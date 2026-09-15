@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -32,7 +33,7 @@ export default function LoginPage() {
   return (
     <main className="auth-wrap">
       <section className="auth-card">
-        <Brand />
+        <div className="auth-toolbar"><Brand /><ThemeToggle /></div>
         <h1>Sign in</h1>
         <p>Access your TXKPRO Workforce account, onboarding, and role-specific workspace.</p>
         <form className="form-stack" onSubmit={submit}>
