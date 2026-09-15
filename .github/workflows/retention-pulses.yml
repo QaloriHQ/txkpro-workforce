@@ -1,0 +1,21 @@
+name: Retention pulses
+
+on:
+  schedule:
+    - cron: "15 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger due 30/60/90-day pulses
+        env:
+          APP_URL: ${{ secrets.TXKPRO_APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$APP_URL"
+          test -n "$CRON_SECRET"
+          curl --fail --silent --show-error \
+            -X POST "$APP_URL/api/retention/run" \
+            -H "Authorization: Bearer $CRON_SECRET"
