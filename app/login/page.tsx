@@ -9,15 +9,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!hasSupabaseBrowserConfig()) {
-      setMessage("Supabase is not configured yet. Use a demo workspace or add the environment variables from .env.example.");
+      setMessage("Supabase is not configured yet. Add the environment variables from .env.example.");
       return;
     }
+    setBusy(true);
     const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
     if (error) {
       setMessage(error.message);
       return;
@@ -30,14 +33,14 @@ export default function LoginPage() {
       <section className="auth-card">
         <Brand />
         <h1>Sign in</h1>
-        <p>Access your student, educator, employer, or TXKPRO operations workspace.</p>
+        <p>Access your TXKPRO Workforce account, onboarding, and role-specific workspace.</p>
         <form className="form-stack" onSubmit={submit}>
-          <label><span>Email</span><input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          <label><span>Password</span><input className="input" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-          <button className="button button-dark button-block" type="submit">Continue</button>
+          <label><span>Email</span><input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <label><span>Password</span><input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          <button className="button button-dark button-block" type="submit" disabled={busy}>{busy ? "Signing in…" : "Continue"}</button>
         </form>
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
-        <p className="footer-note">No backend yet? Preview <Link href="/demo/student"><strong>Student</strong></Link>, <Link href="/demo/educator"><strong>Educator</strong></Link>, <Link href="/demo/employer"><strong>Employer</strong></Link>, or <Link href="/demo/admin"><strong>Admin</strong></Link>.</p>
+        <p className="footer-note">New to TXKPRO Workforce? <Link href="/signup"><strong>Create an account</strong></Link>.</p>
       </section>
     </main>
   );

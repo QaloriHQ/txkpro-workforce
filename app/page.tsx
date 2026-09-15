@@ -11,7 +11,7 @@ export default function HomePage() {
           <Link className="nav-link" href="/demo/educator">Educator</Link>
           <Link className="nav-link" href="/demo/employer">Employer</Link>
         </nav>
-        <Link className="button button-dark button-small" href="/login">Sign in</Link>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}><Link className="button button-ghost button-small" href="/login">Sign in</Link><Link className="button button-dark button-small" href="/signup">Create account</Link></div>
       </header>
       <main className="page-wrap hero">
         <section>
@@ -21,8 +21,8 @@ export default function HomePage() {
             TXKPRO Workforce connects local students, instructors, and home-service employers around verified technical skills, job-readiness requirements, and the first 90 days of employment.
           </p>
           <div className="hero-actions">
-            <Link className="button button-brand" href="/demo/employer">Explore local talent</Link>
-            <Link className="button button-ghost" href="/demo/educator">Preview instructor tools</Link>
+            <Link className="button button-brand" href="/signup">Join TXKPRO Workforce</Link>
+            <Link className="button button-ghost" href="/demo/employer">Preview the MVE</Link>
           </div>
         </section>
         <aside className="hero-card">
