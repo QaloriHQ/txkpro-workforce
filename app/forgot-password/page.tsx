@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
@@ -20,7 +22,7 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     setMessage(null);
     const supabase = createBrowserSupabaseClient();
-    const redirectTo = `${window.location.origin}/auth/confirm?next=${encodeURIComponent("/reset-password")}`;
+    const redirectTo = getAuthCallbackUrl("/reset-password");
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     setBusy(false);
 
@@ -35,9 +37,9 @@ export default function ForgotPasswordPage() {
   return (
     <main className="auth-wrap">
       <section className="auth-card">
-        <Brand />
+        <div className="auth-toolbar"><Brand /><ThemeToggle /></div>
         <h1>Reset your password</h1>
-        <p>Enter the email address connected to your TXKPRO Workforce account. We’ll send a secure recovery link.</p>
+        <p>Enter the email address connected to your TXKPRO Workforce account. We’ll send a secure recovery link back to this public app URL.</p>
         <form className="form-stack" onSubmit={submit}>
           <label>
             <span>Email</span>
