@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(destination);
   }
 
-  const errorUrl = new URL("/login", request.url);
-  errorUrl.searchParams.set("error", "confirmation");
+  const isRecovery = type === "recovery" || next === "/reset-password";
+  const errorUrl = new URL(isRecovery ? "/forgot-password" : "/login", request.url);
+  errorUrl.searchParams.set("error", isRecovery ? "recovery" : "confirmation");
   return NextResponse.redirect(errorUrl);
 }
