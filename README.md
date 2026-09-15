@@ -13,7 +13,7 @@ The first release is intentionally not a generic job board. It is built around t
 - Next.js 16.3.3 / React 19 / TypeScript
 - GitHub Codespaces dev container (Node 24)
 - Supabase Auth + Postgres
-- Server-mediated authorization with a server-only service-role key
+- Server-mediated authorization with a server-only Supabase secret key
 - Twilio Programmable Messaging for SMS
 - GitHub Actions for CI and optional daily retention-pulse triggering
 
@@ -34,35 +34,30 @@ Without Supabase credentials, the role demos still work:
 - `/demo/employer`
 - `/demo/admin`
 
-## Configure Supabase
+## Supabase backend and authentication
 
-Create a Supabase project, then set in `.env.local`:
+This repository is connected to the existing **TXKPRO™** Supabase backend rather than a greenfield demo database. The backend already contains the platform user, role-membership, institution, student, contractor, job, application, and SMS tables.
+
+Set in `.env.local`:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_URL=https://dohhosnwkcbzyugihxba.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_SECRET_KEY=...
 ```
 
-Apply:
+`SUPABASE_SERVICE_ROLE_KEY` is supported as a legacy server-only fallback. Never expose either server secret in client code.
 
-- `supabase/migrations/202609150001_workforce_mve.sql`
-- `supabase/seed.sql`
+Authentication uses Supabase SSR cookies and server-verified claims. Authorization comes from active rows in `app_role_memberships`, not from user-editable Auth metadata.
 
-The migration enables RLS on all workforce tables. The browser does not receive the service-role key. Data mutations go through Next.js server routes that authenticate the user and enforce application role/program scope first.
+### Account onboarding
 
-### Provision initial users
+- Student accounts provision a `wf_student_profiles` record and active student membership.
+- Educator accounts select an existing `wf_institutions` record and remain pending until the institution relationship is approved.
+- Employer accounts provision a contractor/workforce-contractor record with contractor approval kept as a separate pending state.
+- Admin onboarding is only available to an already-provisioned administrator; public signup cannot self-grant admin access.
 
-For the MVE, create Auth users in Supabase, then create matching `profiles` rows with the appropriate `auth_user_id`. Do not allow a public signup request to choose `admin` or `educator` role.
-
-Example profile roles:
-
-- `student`
-- `educator`
-- `employer`
-- `admin`
-
-Educators also need an `educator_programs` row before they can verify or refer students.
+The incremental backend migrations are in `supabase/migrations/`. The original generated prototype schema has been removed from active migrations because it does not match the live TXKPRO backend.
 
 ## Configure SMS
 
@@ -96,6 +91,7 @@ The included `.github/workflows/retention-pulses.yml` can call this daily after 
 
 ## API endpoints in this MVE
 
+- `GET/PATCH/POST /api/onboarding` — authenticated onboarding state and role-specific provisioning
 - `PATCH /api/job-readiness` — student updates readiness attestations/preferences
 - `POST /api/skills/self-attest` — student marks a competency ready for verification
 - `POST /api/skills/verify` — assigned educator/admin verifies competency
@@ -119,10 +115,11 @@ app/
   demo/                 Interactive MVE role previews
   dashboard/            Authenticated role router
   login/                Supabase sign-in
+  signup/               Public Student/Educator/Employer registration
+  onboarding/           Role-aware onboarding wizard
 components/              Shared UI
 lib/                     Auth, Supabase, audit, SMS, types
-supabase/migrations/     Workforce schema
-supabase/seed.sql        Starter trades/skills/employers
+supabase/migrations/     Incremental migrations for the established TXKPRO backend
 .devcontainer/           Codespaces config
 .github/workflows/       CI + retention scheduler
 ```

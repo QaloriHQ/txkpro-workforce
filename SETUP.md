@@ -1,25 +1,61 @@
-# First GitHub/Codespaces setup
+# TXKPRO Workforce — Codespaces + Supabase setup
 
-## Option A — GitHub web
+This repository now targets the existing **TXKPRO™ Supabase project**. The production workforce schema already exists there; the SQL files under `supabase/migrations/` are incremental migrations only.
 
-1. Create an empty repository named `txkpro-workforce` under the GitHub account that should own the product.
-2. Upload/push the contents of this package to `main`.
-3. Open **Code → Codespaces → Create codespace on main**.
-4. Copy `.env.example` to `.env.local`.
-5. Add Supabase values when ready; demo workspaces do not require them.
-6. Run `npm run dev` and open port 3000.
+## 1. Codespaces environment
 
-## Option B — GitHub CLI
-
-From the extracted project directory:
+From the repository root:
 
 ```bash
-git init
-git add .
-git commit -m "Initial TXKPRO Workforce MVE"
-gh repo create QaloriHQ/txkpro-workforce --private --source=. --remote=origin --push
+cp .env.example .env.local
 ```
 
-Then open the repository in Codespaces.
+Add:
 
-> Change `QaloriHQ/txkpro-workforce` if another GitHub owner or repository name is preferred.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://dohhosnwkcbzyugihxba.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+SUPABASE_SECRET_KEY=<server-only secret key>
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` remains supported as a legacy fallback. Never commit `.env.local`.
+
+## 2. Authentication
+
+The app supports:
+
+- Email/password signup for Student, Educator, and Employer accounts
+- Email confirmation through `/auth/confirm`
+- Email/password sign in through `/login`
+- Cookie-based Supabase SSR sessions
+- Server-side role resolution from `app_role_memberships`
+- Sign out through `/auth/signout`
+
+Public registration never grants an admin role. TXKPRO administrator access must already exist in `app_role_memberships`.
+
+## 3. Onboarding behavior
+
+- **Student:** creates/updates the native workforce student profile and activates the Student membership.
+- **Educator:** links to an existing institution and enters `pending_review` unless an approved educator membership already exists.
+- **Employer:** creates/updates a contractor + workforce contractor profile. The contractor remains `approval_status = pending` while the owner account can finish onboarding.
+- **Admin:** onboarding is available only to an already-provisioned TXKPRO administrator.
+
+Onboarding drafts and completion state are stored in `wf_onboarding_accounts`.
+
+## 4. Run
+
+```bash
+npm install
+npm run dev
+```
+
+Open port 3000 and test:
+
+- `/signup`
+- `/login`
+- `/onboarding`
+- `/dashboard`
+
+## 5. Important migration note
+
+The original generated greenfield scaffold SQL has been removed from active migrations because it used a separate prototype schema that does not match the established TXKPRO backend.
