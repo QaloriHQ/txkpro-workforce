@@ -53,9 +53,10 @@ export function normalizeRole(memberships: Membership[]): Role | null {
 export async function getVerifiedIdentity(): Promise<VerifiedIdentity | null> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.getClaims();
-  const sub = data?.claims?.sub;
-  if (error || typeof sub !== "string") return null;
-  const email = typeof data.claims.email === "string" ? data.claims.email : null;
+  const claims = data?.claims;
+  const sub = claims?.sub;
+  if (error || !claims || typeof sub !== "string") return null;
+  const email = typeof claims.email === "string" ? claims.email : null;
   return { authUserId: sub, email };
 }
 
