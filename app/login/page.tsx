@@ -18,6 +18,7 @@ export default function LoginPage() {
       return;
     }
     setBusy(true);
+    setMessage(null);
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(false);
@@ -35,8 +36,17 @@ export default function LoginPage() {
         <h1>Sign in</h1>
         <p>Access your TXKPRO Workforce account, onboarding, and role-specific workspace.</p>
         <form className="form-stack" onSubmit={submit}>
-          <label><span>Email</span><input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          <label><span>Password</span><input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          <label>
+            <span>Email</span>
+            <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <label>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <span>Password</span>
+              <Link href="/forgot-password" style={{ fontSize: 13, fontWeight: 700 }}>Forgot password?</Link>
+            </span>
+            <input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
           <button className="button button-dark button-block" type="submit" disabled={busy}>{busy ? "Signing in…" : "Continue"}</button>
         </form>
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
