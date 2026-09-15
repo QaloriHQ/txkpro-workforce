@@ -20,6 +20,13 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [confirmationRole, setConfirmationRole] = useState<Exclude<Role, "admin"> | null>(null);
+  const [resendBusy, setResendBusy] = useState(false);
+
+  function confirmationRedirect(accountRole: Exclude<Role, "admin">) {
+    return `${window.location.origin}/auth/confirm?next=${encodeURIComponent(`/onboarding?role=${accountRole}`)}`;
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -29,12 +36,13 @@ export default function SignupPage() {
     }
     setBusy(true);
     setMessage(null);
+    setConfirmationPending(false);
     const supabase = createBrowserSupabaseClient();
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(`/onboarding?role=${role}`)}`,
+        emailRedirectTo: confirmationRedirect(role),
         data: {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
@@ -51,7 +59,28 @@ export default function SignupPage() {
       window.location.href = `/onboarding?role=${role}`;
       return;
     }
-    setMessage("Check your email to confirm your account. After confirmation, TXKPRO will continue your onboarding.");
+    setConfirmationRole(role);
+    setConfirmationPending(true);
+    setMessage("Check your email to confirm your account. If it does not arrive, check your spam folder or use Resend verification email below.");
+  }
+
+  async function resendVerification() {
+    if (!hasSupabaseBrowserConfig() || !email.trim()) return;
+    const accountRole = confirmationRole ?? role;
+    setResendBusy(true);
+    setMessage(null);
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: confirmationRedirect(accountRole) },
+    });
+    setResendBusy(false);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setMessage("A new verification email was requested. Check your inbox and spam folder. Supabase may rate-limit repeated requests for a short period.");
   }
 
   return (
@@ -85,6 +114,11 @@ export default function SignupPage() {
           <button className="button button-dark button-block" type="submit" disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
         </form>
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
+        {confirmationPending ? (
+          <button className="button button-ghost button-block" type="button" style={{ marginTop: 10 }} onClick={resendVerification} disabled={resendBusy}>
+            {resendBusy ? "Resending…" : "Resend verification email"}
+          </button>
+        ) : null}
         <p className="footer-note">Already have an account? <Link href="/login"><strong>Sign in</strong></Link>. TXKPRO administrator accounts are provisioned internally and are not available through public registration.</p>
       </section>
     </main>
