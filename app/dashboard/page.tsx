@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getAccountContext } from "@/lib/auth";
 import { hasSupabaseServerConfig } from "@/lib/supabase/server";
 
@@ -21,7 +22,13 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <header className="topbar"><Brand /><div style={{ marginLeft: "auto" }}><form action="/auth/signout" method="post"><button className="button button-dark button-small" type="submit">Sign out</button></form></div></header>
+      <header className="topbar">
+        <Brand />
+        <div className="header-actions">
+          <ThemeToggle />
+          <form action="/auth/signout" method="post"><button className="button button-dark button-small" type="submit">Sign out</button></form>
+        </div>
+      </header>
       <main className="page-wrap">
         <div className="page-heading"><div><p className="eyebrow">Authenticated workspace</p><h1>{workspace.title}</h1></div><span className="pill pill-good">Onboarding complete</span></div>
         <div className="dashboard-grid">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Shell({
   title,
@@ -30,7 +31,10 @@ export function Shell({
             </Link>
           ))}
         </nav>
-        <Link className="button button-dark button-small" href="/login">Sign in</Link>
+        <div className="header-actions">
+          <ThemeToggle />
+          <Link className="button button-dark button-small" href="/login">Sign in</Link>
+        </div>
       </header>
       <main className="page-wrap">
         <div className="page-heading">

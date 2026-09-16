@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomePage() {
   return (
     <>
       <header className="topbar">
         <Brand />
-        <nav className="topnav">
+        <nav className="topnav" aria-label="Workforce previews">
           <Link className="nav-link" href="/demo/student">Student</Link>
           <Link className="nav-link" href="/demo/educator">Educator</Link>
           <Link className="nav-link" href="/demo/employer">Employer</Link>
         </nav>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}><Link className="button button-ghost button-small" href="/login">Sign in</Link><Link className="button button-dark button-small" href="/signup">Create account</Link></div>
+        <div className="header-actions">
+          <ThemeToggle />
+          <Link className="button button-ghost button-small" href="/login">Sign in</Link>
+          <Link className="button button-dark button-small" href="/signup">Create account</Link>
+        </div>
       </header>
       <main className="page-wrap hero">
         <section>
@@ -26,7 +31,7 @@ export default function HomePage() {
           </div>
         </section>
         <aside className="hero-card">
-          <p className="eyebrow" style={{ color: "#98d7b5" }}>Minimum viable ecosystem</p>
+          <p className="eyebrow" style={{ color: "#83bdf4" }}>Minimum viable ecosystem</p>
           <h2>One loop of value for all three sides.</h2>
           <div className="hero-flow">
             <div><small>01 — Student</small><strong>Build a living skills profile</strong></div>

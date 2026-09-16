@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { getAuthCallbackUrl } from "@/lib/site-url";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 import type { Role } from "@/lib/types";
 
@@ -13,6 +16,7 @@ const publicRoles: Array<{ value: Exclude<Role, "admin">; title: string; copy: s
 ];
 
 export default function SignupPage() {
+  const router = useRouter();
   const [role, setRole] = useState<Exclude<Role, "admin">>("student");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -25,7 +29,7 @@ export default function SignupPage() {
   const [resendBusy, setResendBusy] = useState(false);
 
   function confirmationRedirect(accountRole: Exclude<Role, "admin">) {
-    return `${window.location.origin}/auth/confirm?next=${encodeURIComponent(`/onboarding?role=${accountRole}`)}`;
+    return getAuthCallbackUrl(`/onboarding?role=${accountRole}`);
   }
 
   async function submit(event: FormEvent) {
@@ -56,7 +60,8 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
-      window.location.href = `/onboarding?role=${role}`;
+      router.push(`/onboarding?role=${role}`);
+      router.refresh();
       return;
     }
     setConfirmationRole(role);
@@ -86,7 +91,7 @@ export default function SignupPage() {
   return (
     <main className="auth-wrap">
       <section className="auth-card auth-card-wide">
-        <Brand />
+        <div className="auth-toolbar"><Brand /><ThemeToggle /></div>
         <h1>Create your account</h1>
         <p>Choose the TXKPRO Workforce experience that matches how you participate in the local skilled-trades network.</p>
 
