@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { getAccountContext } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -20,7 +21,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     <main className="onboarding-wrap">
       <header className="onboarding-header">
         <Brand />
-        <form action="/auth/signout" method="post"><button className="button button-ghost button-small" type="submit">Sign out</button></form>
+        <div className="header-actions">
+          <ThemeToggle />
+          <form action="/auth/signout" method="post"><button className="button button-ghost button-small" type="submit">Sign out</button></form>
+        </div>
       </header>
       <div className="onboarding-layout">
         <aside className="onboarding-aside">
