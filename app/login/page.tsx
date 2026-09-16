@@ -2,11 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -27,7 +29,8 @@ export default function LoginPage() {
       setMessage(error.message);
       return;
     }
-    window.location.href = "/dashboard";
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (
