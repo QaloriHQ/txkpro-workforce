@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getAuthCallbackUrl } from "@/lib/site-url";
@@ -15,6 +16,7 @@ const publicRoles: Array<{ value: Exclude<Role, "admin">; title: string; copy: s
 ];
 
 export default function SignupPage() {
+  const router = useRouter();
   const [role, setRole] = useState<Exclude<Role, "admin">>("student");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -58,7 +60,8 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
-      window.location.href = `/onboarding?role=${role}`;
+      router.push(`/onboarding?role=${role}`);
+      router.refresh();
       return;
     }
     setConfirmationRole(role);
