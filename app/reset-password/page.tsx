@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
@@ -70,7 +71,7 @@ export default function ResetPasswordPage() {
   return (
     <main className="auth-wrap">
       <section className="auth-card">
-        <Brand />
+        <div className="auth-toolbar"><Brand /><ThemeToggle /></div>
         <h1>Choose a new password</h1>
         <p>Create a new password for your TXKPRO Workforce account.</p>
 
