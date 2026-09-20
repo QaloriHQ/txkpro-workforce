@@ -9,15 +9,16 @@ export default async function DashboardPage() {
   if (!hasSupabaseServerConfig()) redirect("/login");
   const account = await getAccountContext();
   if (!account) redirect("/login");
+  if (!account.role) redirect("/onboarding");
+  if (account.role === "admin") redirect("/admin");
   if (!account.onboarding || account.onboarding.status === "not_started" || account.onboarding.status === "in_progress") redirect("/onboarding");
   if (account.onboarding.status === "pending_review") redirect("/onboarding?pending=1");
-  if (!account.role) redirect("/onboarding");
 
   const workspace = {
     student: { title: "Student workspace", copy: "Your authenticated student account is connected to the TXKPRO workforce backend.", demo: "/demo/student" },
     educator: { title: "Educator workspace", copy: "Your approved educator membership controls access to institution-scoped student records.", demo: "/demo/educator" },
     employer: { title: "Employer workspace", copy: "Your employer account is connected to your canonical Employer membership, company profile, approval state, and persistent Hiring Needs.", demo: "/employer" },
-    admin: { title: "TXKPRO operations", copy: "Your internal role membership controls platform-level access. Onboarding never creates administrator privileges.", demo: "/demo/admin" },
+    admin: { title: "TXKPRO operations", copy: "Your internal role membership controls platform-level access. Onboarding never creates administrator privileges.", demo: "/admin" },
   }[account.role];
 
   return (
