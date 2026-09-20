@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { SignOutButton } from "@/components/sign-out-button";
 import type { Role } from "@/lib/types";
 
 type Institution = { institution_id: string; name: string | null; city: string | null; state: string | null };
@@ -102,7 +103,7 @@ export function OnboardingWizard({
         </p>
         <div className="hero-actions">
           <button className="button button-ghost" onClick={() => window.location.reload()} type="button">Check status</button>
-          <form action="/auth/signout" method="post"><button className="button button-dark" type="submit">Sign out</button></form>
+          <SignOutButton className="button button-dark" />
         </div>
       </div>
     );

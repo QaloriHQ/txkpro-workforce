@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/sign-out-button";
 import { getAccountContext } from "@/lib/auth";
 import { hasSupabaseServerConfig } from "@/lib/supabase/server";
 
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
         <Brand />
         <div className="header-actions">
           <ThemeToggle />
-          <form action="/auth/signout" method="post"><button className="button button-dark button-small" type="submit">Sign out</button></form>
+          <SignOutButton />
         </div>
       </header>
       <main className="page-wrap">
