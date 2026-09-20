@@ -32,7 +32,7 @@ export async function listPendingEmployerApprovals(): Promise<
       ownerIds.length
         ? admin
             .from("users")
-            .select("user_id, first_name, last_name, auth_user_id")
+            .select("user_id, first_name, last_name, email")
             .in("user_id", ownerIds)
         : Promise.resolve({ data: [] }),
       admin
@@ -45,22 +45,6 @@ export async function listPendingEmployerApprovals(): Promise<
         .in("employer_id", employerIds),
     ]);
 
-  const authIds = (owners ?? [])
-    .map((owner) => owner.auth_user_id)
-    .filter((value): value is string => Boolean(value));
-
-  const authEmails = new Map<string, string | null>();
-  if (authIds.length) {
-    const { data: authRows } = await admin
-      .schema("auth")
-      .from("users")
-      .select("id, email")
-      .in("id", authIds);
-    (authRows ?? []).forEach((row) =>
-      authEmails.set(row.id, row.email ?? null),
-    );
-  }
-
   const ownerMap = new Map(
     (owners ?? []).map((owner) => [
       owner.user_id,
@@ -68,9 +52,7 @@ export async function listPendingEmployerApprovals(): Promise<
         name:
           [owner.first_name, owner.last_name].filter(Boolean).join(" ") ||
           "Employer owner",
-        email: owner.auth_user_id
-          ? (authEmails.get(owner.auth_user_id) ?? null)
-          : null,
+        email: owner.email ?? null,
       },
     ]),
   );
