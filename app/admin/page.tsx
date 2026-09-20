@@ -4,6 +4,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { requireRole } from "@/lib/auth";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
   await requireRole(["admin"]);
   const pendingEmployers = await listPendingEmployerApprovals();
