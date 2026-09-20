@@ -31,7 +31,7 @@ Without Supabase credentials, the role demos still work:
 
 - `/demo/student`
 - `/demo/educator`
-- `/demo/employer`
+- `/demo/employer` (prototype reference)
 - `/demo/admin`
 
 ## Supabase backend and authentication
@@ -48,6 +48,8 @@ SUPABASE_SECRET_KEY=...
 
 `SUPABASE_SERVICE_ROLE_KEY` is supported as a legacy server-only fallback. Never expose either server secret in client code.
 
+The production Employer foundation is available at `/employer`. It resolves canonical Employer role + scope server-side and persists Company Profile and Hiring Needs through the authenticated Supabase session and RLS. See `docs/WAVE7_PRODUCTION_INTEGRATION.md`.
+
 Authentication uses Supabase SSR cookies and server-verified claims. Authorization comes from active rows in `app_role_memberships`, not from user-editable Auth metadata.
 
 ### Account onboarding
@@ -58,6 +60,16 @@ Authentication uses Supabase SSR cookies and server-verified claims. Authorizati
 - Admin onboarding is only available to an already-provisioned administrator; public signup cannot self-grant admin access.
 
 The incremental backend migrations are in `supabase/migrations/`. The original generated prototype schema has been removed from active migrations because it does not match the live TXKPRO backend.
+
+## Wave 7 Employer smoke test
+
+With the Supabase environment variables configured, run:
+
+```bash
+npm run wave7:smoke
+```
+
+This validates the persistent Employer schema, seed records, canonical events/audit rows, membership aliases, and anonymous RLS denial.
 
 ## Configure SMS
 
