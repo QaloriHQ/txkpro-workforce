@@ -90,11 +90,16 @@ export function OnboardingWizard({
   }
 
   if (pending) {
+    const employerPending = role === "employer";
     return (
       <div className="onboarding-panel">
         <div className="success-mark">✓</div>
-        <h2>Onboarding submitted</h2>
-        <p className="muted">Your educator relationship is waiting for TXKPRO or your institution to approve it. Student records remain unavailable until that approval is complete.</p>
+        <h2>{employerPending ? "Employer profile submitted" : "Onboarding submitted"}</h2>
+        <p className="muted">
+          {employerPending
+            ? "Your Employer profile has been created and is waiting for TXKPRO approval. Company setup remains saved, but Talent access and approval-gated hiring actions stay unavailable until review is complete."
+            : "Your educator relationship is waiting for TXKPRO or your institution to approve it. Student records remain unavailable until that approval is complete."}
+        </p>
         <div className="hero-actions">
           <button className="button button-ghost" onClick={() => window.location.reload()} type="button">Check status</button>
           <form action="/auth/signout" method="post"><button className="button button-dark" type="submit">Sign out</button></form>
@@ -165,7 +170,7 @@ export function OnboardingWizard({
             {role === "employer" ? <><div><span>Business</span><strong>{String(data.businessName ?? "Not provided")}</strong></div><div><span>Hiring trades</span><strong>{list(data.tradesHiring).join(", ") || "Not selected"}</strong></div></> : null}
           </div>
           {role === "educator" && !provisionedRole ? <div className="alert" style={{ marginTop: 18 }}>Educator access is submitted for institution verification. You will not receive student-record access until the relationship is approved.</div> : null}
-          {role === "employer" ? <div className="alert" style={{ marginTop: 18 }}>Your employer account can be created immediately, while contractor approval remains a separate TXKPRO review state.</div> : null}
+          {role === "employer" ? <div className="alert" style={{ marginTop: 18 }}>Your Employer profile will be saved immediately. TXKPRO approval remains a separate review state, and approval-gated hiring access stays disabled until that review is complete.</div> : null}
         </section>
       ) : null}
 
