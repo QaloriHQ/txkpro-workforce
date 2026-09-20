@@ -136,6 +136,19 @@ export async function decideEmployerApproval(input: {
     .eq("contractor_id", input.employerId);
   if (profileError) throw profileError;
 
+  if (input.decision !== "approved") {
+    const { error: onboardingError } = await admin
+      .from("wf_onboarding_accounts")
+      .update({
+        status: "blocked",
+        completed_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("employer_id", input.employerId)
+      .eq("selected_role", "employer");
+    if (onboardingError) throw onboardingError;
+  }
+
   return {
     employerId: input.employerId,
     businessName: current.business_name ?? "Employer",
