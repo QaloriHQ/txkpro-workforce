@@ -151,3 +151,12 @@ The smoke test checks:
 Wave 7 does not depend on client-side role selection. It does not use a branded hostname as authorization. It does not expose raw MVR/background/drug/medical data. It does not combine readiness evidence into an employability score.
 
 The next integration increment should wire Talent/Referral/Interview/Placement/Retention read models to the same shared backend and event model rather than introducing parallel state.
+
+
+## Admin approval workspace
+
+Platform Admin accounts do not use Student/Educator/Employer onboarding. After normal Supabase Auth sign-in, active platform-level `super_admin`, `admin`, or `platform_admin` membership routes directly to `/admin`.
+
+The production Admin workspace lists pending Employer submissions and allows an authorized platform admin to approve or reject them. Approval updates the canonical Employer state, completes linked Employer onboarding through the existing database trigger, and records an audit event. Rejection moves linked onboarding to `blocked`.
+
+Mobile sign-out uses a POST followed by an HTTP 303 redirect to `/login`, avoiding Safari's ambiguous POST/302 navigation behavior.
