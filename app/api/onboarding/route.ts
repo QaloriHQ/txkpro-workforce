@@ -184,7 +184,7 @@ async function provisionEducator(admin: ReturnType<typeof createAdminClient>, ac
 async function provisionEmployer(admin: ReturnType<typeof createAdminClient>, account: NonNullable<Awaited<ReturnType<typeof getAccountContext>>>, data: JsonObject) {
   const businessName = text(data.businessName, 200);
   if (!businessName) throw new Error("Business name is required.");
-  const { data: existing } = await admin.from("contractors").select("contractor_id").eq("owner_user_id", account.legacyUserId).maybeSingle();
+  const { data: existing } = await admin.from("contractors").select("contractor_id, approval_status").eq("owner_user_id", account.legacyUserId).maybeSingle();
   const contractorId = existing?.contractor_id ?? nativeId("CON");
   const now = new Date().toISOString();
 
@@ -239,9 +239,10 @@ async function provisionEmployer(admin: ReturnType<typeof createAdminClient>, ac
     if (error) throw error;
   }
 
-  await ensureAppMembership({ admin, authUserId: account.authUserId, userId: account.legacyUserId, role: "contractor_owner", scopeType: "contractor", scopeId: contractorId, status: "active" });
-  await ensureWorkforceMembership({ admin, userId: account.legacyUserId, role: "contractor_owner", contractorId, status: "active" });
-  return { status: "complete" as const, entityId: contractorId };
+  await ensureAppMembership({ admin, authUserId: account.authUserId, userId: account.legacyUserId, role: "employer_owner", scopeType: "employer", scopeId: contractorId, status: "active" });
+  await ensureWorkforceMembership({ admin, userId: account.legacyUserId, role: "employer_owner", contractorId, status: "active" });
+  const employerApproved = existing?.approval_status?.toLowerCase() === "approved";
+  return { status: employerApproved ? "complete" as const : "pending_review" as const, entityId: contractorId };
 }
 
 async function saveOnboarding(params: {
@@ -252,8 +253,9 @@ async function saveOnboarding(params: {
   profileData: JsonObject;
   status: "not_started" | "in_progress" | "pending_review" | "complete";
   submitted?: boolean;
+  employerId?: string | null;
 }) {
-  const { admin, account, role, currentStep, profileData, status, submitted = false } = params;
+  const { admin, account, role, currentStep, profileData, status, submitted = false, employerId = null } = params;
   const now = new Date().toISOString();
   const { error } = await admin.from("wf_onboarding_accounts").upsert({
     auth_user_id: account.authUserId,
@@ -262,6 +264,7 @@ async function saveOnboarding(params: {
     status,
     current_step: currentStep,
     profile_data: profileData,
+    employer_id: employerId,
     submitted_at: submitted ? now : account.onboarding?.status === "pending_review" ? now : null,
     completed_at: status === "complete" ? now : null,
     updated_at: now,
@@ -342,7 +345,7 @@ export async function POST(request: Request) {
     else if (role === "employer") result = await provisionEmployer(admin, account, profileData);
     else result = { status: "complete", entityId: account.legacyUserId };
 
-    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true });
+    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: role === "employer" ? result.entityId : null });
     await auditOnboarding(admin, account, "workforce.onboarding.completed", role, result.status, result.entityId);
 
     return Response.json({ ok: true, status: result.status, role, redirectTo: result.status === "complete" ? "/dashboard" : "/onboarding?pending=1" });
