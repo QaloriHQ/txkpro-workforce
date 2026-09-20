@@ -5,7 +5,7 @@ import type { Role } from "@/lib/types";
 
 const ADMIN_ROLES = new Set(["super_admin", "admin", "platform_admin"]);
 const EDUCATOR_ROLES = new Set(["instructor", "institution", "institution_admin"]);
-const EMPLOYER_ROLES = new Set(["contractor_owner", "contractor_recruiter"]);
+const EMPLOYER_ROLES = new Set(["employer_owner", "employer_admin", "recruiter", "hiring_manager", "employer_read_only", "contractor_owner", "contractor_recruiter"]);
 
 export type Membership = {
   role: string;
@@ -29,7 +29,7 @@ export type AccountContext = VerifiedIdentity & {
   role: Role | null;
   onboarding: {
     selected_role: Role | null;
-    status: "not_started" | "in_progress" | "pending_review" | "complete";
+    status: "not_started" | "in_progress" | "pending_review" | "complete" | "blocked" | "cancelled";
     current_step: number;
     profile_data: Record<string, unknown>;
   } | null;
