@@ -27,19 +27,14 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     await audit({
       actorAuthUserId: auth.authUserId,
       actorProfileId: auth.legacyUserId,
-      action:
-        body.decision === "approved"
-          ? "EMPLOYER_APPROVED"
-          : body.decision === "rejected"
-            ? "EMPLOYER_REJECTED"
-            : "EMPLOYER_SUSPENDED",
+      action: "EMPLOYER_APPROVAL_REVIEWED",
       entityType: "employer",
       entityId: result.employerId,
       employerId: result.employerId,
       result: "success",
       oldValue: { approvalStatus: result.previousStatus },
       newValue: { approvalStatus: body.decision },
-      metadata: { source: "platform_admin_ui" },
+      metadata: { source: "platform_admin_ui", decision: body.decision },
     });
 
     return Response.json({ ok: true, result });
