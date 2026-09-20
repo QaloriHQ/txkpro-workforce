@@ -1,60 +1,127 @@
 const port = process.env.PORT || "3000";
-const configuredSite = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
+const rawConfiguredSite = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
 const codespaceName = process.env.CODESPACE_NAME;
-const forwardingDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || "app.github.dev";
-const codespaceOrigin = codespaceName ? `https://${codespaceName}-${port}.${forwardingDomain}` : null;
+const forwardingDomain =
+  process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || "app.github.dev";
+const codespaceOrigin = codespaceName
+  ? `https://${codespaceName}-${port}.${forwardingDomain}`
+  : null;
 const localOrigin = `http://localhost:${port}`;
-const resolvedOrigin = configuredSite || codespaceOrigin || localOrigin;
+
+function parseUrl(value) {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
 
 function isLoopback(value) {
-  try {
-    const url = new URL(value);
-    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
-  } catch {
-    return false;
-  }
+  const url = parseUrl(value);
+  return Boolean(
+    url &&
+      ["localhost", "127.0.0.1", "::1"].includes(url.hostname),
+  );
+}
+
+function isGitHubWebsite(value) {
+  const url = parseUrl(value);
+  return Boolean(
+    url && ["github.com", "www.github.com"].includes(url.hostname.toLowerCase()),
+  );
 }
 
 function isHttps(value) {
-  try {
-    return new URL(value).protocol === "https:";
-  } catch {
-    return false;
-  }
+  return parseUrl(value)?.protocol === "https:";
 }
+
+const configuredUrl = rawConfiguredSite ? parseUrl(rawConfiguredSite) : null;
+const configuredOrigin = configuredUrl?.origin ?? "";
+const resolvedOrigin =
+  codespaceOrigin ||
+  (configuredOrigin && !isGitHubWebsite(configuredOrigin)
+    ? configuredOrigin
+    : localOrigin);
 
 const issues = [];
 
-if (configuredSite) {
-  try {
-    new URL(configuredSite);
-  } catch {
-    issues.push("NEXT_PUBLIC_SITE_URL is not a valid absolute URL.");
-  }
+if (rawConfiguredSite && !configuredUrl) {
+  issues.push("NEXT_PUBLIC_SITE_URL is not a valid absolute URL.");
 }
-
-if (codespaceOrigin && configuredSite && isLoopback(configuredSite)) {
-  issues.push("Codespaces is public, but NEXT_PUBLIC_SITE_URL points to localhost. Leave it blank while using Codespaces.");
+if (configuredUrl && configuredUrl.pathname !== "/") {
+  issues.push(
+    "NEXT_PUBLIC_SITE_URL must be an application origin, not a repository/path URL. Example: https://workforce.txkpro.com",
+  );
 }
-
+if (configuredOrigin && isGitHubWebsite(configuredOrigin)) {
+  issues.push(
+    "NEXT_PUBLIC_SITE_URL points to github.com. GitHub repository pages are not TXKPRO application callback hosts.",
+  );
+}
+if (codespaceOrigin && configuredOrigin && configuredOrigin !== codespaceOrigin) {
+  issues.push(
+    "Codespaces is running on a forwarded app.github.dev host. Browser Auth callbacks will intentionally use the current Codespaces origin.",
+  );
+}
+if (codespaceOrigin && configuredOrigin && isLoopback(configuredOrigin)) {
+  issues.push(
+    "Codespaces is public, but NEXT_PUBLIC_SITE_URL points to localhost. Leave it blank while using Codespaces.",
+  );
+}
 if (process.env.NODE_ENV === "production") {
-  if (!configuredSite) issues.push("Production requires NEXT_PUBLIC_SITE_URL.");
-  if (configuredSite && !isHttps(configuredSite)) issues.push("Production NEXT_PUBLIC_SITE_URL must use HTTPS.");
+  if (!configuredOrigin) {
+    issues.push("Production requires NEXT_PUBLIC_SITE_URL.");
+  }
+  if (configuredOrigin && !isHttps(configuredOrigin)) {
+    issues.push("Production NEXT_PUBLIC_SITE_URL must use HTTPS.");
+  }
 }
 
 console.log("TXKPRO Workforce Auth Configuration");
 console.log("----------------------------------");
 console.log(`Runtime origin: ${resolvedOrigin}`);
-console.log(`Signup callback: ${resolvedOrigin}/auth/confirm?next=%2Fonboarding`);
-console.log(`Recovery callback: ${resolvedOrigin}/auth/confirm?next=%2Freset-password`);
-console.log(`Supabase URL configured: ${Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)}`);
-console.log(`Publishable key configured: ${Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)}`);
-console.log(`Server secret configured: ${Boolean(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)}`);
+console.log(
+  `Signup callback: ${resolvedOrigin}/auth/confirm?next=%2Fonboarding`,
+);
+console.log(
+  `Recovery callback: ${resolvedOrigin}/auth/confirm?next=%2Freset-password`,
+);
+console.log(
+  `Supabase URL configured: ${Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)}`,
+);
+console.log(
+  `Publishable key configured: ${Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)}`,
+);
+console.log(
+  `Server secret configured: ${Boolean(
+    process.env.SUPABASE_SECRET_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+  )}`,
+);
+
+if (codespaceOrigin) {
+  console.log("\nSupabase Auth URL Configuration must allow:");
+  console.log("- https://**.app.github.dev/**");
+  console.log(`- Exact current preview: ${codespaceOrigin}/**`);
+  console.log(
+    "Do not use a github.com repository URL as Site URL or NEXT_PUBLIC_SITE_URL.",
+  );
+}
 
 if (issues.length) {
-  console.error("\nConfiguration issues:");
+  console.error("\nConfiguration notes:");
   issues.forEach((issue) => console.error(`- ${issue}`));
-  process.exitCode = 1;
+  if (
+    issues.some(
+      (issue) =>
+        issue.includes("not a valid") ||
+        issue.includes("points to github.com") ||
+        issue.includes("Production requires") ||
+        issue.includes("must use HTTPS"),
+    )
+  ) {
+    process.exitCode = 1;
+  }
 } else {
   console.log("\nAuth origin configuration looks valid for this environment.");
 }
