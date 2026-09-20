@@ -1,6 +1,7 @@
 import { Brand } from "@/components/brand";
 import { EmployerApprovalQueue } from "@/components/admin/employer-approval-queue";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/sign-out-button";
 import { requireRole } from "@/lib/auth";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
 
@@ -17,11 +18,7 @@ export default async function AdminPage() {
         <div className="header-actions">
           <span className="pill pill-good">Platform Admin</span>
           <ThemeToggle />
-          <form action="/auth/signout" method="post">
-            <button className="button button-dark button-small" type="submit">
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </header>
 
