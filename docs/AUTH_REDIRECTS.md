@@ -1,6 +1,6 @@
 # TXKPRO Workforce — Supabase Auth Redirects
 
-TXKPRO Workforce now builds email confirmation and password-recovery callbacks from `NEXT_PUBLIC_SITE_URL` when it is set. If that variable is blank in browser development, the current browser origin is used. A localhost value is ignored when the app is actually running on a public host such as GitHub Codespaces.
+TXKPRO Workforce builds email confirmation and password-recovery callbacks from the running application origin. In GitHub Codespaces, the current `*.app.github.dev` forwarded-port origin always wins so a stale environment variable cannot send users to `github.com`, a repository URL, or localhost. Outside Codespaces, `NEXT_PUBLIC_SITE_URL` is used when configured.
 
 ## Supabase Auth URL Configuration
 
@@ -18,6 +18,14 @@ Add these **Redirect URLs** while developing:
 http://localhost:3000/**
 https://**.app.github.dev/**
 ```
+
+For troubleshooting, you may also temporarily add the exact current Codespaces preview URL, for example:
+
+```text
+https://<codespace-name>-3000.app.github.dev/**
+```
+
+Do **not** use `https://github.com/...` or a GitHub repository URL as the Site URL, Redirect URL, or `NEXT_PUBLIC_SITE_URL`. Those are source-control pages, not application callback hosts.
 
 Also add the exact production origin/path when deployed:
 
@@ -43,4 +51,6 @@ Set this in production:
 NEXT_PUBLIC_SITE_URL=https://workforce.txkpro.com
 ```
 
-For GitHub Codespaces, it can remain blank so the current `*.app.github.dev` origin is used automatically.
+For GitHub Codespaces, leave it blank. The app intentionally uses the current `*.app.github.dev` origin automatically.
+
+Run `npm run auth:check` inside the Codespace before testing. If it reports a `github.com` origin or a `NEXT_PUBLIC_SITE_URL` containing a repository path, remove that value from `.env.local` and restart the Next.js dev server.
