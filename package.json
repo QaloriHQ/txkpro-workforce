@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs"
+    "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs",
+    "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
