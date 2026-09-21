@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getAuthCallbackUrl } from "@/lib/site-url";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -13,6 +12,8 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [linkBusy, setLinkBusy] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -39,7 +40,7 @@ export default function LoginPage() {
     window.location.replace("/dashboard");
   }
 
-  async function sendSignInLink() {
+  async function sendSignInCode() {
     if (!hasSupabaseBrowserConfig()) {
       setMessage("Supabase is not configured yet. Add the environment variables from .env.example.");
       return;
@@ -56,7 +57,6 @@ export default function LoginPage() {
       email: email.trim(),
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: getAuthCallbackUrl("/dashboard"),
       },
     });
     setLinkBusy(false);
@@ -66,7 +66,32 @@ export default function LoginPage() {
       return;
     }
 
-    setMessage("A one-time sign-in link has been sent. Check your inbox and spam folder.");
+    setOtpSent(true);
+    setMessage("A one-time sign-in code has been sent. Enter the code from your email below.");
+  }
+
+  async function verifySignInCode() {
+    if (!email.trim() || !otp.trim()) {
+      setMessage("Enter your email address and verification code.");
+      return;
+    }
+
+    setLinkBusy(true);
+    setMessage(null);
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: otp.replace(/\s+/g, ""),
+      type: "email",
+    });
+    setLinkBusy(false);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    window.location.replace("/dashboard");
   }
 
   return (
@@ -93,11 +118,35 @@ export default function LoginPage() {
           className="button button-ghost button-block"
           type="button"
           disabled={busy || linkBusy}
-          onClick={sendSignInLink}
+          onClick={sendSignInCode}
           style={{ marginTop: 10 }}
         >
-          {linkBusy ? "Sending link…" : "Email me a one-time sign-in link"}
+          {linkBusy ? "Sending code…" : "Email me a one-time sign-in code"}
         </button>
+
+        {otpSent ? (
+          <div className="form-stack" style={{ marginTop: 12 }}>
+            <label>
+              <span>Verification code</span>
+              <input
+                className="input"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value)}
+                placeholder="Enter code from email"
+              />
+            </label>
+            <button
+              className="button button-brand button-block"
+              type="button"
+              disabled={linkBusy || !otp.trim()}
+              onClick={verifySignInCode}
+            >
+              {linkBusy ? "Verifying…" : "Verify code and sign in"}
+            </button>
+          </div>
+        ) : null}
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
         <p className="footer-note">New to TXKPRO Workforce? <Link href="/signup"><strong>Create an account</strong></Link>.</p>
       </section>
