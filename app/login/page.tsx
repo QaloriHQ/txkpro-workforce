@@ -23,21 +23,29 @@ export default function LoginPage() {
     }
     setBusy(true);
     setMessage(null);
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
+    const response = await fetch("/api/auth/session-login", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mode: "password",
+        email: email.trim(),
+        password,
+      }),
     });
+    const result = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      destination?: string;
+    };
     setBusy(false);
-    if (error) {
+    if (!response.ok || !result.destination) {
       setMessage(
-        error.code === "invalid_credentials"
-          ? "Email or password is incorrect. Use Forgot password or request a one-time sign-in code below."
-          : error.message,
+        result.error ??
+          "Unable to sign in. Use Forgot password or request a one-time sign-in code below.",
       );
       return;
     }
-    window.location.replace("/dashboard");
+    window.location.replace(result.destination);
   }
 
   async function sendSignInCode() {
@@ -78,20 +86,28 @@ export default function LoginPage() {
 
     setLinkBusy(true);
     setMessage(null);
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: otp.replace(/\s+/g, ""),
-      type: "email",
+    const response = await fetch("/api/auth/session-login", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mode: "otp",
+        email: email.trim(),
+        token: otp.replace(/\s+/g, ""),
+      }),
     });
+    const result = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      destination?: string;
+    };
     setLinkBusy(false);
 
-    if (error) {
-      setMessage(error.message);
+    if (!response.ok || !result.destination) {
+      setMessage(result.error ?? "Verification failed. Request a new code and try again.");
       return;
     }
 
-    window.location.replace("/dashboard");
+    window.location.replace(result.destination);
   }
 
   return (
