@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (error) {
       setMessage(
         error.code === "invalid_credentials"
-          ? "Email or password is incorrect. Use Forgot password or request a one-time sign-in link below."
+          ? "Email or password is incorrect. Use Forgot password or request a one-time sign-in code below."
           : error.message,
       );
       return;
