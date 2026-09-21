@@ -8,7 +8,7 @@ TXKPRO Workforce should use a persistent hosted staging application rather than 
 - Hosted application: Vercel
 - Preferred stable URL: `https://staging-workforce.txkpro.com`
 - Production application: `https://workforce.txkpro.com`
-- Database/Auth: isolated Supabase development branch when enabled
+- Database/Auth: isolated Supabase project `TXKPRO Workforce Staging` (`qwxlgzlkaeaqfzjodtis`)
 
 A stable staging origin prevents password-recovery and email-confirmation links from depending on a temporary Codespaces forwarded-port URL.
 
@@ -18,9 +18,9 @@ Configure these in the Vercel Preview/Staging environment:
 
 ```text
 NEXT_PUBLIC_SITE_URL=https://staging-workforce.txkpro.com
-NEXT_PUBLIC_SUPABASE_URL=<staging Supabase branch URL>
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<staging publishable key>
-SUPABASE_SECRET_KEY=<staging server secret>
+NEXT_PUBLIC_SUPABASE_URL=https://qwxlgzlkaeaqfzjodtis.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_3IqP_qR9WpROX7F6elpuKA_UCt4n5vJ
+SUPABASE_SECRET_KEY=<copy from the staging Supabase project; never commit>
 ```
 
 Add the remaining server-only Twilio variables only when the staging environment needs to exercise SMS.
@@ -53,4 +53,16 @@ https://staging-workforce.txkpro.com/auth/confirm?next=%2Freset-password
 
 ## Isolation
 
-For a true sandbox, use a Supabase development branch rather than the production database. Development branches receive schema/migrations without production data, which keeps test Employers, approvals, interviews, placements, retention events, and audit records out of production.
+Staging now uses a completely separate Supabase project rather than a database branch. This keeps staging Auth users, Employers, approvals, Hiring Needs, events, and audit records out of production. The staging project has a greenfield Workforce foundation with RLS enabled and no production data.
+
+
+## Current staging backend
+
+- Project: `TXKPRO Workforce Staging`
+- Project ref: `qwxlgzlkaeaqfzjodtis`
+- API URL: `https://qwxlgzlkaeaqfzjodtis.supabase.co`
+- Cost: `$0/month` under the current organization/project allowance
+- Security advisor: no findings after bootstrap
+- GitHub deployment branch: `staging`
+
+The bootstrap SQL applied to the isolated project is tracked under `supabase/staging/migrations/`. It is intentionally separate from the production migration chain because the production database predates this repository and already contained the base Workforce schema.
