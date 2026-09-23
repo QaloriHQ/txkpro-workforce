@@ -10,6 +10,14 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const requestedRole = params.role === "student" || params.role === "educator" || params.role === "employer" ? params.role : null;
   const account = await getAccountContext();
   if (!account) redirect("/login");
+
+  if (account.onboarding?.status === "complete" && account.role) {
+    if (account.role === "employer") redirect("/employer");
+    if (account.role === "student") redirect("/student");
+    if (account.role === "admin") redirect("/admin");
+    redirect("/dashboard");
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data: institutions } = await supabase
     .from("wf_institutions")
