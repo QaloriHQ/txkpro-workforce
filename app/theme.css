@@ -860,3 +860,201 @@ body:has(.employer-sidebar) .topbar {
     height: 100dvh;
   }
 }
+
+
+/* TXKPRO official logo rendering */
+.brand-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+.brand-logo {
+  display: block;
+  width: auto;
+  height: 34px;
+  max-width: none;
+  object-fit: contain;
+  object-position: left center;
+  flex: 0 0 auto;
+}
+.brand-logo-dark { display: none; }
+html[data-theme="dark"] .brand-logo-light { display: none; }
+html[data-theme="dark"] .brand-logo-dark { display: block; }
+
+/* Employer Talent search */
+.talent-search-panel {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+.talent-search-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.talent-search-heading h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 24px;
+  letter-spacing: -.035em;
+}
+.talent-search-form {
+  display: grid;
+  gap: 0;
+}
+.talent-search-basic {
+  display: grid;
+  grid-template-columns: minmax(190px,1.15fr) minmax(180px,1fr) minmax(160px,.8fr) minmax(170px,.8fr);
+  gap: 12px;
+  padding: 18px 22px;
+}
+.talent-search-basic label,
+.talent-advanced-body label {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+.talent-search-basic label > span,
+.talent-advanced-body label > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+.talent-advanced {
+  margin: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-subtle);
+  overflow: hidden;
+}
+.talent-advanced summary {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--ink);
+}
+.talent-advanced summary::-webkit-details-marker { display: none; }
+.talent-advanced summary > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+.talent-advanced summary strong {
+  font-size: 13px;
+}
+.talent-advanced summary small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.talent-advanced-chevron {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--muted);
+}
+.talent-advanced-chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .18s ease;
+}
+.talent-advanced[open] .talent-advanced-chevron svg {
+  transform: rotate(180deg);
+}
+.talent-advanced-body {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+.talent-advanced-body .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+.talent-readiness-filters {
+  padding-top: 2px;
+}
+.talent-readiness-filters .field-title {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.talent-search-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px 20px;
+}
+.talent-search-actions .button-brand {
+  min-width: 112px;
+}
+
+@media (max-width: 1100px) {
+  .talent-search-basic {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .talent-advanced-body .form-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  body:has(.employer-sidebar) .topbar .brand-logo {
+    width: auto;
+    height: 30px;
+    max-width: none;
+  }
+  .talent-search-heading {
+    padding: 18px;
+  }
+  .talent-search-heading .pill {
+    display: none;
+  }
+  .talent-search-basic {
+    grid-template-columns: 1fr;
+    gap: 11px;
+    padding: 16px 18px;
+  }
+  .talent-advanced {
+    margin: 0 18px;
+  }
+  .talent-advanced summary {
+    min-height: 62px;
+  }
+  .talent-advanced-body .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .talent-advanced-body .check-grid {
+    grid-template-columns: 1fr;
+  }
+  .talent-search-actions {
+    padding: 16px 18px 18px;
+  }
+  .talent-search-actions .button {
+    flex: 1 1 0;
+  }
+}
