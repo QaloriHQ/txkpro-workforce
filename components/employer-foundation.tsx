@@ -92,7 +92,7 @@ export function EmployerFoundation({
         },
       );
       setCompany(result.company);
-      setMessage("Company Profile saved to Supabase.");
+      setMessage("Company profile saved.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to save.");
     } finally {
@@ -147,7 +147,7 @@ export function EmployerFoundation({
       );
       setHiringNeeds((current) => [result.hiringNeed, ...current]);
       event.currentTarget.reset();
-      setMessage("Draft Hiring Need saved to Supabase.");
+      setMessage("Draft hiring need saved.");
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Unable to create Hiring Need.",
@@ -159,50 +159,30 @@ export function EmployerFoundation({
 
   return (
     <>
-      <div className="grid grid-4">
-        <div className="metric">
-          <div className="metric-label">Employer</div>
-          <div className="metric-value" style={{ fontSize: 18 }}>
-            {context.employerName}
-          </div>
-          <div className="metric-detail">{context.employerId}</div>
+      <section className="employer-management-heading">
+        <div>
+          <p className="eyebrow">Manage</p>
+          <h2>Company & hiring needs</h2>
+          <p className="card-sub">
+            Keep your company information current and define the roles you plan to hire for.
+          </p>
         </div>
-        <div className="metric">
-          <div className="metric-label">Role</div>
-          <div className="metric-value" style={{ fontSize: 18 }}>
-            {context.role.replaceAll("_", " ")}
-          </div>
-          <div className="metric-detail">Server-resolved membership</div>
-        </div>
-        <div className="metric">
-          <div className="metric-label">Approval</div>
-          <div className="metric-value" style={{ fontSize: 18 }}>
-            {context.approvalStatus}
-          </div>
-          <div className="metric-detail">TXKPRO-controlled state</div>
-        </div>
-        <div className="metric">
-          <div className="metric-label">Hiring Needs</div>
-          <div className="metric-value">{hiringNeeds.length}</div>
-          <div className="metric-detail">Persistent canonical records</div>
-        </div>
-      </div>
+      </section>
 
       {message ? (
-        <div className="callout" style={{ marginTop: 18 }}>
-          <strong>Production integration</strong>
+        <div className="callout employer-save-message">
+          <strong>Saved</strong>
           {message}
         </div>
       ) : null}
 
-      <div className="grid grid-2" style={{ marginTop: 18 }}>
+      <div className="grid grid-2 employer-management-grid">
         <form className="card" onSubmit={saveCompany}>
           <div className="card-header">
             <div>
               <h2>Company Profile</h2>
               <p className="card-sub">
-                Employer-owned fields persist to the shared Workforce backend.
-                Approval fields remain TXKPRO-controlled.
+                Keep the public-facing company and workforce information employers use across TXKPRO current.
               </p>
             </div>
             <span className={`pill ${statusTone}`}>
@@ -365,8 +345,7 @@ export function EmployerFoundation({
             <div>
               <h2>Create Hiring Need</h2>
               <p className="card-sub">
-                Structured employer demand with explicit criteria. This does not
-                create a public job posting.
+                Define the role, trade, timing, and verified-skill requirements for your next hire.
               </p>
             </div>
             <span className="pill">Draft</span>
@@ -452,13 +431,12 @@ export function EmployerFoundation({
         </form>
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card employer-hiring-needs-list">
         <div className="card-header">
           <div>
             <h2>Persistent Hiring Needs</h2>
             <p className="card-sub">
-              Loaded from <code>wf_hiring_needs</code> through the authenticated
-              Supabase session and RLS.
+              Current hiring needs your team has created for talent discovery and interview workflows.
             </p>
           </div>
           <span className="pill">{hiringNeeds.length} records</span>
@@ -472,27 +450,22 @@ export function EmployerFoundation({
                 <th>Target</th>
                 <th>Status</th>
                 <th>Visibility</th>
-                <th>Version</th>
               </tr>
             </thead>
             <tbody>
               {hiringNeeds.length ? (
                 hiringNeeds.map((need) => (
                   <tr key={need.hiringNeedId}>
-                    <td>
-                      <strong>{need.title}</strong>
-                      <div className="muted">{need.hiringNeedId}</div>
-                    </td>
+                    <td><strong>{need.title}</strong></td>
                     <td>{need.tradeId ?? "—"}</td>
                     <td>{need.targetHires}</td>
                     <td><span className="pill">{need.status}</span></td>
                     <td>{need.visibility.replaceAll("_", " ")}</td>
-                    <td>{need.version}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={5}>
                     <div className="empty">
                       <strong>No Hiring Needs yet</strong>
                       Create the first draft after Employer approval.
