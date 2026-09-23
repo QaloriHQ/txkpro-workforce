@@ -15,8 +15,14 @@ export default async function DashboardPage() {
   if (!account.onboarding || account.onboarding.status === "not_started" || account.onboarding.status === "in_progress") redirect("/onboarding");
   if (account.onboarding.status === "pending_review") redirect("/onboarding?pending=1");
 
+  // Production role workspaces should be the default destination after authentication.
+  // Keep /dashboard only as a temporary fallback for roles that do not yet have a
+  // dedicated production workspace.
+  if (account.role === "employer") redirect("/employer");
+  if (account.role === "student") redirect("/student");
+
   const workspace = {
-    student: { title: "Student workspace", copy: "Your authenticated student account is connected to the TXKPRO workforce backend.", demo: "/demo/student" },
+    student: { title: "Student workspace", copy: "Your authenticated student account is connected to Interview, Placement, and Workforce readiness state.", demo: "/student" },
     educator: { title: "Educator workspace", copy: "Your approved educator membership controls access to institution-scoped student records.", demo: "/demo/educator" },
     employer: { title: "Employer workspace", copy: "Your employer account is connected to your canonical Employer membership, company profile, approval state, and persistent Hiring Needs.", demo: "/employer" },
     admin: { title: "TXKPRO operations", copy: "Your internal role membership controls platform-level access. Onboarding never creates administrator privileges.", demo: "/admin" },
@@ -34,7 +40,7 @@ export default async function DashboardPage() {
       <main className="page-wrap">
         <div className="page-heading"><div><p className="eyebrow">Authenticated workspace</p><h1>{workspace.title}</h1></div><span className="pill pill-good">Onboarding complete</span></div>
         <div className="dashboard-grid">
-          <section className="card"><div className="card-header"><div><h2>Welcome, {account.firstName || "TXKPRO member"}</h2><p className="card-sub">{workspace.copy}</p></div></div><div className="callout"><strong>Backend identity linked</strong>Your Supabase Auth identity is linked to TXKPRO user <code>{account.legacyUserId}</code>. Authorization is derived from active server-side role memberships.</div><div className="hero-actions"><Link className="button button-brand" href={workspace.demo}>{account.role === "employer" ? "Open production Employer workspace" : "Open current MVE workspace"}</Link><Link className="button button-ghost" href="/onboarding">Review onboarding</Link></div></section>
+          <section className="card"><div className="card-header"><div><h2>Welcome, {account.firstName || "TXKPRO member"}</h2><p className="card-sub">{workspace.copy}</p></div></div><div className="callout"><strong>Backend identity linked</strong>Your Supabase Auth identity is linked to TXKPRO user <code>{account.legacyUserId}</code>. Authorization is derived from active server-side role memberships.</div><div className="hero-actions"><Link className="button button-brand" href={workspace.demo}>Open current Educator workspace</Link><Link className="button button-ghost" href="/onboarding">Review onboarding</Link></div></section>
           <aside className="card"><h3>Account</h3><div className="readiness-list" style={{ marginTop: 16 }}><div className="readiness-row"><span>Role</span><strong>{account.role}</strong></div><div className="readiness-row"><span>Email</span><strong style={{ fontSize: 12 }}>{account.email ?? "—"}</strong></div><div className="readiness-row"><span>Access memberships</span><strong>{account.memberships.filter((item) => item.status === "active").length}</strong></div></div></aside>
         </div>
       </main>

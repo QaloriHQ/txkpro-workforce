@@ -255,3 +255,106 @@ export type ReferralDetail = ReferralSummary & {
   operationalSnapshot: Record<string, unknown>;
   privateNotes: EmployerPrivateNote[];
 };
+
+
+export type InterviewStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "declined"
+  | "scheduling"
+  | "scheduled"
+  | "completed"
+  | "cancelled"
+  | "expired"
+  | "no_response";
+
+export type InterviewEvaluation = {
+  evaluationId: string;
+  interviewerUserId: string | null;
+  nextStep: "not_set" | "continue" | "hold" | "close" | "prepare_hire";
+  summary: string | null;
+  updatedAt: string;
+};
+
+export type PlacementStatus = "pending_start" | "active" | "ended" | "unknown";
+
+export type InterviewSummary = {
+  interviewRequestId: string;
+  studentId: string;
+  studentName: string;
+  institutionName: string | null;
+  program: string | null;
+  hiringNeedId: string | null;
+  hiringNeedTitle: string | null;
+  referralId: string | null;
+  roleTitle: string;
+  tradeId: string | null;
+  message: string | null;
+  schedulingUrl: string | null;
+  status: InterviewStatus;
+  sentAt: string | null;
+  respondedAt: string | null;
+  scheduledFor: string | null;
+  interviewFormat: string | null;
+  locationDetail: string | null;
+  completedAt: string | null;
+  evaluationNextStep: InterviewEvaluation["nextStep"] | null;
+  placementId: string | null;
+  placementStatus: PlacementStatus | null;
+  updatedAt: string;
+};
+
+export type InterviewDetail = InterviewSummary & {
+  referralStatus: string | null;
+  responseNote: string | null;
+  evaluation: InterviewEvaluation | null;
+  placement: {
+    placementId: string;
+    status: PlacementStatus;
+    roleTitle: string;
+    tradeId: string | null;
+    hireDate: string;
+    employmentType: string | null;
+  } | null;
+};
+
+export type RetentionMilestone = {
+  milestoneId: string;
+  dayNumber: 30 | 60 | 90;
+  scheduledFor: string;
+  status:
+    | "pending"
+    | "due"
+    | "sending"
+    | "sent"
+    | "responded"
+    | "skipped"
+    | "failed"
+    | "cancelled";
+  sentAt: string | null;
+  responseReceivedAt: string | null;
+};
+
+export type PlacementSummary = {
+  placementId: string;
+  studentId: string;
+  studentName: string;
+  interviewRequestId: string | null;
+  referralId: string | null;
+  hiringNeedId: string | null;
+  hiringNeedTitle: string | null;
+  roleTitle: string;
+  tradeId: string | null;
+  hireDate: string;
+  employmentType: string | null;
+  status: PlacementStatus;
+  startedAt: string | null;
+  endedAt: string | null;
+  milestoneCount: number;
+};
+
+export type PlacementDetail = PlacementSummary & {
+  endReason: string | null;
+  milestones: RetentionMilestone[];
+};

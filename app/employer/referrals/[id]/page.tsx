@@ -4,6 +4,7 @@ import { Brand } from "@/components/brand";
 import { CloseReferralButton } from "@/components/employer/close-referral-button";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { PrivateNoteForm } from "@/components/employer/private-note-form";
+import { RequestInterviewForm } from "@/components/employer/request-interview-form";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
@@ -172,6 +173,26 @@ export default async function ReferralDetailPage({ params }: RouteContext) {
             </div>
           </section>
         </div>
+
+        {context.role !== "employer_read_only" && !["hired", "closed", "expired"].includes(referral.status) ? (
+          <section className="card" style={{ marginTop: 18 }}>
+            <div className="card-header">
+              <div>
+                <h2>Interview Request</h2>
+                <p className="card-sub">
+                  This request stays linked to the Referral while Interview and Referral retain separate canonical states.
+                </p>
+              </div>
+            </div>
+            <RequestInterviewForm
+              studentId={referral.studentId}
+              hiringNeedId={referral.hiringNeedId}
+              referralId={referral.referralId}
+              defaultRoleTitle={referral.hiringNeedTitle}
+              defaultTradeId={referral.primaryTradeId}
+            />
+          </section>
+        ) : null}
 
         <div className="hero-actions">
           <Link

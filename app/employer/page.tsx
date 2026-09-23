@@ -11,6 +11,7 @@ import {
 } from "@/lib/employer/repository";
 import { hasSupabaseServerConfig } from "@/lib/supabase/server";
 import { listReferrals, listSavedTalent, searchTalent } from "@/lib/employer/workflow-repository";
+import { listEmployerInterviews, listEmployerPlacements } from "@/lib/employer/hiring-repository";
 
 export default async function EmployerPage() {
   if (!hasSupabaseServerConfig()) redirect("/login");
@@ -23,14 +24,16 @@ export default async function EmployerPage() {
     listHiringNeeds(context),
   ]);
 
-  const [talent, savedTalent, referrals] =
+  const [talent, savedTalent, referrals, interviews, placements] =
     context.approvalStatus === "approved"
       ? await Promise.all([
           searchTalent(context),
           listSavedTalent(context),
           listReferrals(context),
+          listEmployerInterviews(context),
+          listEmployerPlacements(context),
         ])
-      : [[], [], []];
+      : [[], [], [], [], []];
 
   return (
     <>
@@ -46,11 +49,10 @@ export default async function EmployerPage() {
       <main className="page-wrap">
         <div className="page-heading">
           <div>
-            <p className="eyebrow">Employer workspace · Wave 7</p>
-            <h1>Supabase-backed Employer foundation</h1>
+            <p className="eyebrow">Employer workspace · Wave 9</p>
+            <h1>Production hiring workflow</h1>
             <p className="card-sub">
-              Authentication, membership resolution, Company Profile and Hiring
-              Needs now use the shared TXKPRO Workforce backend.
+              Talent, Referrals, Interviews, hiring decisions, Placements, and retention milestone creation now use the shared TXKPRO Workforce backend.
             </p>
           </div>
           <span
@@ -70,7 +72,7 @@ export default async function EmployerPage() {
         </div>
 
         {context.approvalStatus === "approved" ? (
-          <div className="grid grid-4" style={{ marginBottom: 18 }}>
+          <div className="grid grid-3" style={{ marginBottom: 18 }}>
             <div className="metric-card">
               <span>Visible Talent</span>
               <strong>{talent.length}</strong>
@@ -85,6 +87,16 @@ export default async function EmployerPage() {
               <span>Referrals</span>
               <strong>{referrals.length}</strong>
               <small>Institution referral lifecycle</small>
+            </div>
+            <div className="metric-card">
+              <span>Interviews</span>
+              <strong>{interviews.length}</strong>
+              <small>Shared Interview lifecycle</small>
+            </div>
+            <div className="metric-card">
+              <span>Placements</span>
+              <strong>{placements.length}</strong>
+              <small>Recorded employment outcomes</small>
             </div>
             <div className="metric-card">
               <span>Hiring Needs</span>
