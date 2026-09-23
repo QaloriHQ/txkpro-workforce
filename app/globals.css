@@ -120,7 +120,8 @@ tr:last-child td { border-bottom: 0; }
 .progress > span { display: block; height: 100%; background: var(--brand); border-radius: inherit; }
 
 .filter-bar { display: grid; grid-template-columns: 1fr repeat(3, auto); gap: 10px; margin-bottom: 14px; }
-.input, .select { width: 100%; border: 1px solid #d8deda; border-radius: 10px; padding: 10px 12px; background: white; color: var(--ink); }
+.input, .select, .textarea { width: 100%; border: 1px solid #d8deda; border-radius: 10px; padding: 10px 12px; background: white; color: var(--ink); }
+.textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
 
 .callout { border: 1px solid #cfe5d8; background: var(--soft-green); border-radius: 15px; padding: 16px; }
 .callout strong { display: block; margin-bottom: 5px; }
@@ -193,3 +194,66 @@ tr:last-child td { border-bottom: 0; }
 .success-mark { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: var(--soft-green); color: var(--brand); font-size: 25px; font-weight: 900; }
 @media (max-width: 800px) { .onboarding-layout { grid-template-columns: 1fr; padding-top: 24px; } .onboarding-aside { position: static; padding: 8px 0; } .role-grid { grid-template-columns: 1fr; } .check-grid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .onboarding-header { padding: 0 14px; } .onboarding-layout { width: min(100% - 24px, 1160px); } .onboarding-panel { padding: 20px; } .review-grid { grid-template-columns: 1fr; } .review-grid div:nth-child(odd) { border-right: 0; } }
+
+
+.pipeline-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+.pipeline-column {
+  min-height: 360px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.72);
+  border-radius: 16px;
+  padding: 12px;
+}
+.pipeline-column-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.pipeline-card {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 13px;
+}
+.pipeline-card:hover { border-color: #b9c3bd; }
+.pipeline-card span { font-size: 13px; }
+.pipeline-card small { color: var(--muted); line-height: 1.4; }
+.student-workflow-card {
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 16px;
+  background: #fafbfa;
+}
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
+@media (max-width: 900px) {
+  .topbar {
+    height: auto;
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 18px;
+  }
+  .topnav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .nav-link { flex: 0 0 auto; }
+  .topbar > .button,
+  .topbar > .header-actions { margin-left: auto; }
+}
