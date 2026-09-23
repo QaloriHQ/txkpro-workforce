@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerFoundation } from "@/components/employer-foundation";
@@ -10,8 +11,15 @@ import {
   listHiringNeeds,
 } from "@/lib/employer/repository";
 import { hasSupabaseServerConfig } from "@/lib/supabase/server";
-import { listReferrals, listSavedTalent, searchTalent } from "@/lib/employer/workflow-repository";
-import { listEmployerInterviews, listEmployerPlacements } from "@/lib/employer/hiring-repository";
+import {
+  listReferrals,
+  listSavedTalent,
+  searchTalent,
+} from "@/lib/employer/workflow-repository";
+import {
+  listEmployerInterviews,
+  listEmployerPlacements,
+} from "@/lib/employer/hiring-repository";
 
 export default async function EmployerPage() {
   if (!hasSupabaseServerConfig()) redirect("/login");
@@ -41,70 +49,99 @@ export default async function EmployerPage() {
         <Brand />
         <EmployerWorkspaceNav active="overview" />
         <div className="header-actions">
-          <span className="pill">Production integration</span>
           <ThemeToggle />
           <SignOutButton />
         </div>
       </header>
-      <main className="page-wrap">
-        <div className="page-heading">
-          <div>
-            <p className="eyebrow">Employer workspace · Wave 9</p>
-            <h1>Production hiring workflow</h1>
-            <p className="card-sub">
-              Talent, Referrals, Interviews, hiring decisions, Placements, and retention milestone creation now use the shared TXKPRO Workforce backend.
-            </p>
-          </div>
-          <span
-            className={
-              context.approvalStatus === "approved" ? "pill pill-good" : "pill"
-            }
-          >
-            {context.approvalStatus}
-          </span>
-        </div>
 
-        <div className="callout" style={{ marginBottom: 18 }}>
-          <strong>Authorization boundary</strong>
-          Identity is verified by Supabase Auth. Employer authority comes from
-          active server-side role + scope membership and database RLS; the
-          browser cannot grant itself an Employer role.
-        </div>
+      <main className="page-wrap employer-dashboard">
+        <section className="employer-dashboard-hero">
+          <div className="employer-dashboard-intro">
+            <p className="eyebrow">Employer workspace</p>
+            <h1>Hiring overview</h1>
+            <p>
+              Manage verified local talent from referral and interview through
+              placement and 90-day retention.
+            </p>
+            <div className="hero-actions">
+              <Link className="button button-brand" href="/employer/talent">
+                Browse talent
+              </Link>
+              <Link className="button button-ghost" href="/employer/pipeline">
+                View hiring pipeline
+              </Link>
+            </div>
+          </div>
+
+          <aside className="employer-dashboard-account" aria-label="Employer account">
+            <div className="employer-dashboard-account-top">
+              <span>Company</span>
+              <span
+                className={
+                  context.approvalStatus === "approved"
+                    ? "pill pill-good"
+                    : "pill pill-neutral"
+                }
+              >
+                {context.approvalStatus}
+              </span>
+            </div>
+            <strong>{context.employerName}</strong>
+            <small>{context.role.replaceAll("_", " ")}</small>
+          </aside>
+        </section>
 
         {context.approvalStatus === "approved" ? (
-          <div className="grid grid-3" style={{ marginBottom: 18 }}>
-            <div className="metric-card">
-              <span>Visible Talent</span>
-              <strong>{talent.length}</strong>
-              <small>Authorized, Employer-discoverable candidates</small>
+          <section className="employer-dashboard-section" aria-labelledby="at-a-glance">
+            <div className="employer-dashboard-section-heading">
+              <div>
+                <p className="eyebrow">Today</p>
+                <h2 id="at-a-glance">At a glance</h2>
+              </div>
+              <Link className="text-link" href="/employer/pipeline">
+                Open pipeline
+              </Link>
             </div>
-            <div className="metric-card">
-              <span>Saved Candidates</span>
-              <strong>{savedTalent.length}</strong>
-              <small>Employer-private shortlist</small>
+
+            <div className="grid grid-3 employer-metrics">
+              <Link className="metric-card employer-metric-link" href="/employer/talent">
+                <span>Available talent</span>
+                <strong>{talent.length}</strong>
+                <small>Employer-discoverable candidates</small>
+              </Link>
+              <Link className="metric-card employer-metric-link" href="/employer/saved">
+                <span>Saved candidates</span>
+                <strong>{savedTalent.length}</strong>
+                <small>Private shortlist</small>
+              </Link>
+              <Link className="metric-card employer-metric-link" href="/employer/referrals">
+                <span>Referrals</span>
+                <strong>{referrals.length}</strong>
+                <small>Institution referrals</small>
+              </Link>
+              <Link className="metric-card employer-metric-link" href="/employer/interviews">
+                <span>Interviews</span>
+                <strong>{interviews.length}</strong>
+                <small>Active interview workflow</small>
+              </Link>
+              <Link className="metric-card employer-metric-link" href="/employer/placements">
+                <span>Placements</span>
+                <strong>{placements.length}</strong>
+                <small>Recorded employment outcomes</small>
+              </Link>
+              <div className="metric-card">
+                <span>Hiring needs</span>
+                <strong>{hiringNeeds.length}</strong>
+                <small>Structured workforce demand</small>
+              </div>
             </div>
-            <div className="metric-card">
-              <span>Referrals</span>
-              <strong>{referrals.length}</strong>
-              <small>Institution referral lifecycle</small>
-            </div>
-            <div className="metric-card">
-              <span>Interviews</span>
-              <strong>{interviews.length}</strong>
-              <small>Shared Interview lifecycle</small>
-            </div>
-            <div className="metric-card">
-              <span>Placements</span>
-              <strong>{placements.length}</strong>
-              <small>Recorded employment outcomes</small>
-            </div>
-            <div className="metric-card">
-              <span>Hiring Needs</span>
-              <strong>{hiringNeeds.length}</strong>
-              <small>Structured Employer demand</small>
-            </div>
+          </section>
+        ) : (
+          <div className="alert" style={{ marginBottom: 24 }}>
+            Your Employer profile is awaiting TXKPRO approval. Hiring tools become
+            available after review.
           </div>
-        ) : null}
+        )}
 
         <EmployerFoundation
           initialContext={context}
