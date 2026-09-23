@@ -15,6 +15,12 @@ export default async function DashboardPage() {
   if (!account.onboarding || account.onboarding.status === "not_started" || account.onboarding.status === "in_progress") redirect("/onboarding");
   if (account.onboarding.status === "pending_review") redirect("/onboarding?pending=1");
 
+  // Production role workspaces should be the default destination after authentication.
+  // Keep /dashboard only as a temporary fallback for roles that do not yet have a
+  // dedicated production workspace.
+  if (account.role === "employer") redirect("/employer");
+  if (account.role === "student") redirect("/student");
+
   const workspace = {
     student: { title: "Student workspace", copy: "Your authenticated student account is connected to Interview, Placement, and Workforce readiness state.", demo: "/student" },
     educator: { title: "Educator workspace", copy: "Your approved educator membership controls access to institution-scoped student records.", demo: "/demo/educator" },
