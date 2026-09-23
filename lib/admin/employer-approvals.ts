@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   EmployerApprovalDecision,
   PendingEmployerApproval,
@@ -9,7 +9,7 @@ import type {
 export async function listPendingEmployerApprovals(): Promise<
   PendingEmployerApproval[]
 > {
-  const admin = createAdminClient();
+  const admin = await createServerSupabaseClient();
 
   const { data: employers, error } = await admin
     .from("contractors")
@@ -91,68 +91,22 @@ export async function decideEmployerApproval(input: {
   decision: EmployerApprovalDecision;
   actorUserId: string;
 }) {
-  const admin = createAdminClient();
-  const { data: current, error: currentError } = await admin
-    .from("contractors")
-    .select("contractor_id, approval_status, account_status, business_name")
-    .eq("contractor_id", input.employerId)
-    .maybeSingle();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("admin_review_employer", {
+    p_employer_id: input.employerId,
+    p_decision: input.decision,
+  });
 
-  if (currentError) throw currentError;
-  if (!current) throw new Response("Employer not found", { status: 404 });
-
-  const patch =
-    input.decision === "suspended"
-      ? {
-          approval_status: "suspended",
-          account_status: "suspended",
-          updated_at: new Date().toISOString(),
-        }
-      : {
-          approval_status: input.decision,
-          updated_at: new Date().toISOString(),
-        };
-
-  const { error: updateError } = await admin
-    .from("contractors")
-    .update(patch)
-    .eq("contractor_id", input.employerId);
-  if (updateError) throw updateError;
-
-  const workforceStatus =
-    input.decision === "approved"
-      ? "approved"
-      : input.decision === "rejected"
-        ? "rejected"
-        : "suspended";
-
-  const { error: profileError } = await admin
-    .from("wf_contractor_profiles")
-    .update({
-      workforce_status: workforceStatus,
-      updated_by_user_id: input.actorUserId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("contractor_id", input.employerId);
-  if (profileError) throw profileError;
-
-  if (input.decision !== "approved") {
-    const { error: onboardingError } = await admin
-      .from("wf_onboarding_accounts")
-      .update({
-        status: "blocked",
-        completed_at: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("employer_id", input.employerId)
-      .eq("selected_role", "employer");
-    if (onboardingError) throw onboardingError;
+  if (error) throw error;
+  if (!data || typeof data !== "object") {
+    throw new Error("Employer approval review returned no result.");
   }
 
+  const result = data as Record<string, unknown>;
   return {
-    employerId: input.employerId,
-    businessName: current.business_name ?? "Employer",
-    previousStatus: current.approval_status ?? "pending",
-    decision: input.decision,
+    employerId: String(result.employerId ?? input.employerId),
+    businessName: String(result.businessName ?? "Employer"),
+    previousStatus: String(result.previousStatus ?? "pending"),
+    decision: String(result.decision ?? input.decision) as EmployerApprovalDecision,
   };
 }
