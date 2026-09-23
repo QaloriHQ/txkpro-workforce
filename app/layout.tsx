@@ -16,8 +16,11 @@ export const metadata: Metadata = {
   description:
     "Verified local skilled-trades talent, instructor-backed capability, employer hiring workflows, and placement outcomes for the Greater Texarkana workforce.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: ["/favicon.svg"],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "256x256" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
     type: "website",
@@ -28,10 +31,10 @@ export const metadata: Metadata = {
       "Connect verified local skilled-trades talent with Greater Texarkana employers.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "/og/txkpro-workforce.jpg",
         width: 1200,
-        height: 630,
-        alt: "TXKPRO Workforce — Verified local talent. Human hiring decisions.",
+        height: 627,
+        alt: "TXKPRO Workforce",
       },
     ],
   },
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
     title: "TXKPRO Workforce",
     description:
       "Connect verified local skilled-trades talent with Greater Texarkana employers.",
-    images: ["/opengraph-image"],
+    images: ["/og/txkpro-workforce.jpg"],
   },
 };
 
