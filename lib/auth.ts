@@ -1,5 +1,4 @@
 import "server-only";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/types";
 
@@ -64,8 +63,8 @@ export async function getAccountContext(): Promise<AccountContext | null> {
   const identity = await getVerifiedIdentity();
   if (!identity) return null;
 
-  const admin = createAdminClient();
-  const { data: user, error: userError } = await admin
+  const supabase = await createServerSupabaseClient();
+  const { data: user, error: userError } = await supabase
     .from("users")
     .select("user_id, first_name, last_name, phone, status")
     .eq("auth_user_id", identity.authUserId)
@@ -74,11 +73,11 @@ export async function getAccountContext(): Promise<AccountContext | null> {
   if (userError || !user?.user_id) return null;
 
   const [{ data: memberships }, { data: onboarding }] = await Promise.all([
-    admin
+    supabase
       .from("app_role_memberships")
       .select("role, status, scope_type, scope_id")
       .eq("auth_user_id", identity.authUserId),
-    admin
+    supabase
       .from("wf_onboarding_accounts")
       .select("selected_role, status, current_step, profile_data")
       .eq("auth_user_id", identity.authUserId)
