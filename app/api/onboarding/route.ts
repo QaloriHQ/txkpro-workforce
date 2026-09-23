@@ -311,12 +311,17 @@ export async function PATCH(request: Request) {
     const profileData = { ...(account.onboarding?.profile_data ?? {}), ...incoming };
     const currentStep = Math.min(6, Math.max(1, Number(body.currentStep) || 1));
 
-    if (role === "employer") {
+    if (role === "employer" || role === "student") {
       const supabase = await createServerSupabaseClient();
-      const { data, error } = await supabase.rpc("save_employer_onboarding_step", {
-        p_current_step: currentStep,
-        p_profile_data: profileData,
-      });
+      const { data, error } = await supabase.rpc(
+        role === "employer"
+          ? "save_employer_onboarding_step"
+          : "save_student_onboarding_step",
+        {
+          p_current_step: currentStep,
+          p_profile_data: profileData,
+        },
+      );
       if (error) throw error;
       return Response.json(data ?? { ok: true, role, currentStep, profileData });
     }
@@ -346,18 +351,31 @@ export async function POST(request: Request) {
     const lastName = text(profileData.lastName, 100) || account.lastName;
     if (!firstName || !lastName) return Response.json({ error: "First and last name are required." }, { status: 400 });
 
-    if (role === "employer") {
+    if (role === "employer" || role === "student") {
       const supabase = await createServerSupabaseClient();
-      const { data, error } = await supabase.rpc("complete_employer_onboarding", {
-        p_profile_data: profileData,
-      });
+      const { data, error } = await supabase.rpc(
+        role === "employer"
+          ? "complete_employer_onboarding"
+          : "complete_student_onboarding",
+        { p_profile_data: profileData },
+      );
       if (error) throw error;
-      return Response.json(data ?? {
-        ok: true,
-        status: "pending_review",
-        role: "employer",
-        redirectTo: "/onboarding?pending=1",
-      });
+      return Response.json(
+        data ??
+          (role === "employer"
+            ? {
+                ok: true,
+                status: "pending_review",
+                role: "employer",
+                redirectTo: "/onboarding?pending=1",
+              }
+            : {
+                ok: true,
+                status: "complete",
+                role: "student",
+                redirectTo: "/dashboard",
+              }),
+      );
     }
 
     const admin = createAdminClient();
