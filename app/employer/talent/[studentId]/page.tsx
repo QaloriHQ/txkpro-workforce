@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SaveCandidateButton } from "@/components/employer/save-candidate-button";
+import { RequestInterviewForm } from "@/components/employer/request-interview-form";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
@@ -193,6 +194,26 @@ export default async function CandidateDetailPage({
             )}
           </section>
         </div>
+
+        {context.role !== "employer_read_only" ? (
+          <section className="card" style={{ marginTop: 18 }}>
+            <div className="card-header">
+              <div>
+                <h2>Request Interview</h2>
+                <p className="card-sub">
+                  Create a shared Interview Request. The Student controls the response.
+                </p>
+              </div>
+              <span className="pill pill-info">Human workflow</span>
+            </div>
+            <RequestInterviewForm
+              studentId={candidate.studentId}
+              hiringNeedId={hiringNeedId}
+              defaultRoleTitle={fit?.title ?? null}
+              defaultTradeId={candidate.primaryTradeId}
+            />
+          </section>
+        ) : null}
 
         <div className="hero-actions">
           <Link className="button button-ghost" href="/employer/talent">Back to Talent</Link>
