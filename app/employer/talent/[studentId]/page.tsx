@@ -6,6 +6,7 @@ import { SaveCandidateButton } from "@/components/employer/save-candidate-button
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
+import { listHiringNeeds } from "@/lib/employer/repository";
 import { getTalentCandidate } from "@/lib/employer/workflow-repository";
 
 export const dynamic = "force-dynamic";
@@ -31,8 +32,15 @@ export default async function CandidateDetailPage({
 }: RouteContext) {
   const { studentId } = await params;
   const query = await searchParams;
-  const hiringNeedId = one(query.hiringNeedId) ?? null;
+  const requestedHiringNeedId = one(query.hiringNeedId) ?? null;
   const context = await requireEmployerContext({ approved: true });
+  const hiringNeedId =
+    requestedHiringNeedId ??
+    (context.role === "hiring_manager"
+      ? (await listHiringNeeds(context))[0]?.hiringNeedId ?? null
+      : null);
+  if (context.role === "hiring_manager" && !hiringNeedId) notFound();
+
   const candidate = await getTalentCandidate(
     context,
     decodeURIComponent(studentId),
