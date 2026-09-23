@@ -28,7 +28,13 @@ export default async function EmployerTalentPage({
 }) {
   const context = await requireEmployerContext({ approved: true });
   const params = await searchParams;
-  const hiringNeedId = one(params.hiringNeedId) ?? null;
+  const requestedHiringNeedId = one(params.hiringNeedId) ?? null;
+  const hiringNeeds = await listHiringNeeds(context);
+  const hiringNeedId =
+    requestedHiringNeedId ??
+    (context.role === "hiring_manager"
+      ? hiringNeeds[0]?.hiringNeedId ?? null
+      : null);
 
   const filters: TalentFilters = {
     institutionId: one(params.institutionId) || undefined,
@@ -48,8 +54,34 @@ export default async function EmployerTalentPage({
     referralState: one(params.referralState) || undefined,
   };
 
-  const [hiringNeeds, allCandidates, candidates] = await Promise.all([
-    listHiringNeeds(context),
+  if (context.role === "hiring_manager" && !hiringNeedId) {
+    return (
+      <>
+        <header className="topbar">
+          <Brand />
+          <EmployerWorkspaceNav active="talent" />
+          <ThemeToggle />
+          <SignOutButton />
+        </header>
+        <main className="page-wrap">
+          <div className="page-heading">
+            <div>
+              <p className="eyebrow">Employer · Talent</p>
+              <h1>No assigned Hiring Need</h1>
+              <p className="card-sub">
+                Hiring Manager Talent access is scoped to assigned Hiring Needs.
+              </p>
+            </div>
+          </div>
+          <div className="alert">
+            Ask an Employer Owner, Admin, or Recruiter to assign a Hiring Need.
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  const [allCandidates, candidates] = await Promise.all([
     searchTalent(context, { hiringNeedId }),
     searchTalent(context, { hiringNeedId, filters }),
   ]);
