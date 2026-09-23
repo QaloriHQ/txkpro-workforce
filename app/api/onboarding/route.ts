@@ -388,8 +388,7 @@ export async function POST(request: Request) {
     if (userError) throw userError;
 
     let result: { status: "complete" | "pending_review"; entityId: string };
-    if (role === "student") result = await provisionStudent(admin, account, profileData);
-    else if (role === "educator") result = await provisionEducator(admin, account, profileData);
+    if (role === "educator") result = await provisionEducator(admin, account, profileData);
     else result = { status: "complete", entityId: account.legacyUserId };
 
     await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: null });
