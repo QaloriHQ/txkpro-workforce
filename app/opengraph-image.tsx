@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 
 export const alt = "TXKPRO Workforce — Verified local talent. Human hiring decisions.";
