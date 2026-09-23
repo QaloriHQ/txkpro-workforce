@@ -2,9 +2,49 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./theme.css";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
+  "https://staging-workforce.txkpro.com";
+
 export const metadata: Metadata = {
-  title: "TXKPRO Workforce",
-  description: "Verified local skilled-trades talent for the Greater Texarkana workforce.",
+  metadataBase: new URL(siteUrl),
+  applicationName: "TXKPRO Workforce",
+  title: {
+    default: "TXKPRO Workforce",
+    template: "%s | TXKPRO Workforce",
+  },
+  description:
+    "Verified local skilled-trades talent, instructor-backed capability, employer hiring workflows, and placement outcomes for the Greater Texarkana workforce.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "256x256" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    siteName: "TXKPRO Workforce",
+    title: "TXKPRO Workforce",
+    description:
+      "Connect verified local skilled-trades talent with Greater Texarkana employers.",
+    images: [
+      {
+        url: "/og/txkpro-workforce.jpg",
+        width: 1200,
+        height: 627,
+        alt: "TXKPRO Workforce",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TXKPRO Workforce",
+    description:
+      "Connect verified local skilled-trades talent with Greater Texarkana employers.",
+    images: ["/og/txkpro-workforce.jpg"],
+  },
 };
 
 const themeScript = `
@@ -20,10 +60,14 @@ const themeScript = `
   }
 })();`;
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );
