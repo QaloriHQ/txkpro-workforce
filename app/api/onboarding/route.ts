@@ -372,10 +372,9 @@ export async function POST(request: Request) {
     let result: { status: "complete" | "pending_review"; entityId: string };
     if (role === "student") result = await provisionStudent(admin, account, profileData);
     else if (role === "educator") result = await provisionEducator(admin, account, profileData);
-    else if (role === "employer") result = await provisionEmployer(admin, account, profileData);
     else result = { status: "complete", entityId: account.legacyUserId };
 
-    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: role === "employer" ? result.entityId : null });
+    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: null });
     await auditOnboarding(admin, account, "workforce.onboarding.completed", role, result.status, result.entityId);
 
     return Response.json({ ok: true, status: result.status, role, redirectTo: result.status === "complete" ? "/dashboard" : "/onboarding?pending=1" });
