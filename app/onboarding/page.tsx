@@ -3,15 +3,15 @@ import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { getAccountContext } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
   const params = await searchParams;
   const requestedRole = params.role === "student" || params.role === "educator" || params.role === "employer" ? params.role : null;
   const account = await getAccountContext();
   if (!account) redirect("/login");
-  const admin = createAdminClient();
-  const { data: institutions } = await admin
+  const supabase = await createServerSupabaseClient();
+  const { data: institutions } = await supabase
     .from("wf_institutions")
     .select("institution_id, name, city, state")
     .eq("active", true)
