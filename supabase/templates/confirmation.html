@@ -15,7 +15,7 @@
             <p style="margin:0;color:#475467;font-size:16px;line-height:1.6;">Welcome to TXKPRO Workforce. Confirm your email address to continue setting up your workforce profile.</p>
           </td></tr>
           <tr><td style="padding:24px 36px;">
-            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#1f78d1;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 20px;border-radius:10px;">Confirm email address</a>
+            <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/onboarding" style="display:inline-block;background:#1f78d1;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 20px;border-radius:10px;">Confirm email address</a>
           </td></tr>
           <tr><td style="padding:4px 36px 30px;">
             <p style="margin:0;color:#667085;font-size:13px;line-height:1.6;">If you did not create a TXKPRO Workforce account, you can safely ignore this email.</p>
