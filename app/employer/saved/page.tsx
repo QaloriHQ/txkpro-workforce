@@ -22,11 +22,17 @@ export default async function SavedCandidatesPage({
 }) {
   const context = await requireEmployerContext({ approved: true });
   const params = await searchParams;
-  const hiringNeedId = one(params.hiringNeedId) ?? null;
-  const [hiringNeeds, candidates] = await Promise.all([
-    listHiringNeeds(context),
-    listSavedTalent(context, hiringNeedId),
-  ]);
+  const requestedHiringNeedId = one(params.hiringNeedId) ?? null;
+  const hiringNeeds = await listHiringNeeds(context);
+  const hiringNeedId =
+    requestedHiringNeedId ??
+    (context.role === "hiring_manager"
+      ? hiringNeeds[0]?.hiringNeedId ?? null
+      : null);
+  const candidates =
+    context.role === "hiring_manager" && !hiringNeedId
+      ? []
+      : await listSavedTalent(context, hiringNeedId);
 
   return (
     <>
