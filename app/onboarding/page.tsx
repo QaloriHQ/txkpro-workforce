@@ -11,10 +11,13 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const account = await getAccountContext();
   if (!account) redirect("/login");
 
+  // Platform administrators are provisioned server-side and never complete
+  // public workforce onboarding.
+  if (account.role === "admin") redirect("/admin");
+
   if (account.onboarding?.status === "complete" && account.role) {
     if (account.role === "employer") redirect("/employer");
     if (account.role === "student") redirect("/student");
-    if (account.role === "admin") redirect("/admin");
     redirect("/dashboard");
   }
 
