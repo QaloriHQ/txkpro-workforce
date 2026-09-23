@@ -7,18 +7,18 @@ export function Brand() {
       <span className="brand-logo-wrap" aria-hidden="true">
         <Image
           className="brand-logo brand-logo-light"
-          src="/txkpro-logo-light.svg"
+          src="/brand/txkpro-logo-light.png"
           alt=""
-          width={786}
-          height={192}
+          width={700}
+          height={174}
           priority
         />
         <Image
           className="brand-logo brand-logo-dark"
-          src="/txkpro-logo-dark.svg"
+          src="/brand/txkpro-logo-dark.png"
           alt=""
-          width={1575}
-          height={385}
+          width={700}
+          height={171}
           priority
         />
       </span>
