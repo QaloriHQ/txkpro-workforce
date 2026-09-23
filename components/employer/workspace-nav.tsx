@@ -34,11 +34,20 @@ export function EmployerWorkspaceNav({
       <button
         className="employer-mobile-menu"
         type="button"
+        aria-label={open ? "Close Employer menu" : "Open Employer menu"}
         aria-expanded={open}
         aria-controls="employer-workspace-navigation"
         onClick={() => setOpen((value) => !value)}
       >
-        {open ? "Close" : "Menu"}
+        {open ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+          </svg>
+        )}
       </button>
 
       <nav
