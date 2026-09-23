@@ -87,7 +87,15 @@ export function OnboardingWizard({
       setMessage(body.error ?? "Unable to complete onboarding.");
       return;
     }
-    window.location.href = body.redirectTo ?? "/dashboard";
+    const fallback =
+      role === "employer"
+        ? "/employer"
+        : role === "student"
+          ? "/student"
+          : role === "admin"
+            ? "/admin"
+            : "/dashboard";
+    window.location.replace(body.redirectTo ?? fallback);
   }
 
   if (pending) {
