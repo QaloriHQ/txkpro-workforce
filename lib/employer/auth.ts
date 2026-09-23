@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getAccountContext } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   EmployerApprovalStatus,
   EmployerContext,
@@ -94,15 +94,18 @@ export async function getEmployerContext(
     (a, b) => ROLE_PRIORITY.indexOf(a.role) - ROLE_PRIORITY.indexOf(b.role),
   )[0];
 
-  const admin = createAdminClient();
+  // Employer reads must use the authenticated server client so RLS remains
+  // the authorization boundary. The Employer workspace must not depend on a
+  // Vercel service-role secret just to resolve its own tenant context.
+  const supabase = await createServerSupabaseClient();
   const [{ data: employer, error: employerError }, { data: workforceProfile }] =
     await Promise.all([
-      admin
+      supabase
         .from("contractors")
         .select("contractor_id, business_name, approval_status, account_status")
         .eq("contractor_id", membership.employerId)
         .maybeSingle(),
-      admin
+      supabase
         .from("wf_contractor_profiles")
         .select("workforce_status")
         .eq("contractor_id", membership.employerId)
