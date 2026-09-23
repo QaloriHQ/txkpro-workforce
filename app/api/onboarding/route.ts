@@ -306,6 +306,9 @@ export async function PATCH(request: Request) {
     if (!role) return Response.json({ error: "Choose an account type." }, { status: 400 });
     if (account.role && role !== account.role) return Response.json({ error: "Your provisioned TXKPRO role cannot be changed through onboarding." }, { status: 403 });
     if (role === "admin" && account.role !== "admin") return Response.json({ error: "Administrator access must be provisioned by TXKPRO." }, { status: 403 });
+    if (role === "admin" && account.role === "admin") {
+      return Response.json({ ok: true, role: "admin", status: "complete", redirectTo: "/admin" });
+    }
 
     const incoming = safeProfileData(body.profileData);
     const profileData = { ...(account.onboarding?.profile_data ?? {}), ...incoming };
@@ -344,6 +347,9 @@ export async function POST(request: Request) {
     if (!role) return Response.json({ error: "Choose an account type." }, { status: 400 });
     if (account.role && role !== account.role) return Response.json({ error: "Your provisioned TXKPRO role cannot be changed through onboarding." }, { status: 403 });
     if (role === "admin" && account.role !== "admin") return Response.json({ error: "Administrator access must be provisioned by TXKPRO." }, { status: 403 });
+    if (role === "admin" && account.role === "admin") {
+      return Response.json({ ok: true, role: "admin", status: "complete", redirectTo: "/admin" });
+    }
 
     const incoming = safeProfileData(body.profileData);
     const profileData = { ...(account.onboarding?.profile_data ?? {}), ...incoming };
