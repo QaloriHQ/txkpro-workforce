@@ -58,7 +58,21 @@ export async function POST(request: Request) {
     if (membershipError) throw membershipError;
 
     const role = normalizeRole((memberships ?? []) as Membership[]);
-    const destination = role === "admin" ? "/admin" : "/dashboard";
+    const requestedRole = authResult.data.user.user_metadata?.requested_role;
+    const onboardingRole =
+      requestedRole === "student" ||
+      requestedRole === "educator" ||
+      requestedRole === "employer"
+        ? requestedRole
+        : null;
+    const destination =
+      role === "admin"
+        ? "/admin"
+        : role
+          ? "/dashboard"
+          : onboardingRole
+            ? `/onboarding?role=${onboardingRole}`
+            : "/onboarding";
 
     return Response.json({
       ok: true,
