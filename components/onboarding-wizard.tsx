@@ -69,6 +69,10 @@ export function OnboardingWizard({
       setMessage(body.error ?? "Unable to save onboarding.");
       return false;
     }
+    if (typeof body.redirectTo === "string" && body.redirectTo) {
+      window.location.replace(body.redirectTo);
+      return true;
+    }
     setStep(nextStep);
     return true;
   }
