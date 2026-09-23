@@ -1,6 +1,7 @@
 import { getAccountContext } from "@/lib/auth";
 import { nativeBridgeKey, nativeId } from "@/lib/native-id";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/types";
 
 const ALLOWED_ROLES = new Set<Role>(["student", "educator", "employer", "admin"]);
@@ -287,8 +288,12 @@ async function auditOnboarding(admin: ReturnType<typeof createAdminClient>, acco
 export async function GET() {
   const account = await getAccountContext();
   if (!account) return Response.json({ error: "Unauthorized or workforce account is not linked." }, { status: 401 });
-  const admin = createAdminClient();
-  const { data: institutions } = await admin.from("wf_institutions").select("institution_id, name, city, state").eq("active", true).order("name");
+  const supabase = await createServerSupabaseClient();
+  const { data: institutions } = await supabase
+    .from("wf_institutions")
+    .select("institution_id, name, city, state")
+    .eq("active", true)
+    .order("name");
   return Response.json({ account, institutions: institutions ?? [] });
 }
 
@@ -305,6 +310,17 @@ export async function PATCH(request: Request) {
     const incoming = safeProfileData(body.profileData);
     const profileData = { ...(account.onboarding?.profile_data ?? {}), ...incoming };
     const currentStep = Math.min(6, Math.max(1, Number(body.currentStep) || 1));
+
+    if (role === "employer") {
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase.rpc("save_employer_onboarding_step", {
+        p_current_step: currentStep,
+        p_profile_data: profileData,
+      });
+      if (error) throw error;
+      return Response.json(data ?? { ok: true, role, currentStep, profileData });
+    }
+
     const admin = createAdminClient();
     await saveOnboarding({ admin, account, role, currentStep, profileData, status: "in_progress" });
     return Response.json({ ok: true, role, currentStep, profileData });
@@ -330,6 +346,20 @@ export async function POST(request: Request) {
     const lastName = text(profileData.lastName, 100) || account.lastName;
     if (!firstName || !lastName) return Response.json({ error: "First and last name are required." }, { status: 400 });
 
+    if (role === "employer") {
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase.rpc("complete_employer_onboarding", {
+        p_profile_data: profileData,
+      });
+      if (error) throw error;
+      return Response.json(data ?? {
+        ok: true,
+        status: "pending_review",
+        role: "employer",
+        redirectTo: "/onboarding?pending=1",
+      });
+    }
+
     const admin = createAdminClient();
     const { error: userError } = await admin.from("users").update({
       first_name: firstName,
@@ -342,10 +372,9 @@ export async function POST(request: Request) {
     let result: { status: "complete" | "pending_review"; entityId: string };
     if (role === "student") result = await provisionStudent(admin, account, profileData);
     else if (role === "educator") result = await provisionEducator(admin, account, profileData);
-    else if (role === "employer") result = await provisionEmployer(admin, account, profileData);
     else result = { status: "complete", entityId: account.legacyUserId };
 
-    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: role === "employer" ? result.entityId : null });
+    await saveOnboarding({ admin, account, role, currentStep: 6, profileData, status: result.status, submitted: true, employerId: null });
     await auditOnboarding(admin, account, "workforce.onboarding.completed", role, result.status, result.entityId);
 
     return Response.json({ ok: true, status: result.status, role, redirectTo: result.status === "complete" ? "/dashboard" : "/onboarding?pending=1" });
