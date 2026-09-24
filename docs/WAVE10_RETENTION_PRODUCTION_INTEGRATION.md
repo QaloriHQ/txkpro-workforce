@@ -136,7 +136,8 @@ A rolled-back staging database test verified:
 - exactly one open intervention case;
 - scheduler replay cannot reclaim the responded milestone;
 - duplicate inbound provider ID is idempotent;
-- STOP changes retention consent to `opted_out`.
+- STOP changes retention consent to `opted_out`;
+- repeated delivery of the same STOP provider message is idempotent.
 
 No test data from that transaction was retained.
 
