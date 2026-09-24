@@ -6,7 +6,7 @@ The first release is intentionally not a generic job board. It is built around t
 
 1. **Verified Skills Matrix + 1-Click Referral** — students maintain a living competency profile; assigned educators verify demonstrated skills and refer students directly to approved employers.
 2. **Job-Ready Filter** — employers filter on job-relevant readiness attestations and work preferences before spending time on an interview.
-3. **30/60/90-Day Retention Pulse** — both sides receive brief SMS check-ins after hire; an issue response creates a human intervention case.
+3. **30/60/90-Day Retention Pulse** — students who explicitly opt in receive brief SMS check-ins after hire; a help response creates a human intervention case for human follow-up.
 
 ## Stack
 
@@ -59,7 +59,7 @@ Authentication uses Supabase SSR cookies and server-verified claims. Authorizati
 - Employer accounts provision a contractor/workforce-contractor record with contractor approval kept as a separate pending state.
 - Admin onboarding is only available to an already-provisioned administrator; public signup cannot self-grant admin access.
 
-The incremental backend migrations are in `supabase/migrations/`. The original generated prototype schema has been removed from active migrations because it does not match the live TXKPRO backend.
+Shared/legacy incremental backend migrations remain in `supabase/migrations/`. Isolated hosted-staging migrations for Waves 8–10 are versioned in `supabase/staging/migrations/`. The original generated prototype schema has been removed from active migrations because it does not match the canonical TXKPRO Workforce backend.
 
 ## Wave 7 Employer smoke test
 
@@ -70,6 +70,16 @@ npm run wave7:smoke
 ```
 
 This validates the persistent Employer schema, seed records, canonical events/audit rows, membership aliases, and anonymous RLS denial.
+
+## Wave 10 retention smoke test
+
+With the staging Supabase environment variables configured, run:
+
+```bash
+npm run wave10:smoke
+```
+
+Wave 10 uses `wf_retention_milestones` as the retention source of truth. The smoke test verifies the canonical retention tables, Day 30/60/90 milestone seed, anonymous denial, and that the scheduler claim RPC is service-only.
 
 ## Configure SMS
 
@@ -85,7 +95,7 @@ CRON_SECRET=...
 
 Then configure the Twilio number's incoming-message webhook to the same `/api/twilio/inbound` URL.
 
-Retention messages are sent only when the intended recipient has both a phone number and `sms_consent_at` value.
+Retention messages are sent only when the Student has a mobile number and an active `wf_sms_consents` record for the `retention` category. Replying STOP changes that consent to `opted_out` immediately.
 
 ## Trigger retention pulses
 

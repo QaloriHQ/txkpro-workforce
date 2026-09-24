@@ -152,6 +152,18 @@ export function OnboardingWizard({
               <label><span>Last name</span><input className="input" value={String(data.lastName ?? "")} onChange={(e) => setField("lastName", e.target.value)} /></label>
             </div>
             <label><span>Mobile phone</span><input className="input" type="tel" value={String(data.phone ?? "")} onChange={(e) => setField("phone", e.target.value)} placeholder="(903) 555-0123" /></label>
+            {role === "student" ? (
+              <label className="check-card">
+                <input
+                  type="checkbox"
+                  checked={data.smsRetentionConsent === true}
+                  onChange={(e) => setField("smsRetentionConsent", e.target.checked)}
+                />
+                <span>
+                  Text me TXKPRO 30/60/90-day retention check-ins after I start a job. Message frequency varies. Message and data rates may apply. Reply STOP to opt out or HELP for help. Consent is optional and is not a condition of using TXKPRO.
+                </span>
+              </label>
+            ) : null}
             {role === "student" ? <StudentBasics data={data} setField={setField} institutions={institutions} /> : null}
             {role === "educator" ? <EducatorBasics data={data} setField={setField} institutions={institutions} /> : null}
             {role === "employer" ? <EmployerBasics data={data} setField={setField} /> : null}
@@ -178,7 +190,7 @@ export function OnboardingWizard({
           <div className="review-grid">
             <div><span>Name</span><strong>{String(data.firstName ?? "")} {String(data.lastName ?? "")}</strong></div>
             <div><span>Phone</span><strong>{String(data.phone ?? "Not provided")}</strong></div>
-            {role === "student" ? <><div><span>Trade</span><strong>{String(data.primaryTrade ?? "Not selected")}</strong></div><div><span>Location</span><strong>{String(data.city ?? "")}, {String(data.state ?? "")}</strong></div></> : null}
+            {role === "student" ? <><div><span>Trade</span><strong>{String(data.primaryTrade ?? "Not selected")}</strong></div><div><span>Location</span><strong>{String(data.city ?? "")}, {String(data.state ?? "")}</strong></div><div><span>Retention SMS</span><strong>{data.smsRetentionConsent === true ? "Opted in" : "Not opted in"}</strong></div></> : null}
             {role === "educator" ? <div><span>Institution</span><strong>{institutions.find((item) => item.institution_id === data.institutionId)?.name ?? "Not selected"}</strong></div> : null}
             {role === "employer" ? <><div><span>Business</span><strong>{String(data.businessName ?? "Not provided")}</strong></div><div><span>Hiring trades</span><strong>{list(data.tradesHiring).join(", ") || "Not selected"}</strong></div></> : null}
           </div>

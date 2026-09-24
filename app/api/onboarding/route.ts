@@ -30,6 +30,53 @@ function safeProfileData(value: unknown): JsonObject {
   return JSON.parse(serialized) as JsonObject;
 }
 
+async function syncStudentRetentionSmsConsent(
+  account: NonNullable<Awaited<ReturnType<typeof getAccountContext>>>,
+  profileData: JsonObject,
+) {
+  const admin = createAdminClient();
+  const phone = text(profileData.phone, 60) || account.phone || null;
+  const consented = profileData.smsRetentionConsent === true;
+
+  if (consented) {
+    const now = new Date().toISOString();
+    const { error } = await admin.from("wf_sms_consents").upsert(
+      {
+        user_id: account.legacyUserId,
+        category: "retention",
+        status: "consented",
+        phone_snapshot: phone,
+        sms_consent_at: now,
+        consent_source: "student_onboarding",
+        opt_out_at: null,
+        updated_at: now,
+      },
+      { onConflict: "user_id,category" },
+    );
+    if (error) throw error;
+    return;
+  }
+
+  const { data: existing, error: readError } = await admin
+    .from("wf_sms_consents")
+    .select("consent_id")
+    .eq("user_id", account.legacyUserId)
+    .eq("category", "retention")
+    .maybeSingle();
+  if (readError) throw readError;
+
+  if (!existing) {
+    const { error } = await admin.from("wf_sms_consents").insert({
+      user_id: account.legacyUserId,
+      category: "retention",
+      status: "unknown",
+      phone_snapshot: phone,
+      consent_source: "student_onboarding",
+    });
+    if (error) throw error;
+  }
+}
+
 async function ensureAppMembership(params: {
   admin: ReturnType<typeof createAdminClient>;
   authUserId: string;
@@ -357,6 +404,15 @@ export async function POST(request: Request) {
     const lastName = text(profileData.lastName, 100) || account.lastName;
     if (!firstName || !lastName) return Response.json({ error: "First and last name are required." }, { status: 400 });
 
+    const retentionSmsConsent = role === "student" && profileData.smsRetentionConsent === true;
+    const retentionPhone = text(profileData.phone, 60) || account.phone;
+    if (retentionSmsConsent && !retentionPhone) {
+      return Response.json(
+        { error: "Add a mobile phone number before opting in to retention SMS check-ins." },
+        { status: 400 },
+      );
+    }
+
     if (role === "employer" || role === "student") {
       const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase.rpc(
@@ -366,6 +422,9 @@ export async function POST(request: Request) {
         { p_profile_data: profileData },
       );
       if (error) throw error;
+      if (role === "student") {
+        await syncStudentRetentionSmsConsent(account, profileData);
+      }
       return Response.json(
         data ??
           (role === "employer"

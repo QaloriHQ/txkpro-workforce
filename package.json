@@ -11,7 +11,8 @@
     "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs",
     "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs",
     "wave8:smoke": "node --env-file-if-exists=.env.local scripts/wave8-smoke.mjs",
-    "wave9:smoke": "node --env-file-if-exists=.env.local scripts/wave9-smoke.mjs"
+    "wave9:smoke": "node --env-file-if-exists=.env.local scripts/wave9-smoke.mjs",
+    "wave10:smoke": "node --env-file-if-exists=.env.local scripts/wave10-smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
