@@ -6,7 +6,8 @@ import {
   RoleViewBanner,
   StatusBadge,
 } from "@/components/design-system";
-import { CourseAuthoringWorkspace } from "@/components/employer/learning/course-authoring-workspace";
+import { CourseAuthoringNav } from "@/components/employer/learning/course-authoring-nav";
+import { CourseOverviewWorkspace } from "@/components/employer/learning/course-overview-workspace";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -42,13 +43,13 @@ export default async function EmployerLearningCoursePage({
 
       <main className="page-wrap txk-prototype-content">
         <PageHeader
-          eyebrow="Employer Learning · Course authoring"
+          eyebrow="Employer Learning · Course overview"
           title={course.title}
           description={
             <>
-              Version {course.currentVersion.versionNumber} ·{" "}
-              {course.currentVersion.learningObjective ||
-                "No learning objective has been added yet."}
+              High-level course management for version{" "}
+              {course.currentVersion.versionNumber}. Use Structure to manage the
+              architecture and Lesson Editor for detailed content.
             </>
           }
           actions={
@@ -72,14 +73,19 @@ export default async function EmployerLearningCoursePage({
           }
         />
 
+        <CourseAuthoringNav
+          microCertId={course.microCertId}
+          active="overview"
+        />
+
         {!canManage ? (
           <RoleViewBanner title="Read-only Employer Learning access">
-            Your Employer role can inspect this course, lesson hierarchy and
-            content, but only Employer Owner/Admin may author or publish it.
+            Your Employer role can inspect this course, but only Employer
+            Owner/Admin may author or publish it.
           </RoleViewBanner>
         ) : null}
 
-        <CourseAuthoringWorkspace course={course} canManage={canManage} />
+        <CourseOverviewWorkspace course={course} canManage={canManage} />
       </main>
     </>
   );
