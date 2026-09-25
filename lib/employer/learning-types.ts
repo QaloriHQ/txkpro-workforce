@@ -9,6 +9,25 @@ export const MICRO_CERT_STATUSES = [
 
 export type MicroCertStatus = (typeof MICRO_CERT_STATUSES)[number];
 
+export const LESSON_STATUSES = [
+  "draft",
+  "ready",
+  "published",
+  "archived",
+] as const;
+export type LessonStatus = (typeof LESSON_STATUSES)[number];
+
+export const LESSON_BLOCK_TYPES = [
+  "text",
+  "video",
+  "image",
+  "document",
+  "link",
+  "embed",
+  "safety_note",
+] as const;
+export type LessonBlockType = (typeof LESSON_BLOCK_TYPES)[number];
+
 export type MicroCertEligibility = {
   eligibilityId?: string;
   institutionId?: string | null;
@@ -103,4 +122,60 @@ export type EmployerMicroCertDetail = {
   };
   createdAt: string;
   updatedAt: string;
+};
+
+export type EmployerLearningBlockContent = {
+  text?: string;
+  url?: string;
+  caption?: string;
+  alt?: string;
+  [key: string]: unknown;
+};
+
+export type EmployerLearningLessonBlock = {
+  lessonBlockId: string;
+  lessonId: string;
+  sequence: number;
+  blockType: LessonBlockType;
+  title: string | null;
+  content: EmployerLearningBlockContent;
+  required: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningLesson = {
+  lessonId: string;
+  microCertVersionId: string;
+  sequence: number;
+  title: string;
+  description: string | null;
+  learningObjective: string | null;
+  estimatedMinutes: number | null;
+  required: boolean;
+  status: LessonStatus;
+  createdByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  blocks: EmployerLearningLessonBlock[];
+};
+
+export type EmployerMicroCertAuthoringDetail = EmployerMicroCertDetail & {
+  lessons: EmployerLearningLesson[];
+};
+
+export type EmployerLearningLessonInput = {
+  title?: string;
+  description?: string | null;
+  learningObjective?: string | null;
+  estimatedMinutes?: number | null;
+  required?: boolean;
+  status?: Extract<LessonStatus, "draft" | "ready">;
+};
+
+export type EmployerLearningBlockInput = {
+  blockType?: LessonBlockType;
+  title?: string | null;
+  content?: EmployerLearningBlockContent;
+  required?: boolean;
 };
