@@ -3,10 +3,13 @@
 import DOMPurify from "dompurify";
 import {
   ArrowDownIcon,
+  ArrowLeftIcon,
   ArrowUpIcon,
   Bars3Icon,
   BookmarkSquareIcon,
   DocumentDuplicateIcon,
+  EyeIcon,
+  LinkIcon,
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -233,6 +236,11 @@ export function LessonEditor({
     }
   }
 
+  function addRichLink() {
+    const url = window.prompt("Link URL");
+    if (url) richCommand("createLink", url);
+  }
+
   async function reorder(from: number, to: number) {
     if (!canEdit || to < 0 || to >= lesson.blocks.length) return;
     const ids = lesson.blocks.map((block) => block.lessonBlockId);
@@ -307,6 +315,28 @@ export function LessonEditor({
       if (body.library) setReusable(body.library);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to save reusable block.");
+    }
+  }
+
+  async function saveLessonTemplate() {
+    if (!canEdit) return;
+    const title = window.prompt("Lesson template name", lesson.title);
+    if (!title) return;
+    try {
+      const body = await requestJson("/api/employer/learning/reusable", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "save_lesson_template",
+          microCertId: course.microCertId,
+          lessonId: lesson.lessonId,
+          title,
+        }),
+      });
+      if (body.library) setReusable(body.library);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Unable to save lesson template.",
+      );
     }
   }
 
@@ -485,12 +515,29 @@ export function LessonEditor({
       <main className="txk-editor-canvas-column">
         <div className="txk-editor-statusbar">
           <div>
+            <div className="txk-editor-breadcrumb-actions">
+              <Link
+                href={`/employer/learning/${encodeURIComponent(course.microCertId)}/structure`}
+              >
+                <ArrowLeftIcon aria-hidden="true" />
+                Course structure
+              </Link>
+            </div>
             <p className="txk-eyebrow">Lesson editor</p>
             <h1>{lesson.title}</h1>
           </div>
-          <StatusBadge tone={saveState === "Save failed" ? "danger" : saveState === "Saved" ? "success" : "warning"}>
-            {saveState}
-          </StatusBadge>
+          <div className="txk-editor-status-actions">
+            <Link
+              className="txk-button txk-button-default txk-button-sm"
+              href={`/employer/learning/${encodeURIComponent(course.microCertId)}/preview`}
+            >
+              <EyeIcon aria-hidden="true" />
+              Preview as student
+            </Link>
+            <StatusBadge tone={saveState === "Save failed" ? "danger" : saveState === "Saved" ? "success" : "warning"}>
+              {saveState}
+            </StatusBadge>
+          </div>
         </div>
 
         {error ? <div className="alert">{error}</div> : null}
@@ -555,6 +602,10 @@ export function LessonEditor({
                       <button type="button" onClick={() => richCommand("formatBlock", "h3")}>H3</button>
                       <button type="button" onClick={() => richCommand("insertUnorderedList")}>• List</button>
                       <button type="button" onClick={() => richCommand("insertOrderedList")}>1. List</button>
+                      <button type="button" onClick={addRichLink}>
+                        <LinkIcon aria-hidden="true" />
+                        Link
+                      </button>
                       <button type="button" onClick={() => richCommand("undo")}>Undo</button>
                       <button type="button" onClick={() => richCommand("redo")}>Redo</button>
                     </div>
@@ -720,7 +771,18 @@ export function LessonEditor({
 
         <Card>
           <p className="txk-eyebrow">Employer library</p>
-          <h3>Reusable blocks</h3>
+          <h3>Reusable content</h3>
+          {canEdit ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void saveLessonTemplate()}
+            >
+              <BookmarkSquareIcon aria-hidden="true" />
+              Save lesson as template
+            </Button>
+          ) : null}
+          <h4 className="txk-library-subheading">Reusable blocks</h4>
           {reusable.blocks.length ? (
             <div className="txk-reusable-list">
               {reusable.blocks.map((block) => (
