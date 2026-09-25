@@ -7,6 +7,7 @@ import type {
   EmployerMicroCertAuthoringDetail,
   EmployerMicroCertDetail,
   EmployerMicroCertSummary,
+  EmployerLearningReusableLibrary,
   MicroCertEligibility,
   MicroCertInput,
   MicroCertStatus,
@@ -274,4 +275,121 @@ export async function reorderEmployerLearningBlocks(
       p_lesson_block_ids: lessonBlockIds,
     },
   );
+}
+
+
+export async function createEmployerLearningSection(
+  context: EmployerContext,
+  microCertId: string,
+  input: { title: string; description?: string | null; required?: boolean },
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_micro_cert_section_create", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_payload: input,
+  });
+}
+
+export async function updateEmployerLearningSection(
+  context: EmployerContext,
+  microCertId: string,
+  sectionId: string,
+  input: { title?: string; description?: string | null; required?: boolean },
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_micro_cert_section_update", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_section_id: sectionId,
+    p_payload: input,
+  });
+}
+
+export async function deleteEmployerLearningSection(
+  context: EmployerContext,
+  microCertId: string,
+  sectionId: string,
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_micro_cert_section_delete", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_section_id: sectionId,
+  });
+}
+
+export async function updateEmployerLearningStructure(
+  context: EmployerContext,
+  microCertId: string,
+  structure: Array<{ sectionId: string | null; lessonIds: string[] }>,
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_micro_cert_structure_update", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_structure: structure,
+  });
+}
+
+export async function getEmployerLearningReusableLibrary(
+  context: EmployerContext,
+) {
+  return rpc<EmployerLearningReusableLibrary>("employer_learning_reusable_library", {
+    p_employer_id: context.employerId,
+  });
+}
+
+export async function saveEmployerLearningReusableBlock(
+  context: EmployerContext,
+  microCertId: string,
+  lessonId: string,
+  blockId: string,
+  title: string,
+) {
+  return rpc<EmployerLearningReusableLibrary>("employer_learning_reusable_block_save", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_lesson_id: lessonId,
+    p_lesson_block_id: blockId,
+    p_title: title,
+  });
+}
+
+export async function insertEmployerLearningReusableBlock(
+  context: EmployerContext,
+  microCertId: string,
+  lessonId: string,
+  reusableBlockId: string,
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_learning_reusable_block_insert", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_lesson_id: lessonId,
+    p_reusable_block_id: reusableBlockId,
+  });
+}
+
+export async function saveEmployerLearningLessonTemplate(
+  context: EmployerContext,
+  microCertId: string,
+  lessonId: string,
+  title: string,
+) {
+  return rpc<EmployerLearningReusableLibrary>("employer_learning_lesson_template_save", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_lesson_id: lessonId,
+    p_title: title,
+  });
+}
+
+export async function insertEmployerLearningLessonTemplate(
+  context: EmployerContext,
+  microCertId: string,
+  lessonTemplateId: string,
+  sectionId?: string | null,
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_learning_lesson_template_insert", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_lesson_template_id: lessonTemplateId,
+    p_section_id: sectionId ?? null,
+  });
 }
