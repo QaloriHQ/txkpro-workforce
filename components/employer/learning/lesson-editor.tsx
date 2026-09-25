@@ -31,7 +31,6 @@ import {
 } from "@/components/design-system";
 import { LearningBlockRenderer } from "@/components/employer/learning/learning-block-renderer";
 import type {
-  EmployerLearningLesson,
   EmployerLearningLessonBlock,
   EmployerLearningReusableLibrary,
   EmployerMicroCertAuthoringDetail,
@@ -791,7 +790,7 @@ export function LessonEditor({
                 </button>
               ))}
             </div>
-          ) : <p className="muted">Save a block to reuse it across this Employer's courses.</p>}
+          ) : <p className="muted">Save a block to reuse it across this Employer&apos;s courses.</p>}
         </Card>
       </aside>
     </div>
