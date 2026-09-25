@@ -1,6 +1,7 @@
 import { AcademicCapIcon } from "@heroicons/react/24/outline";
 import { Brand } from "@/components/brand";
 import {
+  ButtonLink,
   Card,
   EmptyState,
   MetricCard,
@@ -8,6 +9,7 @@ import {
   RoleViewBanner,
   StatusBadge,
 } from "@/components/design-system";
+import { CourseCreatePanel } from "@/components/employer/learning/course-create-panel";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -43,6 +45,8 @@ function countStatus(
 export default async function EmployerLearningPage() {
   const context = await requireEmployerContext({ approved: true });
   const courses = await listEmployerMicroCerts(context);
+  const canManage =
+    context.role === "employer_owner" || context.role === "employer_admin";
 
   const assignments = courses.reduce(
     (total, course) => total + course.assignmentCount,
@@ -68,16 +72,20 @@ export default async function EmployerLearningPage() {
         <PageHeader
           eyebrow="Readiness & Outcomes"
           title="Employer Learning"
-          description="Manage company-specific Micro-Certification courses, versions, eligibility and completion signals. Course completion and Company Badges remain distinct from Instructor Verified Skills."
+          description="Create company-specific Micro-Certification courses, build versioned lessons and content, and track completion signals. Employer Training remains distinct from Instructor Verified Skills."
+          actions={canManage ? <CourseCreatePanel /> : undefined}
         />
 
         <RoleViewBanner title="Employer-owned training">
-          {context.role === "employer_owner" || context.role === "employer_admin"
-            ? "You can manage your Employer Learning library. Recruiters, Hiring Managers and read-only users can view authorized training without changing course content."
-            : "Your current Employer role has read-only access to Employer Learning."}
+          {canManage
+            ? "You can create and manage your Employer's courses, lessons, content blocks and versions. Published versions are locked; create a new version to revise live content."
+            : "Your current Employer role can inspect authorized Employer Learning but cannot change course content."}
         </RoleViewBanner>
 
-        <section className="txk-metric-grid txk-learning-metrics" aria-label="Employer Learning summary">
+        <section
+          className="txk-metric-grid txk-learning-metrics"
+          aria-label="Employer Learning summary"
+        >
           <MetricCard
             label="Courses"
             value={courses.length}
@@ -106,8 +114,8 @@ export default async function EmployerLearningPage() {
               <p className="txk-eyebrow">Library</p>
               <h2>Micro-Certification courses</h2>
               <p>
-                The library is connected to the W11-04 production backend.
-                Lesson/content authoring is added in W11-04A.
+                Open a course to manage its current version, lessons and ordered
+                content blocks.
               </p>
             </div>
             <StatusBadge tone="info">
@@ -171,6 +179,13 @@ export default async function EmployerLearningPage() {
                         : "No eligibility rule"}
                     </span>
                   </div>
+
+                  <ButtonLink
+                    href={`/employer/learning/${encodeURIComponent(course.microCertId)}`}
+                    tone="primary"
+                  >
+                    {canManage ? "Open authoring" : "View course"}
+                  </ButtonLink>
                 </Card>
               ))}
             </div>
@@ -178,7 +193,11 @@ export default async function EmployerLearningPage() {
             <Card>
               <EmptyState
                 title="No Employer Learning courses yet"
-                description="The production library is connected. Course and lesson authoring will use this same library when W11-04A is implemented."
+                description={
+                  canManage
+                    ? "Create the first draft Micro-Certification to begin building lessons and company-specific training content."
+                    : "No Employer Learning courses are available for your Employer yet."
+                }
               />
             </Card>
           )}
