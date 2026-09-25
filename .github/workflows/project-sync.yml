@@ -37,7 +37,7 @@ jobs:
             const metadataValue = (body, label) => {
               const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
               const regex = new RegExp(
-                "\\\*\\\*" + escaped + ":\\\*\\\*\\\\s*([^\\\\r\\\\n]+)",
+                "\\*\\*" + escaped + ":\\*\\*\\s*([^\\r\\n]+)",
                 "i"
               );
               const match = String(body || "").match(regex);
