@@ -439,7 +439,7 @@ export function LessonEditor({
     });
   }
 
-  function onDropCanvas(event: React.DragEvent<HTMLDivElement>, index?: number) {
+  function onDropCanvas(event: React.DragEvent<HTMLElement>, index?: number) {
     event.preventDefault();
     const componentType = event.dataTransfer.getData("application/x-txk-component") as LessonBlockType;
     if (componentType) {
