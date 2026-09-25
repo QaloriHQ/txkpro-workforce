@@ -11,10 +11,17 @@ import { getEmployerMicroCertAuthoringDetail } from "@/lib/employer/learning-rep
 
 export const dynamic = "force-dynamic";
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ lesson?: string }>;
+};
 
-export default async function CoursePreviewPage({ params }: RouteContext) {
+export default async function CoursePreviewPage({
+  params,
+  searchParams,
+}: RouteContext) {
   const { id } = await params;
+  const query = await searchParams;
   const context = await requireEmployerContext({ approved: true });
   const course = await getEmployerMicroCertAuthoringDetail(
     context,
@@ -52,7 +59,10 @@ export default async function CoursePreviewPage({ params }: RouteContext) {
           active="preview"
         />
 
-        <StudentCoursePreview course={course} />
+        <StudentCoursePreview
+          course={course}
+          initialLessonId={query.lesson ?? null}
+        />
       </main>
     </>
   );
