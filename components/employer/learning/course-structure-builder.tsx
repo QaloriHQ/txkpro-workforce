@@ -395,7 +395,7 @@ export function CourseStructureBuilder({
                 ))}
               </div>
             ) : (
-              <p className="muted">Save a lesson as a template to reuse it across this Employer's courses.</p>
+              <p className="muted">Save a lesson as a template to reuse it across this Employer&apos;s courses.</p>
             )}
           </Card>
         </aside>
