@@ -16,14 +16,20 @@ import type { EmployerMicroCertAuthoringDetail } from "@/lib/employer/learning-t
 
 export function StudentCoursePreview({
   course,
+  initialLessonId,
 }: {
   course: EmployerMicroCertAuthoringDetail;
+  initialLessonId?: string | null;
 }) {
   const lessons = useMemo(
     () => course.lessons.filter((lesson) => lesson.status !== "archived"),
     [course.lessons],
   );
-  const [index, setIndex] = useState(0);
+  const initialIndex = Math.max(
+    0,
+    lessons.findIndex((lesson) => lesson.lessonId === initialLessonId),
+  );
+  const [index, setIndex] = useState(initialIndex);
   const [completed, setCompleted] = useState<Set<string>>(() => new Set());
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const lesson = lessons[index];
@@ -52,6 +58,16 @@ export function StudentCoursePreview({
           </Button>
           <Button size="sm" type="button" tone={device === "mobile" ? "primary" : "default"} onClick={() => setDevice("mobile")}>
             <DevicePhoneMobileIcon aria-hidden="true" /> Mobile
+          </Button>
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => {
+              setCompleted(new Set());
+              setIndex(initialIndex);
+            }}
+          >
+            Reset preview
           </Button>
         </div>
       </div>
