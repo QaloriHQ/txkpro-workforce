@@ -43,13 +43,13 @@ export default async function EmployerLearningCoursePage({
 
       <main className="page-wrap txk-prototype-content">
         <PageHeader
-          eyebrow="Employer Learning · Course overview"
+          eyebrow="Employer Learning · Course"
           title={course.title}
           description={
             <>
-              High-level course management for version{" "}
-              {course.currentVersion.versionNumber}. Use Structure to manage the
-              architecture and Lesson Editor for detailed content.
+              Version {course.currentVersion.versionNumber} ·{" "}
+              {course.currentVersion.learningObjective ||
+                "No learning objective has been added yet."}
             </>
           }
           actions={
@@ -80,8 +80,8 @@ export default async function EmployerLearningCoursePage({
 
         {!canManage ? (
           <RoleViewBanner title="Read-only Employer Learning access">
-            Your Employer role can inspect this course, but only Employer
-            Owner/Admin may author or publish it.
+            Your Employer role can inspect course architecture and content, but
+            only Employer Owner/Admin may author or publish it.
           </RoleViewBanner>
         ) : null}
 
