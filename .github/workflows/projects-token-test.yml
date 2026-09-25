@@ -1,0 +1,29 @@
+name: Test GitHub Projects Token
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-project-access:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify access to TXKPRO Project #1
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: |
+          gh api graphql -f query='
+            query {
+              user(login: "QaloriHQ") {
+                projectV2(number: 1) {
+                  id
+                  number
+                  title
+                  url
+                }
+              }
+            }
+          '
