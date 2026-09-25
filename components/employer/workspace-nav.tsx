@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ComponentType, type SVGProps } from "react";
+import {
+  AcademicCapIcon,
+  Bars3Icon,
+  BookmarkIcon,
+  BriefcaseIcon,
+  CalendarDaysIcon,
+  HomeIcon,
+  PaperAirplaneIcon,
+  QueueListIcon,
+  UserGroupIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 type EmployerSection =
   | "overview"
@@ -10,17 +22,88 @@ type EmployerSection =
   | "referrals"
   | "interviews"
   | "pipeline"
-  | "placements";
+  | "placements"
+  | "learning";
 
-const items = [
-  ["overview", "/employer", "Overview"],
-  ["talent", "/employer/talent", "Talent"],
-  ["saved", "/employer/saved", "Saved"],
-  ["referrals", "/employer/referrals", "Referrals"],
-  ["interviews", "/employer/interviews", "Interviews"],
-  ["pipeline", "/employer/pipeline", "Hiring Pipeline"],
-  ["placements", "/employer/placements", "Placements"],
-] as const;
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+
+type NavItem = {
+  key: EmployerSection;
+  href: string;
+  label: string;
+  icon: Icon;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const groups: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      {
+        key: "overview",
+        href: "/employer",
+        label: "Overview",
+        icon: HomeIcon,
+      },
+    ],
+  },
+  {
+    label: "Talent & Hiring",
+    items: [
+      {
+        key: "talent",
+        href: "/employer/talent",
+        label: "Talent",
+        icon: UserGroupIcon,
+      },
+      {
+        key: "saved",
+        href: "/employer/saved",
+        label: "Saved",
+        icon: BookmarkIcon,
+      },
+      {
+        key: "referrals",
+        href: "/employer/referrals",
+        label: "Referrals",
+        icon: PaperAirplaneIcon,
+      },
+      {
+        key: "interviews",
+        href: "/employer/interviews",
+        label: "Interviews",
+        icon: CalendarDaysIcon,
+      },
+      {
+        key: "pipeline",
+        href: "/employer/pipeline",
+        label: "Hiring Pipeline",
+        icon: QueueListIcon,
+      },
+      {
+        key: "placements",
+        href: "/employer/placements",
+        label: "Placements",
+        icon: BriefcaseIcon,
+      },
+    ],
+  },
+  {
+    label: "Readiness & Outcomes",
+    items: [
+      {
+        key: "learning",
+        href: "/employer/learning",
+        label: "Employer Learning",
+        icon: AcademicCapIcon,
+      },
+    ],
+  },
+];
 
 export function EmployerWorkspaceNav({
   active,
@@ -40,13 +123,9 @@ export function EmployerWorkspaceNav({
         onClick={() => setOpen((value) => !value)}
       >
         {open ? (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 18 18 6M6 6l12 12" />
-          </svg>
+          <XMarkIcon aria-hidden="true" />
         ) : (
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-          </svg>
+          <Bars3Icon aria-hidden="true" />
         )}
       </button>
 
@@ -56,25 +135,34 @@ export function EmployerWorkspaceNav({
         aria-label="Employer workspace"
       >
         <div className="employer-sidebar-heading">
-          <span>Employer workspace</span>
-          <strong>Workforce</strong>
-          <small>Local hiring and placement operations</small>
+          <span>Workforce</span>
+          <strong>Employer workspace</strong>
+          <small>Talent, learning and placement operations</small>
         </div>
 
         <div className="employer-sidebar-links">
-          {items.map(([key, href, label]) => (
-            <Link
-              className={`employer-sidebar-link ${active === key ? "active" : ""}`}
-              href={href}
-              key={key}
-              aria-current={active === key ? "page" : undefined}
-              onClick={() => setOpen(false)}
-            >
-              <span>{label}</span>
-              {active === key ? (
-                <span className="employer-sidebar-current" aria-hidden="true" />
-              ) : null}
-            </Link>
+          {groups.map((group) => (
+            <div className="employer-nav-group" key={group.label}>
+              <span className="employer-nav-label">{group.label}</span>
+              {group.items.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <Link
+                    className={`employer-sidebar-link ${active === item.key ? "active" : ""}`}
+                    href={item.href}
+                    key={item.key}
+                    aria-current={active === item.key ? "page" : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    <IconComponent
+                      className="employer-sidebar-icon"
+                      aria-hidden="true"
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           ))}
         </div>
 
