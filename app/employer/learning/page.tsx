@@ -118,9 +118,11 @@ export default async function EmployerLearningPage() {
                 content blocks.
               </p>
             </div>
-            <StatusBadge tone="info">
-              {countStatus(courses, "ready")} ready
-            </StatusBadge>
+            {countStatus(courses, "ready") > 0 ? (
+              <StatusBadge tone="info">
+                {countStatus(courses, "ready")} ready
+              </StatusBadge>
+            ) : null}
           </div>
 
           {courses.length ? (
@@ -190,13 +192,18 @@ export default async function EmployerLearningPage() {
               ))}
             </div>
           ) : (
-            <Card>
+            <Card className="txk-empty-card">
               <EmptyState
                 title="No Employer Learning courses yet"
                 description={
                   canManage
                     ? "Create the first draft Micro-Certification to begin building lessons and company-specific training content."
                     : "No Employer Learning courses are available for your Employer yet."
+                }
+                action={
+                  canManage ? (
+                    <CourseCreatePanel label="Create first course" />
+                  ) : undefined
                 }
               />
             </Card>
