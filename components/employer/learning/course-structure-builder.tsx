@@ -42,7 +42,7 @@ async function requestJson(url: string, init: RequestInit) {
 }
 
 function initialGroups(course: EmployerMicroCertAuthoringDetail): Group[] {
-  const groups = course.sections.map((section) => ({
+  const groups: Group[] = course.sections.map((section) => ({
     sectionId: section.sectionId,
     lessonIds: course.lessons
       .filter((lesson) => lesson.sectionId === section.sectionId)
