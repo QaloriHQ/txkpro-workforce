@@ -19,12 +19,21 @@ export type LessonStatus = (typeof LESSON_STATUSES)[number];
 
 export const LESSON_BLOCK_TYPES = [
   "text",
-  "video",
+  "rich_text",
+  "heading",
+  "list",
+  "callout",
+  "safety_note",
   "image",
+  "video",
   "document",
   "link",
   "embed",
-  "safety_note",
+  "divider",
+  "button",
+  "download",
+  "accordion",
+  "columns",
 ] as const;
 export type LessonBlockType = (typeof LESSON_BLOCK_TYPES)[number];
 
@@ -144,9 +153,21 @@ export type EmployerLearningLessonBlock = {
   updatedAt: string;
 };
 
+export type EmployerLearningCourseSection = {
+  sectionId: string;
+  microCertVersionId: string;
+  sequence: number;
+  title: string;
+  description: string | null;
+  required: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type EmployerLearningLesson = {
   lessonId: string;
   microCertVersionId: string;
+  sectionId: string | null;
   sequence: number;
   title: string;
   description: string | null;
@@ -161,7 +182,33 @@ export type EmployerLearningLesson = {
 };
 
 export type EmployerMicroCertAuthoringDetail = EmployerMicroCertDetail & {
+  sections: EmployerLearningCourseSection[];
   lessons: EmployerLearningLesson[];
+};
+
+export type EmployerLearningReusableBlock = {
+  reusableBlockId: string;
+  title: string;
+  blockType: LessonBlockType;
+  content: EmployerLearningBlockContent;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningLessonTemplate = {
+  lessonTemplateId: string;
+  title: string;
+  description: string | null;
+  snapshot: Record<string, unknown>;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningReusableLibrary = {
+  blocks: EmployerLearningReusableBlock[];
+  lessonTemplates: EmployerLearningLessonTemplate[];
 };
 
 export type EmployerLearningLessonInput = {
@@ -171,6 +218,7 @@ export type EmployerLearningLessonInput = {
   estimatedMinutes?: number | null;
   required?: boolean;
   status?: Extract<LessonStatus, "draft" | "ready">;
+  sectionId?: string | null;
 };
 
 export type EmployerLearningBlockInput = {
