@@ -1,0 +1,550 @@
+name: Sync TXKPRO Roadmap to GitHub Project
+
+on:
+  issues:
+    types: [opened, edited, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Optional issue number to sync. Leave blank to backfill all roadmap issues."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: project-sync-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  sync-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync roadmap metadata to Project #1
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          script: |
+            const PROJECT_OWNER = "QaloriHQ";
+            const PROJECT_NUMBER = 1;
+            const REPOSITORY = context.repo.owner + "/" + context.repo.repo;
+
+            const normalize = (value) =>
+              String(value || "").trim().toLowerCase();
+
+            const metadataValue = (body, label) => {
+              const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(
+                "\\*\\*" + escaped + ":\\*\\*\\s*([^\\r\\n]+)",
+                "i"
+              );
+              const match = String(body || "").match(regex);
+              return match ? match[1].trim() : "";
+            };
+
+            const isRoadmapIssue = (body) =>
+              Boolean(metadataValue(body, "Task ID"));
+
+            async function getProjectPage(cursor = null) {
+              return github.graphql(
+                `query($login: String!, $number: Int!, $cursor: String) {
+                  user(login: $login) {
+                    projectV2(number: $number) {
+                      id
+                      title
+                      fields(first: 100) {
+                        nodes {
+                          ... on ProjectV2Field {
+                            id
+                            name
+                            dataType
+                          }
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            dataType
+                            options {
+                              id
+                              name
+                            }
+                          }
+                          ... on ProjectV2IterationField {
+                            id
+                            name
+                            dataType
+                          }
+                        }
+                      }
+                      items(first: 100, after: $cursor) {
+                        nodes {
+                          id
+                          content {
+                            ... on Issue {
+                              id
+                              number
+                              repository {
+                                nameWithOwner
+                              }
+                            }
+                            ... on PullRequest {
+                              id
+                              number
+                              repository {
+                                nameWithOwner
+                              }
+                            }
+                          }
+                          fieldValues(first: 50) {
+                            nodes {
+                              ... on ProjectV2ItemFieldSingleSelectValue {
+                                name
+                                optionId
+                                field {
+                                  ... on ProjectV2Field {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2SingleSelectField {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2IterationField {
+                                    id
+                                    name
+                                  }
+                                }
+                              }
+                              ... on ProjectV2ItemFieldDateValue {
+                                date
+                                field {
+                                  ... on ProjectV2Field {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2SingleSelectField {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2IterationField {
+                                    id
+                                    name
+                                  }
+                                }
+                              }
+                              ... on ProjectV2ItemFieldTextValue {
+                                text
+                                field {
+                                  ... on ProjectV2Field {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2SingleSelectField {
+                                    id
+                                    name
+                                  }
+                                  ... on ProjectV2IterationField {
+                                    id
+                                    name
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        pageInfo {
+                          hasNextPage
+                          endCursor
+                        }
+                      }
+                    }
+                  }
+                }`,
+                {
+                  login: PROJECT_OWNER,
+                  number: PROJECT_NUMBER,
+                  cursor
+                }
+              );
+            }
+
+            const firstPage = await getProjectPage();
+            const project = firstPage.user?.projectV2;
+
+            if (!project) {
+              core.setFailed(
+                `Could not resolve Project #${PROJECT_NUMBER} for ${PROJECT_OWNER}.`
+              );
+              return;
+            }
+
+            core.info(`Project: ${project.title} (${project.id})`);
+
+            const fieldMap = new Map();
+            for (const field of project.fields.nodes || []) {
+              if (field?.name) fieldMap.set(normalize(field.name), field);
+            }
+
+            const itemMap = new Map();
+
+            const cacheItems = (nodes) => {
+              for (const item of nodes || []) {
+                const content = item?.content;
+                if (
+                  content?.id &&
+                  normalize(content.repository?.nameWithOwner) ===
+                    normalize(REPOSITORY)
+                ) {
+                  itemMap.set(content.id, item);
+                }
+              }
+            };
+
+            cacheItems(project.items.nodes);
+
+            let pageInfo = project.items.pageInfo;
+            while (pageInfo?.hasNextPage) {
+              const next = await getProjectPage(pageInfo.endCursor);
+              const nextProject = next.user?.projectV2;
+              cacheItems(nextProject?.items?.nodes);
+              pageInfo = nextProject?.items?.pageInfo;
+            }
+
+            async function ensureProjectItem(issue) {
+              const existing = itemMap.get(issue.node_id);
+              if (existing) return existing;
+
+              try {
+                const added = await github.graphql(
+                  `mutation($projectId: ID!, $contentId: ID!) {
+                    addProjectV2ItemById(
+                      input: {
+                        projectId: $projectId
+                        contentId: $contentId
+                      }
+                    ) {
+                      item {
+                        id
+                      }
+                    }
+                  }`,
+                  {
+                    projectId: project.id,
+                    contentId: issue.node_id
+                  }
+                );
+
+                const item = {
+                  id: added.addProjectV2ItemById.item.id,
+                  content: {
+                    id: issue.node_id,
+                    number: issue.number,
+                    repository: { nameWithOwner: REPOSITORY }
+                  },
+                  fieldValues: { nodes: [] }
+                };
+                itemMap.set(issue.node_id, item);
+                return item;
+              } catch (error) {
+                core.warning(
+                  `Could not add issue #${issue.number} to the project: ${error.message}`
+                );
+                return null;
+              }
+            }
+
+            const getCurrentFieldValue = (item, fieldName) => {
+              const wanted = normalize(fieldName);
+              for (const value of item?.fieldValues?.nodes || []) {
+                if (normalize(value?.field?.name) === wanted) {
+                  return value?.name || value?.date || value?.text || "";
+                }
+              }
+              return "";
+            };
+
+            async function setSingleSelect(itemId, fieldName, desiredValue) {
+              if (!desiredValue) return;
+
+              const field = fieldMap.get(normalize(fieldName));
+              if (!field) {
+                core.warning(`Project field "${fieldName}" was not found; skipping.`);
+                return;
+              }
+
+              const options = field.options || [];
+              const option = options.find(
+                (candidate) =>
+                  normalize(candidate.name) === normalize(desiredValue)
+              );
+
+              if (!option) {
+                core.warning(
+                  `No "${fieldName}" option matches "${desiredValue}"; skipping.`
+                );
+                return;
+              }
+
+              await github.graphql(
+                `mutation(
+                  $projectId: ID!
+                  $itemId: ID!
+                  $fieldId: ID!
+                  $optionId: String!
+                ) {
+                  updateProjectV2ItemFieldValue(
+                    input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }
+                  ) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }`,
+                {
+                  projectId: project.id,
+                  itemId,
+                  fieldId: field.id,
+                  optionId: option.id
+                }
+              );
+            }
+
+            async function setDate(itemId, fieldName, dateValue) {
+              if (!dateValue) return;
+
+              const field = fieldMap.get(normalize(fieldName));
+              if (!field) {
+                core.warning(`Project field "${fieldName}" was not found; skipping.`);
+                return;
+              }
+
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                core.warning(
+                  `"${dateValue}" is not a YYYY-MM-DD value for "${fieldName}"; skipping.`
+                );
+                return;
+              }
+
+              await github.graphql(
+                `mutation(
+                  $projectId: ID!
+                  $itemId: ID!
+                  $fieldId: ID!
+                  $date: Date!
+                ) {
+                  updateProjectV2ItemFieldValue(
+                    input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { date: $date }
+                    }
+                  ) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }`,
+                {
+                  projectId: project.id,
+                  itemId,
+                  fieldId: field.id,
+                  date: dateValue
+                }
+              );
+            }
+
+            async function setText(itemId, fieldName, textValue) {
+              if (!textValue) return;
+
+              const field = fieldMap.get(normalize(fieldName));
+              if (!field) {
+                core.warning(`Project field "${fieldName}" was not found; skipping.`);
+                return;
+              }
+
+              await github.graphql(
+                `mutation(
+                  $projectId: ID!
+                  $itemId: ID!
+                  $fieldId: ID!
+                  $text: String!
+                ) {
+                  updateProjectV2ItemFieldValue(
+                    input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { text: $text }
+                    }
+                  ) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }`,
+                {
+                  projectId: project.id,
+                  itemId,
+                  fieldId: field.id,
+                  text: textValue
+                }
+              );
+            }
+
+            async function clearField(itemId, fieldName) {
+              const field = fieldMap.get(normalize(fieldName));
+              if (!field) return;
+
+              try {
+                await github.graphql(
+                  `mutation(
+                    $projectId: ID!
+                    $itemId: ID!
+                    $fieldId: ID!
+                  ) {
+                    clearProjectV2ItemFieldValue(
+                      input: {
+                        projectId: $projectId
+                        itemId: $itemId
+                        fieldId: $fieldId
+                      }
+                    ) {
+                      projectV2Item {
+                        id
+                      }
+                    }
+                  }`,
+                  {
+                    projectId: project.id,
+                    itemId,
+                    fieldId: field.id
+                  }
+                );
+              } catch (error) {
+                core.warning(
+                  `Could not clear "${fieldName}" for item ${itemId}: ${error.message}`
+                );
+              }
+            }
+
+            async function syncIssue(issue, eventAction = "") {
+              if (!issue || issue.pull_request || !isRoadmapIssue(issue.body)) {
+                return;
+              }
+
+              const taskId = metadataValue(issue.body, "Task ID");
+              const productionWaveRaw = metadataValue(
+                issue.body,
+                "Production Wave"
+              );
+              const release = metadataValue(issue.body, "Release");
+              const workstream = metadataValue(issue.body, "Workstream");
+              const priority = metadataValue(issue.body, "Priority");
+              const plannedStart = metadataValue(issue.body, "Planned start");
+              const plannedTarget = metadataValue(issue.body, "Planned target");
+              const criticalPath = metadataValue(issue.body, "Critical Path");
+              const pilotWeek = metadataValue(issue.body, "Pilot Week");
+
+              const productionWave =
+                productionWaveRaw.match(/Wave\s+\d+/i)?.[0] ||
+                productionWaveRaw;
+
+              core.info(
+                `Syncing #${issue.number} ${taskId}: ${issue.title}`
+              );
+
+              const item = await ensureProjectItem(issue);
+              if (!item) return;
+
+              await setSingleSelect(item.id, "Wave", productionWave);
+              await setSingleSelect(item.id, "Release", release);
+              await setSingleSelect(item.id, "Workstream", workstream);
+              await setSingleSelect(item.id, "Priority", priority);
+              await setSingleSelect(item.id, "Critical Path", criticalPath);
+              await setDate(item.id, "Start date", plannedStart);
+              await setDate(item.id, "Target date", plannedTarget);
+              await setText(item.id, "Pilot Week", pilotWeek);
+
+              const currentStatus = getCurrentFieldValue(item, "Status");
+
+              if (normalize(issue.state) === "closed") {
+                await setSingleSelect(item.id, "Status", "Done");
+                const completionDate = String(
+                  issue.closed_at || new Date().toISOString()
+                ).slice(0, 10);
+                await setDate(
+                  item.id,
+                  "Actual completion",
+                  completionDate
+                );
+              } else if (normalize(eventAction) === "reopened") {
+                await setSingleSelect(item.id, "Status", "Planned");
+                await clearField(item.id, "Actual completion");
+              } else if (
+                !currentStatus ||
+                normalize(currentStatus) === "backlog"
+              ) {
+                await setSingleSelect(item.id, "Status", "Planned");
+              }
+            }
+
+            let issues = [];
+
+            if (context.eventName === "issues") {
+              const number = context.payload.issue.number;
+              const response = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: number
+              });
+              issues = [response.data];
+            } else {
+              const requested = String(
+                context.payload.inputs?.issue_number || ""
+              ).trim();
+
+              if (requested) {
+                const number = Number(requested);
+                if (!Number.isInteger(number) || number <= 0) {
+                  core.setFailed(
+                    `Invalid issue_number input: "${requested}"`
+                  );
+                  return;
+                }
+
+                const response = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: number
+                });
+                issues = [response.data];
+              } else {
+                const all = await github.paginate(
+                  github.rest.issues.listForRepo,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    state: "all",
+                    per_page: 100
+                  }
+                );
+                issues = all.filter(
+                  (issue) => !issue.pull_request && isRoadmapIssue(issue.body)
+                );
+              }
+            }
+
+            core.info(`Roadmap issues selected: ${issues.length}`);
+
+            for (const issue of issues) {
+              await syncIssue(issue, context.payload.action || "");
+            }
+
+            core.info("Project synchronization complete.");
