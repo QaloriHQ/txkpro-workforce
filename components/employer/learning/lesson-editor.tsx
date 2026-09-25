@@ -528,7 +528,7 @@ export function LessonEditor({
           <div className="txk-editor-status-actions">
             <Link
               className="txk-button txk-button-default txk-button-sm"
-              href={`/employer/learning/${encodeURIComponent(course.microCertId)}/preview`}
+              href={`/employer/learning/${encodeURIComponent(course.microCertId)}/preview?lesson=${encodeURIComponent(lesson.lessonId)}`}
             >
               <EyeIcon aria-hidden="true" />
               Preview as student
