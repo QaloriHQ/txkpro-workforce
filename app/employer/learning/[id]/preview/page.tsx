@@ -1,8 +1,8 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Brand } from "@/components/brand";
-import { ButtonLink, PageHeader, StatusBadge } from "@/components/design-system";
+import { ButtonLink, PageHeader } from "@/components/design-system";
 import { CourseAuthoringNav } from "@/components/employer/learning/course-authoring-nav";
-import { StudentPreviewWorkspace } from "@/components/employer/learning/student-preview-workspace";
+import { StudentCoursePreview } from "@/components/employer/learning/student-course-preview";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,17 +11,10 @@ import { getEmployerMicroCertAuthoringDetail } from "@/lib/employer/learning-rep
 
 export const dynamic = "force-dynamic";
 
-type RouteContext = {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ lesson?: string }>;
-};
+type RouteContext = { params: Promise<{ id: string }> };
 
-export default async function EmployerLearningPreviewPage({
-  params,
-  searchParams,
-}: RouteContext) {
+export default async function CoursePreviewPage({ params }: RouteContext) {
   const { id } = await params;
-  const query = await searchParams;
   const context = await requireEmployerContext({ approved: true });
   const course = await getEmployerMicroCertAuthoringDetail(
     context,
@@ -41,19 +34,16 @@ export default async function EmployerLearningPreviewPage({
 
       <main className="page-wrap txk-prototype-content">
         <PageHeader
-          eyebrow="Employer Learning · Preview"
+          eyebrow="Employer Learning · Student preview"
           title={course.title}
-          description="Interactive Student simulation. Preview progress is browser-only and never creates assignment, assessment, badge, certification, or completion evidence."
+          description="Preview the learner experience interactively. Simulation state stays in this browser session and never creates Student completion evidence."
           actions={
-            <>
-              <ButtonLink
-                href={`/employer/learning/${encodeURIComponent(course.microCertId)}`}
-              >
-                <ArrowLeftIcon aria-hidden="true" />
-                Course overview
-              </ButtonLink>
-              <StatusBadge tone="info">Simulation</StatusBadge>
-            </>
+            <ButtonLink
+              href={`/employer/learning/${encodeURIComponent(course.microCertId)}`}
+            >
+              <ArrowLeftIcon aria-hidden="true" />
+              Back to overview
+            </ButtonLink>
           }
         />
 
@@ -62,10 +52,7 @@ export default async function EmployerLearningPreviewPage({
           active="preview"
         />
 
-        <StudentPreviewWorkspace
-          course={course}
-          initialLessonId={query.lesson ?? null}
-        />
+        <StudentCoursePreview course={course} />
       </main>
     </>
   );
