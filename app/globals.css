@@ -704,7 +704,7 @@ button:disabled,
 .employer-mobile-menu svg { width: 20px; height: 20px; }
 .employer-sidebar {
   position: fixed;
-  top: var(--txk-topbar-height);
+  top: 0;
   left: 0;
   bottom: 0;
   z-index: 18;
@@ -805,8 +805,13 @@ body:has(.employer-sidebar) .page-wrap {
   margin-right: 28px;
 }
 body:has(.employer-sidebar) .topbar {
-  padding-left: calc(var(--txk-sidebar-width) + 28px);
+  width: calc(100% - var(--txk-sidebar-width));
+  margin-left: var(--txk-sidebar-width);
+  padding-left: 28px;
+  padding-right: 28px;
 }
+body:has(.employer-sidebar) .topbar > .brand { display: none; }
+body:has(.employer-sidebar) .topbar > .header-actions { margin-left: auto; }
 
 html[data-theme="dark"] .card,
 html[data-theme="dark"] .metric-card,
@@ -831,7 +836,13 @@ html[data-theme="dark"] .txk-textarea {
     margin-left: auto;
     margin-right: auto;
   }
-  body:has(.employer-sidebar) .topbar { padding-left: 16px; }
+  body:has(.employer-sidebar) .topbar {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  body:has(.employer-sidebar) .topbar > .brand { display: none; }
   .employer-mobile-menu { display: grid; }
   .employer-sidebar {
     top: 0;
