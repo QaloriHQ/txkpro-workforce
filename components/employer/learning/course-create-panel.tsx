@@ -2,7 +2,7 @@
 
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -12,11 +12,24 @@ import {
   Textarea,
 } from "@/components/design-system";
 
-export function CourseCreatePanel() {
+export function CourseCreatePanel({
+  label = "Create course",
+}: {
+  label?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !busy) setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, busy]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,55 +71,81 @@ export function CourseCreatePanel() {
     }
   }
 
-  if (!open) {
-    return (
-      <Button tone="primary" type="button" onClick={() => setOpen(true)}>
-        <PlusIcon aria-hidden="true" />
-        Create course
-      </Button>
-    );
-  }
-
   return (
-    <Card className="txk-create-course-panel">
-      <div className="txk-inline-heading">
-        <div>
-          <p className="txk-eyebrow">New Micro-Certification</p>
-          <h2>Create course</h2>
-        </div>
-        <IconButton label="Close create course" onClick={() => setOpen(false)}>
-          <XMarkIcon aria-hidden="true" />
-        </IconButton>
-      </div>
+    <>
+      <Button
+        className="txk-create-course-trigger"
+        tone="primary"
+        type="button"
+        onClick={() => setOpen(true)}
+      >
+        <PlusIcon aria-hidden="true" />
+        {label}
+      </Button>
 
-      <form className="txk-form-stack" onSubmit={submit}>
-        <FormField label="Course title">
-          <Input name="title" required maxLength={200} autoFocus />
-        </FormField>
-        <FormField label="Description">
-          <Textarea name="description" maxLength={4000} />
-        </FormField>
-        <FormField
-          label="Learning objective"
-          help="Describe the company-specific process or expectation this training prepares learners for."
+      {open ? (
+        <div
+          className="txk-course-dialog-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && !busy) setOpen(false);
+          }}
         >
-          <Textarea name="learningObjective" maxLength={4000} />
-        </FormField>
-        <FormField label="Estimated duration (minutes)">
-          <Input name="durationMinutes" type="number" min="0" />
-        </FormField>
+          <Card
+            className="txk-course-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-course-title"
+          >
+            <div className="txk-inline-heading">
+              <div>
+                <p className="txk-eyebrow">New Micro-Certification</p>
+                <h2 id="create-course-title">Create course</h2>
+              </div>
+              <IconButton
+                label="Close create course"
+                onClick={() => setOpen(false)}
+                disabled={busy}
+              >
+                <XMarkIcon aria-hidden="true" />
+              </IconButton>
+            </div>
 
-        {error ? <div className="txk-form-error">{error}</div> : null}
+            <form className="txk-form-stack" onSubmit={submit}>
+              <FormField label="Course title">
+                <Input name="title" required maxLength={200} autoFocus />
+              </FormField>
+              <FormField label="Description">
+                <Textarea name="description" maxLength={4000} />
+              </FormField>
+              <FormField
+                label="Learning objective"
+                help="Describe the company-specific process or expectation this training prepares learners for."
+              >
+                <Textarea name="learningObjective" maxLength={4000} />
+              </FormField>
+              <FormField label="Estimated duration (minutes)">
+                <Input name="durationMinutes" type="number" min="0" />
+              </FormField>
 
-        <div className="txk-form-actions">
-          <Button type="submit" tone="primary" disabled={busy}>
-            {busy ? "Creating…" : "Create draft course"}
-          </Button>
-          <Button type="button" onClick={() => setOpen(false)} disabled={busy}>
-            Cancel
-          </Button>
+              {error ? <div className="txk-form-error">{error}</div> : null}
+
+              <div className="txk-form-actions">
+                <Button type="submit" tone="primary" disabled={busy}>
+                  {busy ? "Creating…" : "Create draft course"}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  disabled={busy}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
-      </form>
-    </Card>
+      ) : null}
+    </>
   );
 }
