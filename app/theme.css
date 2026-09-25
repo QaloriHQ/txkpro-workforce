@@ -2150,3 +2150,56 @@ html[data-theme="dark"] .theme-toggle-icon .theme-icon-sun {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* W11-04C editor navigation polish */
+.txk-editor-breadcrumb-actions {
+  margin-bottom: 6px;
+}
+.txk-editor-breadcrumb-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--txk-text-muted);
+  font-size: 9px;
+  font-weight: 760;
+}
+.txk-editor-breadcrumb-actions a:hover {
+  color: var(--txk-text-primary);
+}
+.txk-editor-breadcrumb-actions svg {
+  width: 14px;
+  height: 14px;
+}
+.txk-editor-status-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.txk-editor-status-actions .txk-button svg {
+  width: 15px;
+  height: 15px;
+}
+.txk-rich-toolbar button svg {
+  width: 13px;
+  height: 13px;
+  vertical-align: middle;
+}
+.txk-library-subheading {
+  margin: 14px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 650px) {
+  .txk-editor-statusbar {
+    flex-direction: column;
+  }
+  .txk-editor-status-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
