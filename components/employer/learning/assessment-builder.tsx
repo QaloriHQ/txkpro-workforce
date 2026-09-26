@@ -14,7 +14,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -999,9 +999,9 @@ export function AssessmentBuilder({
     }
   }
 
-  const totalPoints = useMemo(
-    () => questions.reduce((sum, question) => sum + Number(question.points), 0),
-    [questions],
+  const totalPoints = questions.reduce(
+    (sum, question) => sum + Number(question.points),
+    0,
   );
 
   return (
