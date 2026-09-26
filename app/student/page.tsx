@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -60,9 +61,9 @@ export default async function StudentWorkspacePage() {
             <span className="pill pill-info">{activeTrainingCount}</span>
           </div>
           <div className="student-workspace-training-actions">
-            <a className="button button-brand" href="/student/employer-training">
+            <Link className="button button-brand" href="/student/employer-training">
               Open Employer Training
-            </a>
+            </Link>
             <span className="muted">
               {trainingAssignments.some((assignment) => assignment.status === "in_progress")
                 ? "You have training in progress."
