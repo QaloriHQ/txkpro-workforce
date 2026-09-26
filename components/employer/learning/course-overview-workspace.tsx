@@ -17,7 +17,7 @@ import {
   Textarea,
 } from "@/components/design-system";
 import type {
-  EmployerMicroCertAuthoringDetail,
+  EmployerMicroCertModuleDetail,
   MicroCertStatus,
 } from "@/lib/employer/learning-types";
 
@@ -44,7 +44,7 @@ export function CourseOverviewWorkspace({
   course,
   canManage,
 }: {
-  course: EmployerMicroCertAuthoringDetail;
+  course: EmployerMicroCertModuleDetail;
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -68,6 +68,9 @@ export function CourseOverviewWorkspace({
     activeLessons.length === 0 ? "Add at least one lesson." : null,
     activeLessons.some((lesson) => lesson.blocks.length === 0)
       ? "One or more lessons have no content."
+      : null,
+    course.checkpoints.length === 0
+      ? "Add at least one interactive checkpoint."
       : null,
     Object.keys(course.currentVersion.passingRequirement ?? {}).length === 0
       ? "Completion/passing requirements are not configured yet."
@@ -127,8 +130,8 @@ export function CourseOverviewWorkspace({
       {error ? <div className="alert">{error}</div> : null}
 
       <section className="txk-metric-grid txk-course-overview-metrics">
-        <MetricCard label="Version" value={course.currentVersion.versionNumber} detail={course.currentVersion.status.replaceAll("_", " ")} />
         <MetricCard label="Lessons" value={activeLessons.length} detail={`${course.sections.length} section${course.sections.length === 1 ? "" : "s"}`} />
+        <MetricCard label="Checkpoints" value={course.checkpoints.length} detail={`${course.checkpoints.filter((checkpoint) => checkpoint.required).length} required`} />
         <MetricCard label="Duration" value={totalMinutes ? `${totalMinutes}m` : "—"} detail="Lesson estimates" />
         <MetricCard label="Assignments" value={course.metrics.assignmentCount} detail={`${course.metrics.completionRate}% completion`} />
       </section>
