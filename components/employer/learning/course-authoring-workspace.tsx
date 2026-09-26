@@ -138,7 +138,8 @@ export function CourseAuthoringWorkspace({
 
   async function createLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const minutes = String(form.get("estimatedMinutes") ?? "").trim();
     await run("new-lesson", async () => {
       await requestJson(`${courseBase}/lessons`, {
@@ -153,7 +154,7 @@ export function CourseAuthoringWorkspace({
           status: "draft",
         }),
       });
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
@@ -219,7 +220,8 @@ export function CourseAuthoringWorkspace({
     lesson: EmployerLearningLesson,
   ) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const blockType = String(form.get("blockType") ?? "text") as LessonBlockType;
     const value = String(form.get("contentValue") ?? "").trim();
     const content =
@@ -240,7 +242,7 @@ export function CourseAuthoringWorkspace({
           }),
         },
       );
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
