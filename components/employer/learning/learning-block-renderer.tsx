@@ -116,7 +116,16 @@ function EmbeddedVideo({
   );
 }
 
-type RenderableLearningBlock = Pick<\n  EmployerLearningLessonBlock,\n  "blockType" | "content" | "title"\n>;\n\nexport function LearningBlockRenderer({\n  block,\n}: {\n  block: RenderableLearningBlock;\n}) {
+type RenderableLearningBlock = Pick<
+  EmployerLearningLessonBlock,
+  "blockType" | "content" | "title"
+>;
+
+export function LearningBlockRenderer({
+  block,
+}: {
+  block: RenderableLearningBlock;
+}) {
   const content = block.content ?? {};
 
   if (block.blockType === "rich_text") {
