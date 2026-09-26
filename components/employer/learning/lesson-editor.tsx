@@ -449,6 +449,25 @@ export function LessonEditor({
     });
   }
 
+  async function useCaptionAsset(asset: EmployerLearningMediaAsset) {
+    if (!selected || selected.blockType !== "video" || !canEdit) return;
+    if (asset.extension !== "vtt" || !asset.contentUrl) {
+      setError("Select a ready VTT caption file.");
+      return;
+    }
+    await saveBlock(selected, {
+      content: {
+        ...selected.content,
+        captionsUrl: asset.contentUrl,
+        captionsMediaAssetId: asset.mediaAssetId,
+        captionLanguage:
+          String(selected.content.captionLanguage ?? "").trim() || "en",
+        captionLabel:
+          String(selected.content.captionLabel ?? "").trim() || "English",
+      },
+    });
+  }
+
   async function saveLessonSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -517,6 +536,12 @@ export function LessonEditor({
           url: String(form.get("url") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
           posterUrl: String(form.get("posterUrl") ?? "").trim() || null,
+          captionsUrl: String(form.get("captionsUrl") ?? "").trim() || null,
+          captionLanguage:
+            String(form.get("captionLanguage") ?? "").trim() || "en",
+          captionLabel:
+            String(form.get("captionLabel") ?? "").trim() || "English",
+          transcript: String(form.get("transcript") ?? "").trim() || null,
         };
         break;
       case "audio":
@@ -835,6 +860,26 @@ export function LessonEditor({
                       <Input name="posterUrl" defaultValue={String(selected.content.posterUrl ?? "")} disabled={!canEdit} />
                     </FormField>
                     <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField
+                      label="VTT captions URL"
+                      help="Upload a .vtt file in the Employer Media Library and choose Use as captions, or enter an HTTPS/internal VTT URL."
+                    >
+                      <Input name="captionsUrl" defaultValue={String(selected.content.captionsUrl ?? "")} disabled={!canEdit} />
+                    </FormField>
+                    <div className="txk-form-grid-2">
+                      <FormField label="Caption language">
+                        <Input name="captionLanguage" defaultValue={String(selected.content.captionLanguage ?? "en")} disabled={!canEdit} />
+                      </FormField>
+                      <FormField label="Caption label">
+                        <Input name="captionLabel" defaultValue={String(selected.content.captionLabel ?? "English")} disabled={!canEdit} />
+                      </FormField>
+                    </div>
+                    <FormField
+                      label="Transcript"
+                      help="Optional accessible text transcript. Streaming providers may also provide their own captions."
+                    >
+                      <Textarea name="transcript" defaultValue={String(selected.content.transcript ?? "")} disabled={!canEdit} />
+                    </FormField>
                   </>
                 ) : null}
 
@@ -898,6 +943,7 @@ export function LessonEditor({
           onInsertAsset={insertMediaAsset}
           onReplaceSelected={replaceSelectedMedia}
           onUsePoster={usePosterAsset}
+          onUseCaptions={useCaptionAsset}
         />
 
         <Card>
