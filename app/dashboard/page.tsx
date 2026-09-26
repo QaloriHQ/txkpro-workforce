@@ -20,6 +20,7 @@ export default async function DashboardPage() {
   // dedicated production workspace.
   if (account.role === "employer") redirect("/employer");
   if (account.role === "student") redirect("/student");
+  if (account.role === "educator") redirect("/institution/learning");
 
   const workspace = {
     student: { title: "Student workspace", copy: "Your authenticated student account is connected to Interview, Placement, and Workforce readiness state.", demo: "/student" },
