@@ -286,6 +286,135 @@ export type EmployerLearningAssessmentSummary = {
   updatedAt: string;
 };
 
+
+export const EMPLOYER_LEARNING_ASSESSMENT_TYPES = [
+  "checkpoint",
+  "lesson_quiz",
+  "final_assessment",
+] as const;
+export type EmployerLearningAssessmentType =
+  (typeof EMPLOYER_LEARNING_ASSESSMENT_TYPES)[number];
+
+export const EMPLOYER_LEARNING_QUESTION_TYPES = [
+  "single_choice",
+  "multiple_choice",
+  "true_false",
+  "acknowledgement",
+  "numeric",
+] as const;
+export type EmployerLearningQuestionType =
+  (typeof EMPLOYER_LEARNING_QUESTION_TYPES)[number];
+
+export type EmployerLearningChoiceOption = {
+  id: string;
+  label: string;
+};
+
+export type EmployerLearningAssessmentQuestion = {
+  questionId: string;
+  assessmentId: string;
+  sequence: number;
+  questionType: EmployerLearningQuestionType;
+  prompt: string;
+  options: EmployerLearningChoiceOption[];
+  answerKey: Record<string, unknown>;
+  points: number;
+  required: boolean;
+  feedbackCorrect: string | null;
+  feedbackIncorrect: string | null;
+  createdByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningAssessmentAuthoringDetail = {
+  assessmentId: string;
+  microCertVersionId: string;
+  lessonId: string | null;
+  sequence: number;
+  title: string;
+  description: string | null;
+  assessmentType: EmployerLearningAssessmentType;
+  passingScore: number;
+  maxAttempts: number | null;
+  required: boolean;
+  randomizeQuestions: boolean;
+  showFeedback: boolean;
+  config: Record<string, unknown>;
+  createdByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  questions: EmployerLearningAssessmentQuestion[];
+};
+
+export type EmployerLearningAssessmentInput = Partial<{
+  lessonId: string | null;
+  title: string;
+  description: string | null;
+  assessmentType: EmployerLearningAssessmentType;
+  passingScore: number;
+  maxAttempts: number | null;
+  required: boolean;
+  randomizeQuestions: boolean;
+  showFeedback: boolean;
+  config: Record<string, unknown>;
+}>;
+
+export type EmployerLearningAssessmentQuestionInput = Partial<{
+  questionType: EmployerLearningQuestionType;
+  prompt: string;
+  options: EmployerLearningChoiceOption[];
+  answerKey: Record<string, unknown>;
+  points: number;
+  required: boolean;
+  feedbackCorrect: string | null;
+  feedbackIncorrect: string | null;
+}>;
+
+export type EmployerLearningStudentAssessmentQuestion = {
+  questionId: string;
+  sequence: number;
+  questionType: EmployerLearningQuestionType;
+  prompt: string;
+  options: EmployerLearningChoiceOption[];
+  points: number;
+  required: boolean;
+};
+
+export type EmployerLearningStudentAssessment = {
+  assessmentId: string;
+  microCertVersionId: string;
+  lessonId: string | null;
+  sequence: number;
+  title: string;
+  description: string | null;
+  assessmentType: EmployerLearningAssessmentType;
+  passingScore: number;
+  maxAttempts: number | null;
+  required: boolean;
+  randomizeQuestions: boolean;
+  showFeedback: boolean;
+  questions: EmployerLearningStudentAssessmentQuestion[];
+};
+
+export type EmployerLearningAssessmentScoreResult = {
+  assessmentId: string;
+  valid: boolean;
+  missingRequiredQuestionIds: string[];
+  score: number;
+  pointsEarned: number;
+  pointsPossible: number;
+  passed: boolean;
+  passingScore: number;
+  results: Array<{
+    questionId: string;
+    isCorrect: boolean;
+    score: number;
+    pointsPossible: number;
+    feedback?: string | null;
+  }>;
+};
+
 export type EmployerLearningCertificationSummary = {
   certificationDefinitionId: string;
   title: string;
