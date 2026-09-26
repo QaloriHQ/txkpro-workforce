@@ -26,6 +26,7 @@ export const LESSON_BLOCK_TYPES = [
   "safety_note",
   "image",
   "video",
+  "audio",
   "document",
   "link",
   "embed",
@@ -313,4 +314,43 @@ export type EmployerMicroCertModuleDetail = EmployerMicroCertAuthoringDetail & {
   assessmentSummary: EmployerLearningAssessmentSummary[];
   certification: EmployerLearningCertificationSummary | null;
   resourceSummary: EmployerLearningResourceSummary;
+};
+
+
+export const EMPLOYER_LEARNING_MEDIA_KINDS = [
+  "image",
+  "video",
+  "audio",
+  "document",
+] as const;
+
+export type EmployerLearningMediaKind =
+  (typeof EMPLOYER_LEARNING_MEDIA_KINDS)[number];
+
+export type EmployerLearningMediaAsset = {
+  mediaAssetId: string;
+  employerId: string;
+  bucketId: string;
+  storagePath: string;
+  originalFilename: string;
+  displayName: string;
+  mediaKind: EmployerLearningMediaKind;
+  mimeType: string;
+  extension: string;
+  sizeBytes: number;
+  status: "pending" | "ready" | "failed" | "deleted";
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  contentUrl?: string;
+  downloadUrl?: string;
+};
+
+export type EmployerLearningMediaReserveInput = {
+  filename: string;
+  displayName?: string | null;
+  mediaKind: EmployerLearningMediaKind;
+  mimeType: string;
+  sizeBytes: number;
+  metadata?: Record<string, unknown>;
 };
