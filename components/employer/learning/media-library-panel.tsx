@@ -140,6 +140,20 @@ function compatible(
   return false;
 }
 
+async function fetchMediaAssets() {
+  const response = await fetch("/api/employer/learning/media", {
+    cache: "no-store",
+  });
+  const body = (await response.json()) as {
+    assets?: EmployerLearningMediaAsset[];
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(body.error ?? "Unable to load Employer media.");
+  }
+  return body.assets ?? [];
+}
+
 export function MediaLibraryPanel({
   canEdit,
   selectedBlock,
@@ -170,17 +184,7 @@ export function MediaLibraryPanel({
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch("/api/employer/learning/media", {
-        cache: "no-store",
-      });
-      const body = (await response.json()) as {
-        assets?: EmployerLearningMediaAsset[];
-        error?: string;
-      };
-      if (!response.ok) {
-        throw new Error(body.error ?? "Unable to load Employer media.");
-      }
-      setAssets(body.assets ?? []);
+      setAssets(await fetchMediaAssets());
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Unable to load Employer media.",
@@ -191,11 +195,28 @@ export function MediaLibraryPanel({
   }, []);
 
   useEffect(() => {
-    void load();
+    let active = true;
+    void fetchMediaAssets()
+      .then((nextAssets) => {
+        if (!active) return;
+        setAssets(nextAssets);
+        setLoading(false);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to load Employer media.",
+        );
+        setLoading(false);
+      });
+
     return () => {
+      active = false;
       void uploadRef.current?.abort();
     };
-  }, [load]);
+  }, []);
 
   async function reserve(file: File): Promise<UploadReservation> {
     const { kind, mime } = inferFile(file);
