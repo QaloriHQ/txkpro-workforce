@@ -19,7 +19,7 @@ export async function GET(request: Request, routeContext: RouteContext) {
       .from(asset.bucketId)
       .createSignedUrl(
         asset.storagePath,
-        600,
+        3600,
         download ? { download: asset.originalFilename } : undefined,
       );
 
