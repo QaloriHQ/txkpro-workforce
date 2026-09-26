@@ -9,9 +9,11 @@ import {
   BookmarkSquareIcon,
   DocumentDuplicateIcon,
   EyeIcon,
+  PencilSquareIcon,
   LinkIcon,
   PlusIcon,
   TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import {
@@ -128,6 +130,302 @@ function findLesson(course: EmployerMicroCertAuthoringDetail, lessonId: string) 
   return course.lessons.find((item) => item.lessonId === lessonId);
 }
 
+function BlockPropertiesForm({
+  block,
+  canEdit,
+  onSubmit,
+}: {
+  block: EmployerLearningLessonBlock;
+  canEdit: boolean;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
+}) {
+  if (block.blockType === "rich_text") {
+    return (
+      <p className="muted">
+        Edit Rich Text directly in the lesson canvas. Select the block to show
+        its formatting toolbar.
+      </p>
+    );
+  }
+
+  return (
+    <form className="txk-form-stack" onSubmit={onSubmit}>
+      <FormField label="Block title">
+        <Input
+          name="title"
+          defaultValue={block.title ?? ""}
+          disabled={!canEdit}
+        />
+      </FormField>
+
+      {block.blockType === "heading" ? (
+        <>
+          <FormField label="Heading text">
+            <Input
+              name="text"
+              defaultValue={String(block.content.text ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Heading level">
+            <select
+              className="txk-input"
+              name="level"
+              defaultValue={String(block.content.level ?? 2)}
+              disabled={!canEdit}
+            >
+              <option value="2">H2</option>
+              <option value="3">H3</option>
+              <option value="4">H4</option>
+            </select>
+          </FormField>
+        </>
+      ) : null}
+
+      {block.blockType === "list" ? (
+        <>
+          <FormField label="List items" help="One item per line">
+            <Textarea
+              name="items"
+              defaultValue={
+                Array.isArray(block.content.items)
+                  ? block.content.items.join("\n")
+                  : ""
+              }
+              disabled={!canEdit}
+            />
+          </FormField>
+          <label className="txk-check-field">
+            <input
+              type="checkbox"
+              name="ordered"
+              defaultChecked={Boolean(block.content.ordered)}
+              disabled={!canEdit}
+            />
+            <span>Numbered list</span>
+          </label>
+        </>
+      ) : null}
+
+      {["text", "callout", "safety_note"].includes(block.blockType) ? (
+        <FormField label="Text">
+          <Textarea
+            name="text"
+            defaultValue={String(block.content.text ?? "")}
+            disabled={!canEdit}
+          />
+        </FormField>
+      ) : null}
+
+      {block.blockType === "image" ? (
+        <>
+          <FormField
+            label="Image URL"
+            help="Use an uploaded Employer asset or an HTTPS image URL."
+          >
+            <Input
+              name="url"
+              defaultValue={String(block.content.url ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Alt text">
+            <Input
+              name="alt"
+              defaultValue={String(block.content.alt ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Caption">
+            <Input
+              name="caption"
+              defaultValue={String(block.content.caption ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+        </>
+      ) : null}
+
+      {block.blockType === "video" ? (
+        <>
+          <FormField
+            label="Video URL"
+            help="Supports uploaded video plus YouTube, Vimeo, Loom, Wistia and Dailymotion URLs."
+          >
+            <Input
+              name="url"
+              defaultValue={String(block.content.url ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Poster / thumbnail URL">
+            <Input
+              name="posterUrl"
+              defaultValue={String(block.content.posterUrl ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Caption">
+            <Input
+              name="caption"
+              defaultValue={String(block.content.caption ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField
+            label="VTT captions URL"
+            help="Upload a .vtt file in the Employer Media Library and choose Use as captions, or enter an HTTPS/internal VTT URL."
+          >
+            <Input
+              name="captionsUrl"
+              defaultValue={String(block.content.captionsUrl ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <div className="txk-form-grid-2">
+            <FormField label="Caption language">
+              <Input
+                name="captionLanguage"
+                defaultValue={String(block.content.captionLanguage ?? "en")}
+                disabled={!canEdit}
+              />
+            </FormField>
+            <FormField label="Caption label">
+              <Input
+                name="captionLabel"
+                defaultValue={String(block.content.captionLabel ?? "English")}
+                disabled={!canEdit}
+              />
+            </FormField>
+          </div>
+          <FormField
+            label="Transcript"
+            help="Optional accessible text transcript. Streaming providers may also provide their own captions."
+          >
+            <Textarea
+              name="transcript"
+              defaultValue={String(block.content.transcript ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+        </>
+      ) : null}
+
+      {block.blockType === "audio" ? (
+        <>
+          <FormField label="Audio URL">
+            <Input
+              name="url"
+              defaultValue={String(block.content.url ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Caption">
+            <Input
+              name="caption"
+              defaultValue={String(block.content.caption ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+        </>
+      ) : null}
+
+      {["document", "download", "link", "embed", "button"].includes(
+        block.blockType,
+      ) ? (
+        <>
+          <FormField label="URL">
+            <Input
+              name="url"
+              defaultValue={String(block.content.url ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          {block.blockType !== "embed" ? (
+            <FormField label="Label">
+              <Input
+                name="label"
+                defaultValue={String(block.content.label ?? "")}
+                disabled={!canEdit}
+              />
+            </FormField>
+          ) : null}
+        </>
+      ) : null}
+
+      {block.blockType === "accordion" ? (
+        <>
+          <FormField label="Accordion title">
+            <Input
+              name="accordionTitle"
+              defaultValue={String(block.content.title ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Body">
+            <Textarea
+              name="body"
+              defaultValue={String(block.content.body ?? "")}
+              disabled={!canEdit}
+            />
+          </FormField>
+        </>
+      ) : null}
+
+      {block.blockType === "columns" ? (
+        <>
+          <FormField label="Left column">
+            <Textarea
+              name="column1"
+              defaultValue={String(
+                Array.isArray(block.content.columns) &&
+                  block.content.columns[0] &&
+                  typeof block.content.columns[0] === "object" &&
+                  "text" in block.content.columns[0]
+                  ? (block.content.columns[0] as { text?: unknown }).text ?? ""
+                  : "",
+              )}
+              disabled={!canEdit}
+            />
+          </FormField>
+          <FormField label="Right column">
+            <Textarea
+              name="column2"
+              defaultValue={String(
+                Array.isArray(block.content.columns) &&
+                  block.content.columns[1] &&
+                  typeof block.content.columns[1] === "object" &&
+                  "text" in block.content.columns[1]
+                  ? (block.content.columns[1] as { text?: unknown }).text ?? ""
+                  : "",
+              )}
+              disabled={!canEdit}
+            />
+          </FormField>
+        </>
+      ) : null}
+
+      {block.blockType !== "divider" ? (
+        <label className="txk-check-field">
+          <input
+            type="checkbox"
+            name="required"
+            defaultChecked={block.required}
+            disabled={!canEdit}
+          />
+          <span>Required content</span>
+        </label>
+      ) : null}
+
+      {canEdit ? (
+        <Button tone="primary" type="submit">
+          Save block properties
+        </Button>
+      ) : null}
+    </form>
+  );
+}
+
 export function LessonEditor({
   course: initialCourse,
   lessonId,
@@ -145,6 +443,7 @@ export function LessonEditor({
   const [selectedId, setSelectedId] = useState<string | null>(
     lesson?.blocks[0]?.lessonBlockId ?? null,
   );
+  const [blockEditorOpen, setBlockEditorOpen] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("Saved");
   const [error, setError] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -273,6 +572,7 @@ export function LessonEditor({
       );
       adopt(body);
       setSelectedId(null);
+      setBlockEditorOpen(false);
       setSaveState("Saved");
     } catch (cause) {
       setSaveState("Save failed");
@@ -429,7 +729,7 @@ export function LessonEditor({
         url,
         mediaAssetId: asset.mediaAssetId,
         label:
-          String(selected.content.label ?? "").trim() || asset.displayName,
+          String(block.content.label ?? "").trim() || asset.displayName,
       },
     });
   }
@@ -494,14 +794,17 @@ export function LessonEditor({
     }
   }
 
-  async function saveSelectedProperties(event: FormEvent<HTMLFormElement>) {
+  async function saveBlockProperties(
+    block: EmployerLearningLessonBlock,
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
-    if (!selected || !canEdit || selected.blockType === "rich_text") return;
+    if (!canEdit || block.blockType === "rich_text") return;
     const form = new FormData(event.currentTarget);
     const title = String(form.get("title") ?? "").trim() || null;
-    let content: Record<string, unknown> = { ...selected.content };
+    let content: Record<string, unknown> = { ...block.content };
 
-    switch (selected.blockType) {
+    switch (block.blockType) {
       case "heading":
         content = {
           text: String(form.get("text") ?? "").trim(),
@@ -524,7 +827,7 @@ export function LessonEditor({
         break;
       case "image":
         content = {
-          ...selected.content,
+          ...block.content,
           url: String(form.get("url") ?? "").trim(),
           alt: String(form.get("alt") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
@@ -532,7 +835,7 @@ export function LessonEditor({
         break;
       case "video":
         content = {
-          ...selected.content,
+          ...block.content,
           url: String(form.get("url") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
           posterUrl: String(form.get("posterUrl") ?? "").trim() || null,
@@ -546,7 +849,7 @@ export function LessonEditor({
         break;
       case "audio":
         content = {
-          ...selected.content,
+          ...block.content,
           url: String(form.get("url") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
         };
@@ -554,7 +857,7 @@ export function LessonEditor({
       case "document":
       case "download":
         content = {
-          ...selected.content,
+          ...block.content,
           url: String(form.get("url") ?? "").trim(),
           label: String(form.get("label") ?? "").trim(),
         };
@@ -591,11 +894,12 @@ export function LessonEditor({
         break;
     }
 
-    await saveBlock(selected, {
+    await saveBlock(block, {
       title,
       content,
       required: form.get("required") === "on",
     });
+    setBlockEditorOpen(false);
   }
 
   function onDropCanvas(event: React.DragEvent<HTMLElement>, index?: number) {
@@ -811,10 +1115,10 @@ export function LessonEditor({
                 {selected.blockType === "heading" ? (
                   <>
                     <FormField label="Heading text">
-                      <Input name="text" defaultValue={String(selected.content.text ?? "")} disabled={!canEdit} />
+                      <Input name="text" defaultValue={String(block.content.text ?? "")} disabled={!canEdit} />
                     </FormField>
                     <FormField label="Heading level">
-                      <select className="txk-input" name="level" defaultValue={String(selected.content.level ?? 2)} disabled={!canEdit}>
+                      <select className="txk-input" name="level" defaultValue={String(block.content.level ?? 2)} disabled={!canEdit}>
                         <option value="2">H2</option>
                         <option value="3">H3</option>
                         <option value="4">H4</option>
@@ -826,25 +1130,25 @@ export function LessonEditor({
                 {selected.blockType === "list" ? (
                   <>
                     <FormField label="List items" help="One item per line">
-                      <Textarea name="items" defaultValue={Array.isArray(selected.content.items) ? selected.content.items.join("\n") : ""} disabled={!canEdit} />
+                      <Textarea name="items" defaultValue={Array.isArray(block.content.items) ? block.content.items.join("\n") : ""} disabled={!canEdit} />
                     </FormField>
-                    <label className="txk-check-field"><input type="checkbox" name="ordered" defaultChecked={Boolean(selected.content.ordered)} disabled={!canEdit} /><span>Numbered list</span></label>
+                    <label className="txk-check-field"><input type="checkbox" name="ordered" defaultChecked={Boolean(block.content.ordered)} disabled={!canEdit} /><span>Numbered list</span></label>
                   </>
                 ) : null}
 
                 {["text","callout","safety_note"].includes(selected.blockType) ? (
                   <FormField label="Text">
-                    <Textarea name="text" defaultValue={String(selected.content.text ?? "")} disabled={!canEdit} />
+                    <Textarea name="text" defaultValue={String(block.content.text ?? "")} disabled={!canEdit} />
                   </FormField>
                 ) : null}
 
                 {selected.blockType === "image" ? (
                   <>
                     <FormField label="Image URL" help="Use an uploaded Employer asset or an HTTPS image URL.">
-                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
                     </FormField>
-                    <FormField label="Alt text"><Input name="alt" defaultValue={String(selected.content.alt ?? "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Alt text"><Input name="alt" defaultValue={String(block.content.alt ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
                   </>
                 ) : null}
 
@@ -854,31 +1158,31 @@ export function LessonEditor({
                       label="Video URL"
                       help="Supports uploaded video plus YouTube, Vimeo, Loom, Wistia and Dailymotion URLs."
                     >
-                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
                     </FormField>
                     <FormField label="Poster / thumbnail URL">
-                      <Input name="posterUrl" defaultValue={String(selected.content.posterUrl ?? "")} disabled={!canEdit} />
+                      <Input name="posterUrl" defaultValue={String(block.content.posterUrl ?? "")} disabled={!canEdit} />
                     </FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
                     <FormField
                       label="VTT captions URL"
                       help="Upload a .vtt file in the Employer Media Library and choose Use as captions, or enter an HTTPS/internal VTT URL."
                     >
-                      <Input name="captionsUrl" defaultValue={String(selected.content.captionsUrl ?? "")} disabled={!canEdit} />
+                      <Input name="captionsUrl" defaultValue={String(block.content.captionsUrl ?? "")} disabled={!canEdit} />
                     </FormField>
                     <div className="txk-form-grid-2">
                       <FormField label="Caption language">
-                        <Input name="captionLanguage" defaultValue={String(selected.content.captionLanguage ?? "en")} disabled={!canEdit} />
+                        <Input name="captionLanguage" defaultValue={String(block.content.captionLanguage ?? "en")} disabled={!canEdit} />
                       </FormField>
                       <FormField label="Caption label">
-                        <Input name="captionLabel" defaultValue={String(selected.content.captionLabel ?? "English")} disabled={!canEdit} />
+                        <Input name="captionLabel" defaultValue={String(block.content.captionLabel ?? "English")} disabled={!canEdit} />
                       </FormField>
                     </div>
                     <FormField
                       label="Transcript"
                       help="Optional accessible text transcript. Streaming providers may also provide their own captions."
                     >
-                      <Textarea name="transcript" defaultValue={String(selected.content.transcript ?? "")} disabled={!canEdit} />
+                      <Textarea name="transcript" defaultValue={String(block.content.transcript ?? "")} disabled={!canEdit} />
                     </FormField>
                   </>
                 ) : null}
@@ -886,32 +1190,32 @@ export function LessonEditor({
                 {selected.blockType === "audio" ? (
                   <>
                     <FormField label="Audio URL">
-                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
                     </FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
                   </>
                 ) : null}
 
                 {["document","download","link","embed","button"].includes(selected.blockType) ? (
                   <>
-                    <FormField label="URL"><Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="URL"><Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} /></FormField>
                     {selected.blockType !== "embed" ? (
-                      <FormField label="Label"><Input name="label" defaultValue={String(selected.content.label ?? "")} disabled={!canEdit} /></FormField>
+                      <FormField label="Label"><Input name="label" defaultValue={String(block.content.label ?? "")} disabled={!canEdit} /></FormField>
                     ) : null}
                   </>
                 ) : null}
 
                 {selected.blockType === "accordion" ? (
                   <>
-                    <FormField label="Accordion title"><Input name="accordionTitle" defaultValue={String(selected.content.title ?? "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Body"><Textarea name="body" defaultValue={String(selected.content.body ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Accordion title"><Input name="accordionTitle" defaultValue={String(block.content.title ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Body"><Textarea name="body" defaultValue={String(block.content.body ?? "")} disabled={!canEdit} /></FormField>
                   </>
                 ) : null}
 
                 {selected.blockType === "columns" ? (
                   <>
-                    <FormField label="Left column"><Textarea name="column1" defaultValue={String(Array.isArray(selected.content.columns) && selected.content.columns[0] && typeof selected.content.columns[0] === "object" && "text" in selected.content.columns[0] ? (selected.content.columns[0] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Right column"><Textarea name="column2" defaultValue={String(Array.isArray(selected.content.columns) && selected.content.columns[1] && typeof selected.content.columns[1] === "object" && "text" in selected.content.columns[1] ? (selected.content.columns[1] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Left column"><Textarea name="column1" defaultValue={String(Array.isArray(block.content.columns) && block.content.columns[0] && typeof block.content.columns[0] === "object" && "text" in block.content.columns[0] ? (block.content.columns[0] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Right column"><Textarea name="column2" defaultValue={String(Array.isArray(block.content.columns) && block.content.columns[1] && typeof block.content.columns[1] === "object" && "text" in block.content.columns[1] ? (block.content.columns[1] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
                   </>
                 ) : null}
 
