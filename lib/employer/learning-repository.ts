@@ -4,7 +4,10 @@ import type { EmployerContext } from "@/lib/employer/types";
 import type {
   EmployerLearningBlockInput,
   EmployerLearningLessonInput,
+  EmployerLearningCheckpointInput,
+  EmployerLearningPassingRequirement,
   EmployerMicroCertAuthoringDetail,
+  EmployerMicroCertModuleDetail,
   EmployerMicroCertDetail,
   EmployerMicroCertSummary,
   EmployerLearningReusableLibrary,
@@ -26,7 +29,7 @@ function learningRpcError(error: { message?: string }) {
     throw new Response(message, { status: 409 });
   }
   if (
-    /invalid|required|must be|outside|unknown|eligibility|duration|badge|lessonIds|lessonBlockIds|content block|estimatedMinutes|URL/i.test(
+    /invalid|required|must be|outside|unknown|eligibility|duration|badge|certification|lessonIds|lessonBlockIds|checkpoint|passingRequirement|minimumCheckpointPercent|content block|estimatedMinutes|URL/i.test(
       message,
     )
   ) {
@@ -391,5 +394,82 @@ export async function insertEmployerLearningLessonTemplate(
     p_micro_cert_id: microCertId,
     p_lesson_template_id: lessonTemplateId,
     p_section_id: sectionId ?? null,
+  });
+}
+
+
+export async function getEmployerMicroCertModuleDetail(
+  context: EmployerContext,
+  microCertId: string,
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_module_detail", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+  });
+}
+
+export async function createEmployerLearningCheckpoint(
+  context: EmployerContext,
+  microCertId: string,
+  input: EmployerLearningCheckpointInput,
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_checkpoint_create", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_payload: input,
+  });
+}
+
+export async function updateEmployerLearningCheckpoint(
+  context: EmployerContext,
+  microCertId: string,
+  checkpointId: string,
+  input: EmployerLearningCheckpointInput,
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_checkpoint_update", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_checkpoint_id: checkpointId,
+    p_payload: input,
+  });
+}
+
+export async function deleteEmployerLearningCheckpoint(
+  context: EmployerContext,
+  microCertId: string,
+  checkpointId: string,
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_checkpoint_delete", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_checkpoint_id: checkpointId,
+  });
+}
+
+export async function reorderEmployerLearningCheckpoints(
+  context: EmployerContext,
+  microCertId: string,
+  checkpointIds: string[],
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_checkpoints_reorder", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_checkpoint_ids: checkpointIds,
+  });
+}
+
+export async function updateEmployerLearningRequirements(
+  context: EmployerContext,
+  microCertId: string,
+  requirement: EmployerLearningPassingRequirement,
+  companyBadgeId?: string | null,
+  certificationDefinitionId?: string | null,
+) {
+  return rpc<EmployerMicroCertModuleDetail>("employer_micro_cert_requirements_update", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_requirement: requirement,
+    p_company_badge_id: companyBadgeId ?? null,
+    p_certification_definition_id: certificationDefinitionId ?? null,
   });
 }
