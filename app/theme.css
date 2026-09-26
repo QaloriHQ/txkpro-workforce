@@ -2773,3 +2773,78 @@ html[data-theme="dark"] .theme-toggle-icon .theme-icon-sun {
     display: block;
   }
 }
+
+
+/* ============================================================
+   W11-04F — Explicit Lesson Component Actions
+   ============================================================ */
+.txk-editor-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.txk-editor-block-actions .txk-button {
+  min-height: 32px;
+}
+.txk-editor-block-actions .txk-button svg {
+  width: 15px;
+  height: 15px;
+}
+.txk-block-editor-dialog {
+  width: min(680px, 100%);
+}
+.txk-block-editor-secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--txk-border);
+}
+.txk-block-editor-dialog h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -.025em;
+  text-transform: capitalize;
+}
+
+@media (max-width: 760px) {
+  .txk-editor-block > header {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px;
+  }
+  .txk-editor-block > header > span {
+    min-width: 0;
+  }
+  .txk-editor-block-actions {
+    flex: 0 0 100%;
+    width: 100%;
+    justify-content: stretch;
+    padding-top: 4px;
+  }
+  .txk-editor-block-actions .txk-button {
+    min-height: 40px;
+    flex: 1 1 auto;
+  }
+  .txk-editor-block-actions .txk-button:nth-of-type(3),
+  .txk-editor-block-actions .txk-button:nth-of-type(4) {
+    flex: 0 0 40px;
+    padding-inline: 9px;
+  }
+  .txk-block-editor-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+  .txk-block-editor-dialog {
+    width: 100%;
+    max-height: 86dvh;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .txk-block-editor-secondary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
