@@ -5,12 +5,13 @@ export function CourseAuthoringNav({
   active,
 }: {
   microCertId: string;
-  active: "overview" | "structure" | "preview";
+  active: "overview" | "structure" | "checkpoints" | "preview";
 }) {
   const base = `/employer/learning/${encodeURIComponent(microCertId)}`;
   const items = [
     { key: "overview", label: "Overview", href: base },
     { key: "structure", label: "Structure", href: `${base}/structure` },
+    { key: "checkpoints", label: "Checkpoints", href: `${base}/checkpoints` },
     { key: "preview", label: "Preview as student", href: `${base}/preview` },
   ] as const;
 
