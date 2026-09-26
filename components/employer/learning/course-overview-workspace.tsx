@@ -92,6 +92,8 @@ export function CourseOverviewWorkspace({
             String(form.get("equipmentProcessContext") ?? "").trim() || null,
           safetyNotes: String(form.get("safetyNotes") ?? "").trim() || null,
           durationMinutes: duration ? Number(duration) : null,
+          contentType: String(form.get("contentType") ?? "mixed"),
+          contentUrl: String(form.get("contentUrl") ?? "").trim() || null,
           status: String(form.get("status") ?? "draft"),
           expectedVersionNumber: course.currentVersion.versionNumber,
         }),
@@ -213,6 +215,30 @@ export function CourseOverviewWorkspace({
               </FormField>
               <FormField label="Safety notes">
                 <Textarea name="safetyNotes" defaultValue={course.currentVersion.safetyNotes ?? ""} disabled={!canEdit} />
+              </FormField>
+            </div>
+            <div className="txk-form-grid-2">
+              <FormField label="Primary content type">
+                <select
+                  className="txk-input"
+                  name="contentType"
+                  defaultValue={course.currentVersion.contentType || "mixed"}
+                  disabled={!canEdit}
+                >
+                  <option value="mixed">Mixed</option>
+                  <option value="video">Video</option>
+                  <option value="embed">Embed</option>
+                  <option value="document">Document</option>
+                  <option value="link">Link</option>
+                </select>
+              </FormField>
+              <FormField label="Primary content URL">
+                <Input
+                  name="contentUrl"
+                  type="url"
+                  defaultValue={course.currentVersion.contentUrl ?? ""}
+                  disabled={!canEdit}
+                />
               </FormField>
             </div>
             <FormField label="Estimated duration (minutes)">
