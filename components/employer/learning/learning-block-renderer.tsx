@@ -185,6 +185,8 @@ export function LearningBlockRenderer({
   if (block.blockType === "video") {
     const src = String(content.url ?? "");
     const embed = externalVideoEmbedUrl(src);
+    const captionsUrl = String(content.captionsUrl ?? "").trim();
+    const transcript = String(content.transcript ?? "").trim();
     return (
       <div className="txk-learner-media">
         {embed ? (
@@ -199,10 +201,25 @@ export function LearningBlockRenderer({
             src={src}
             poster={content.posterUrl ? String(content.posterUrl) : undefined}
           >
+            {captionsUrl ? (
+              <track
+                kind="captions"
+                src={captionsUrl}
+                srcLang={String(content.captionLanguage ?? "en")}
+                label={String(content.captionLabel ?? "English")}
+                default
+              />
+            ) : null}
             Your browser does not support video playback.
           </video>
         )}
         {content.caption ? <p>{String(content.caption)}</p> : null}
+        {transcript ? (
+          <details className="txk-learner-transcript">
+            <summary>Transcript</summary>
+            <p>{transcript}</p>
+          </details>
+        ) : null}
       </div>
     );
   }
