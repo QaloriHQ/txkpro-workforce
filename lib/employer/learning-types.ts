@@ -227,3 +227,90 @@ export type EmployerLearningBlockInput = {
   content?: EmployerLearningBlockContent;
   required?: boolean;
 };
+
+
+export const EMPLOYER_LEARNING_CHECKPOINT_TYPES = [
+  "acknowledgement",
+  "confirmation",
+  "reflection",
+] as const;
+export type EmployerLearningCheckpointType =
+  (typeof EMPLOYER_LEARNING_CHECKPOINT_TYPES)[number];
+
+export type EmployerLearningCheckpoint = {
+  checkpointId: string;
+  microCertVersionId: string;
+  sequence: number;
+  title: string | null;
+  prompt: string;
+  checkpointType: EmployerLearningCheckpointType;
+  config: Record<string, unknown>;
+  required: boolean;
+  weight: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningCheckpointInput = {
+  title?: string | null;
+  prompt?: string;
+  checkpointType?: EmployerLearningCheckpointType;
+  config?: Record<string, unknown>;
+  required?: boolean;
+  weight?: number;
+};
+
+export type EmployerLearningPassingRequirement = {
+  completionRuleVersion: 1;
+  checkpointMode: "all_required" | "weighted_percent";
+  minimumCheckpointPercent: number;
+  requireAllRequiredLessons: boolean;
+  requireAllRequiredAssessments: boolean;
+};
+
+export type EmployerLearningAssessmentSummary = {
+  assessmentId: string;
+  lessonId: string | null;
+  sequence: number;
+  title: string;
+  description: string | null;
+  assessmentType: "checkpoint" | "lesson_quiz" | "final_assessment";
+  passingScore: number;
+  maxAttempts: number | null;
+  required: boolean;
+  randomizeQuestions: boolean;
+  showFeedback: boolean;
+  questionCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerLearningCertificationSummary = {
+  certificationDefinitionId: string;
+  title: string;
+  description: string | null;
+  criteria: Record<string, unknown>;
+  version: number;
+  active: boolean;
+  expiresAfterDays: number | null;
+};
+
+export type EmployerLearningResourceSummary = {
+  primaryContentType: string;
+  primaryContentUrl: string | null;
+  resources: Array<{
+    lessonId: string;
+    lessonTitle: string;
+    lessonBlockId: string;
+    blockType: LessonBlockType;
+    title: string | null;
+    url: string;
+  }>;
+};
+
+export type EmployerMicroCertModuleDetail = EmployerMicroCertAuthoringDetail & {
+  checkpoints: EmployerLearningCheckpoint[];
+  assessmentSummary: EmployerLearningAssessmentSummary[];
+  certification: EmployerLearningCertificationSummary | null;
+  resourceSummary: EmployerLearningResourceSummary;
+};
