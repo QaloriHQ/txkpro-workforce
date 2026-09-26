@@ -729,7 +729,7 @@ export function LessonEditor({
         url,
         mediaAssetId: asset.mediaAssetId,
         label:
-          String(block.content.label ?? "").trim() || asset.displayName,
+          String(selected.content.label ?? "").trim() || asset.displayName,
       },
     });
   }
@@ -902,6 +902,15 @@ export function LessonEditor({
     setBlockEditorOpen(false);
   }
 
+  function openBlockEditor(block: EmployerLearningLessonBlock) {
+    setSelectedId(block.lessonBlockId);
+    if (block.blockType === "rich_text") {
+      requestAnimationFrame(() => editorRef.current?.focus());
+      return;
+    }
+    setBlockEditorOpen(true);
+  }
+
   function onDropCanvas(event: React.DragEvent<HTMLElement>, index?: number) {
     event.preventDefault();
     const componentType = event.dataTransfer.getData("application/x-txk-component") as LessonBlockType;
@@ -1015,12 +1024,67 @@ export function LessonEditor({
               <header>
                 <Bars3Icon aria-hidden="true" />
                 <span>{block.blockType.replaceAll("_", " ")}</span>
-                <div>
-                  <Button size="sm" type="button" disabled={!canEdit || index === 0} onClick={(event) => { event.stopPropagation(); void reorder(index, index - 1); }}>
-                    <ArrowUpIcon aria-hidden="true" /><span className="sr-only">Move up</span>
+                <div className="txk-editor-block-actions">
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openBlockEditor(block);
+                    }}
+                  >
+                    <PencilSquareIcon aria-hidden="true" />
+                    <span>Edit</span>
                   </Button>
-                  <Button size="sm" type="button" disabled={!canEdit || index === lesson.blocks.length - 1} onClick={(event) => { event.stopPropagation(); void reorder(index, index + 1); }}>
-                    <ArrowDownIcon aria-hidden="true" /><span className="sr-only">Move down</span>
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void duplicateBlock(block);
+                    }}
+                  >
+                    <DocumentDuplicateIcon aria-hidden="true" />
+                    <span>Duplicate</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={!canEdit || index === 0}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void reorder(index, index - 1);
+                    }}
+                  >
+                    <ArrowUpIcon aria-hidden="true" />
+                    <span className="sr-only">Move up</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={!canEdit || index === lesson.blocks.length - 1}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void reorder(index, index + 1);
+                    }}
+                  >
+                    <ArrowDownIcon aria-hidden="true" />
+                    <span className="sr-only">Move down</span>
+                  </Button>
+                  <Button
+                    size="sm"
+                    tone="danger"
+                    type="button"
+                    disabled={!canEdit}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void deleteBlock(block);
+                    }}
+                  >
+                    <TrashIcon aria-hidden="true" />
+                    <span>Delete</span>
                   </Button>
                 </div>
               </header>
@@ -1106,128 +1170,16 @@ export function LessonEditor({
             <p className="txk-eyebrow">Selected block</p>
             <h3>{selected.title || selected.blockType.replaceAll("_", " ")}</h3>
 
-            {selected.blockType !== "rich_text" ? (
-              <form className="txk-form-stack" onSubmit={saveSelectedProperties}>
-                <FormField label="Block title">
-                  <Input name="title" defaultValue={selected.title ?? ""} disabled={!canEdit} />
-                </FormField>
-
-                {selected.blockType === "heading" ? (
-                  <>
-                    <FormField label="Heading text">
-                      <Input name="text" defaultValue={String(block.content.text ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <FormField label="Heading level">
-                      <select className="txk-input" name="level" defaultValue={String(block.content.level ?? 2)} disabled={!canEdit}>
-                        <option value="2">H2</option>
-                        <option value="3">H3</option>
-                        <option value="4">H4</option>
-                      </select>
-                    </FormField>
-                  </>
-                ) : null}
-
-                {selected.blockType === "list" ? (
-                  <>
-                    <FormField label="List items" help="One item per line">
-                      <Textarea name="items" defaultValue={Array.isArray(block.content.items) ? block.content.items.join("\n") : ""} disabled={!canEdit} />
-                    </FormField>
-                    <label className="txk-check-field"><input type="checkbox" name="ordered" defaultChecked={Boolean(block.content.ordered)} disabled={!canEdit} /><span>Numbered list</span></label>
-                  </>
-                ) : null}
-
-                {["text","callout","safety_note"].includes(selected.blockType) ? (
-                  <FormField label="Text">
-                    <Textarea name="text" defaultValue={String(block.content.text ?? "")} disabled={!canEdit} />
-                  </FormField>
-                ) : null}
-
-                {selected.blockType === "image" ? (
-                  <>
-                    <FormField label="Image URL" help="Use an uploaded Employer asset or an HTTPS image URL.">
-                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <FormField label="Alt text"><Input name="alt" defaultValue={String(block.content.alt ?? "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
-                  </>
-                ) : null}
-
-                {selected.blockType === "video" ? (
-                  <>
-                    <FormField
-                      label="Video URL"
-                      help="Supports uploaded video plus YouTube, Vimeo, Loom, Wistia and Dailymotion URLs."
-                    >
-                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <FormField label="Poster / thumbnail URL">
-                      <Input name="posterUrl" defaultValue={String(block.content.posterUrl ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
-                    <FormField
-                      label="VTT captions URL"
-                      help="Upload a .vtt file in the Employer Media Library and choose Use as captions, or enter an HTTPS/internal VTT URL."
-                    >
-                      <Input name="captionsUrl" defaultValue={String(block.content.captionsUrl ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <div className="txk-form-grid-2">
-                      <FormField label="Caption language">
-                        <Input name="captionLanguage" defaultValue={String(block.content.captionLanguage ?? "en")} disabled={!canEdit} />
-                      </FormField>
-                      <FormField label="Caption label">
-                        <Input name="captionLabel" defaultValue={String(block.content.captionLabel ?? "English")} disabled={!canEdit} />
-                      </FormField>
-                    </div>
-                    <FormField
-                      label="Transcript"
-                      help="Optional accessible text transcript. Streaming providers may also provide their own captions."
-                    >
-                      <Textarea name="transcript" defaultValue={String(block.content.transcript ?? "")} disabled={!canEdit} />
-                    </FormField>
-                  </>
-                ) : null}
-
-                {selected.blockType === "audio" ? (
-                  <>
-                    <FormField label="Audio URL">
-                      <Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} />
-                    </FormField>
-                    <FormField label="Caption"><Input name="caption" defaultValue={String(block.content.caption ?? "")} disabled={!canEdit} /></FormField>
-                  </>
-                ) : null}
-
-                {["document","download","link","embed","button"].includes(selected.blockType) ? (
-                  <>
-                    <FormField label="URL"><Input name="url" defaultValue={String(block.content.url ?? "")} disabled={!canEdit} /></FormField>
-                    {selected.blockType !== "embed" ? (
-                      <FormField label="Label"><Input name="label" defaultValue={String(block.content.label ?? "")} disabled={!canEdit} /></FormField>
-                    ) : null}
-                  </>
-                ) : null}
-
-                {selected.blockType === "accordion" ? (
-                  <>
-                    <FormField label="Accordion title"><Input name="accordionTitle" defaultValue={String(block.content.title ?? "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Body"><Textarea name="body" defaultValue={String(block.content.body ?? "")} disabled={!canEdit} /></FormField>
-                  </>
-                ) : null}
-
-                {selected.blockType === "columns" ? (
-                  <>
-                    <FormField label="Left column"><Textarea name="column1" defaultValue={String(Array.isArray(block.content.columns) && block.content.columns[0] && typeof block.content.columns[0] === "object" && "text" in block.content.columns[0] ? (block.content.columns[0] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
-                    <FormField label="Right column"><Textarea name="column2" defaultValue={String(Array.isArray(block.content.columns) && block.content.columns[1] && typeof block.content.columns[1] === "object" && "text" in block.content.columns[1] ? (block.content.columns[1] as { text?: unknown }).text ?? "" : "")} disabled={!canEdit} /></FormField>
-                  </>
-                ) : null}
-
-                {selected.blockType !== "divider" ? (
-                  <label className="txk-check-field"><input type="checkbox" name="required" defaultChecked={selected.required} disabled={!canEdit} /><span>Required content</span></label>
-                ) : null}
-
-                {canEdit ? <Button tone="primary" type="submit">Save block properties</Button> : null}
-              </form>
-            ) : null}
+            <BlockPropertiesForm
+              block={selected}
+              canEdit={canEdit}
+              onSubmit={(event) => saveBlockProperties(selected, event)}
+            />
 
             <div className="txk-form-stack">
+              <Button type="button" onClick={() => openBlockEditor(selected)} disabled={!canEdit}>
+                <PencilSquareIcon aria-hidden="true" /> Edit
+              </Button>
               <Button type="button" onClick={() => void duplicateBlock(selected)} disabled={!canEdit}>
                 <DocumentDuplicateIcon aria-hidden="true" /> Duplicate
               </Button>
@@ -1275,6 +1227,68 @@ export function LessonEditor({
           ) : <p className="muted">Save a block to reuse it across this Employer&apos;s courses.</p>}
         </Card>
       </aside>
+
+      {blockEditorOpen && selected && selected.blockType !== "rich_text" ? (
+        <div
+          className="txk-course-dialog-backdrop txk-block-editor-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) {
+              setBlockEditorOpen(false);
+            }
+          }}
+        >
+          <Card
+            className="txk-course-dialog txk-block-editor-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Edit ${selected.blockType.replaceAll("_", " ")} component`}
+          >
+            <div className="txk-inline-heading">
+              <div>
+                <p className="txk-eyebrow">Lesson component</p>
+                <h2>
+                  Edit {selected.blockType.replaceAll("_", " ")}
+                </h2>
+              </div>
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => setBlockEditorOpen(false)}
+              >
+                <XMarkIcon aria-hidden="true" />
+                <span className="sr-only">Close editor</span>
+              </Button>
+            </div>
+
+            <BlockPropertiesForm
+              block={selected}
+              canEdit={canEdit}
+              onSubmit={(event) => saveBlockProperties(selected, event)}
+            />
+
+            <div className="txk-block-editor-secondary-actions">
+              <Button
+                type="button"
+                onClick={() => void duplicateBlock(selected)}
+                disabled={!canEdit}
+              >
+                <DocumentDuplicateIcon aria-hidden="true" />
+                Duplicate
+              </Button>
+              <Button
+                tone="danger"
+                type="button"
+                onClick={() => void deleteBlock(selected)}
+                disabled={!canEdit}
+              >
+                <TrashIcon aria-hidden="true" />
+                Delete component
+              </Button>
+            </div>
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }
