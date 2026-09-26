@@ -13,6 +13,11 @@ import type {
   EmployerLearningReusableLibrary,
   EmployerLearningMediaAsset,
   EmployerLearningMediaReserveInput,
+  EmployerLearningAssessmentAuthoringDetail,
+  EmployerLearningAssessmentInput,
+  EmployerLearningAssessmentQuestionInput,
+  EmployerLearningStudentAssessment,
+  EmployerLearningAssessmentScoreResult,
   MicroCertEligibility,
   MicroCertInput,
   MicroCertStatus,
@@ -31,7 +36,7 @@ function learningRpcError(error: { message?: string }) {
     throw new Response(message, { status: 409 });
   }
   if (
-    /invalid|required|must be|outside|unknown|eligibility|duration|badge|certification|lessonIds|lessonBlockIds|checkpoint|passingRequirement|minimumCheckpointPercent|content block|estimatedMinutes|URL|MEDIA_ASSET_IN_USE|media file|media asset|file type/i.test(
+    /invalid|required|must be|outside|unknown|eligibility|duration|badge|certification|lessonIds|lessonBlockIds|checkpoint|assessment|question|answer key|passing score|maximum attempts|points|option|response|passingRequirement|minimumCheckpointPercent|content block|estimatedMinutes|URL|MEDIA_ASSET_IN_USE|media file|media asset|file type/i.test(
       message,
     )
   ) {
@@ -556,4 +561,199 @@ export async function finalizeEmployerLearningMediaDelete(
     p_employer_id: context.employerId,
     p_media_asset_id: mediaAssetId,
   });
+}
+
+
+export async function createEmployerLearningAssessment(
+  context: EmployerContext,
+  microCertId: string,
+  input: EmployerLearningAssessmentInput,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_create",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function getEmployerLearningAssessmentAuthoringDetail(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_authoring_detail",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+    },
+  );
+}
+
+export async function updateEmployerLearningAssessment(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  input: EmployerLearningAssessmentInput,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_update",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function deleteEmployerLearningAssessment(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+) {
+  return rpc<EmployerMicroCertModuleDetail>(
+    "employer_micro_cert_assessment_delete",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+    },
+  );
+}
+
+export async function duplicateEmployerLearningAssessment(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_duplicate",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+    },
+  );
+}
+
+export async function reorderEmployerLearningAssessments(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentIds: string[],
+) {
+  return rpc<EmployerMicroCertModuleDetail>(
+    "employer_micro_cert_assessments_reorder",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_ids: assessmentIds,
+    },
+  );
+}
+
+export async function createEmployerLearningAssessmentQuestion(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  input: EmployerLearningAssessmentQuestionInput,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_question_create",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function updateEmployerLearningAssessmentQuestion(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  questionId: string,
+  input: EmployerLearningAssessmentQuestionInput,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_question_update",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_question_id: questionId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function deleteEmployerLearningAssessmentQuestion(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  questionId: string,
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_question_delete",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_question_id: questionId,
+    },
+  );
+}
+
+export async function reorderEmployerLearningAssessmentQuestions(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  questionIds: string[],
+) {
+  return rpc<EmployerLearningAssessmentAuthoringDetail>(
+    "employer_micro_cert_assessment_questions_reorder",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_question_ids: questionIds,
+    },
+  );
+}
+
+export async function getEmployerLearningAssessmentPreview(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+) {
+  return rpc<EmployerLearningStudentAssessment>(
+    "employer_micro_cert_assessment_preview",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+    },
+  );
+}
+
+export async function scoreEmployerLearningAssessmentPreview(
+  context: EmployerContext,
+  microCertId: string,
+  assessmentId: string,
+  responses: Array<{ questionId: string; response: Record<string, unknown> }>,
+) {
+  return rpc<EmployerLearningAssessmentScoreResult>(
+    "employer_micro_cert_assessment_preview_score",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_assessment_id: assessmentId,
+      p_responses: responses,
+    },
+  );
 }
