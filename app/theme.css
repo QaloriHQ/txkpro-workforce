@@ -2203,3 +2203,263 @@ html[data-theme="dark"] .theme-toggle-icon .theme-icon-sun {
     justify-content: space-between;
   }
 }
+
+
+/* ============================================================
+   W11-05 — Module Detail + Checkpoints
+   ============================================================ */
+.txk-checkpoint-workspace {
+  display: grid;
+  gap: 16px;
+}
+.txk-checkpoint-metrics {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  margin: 0;
+}
+.txk-module-detail-grid,
+.txk-requirements-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+}
+.txk-module-detail-grid .txk-card,
+.txk-requirements-grid .txk-card,
+.txk-checkpoint-card,
+.txk-new-checkpoint-card {
+  box-shadow: none;
+}
+.txk-module-detail-grid h2,
+.txk-requirements-grid h2,
+.txk-new-checkpoint-card h3 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+.txk-module-detail-list {
+  display: grid;
+  gap: 0;
+  margin: 12px 0 0;
+}
+.txk-module-detail-list > div {
+  display: grid;
+  grid-template-columns: minmax(120px,.45fr) minmax(0,1fr);
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--txk-border);
+}
+.txk-module-detail-list dt {
+  color: var(--txk-text-muted);
+  font-size: 9px;
+  font-weight: 760;
+}
+.txk-module-detail-list dd {
+  margin: 0;
+  color: var(--txk-text-primary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.txk-module-detail-list dd span,
+.txk-module-detail-list dd small {
+  display: block;
+}
+.txk-module-detail-list dd a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--txk-info);
+  font-weight: 760;
+}
+.txk-module-detail-list dd a svg {
+  width: 13px;
+  height: 13px;
+}
+.txk-module-detail-list dd small {
+  margin-top: 4px;
+  color: var(--txk-text-muted);
+}
+.txk-resource-summary-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+.txk-resource-summary-list > div {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(100px,.6fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+}
+.txk-resource-summary-list strong,
+.txk-resource-summary-list span,
+.txk-resource-summary-list small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.txk-resource-summary-list strong { font-size: 10px; }
+.txk-resource-summary-list span,
+.txk-resource-summary-list small {
+  color: var(--txk-text-muted);
+  font-size: 8px;
+}
+.txk-checkpoint-list {
+  display: grid;
+  gap: 10px;
+}
+.txk-checkpoint-card {
+  display: grid;
+  gap: 10px;
+}
+.txk-checkpoint-card-head {
+  display: grid;
+  grid-template-columns: 30px minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.txk-checkpoint-card-head > div:nth-child(2) strong,
+.txk-checkpoint-card-head > div:nth-child(2) span {
+  display: block;
+}
+.txk-checkpoint-card-head > div:nth-child(2) strong {
+  font-size: 11px;
+}
+.txk-checkpoint-card-head > div:nth-child(2) span {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 8px;
+  text-transform: capitalize;
+}
+.txk-checkpoint-sequence {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--txk-border);
+  border-radius: 8px;
+  background: var(--txk-bg-subtle);
+  color: var(--txk-text-muted);
+  font-size: 9px;
+  font-weight: 850;
+}
+.txk-new-checkpoint-card {
+  margin-top: 12px;
+  border-style: dashed;
+}
+.txk-requirements-icon {
+  width: 25px;
+  height: 25px;
+  color: var(--txk-info);
+}
+.txk-assessment-summary-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+.txk-assessment-summary-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+}
+.txk-assessment-summary-list strong,
+.txk-assessment-summary-list span,
+.txk-assessment-summary-list small {
+  display: block;
+}
+.txk-assessment-summary-list strong { font-size: 10px; }
+.txk-assessment-summary-list span,
+.txk-assessment-summary-list small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 8px;
+}
+
+/* Previewed W11-05 checkpoint step */
+.txk-preview-checkpoints {
+  max-width: 780px;
+}
+.txk-preview-checkpoint-head {
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  gap: 9px;
+  align-items: center;
+}
+.txk-preview-checkpoint-head > span {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--txk-border);
+  border-radius: 8px;
+  color: var(--txk-text-muted);
+  font-size: 9px;
+  font-weight: 850;
+}
+.txk-preview-checkpoint-head strong,
+.txk-preview-checkpoint-head small {
+  display: block;
+}
+.txk-preview-checkpoint-head strong { font-size: 11px; }
+.txk-preview-checkpoint-head small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 8px;
+  text-transform: capitalize;
+}
+.txk-preview-checkpoint-control {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+  font-size: 10px;
+  font-weight: 720;
+}
+.txk-preview-checkpoint-control input {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 980px) {
+  .txk-checkpoint-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .txk-module-detail-grid,
+  .txk-requirements-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .txk-checkpoint-metrics {
+    grid-template-columns: 1fr;
+  }
+  .txk-module-detail-list > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .txk-resource-summary-list > div {
+    grid-template-columns: 1fr;
+  }
+  .txk-checkpoint-card-head,
+  .txk-preview-checkpoint-head {
+    grid-template-columns: 30px minmax(0,1fr);
+  }
+  .txk-checkpoint-card-head .txk-status-badge,
+  .txk-preview-checkpoint-head .txk-status-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
