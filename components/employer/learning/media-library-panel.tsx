@@ -42,6 +42,7 @@ type UploadState = {
   progress: number;
   status: "uploading" | "failed";
   error?: string;
+  retryable?: boolean;
 };
 
 const ACCEPTED =
@@ -327,6 +328,7 @@ export function MediaLibraryPanel({
       reservation,
       progress: 0,
       status: "uploading",
+      retryable: true,
     });
 
     await new Promise<void>((resolve, reject) => {
@@ -360,6 +362,10 @@ export function MediaLibraryPanel({
         },
         onError(cause) {
           const { kind, extension } = inferFile(file);
+          const limitFailure =
+            /response code:\s*413|maximum size exceeded|payload too large/i.test(
+              cause.message,
+            );
           const message = normalizeTusError(cause, file, kind, extension);
           setUploadState((current) =>
             current
@@ -367,6 +373,7 @@ export function MediaLibraryPanel({
                   ...current,
                   status: "failed",
                   error: message,
+                  retryable: !limitFailure,
                 }
               : current,
           );
@@ -565,7 +572,7 @@ export function MediaLibraryPanel({
             <span style={{ width: `${uploadState.progress}%` }} />
           </div>
           <div className="txk-form-actions">
-            {uploadState.status === "failed" ? (
+            {uploadState.status === "failed" && uploadState.retryable !== false ? (
               <Button size="sm" type="button" onClick={retryUpload}>
                 <ArrowPathIcon aria-hidden="true" />
                 Retry
