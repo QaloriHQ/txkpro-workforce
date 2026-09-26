@@ -11,6 +11,8 @@ import type {
   EmployerMicroCertDetail,
   EmployerMicroCertSummary,
   EmployerLearningReusableLibrary,
+  EmployerLearningMediaAsset,
+  EmployerLearningMediaReserveInput,
   MicroCertEligibility,
   MicroCertInput,
   MicroCertStatus,
@@ -29,7 +31,7 @@ function learningRpcError(error: { message?: string }) {
     throw new Response(message, { status: 409 });
   }
   if (
-    /invalid|required|must be|outside|unknown|eligibility|duration|badge|certification|lessonIds|lessonBlockIds|checkpoint|passingRequirement|minimumCheckpointPercent|content block|estimatedMinutes|URL/i.test(
+    /invalid|required|must be|outside|unknown|eligibility|duration|badge|certification|lessonIds|lessonBlockIds|checkpoint|passingRequirement|minimumCheckpointPercent|content block|estimatedMinutes|URL|MEDIA_ASSET_IN_USE|media file|media asset|file type/i.test(
       message,
     )
   ) {
@@ -471,5 +473,87 @@ export async function updateEmployerLearningRequirements(
     p_requirement: requirement,
     p_company_badge_id: companyBadgeId ?? null,
     p_certification_definition_id: certificationDefinitionId ?? null,
+  });
+}
+
+
+export async function duplicateEmployerLearningSection(
+  context: EmployerContext,
+  microCertId: string,
+  sectionId: string,
+) {
+  return rpc<EmployerMicroCertAuthoringDetail>("employer_micro_cert_section_duplicate", {
+    p_employer_id: context.employerId,
+    p_micro_cert_id: microCertId,
+    p_section_id: sectionId,
+  });
+}
+
+export async function reserveEmployerLearningMedia(
+  context: EmployerContext,
+  input: EmployerLearningMediaReserveInput,
+) {
+  return rpc<EmployerLearningMediaAsset>("employer_learning_media_reserve", {
+    p_employer_id: context.employerId,
+    p_filename: input.filename,
+    p_display_name: input.displayName ?? null,
+    p_media_kind: input.mediaKind,
+    p_mime_type: input.mimeType,
+    p_size_bytes: input.sizeBytes,
+    p_metadata: input.metadata ?? {},
+  });
+}
+
+export async function finalizeEmployerLearningMedia(
+  context: EmployerContext,
+  mediaAssetId: string,
+) {
+  return rpc<EmployerLearningMediaAsset>("employer_learning_media_finalize", {
+    p_employer_id: context.employerId,
+    p_media_asset_id: mediaAssetId,
+  });
+}
+
+export async function listEmployerLearningMedia(
+  context: EmployerContext,
+) {
+  return rpc<EmployerLearningMediaAsset[]>("employer_learning_media_list", {
+    p_employer_id: context.employerId,
+  });
+}
+
+export async function getEmployerLearningMedia(
+  context: EmployerContext,
+  mediaAssetId: string,
+) {
+  return rpc<EmployerLearningMediaAsset>("employer_learning_media_get", {
+    p_employer_id: context.employerId,
+    p_media_asset_id: mediaAssetId,
+  });
+}
+
+export async function guardEmployerLearningMediaDelete(
+  context: EmployerContext,
+  mediaAssetId: string,
+) {
+  return rpc<{
+    mediaAssetId: string;
+    bucketId: string;
+    storagePath: string;
+    status: string;
+    referenceCount: number;
+  }>("employer_learning_media_delete_guard", {
+    p_employer_id: context.employerId,
+    p_media_asset_id: mediaAssetId,
+  });
+}
+
+export async function finalizeEmployerLearningMediaDelete(
+  context: EmployerContext,
+  mediaAssetId: string,
+) {
+  return rpc<void>("employer_learning_media_delete_finalize", {
+    p_employer_id: context.employerId,
+    p_media_asset_id: mediaAssetId,
   });
 }
