@@ -114,7 +114,8 @@ export function CourseCheckpointsWorkspace({
 
   async function createCheckpoint(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const checkpointType = String(
       form.get("checkpointType") ?? "acknowledgement",
     ) as EmployerLearningCheckpointType;
@@ -132,7 +133,7 @@ export function CourseCheckpointsWorkspace({
           weight: Number(form.get("weight") ?? 1),
         }),
       });
-      event.currentTarget.reset();
+      formElement.reset();
     });
   }
 
