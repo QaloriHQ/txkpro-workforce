@@ -61,7 +61,6 @@ function normalizedRequirement(
 }
 
 function checkpointLabel(type: EmployerLearningCheckpointType) {
-  if (type === "safety_acknowledgement") return "Safety acknowledgement";
   return type.replaceAll("_", " ");
 }
 
