@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Temporary staging bootstrap. Remove immediately after demo identities are provisioned.
 
 function demoPassword(email: string) {
   const digest = createHash("sha256")
