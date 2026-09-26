@@ -7,6 +7,7 @@ import {
   Bars3Icon,
   BookmarkSquareIcon,
   DocumentDuplicateIcon,
+  EllipsisHorizontalIcon,
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
@@ -529,6 +530,7 @@ export function CourseStructureBuilder({
                 </div>
 
                 {canEdit ? (
+                  <>
                   <div className="txk-structure-section-actions">
                     <Button
                       size="sm"
@@ -613,6 +615,83 @@ export function CourseStructureBuilder({
                       </>
                     ) : null}
                   </div>
+                    <details className="txk-section-mobile-menu">
+                      <summary>
+                        <EllipsisHorizontalIcon aria-hidden="true" />
+                        <span>Section actions</span>
+                      </summary>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setModal({
+                              kind: "lesson-create",
+                              sectionId: group.sectionId,
+                            })
+                          }
+                        >
+                          <PlusIcon aria-hidden="true" />
+                          Add lesson
+                        </button>
+                        {!isUnsectioned && section ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModal({
+                                  kind: "section-edit",
+                                  sectionId: section.sectionId,
+                                })
+                              }
+                            >
+                              <PencilSquareIcon aria-hidden="true" />
+                              Edit section
+                            </button>
+                            <button
+                              type="button"
+                              disabled={Boolean(busy)}
+                              onClick={() =>
+                                duplicateSection(section.sectionId)
+                              }
+                            >
+                              <DocumentDuplicateIcon aria-hidden="true" />
+                              Duplicate section
+                            </button>
+                            <button
+                              type="button"
+                              disabled={groupIndex === 0 || Boolean(busy)}
+                              onClick={() => moveSection(groupIndex, -1)}
+                            >
+                              <ArrowUpIcon aria-hidden="true" />
+                              Move section up
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                groupIndex >= groups.length - 2 ||
+                                Boolean(busy)
+                              }
+                              onClick={() => moveSection(groupIndex, 1)}
+                            >
+                              <ArrowDownIcon aria-hidden="true" />
+                              Move section down
+                            </button>
+                            <button
+                              type="button"
+                              className="danger"
+                              disabled={Boolean(busy)}
+                              onClick={() =>
+                                deleteSection(section.sectionId)
+                              }
+                            >
+                              <TrashIcon aria-hidden="true" />
+                              Delete section
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    </details>
+                  </>
                 ) : null}
               </div>
 
