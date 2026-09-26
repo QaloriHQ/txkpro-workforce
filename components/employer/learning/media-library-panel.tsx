@@ -47,6 +47,11 @@ type UploadState = {
 const ACCEPTED =
   ".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.mov,.mp3,.m4a,.wav,.ogg,.pdf,.txt,.csv,.vtt,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
 
+const MB = 1024 * 1024;
+const DIRECT_UPLOAD_LIMIT_BYTES = 50 * MB;
+const IMAGE_UPLOAD_LIMIT_BYTES = 15 * MB;
+const VTT_UPLOAD_LIMIT_BYTES = 5 * MB;
+
 const EXTENSION_FALLBACK: Record<
   string,
   { kind: EmployerLearningMediaKind; mime: string }
@@ -104,6 +109,24 @@ function inferFile(file: File) {
   return { kind, mime, extension };
 }
 
+function uploadLimitMessage(
+  file: File,
+  kind: EmployerLearningMediaKind,
+  extension: string,
+) {
+  const actual = formatBytes(file.size);
+  if (extension === "vtt") {
+    return `${file.name} is ${actual}. VTT caption uploads are limited to 5 MB.`;
+  }
+  if (kind === "image") {
+    return `${file.name} is ${actual}. Image uploads are limited to 15 MB.`;
+  }
+  if (kind === "video") {
+    return `${file.name} is ${actual}. Direct video uploads are limited to 50 MB on the current TXKPRO staging Storage plan. For larger video, use YouTube, Vimeo, Loom, Wistia, or Dailymotion.`;
+  }
+  return `${file.name} is ${actual}. Direct ${kind} uploads are limited to 50 MB on the current TXKPRO staging Storage plan.`;
+}
+
 function validateFileLocally(
   file: File,
   kind: EmployerLearningMediaKind,
@@ -111,20 +134,31 @@ function validateFileLocally(
 ) {
   const maxBytes =
     extension === "vtt"
-      ? 5 * 1024 * 1024
+      ? VTT_UPLOAD_LIMIT_BYTES
       : kind === "image"
-        ? 15 * 1024 * 1024
-        : kind === "video"
-          ? 500 * 1024 * 1024
-          : kind === "audio"
-            ? 100 * 1024 * 1024
-            : 50 * 1024 * 1024;
+        ? IMAGE_UPLOAD_LIMIT_BYTES
+        : DIRECT_UPLOAD_LIMIT_BYTES;
+
   if (file.size <= 0) throw new Error("Media file must not be empty.");
   if (file.size > maxBytes) {
-    throw new Error(
-      `This ${kind} file is larger than the allowed upload size.`,
-    );
+    throw new Error(uploadLimitMessage(file, kind, extension));
   }
+}
+
+function normalizeTusError(
+  cause: Error,
+  file: File,
+  kind: EmployerLearningMediaKind,
+  extension: string,
+) {
+  if (
+    /response code:\s*413|maximum size exceeded|payload too large/i.test(
+      cause.message,
+    )
+  ) {
+    return uploadLimitMessage(file, kind, extension);
+  }
+  return cause.message;
 }
 
 function iconFor(kind: EmployerLearningMediaKind) {
@@ -325,16 +359,18 @@ export function MediaLibraryPanel({
           );
         },
         onError(cause) {
+          const { kind, extension } = inferFile(file);
+          const message = normalizeTusError(cause, file, kind, extension);
           setUploadState((current) =>
             current
               ? {
                   ...current,
                   status: "failed",
-                  error: cause.message,
+                  error: message,
                 }
               : current,
           );
-          reject(cause);
+          reject(new Error(message));
         },
         async onSuccess() {
           try {
@@ -426,11 +462,16 @@ export function MediaLibraryPanel({
     if (!uploadState || uploadState.status !== "failed") return;
     setError(null);
     try {
+      const { kind, extension } = inferFile(uploadState.file);
+      validateFileLocally(uploadState.file, kind, extension);
       await startTus(uploadState.file, uploadState.reservation);
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Unable to retry upload.",
+      const message =
+        cause instanceof Error ? cause.message : "Unable to retry upload.";
+      setUploadState((current) =>
+        current ? { ...current, status: "failed", error: message } : current,
       );
+      setError(message);
     }
   }
 
@@ -489,7 +530,7 @@ export function MediaLibraryPanel({
             <ArrowUpTrayIcon aria-hidden="true" />
             <strong>Upload media</strong>
             <span>
-              Images · video · audio · documents · VTT captions
+              Direct uploads ≤ 50 MB · images ≤ 15 MB · VTT captions ≤ 5 MB
             </span>
             <Button
               size="sm"
@@ -499,6 +540,10 @@ export function MediaLibraryPanel({
             >
               Choose file
             </Button>
+            <small>
+              Larger video? Add a YouTube, Vimeo, Loom, Wistia, or Dailymotion
+              URL to a Video block instead.
+            </small>
           </div>
         </>
       ) : null}
