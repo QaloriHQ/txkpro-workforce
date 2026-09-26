@@ -46,12 +46,43 @@ export function StudentCoursePreview({
   const requiredCheckpoints = course.checkpoints.filter(
     (checkpoint) => checkpoint.required,
   );
-  const requiredCheckpointsSatisfied = requiredCheckpoints.every((checkpoint) => {
-    const value = checkpointResponses[checkpoint.checkpointId];
-    return checkpoint.checkpointType === "reflection"
+  function checkpointSatisfied(checkpointId: string, checkpointType: string) {
+    const value = checkpointResponses[checkpointId];
+    return checkpointType === "reflection"
       ? typeof value === "string" && value.trim().length > 0
       : value === true;
-  });
+  }
+
+  const requiredCheckpointsSatisfied = requiredCheckpoints.every((checkpoint) =>
+    checkpointSatisfied(checkpoint.checkpointId, checkpoint.checkpointType),
+  );
+  const totalCheckpointWeight = course.checkpoints.reduce(
+    (sum, checkpoint) => sum + Number(checkpoint.weight || 0),
+    0,
+  );
+  const completedCheckpointWeight = course.checkpoints.reduce(
+    (sum, checkpoint) =>
+      checkpointSatisfied(checkpoint.checkpointId, checkpoint.checkpointType)
+        ? sum + Number(checkpoint.weight || 0)
+        : sum,
+    0,
+  );
+  const checkpointPercent =
+    totalCheckpointWeight > 0
+      ? Math.round((completedCheckpointWeight / totalCheckpointWeight) * 100)
+      : 100;
+  const rawRequirement = course.currentVersion.passingRequirement ?? {};
+  const checkpointMode =
+    rawRequirement.checkpointMode === "weighted_percent"
+      ? "weighted_percent"
+      : "all_required";
+  const minimumCheckpointPercent = Number(
+    rawRequirement.minimumCheckpointPercent ?? 100,
+  );
+  const checkpointRuleSatisfied =
+    requiredCheckpointsSatisfied &&
+    (checkpointMode === "all_required" ||
+      checkpointPercent >= minimumCheckpointPercent);
 
   const completedSteps =
     completed.size + (checkpointStepComplete && hasCheckpointStep ? 1 : 0);
@@ -244,6 +275,15 @@ export function StudentCoursePreview({
                   Complete the required interactions below. This is only a
                   preview; responses stay in this browser session.
                 </p>
+                <div className="txk-form-actions">
+                  <StatusBadge tone={checkpointRuleSatisfied ? "success" : "warning"}>
+                    {checkpointMode === "weighted_percent"
+                      ? `${checkpointPercent}% / ${minimumCheckpointPercent}% required`
+                      : requiredCheckpointsSatisfied
+                        ? "Required checkpoints complete"
+                        : "Required checkpoints incomplete"}
+                  </StatusBadge>
+                </div>
               </header>
 
               <div className="txk-preview-content txk-preview-checkpoints">
@@ -332,7 +372,7 @@ export function StudentCoursePreview({
                 <Button
                   type="button"
                   tone={checkpointStepComplete ? "default" : "primary"}
-                  disabled={!requiredCheckpointsSatisfied}
+                  disabled={!checkpointRuleSatisfied}
                   onClick={() =>
                     setCheckpointStepComplete((value) => !value)
                   }
