@@ -27,7 +27,7 @@ function learningRpcError(error: { message?: string }) {
   if (/not found/i.test(message)) {
     throw new Response(message, { status: 404 });
   }
-  if (/VERSION_CONFLICT|IMMUTABLE|LESSON_ARCHIVED/i.test(message)) {
+  if (/VERSION_CONFLICT|IMMUTABLE|LESSON_ARCHIVED|MEDIA_ASSET_IN_USE/i.test(message)) {
     throw new Response(message, { status: 409 });
   }
   if (
