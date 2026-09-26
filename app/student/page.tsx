@@ -2,12 +2,14 @@ import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { SignOutButton } from "@/components/sign-out-button";
 import { StudentInterviewResponseForm } from "@/components/student/interview-response-form";
+import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
   listStudentInterviews,
   listStudentPlacements,
 } from "@/lib/student/workflow-repository";
+import { listStudentEmployerTrainingAssignments } from "@/lib/student/learning-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,14 @@ export default async function StudentWorkspacePage() {
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
 
-  const [interviews, placements] = await Promise.all([
+  const [interviews, placements, trainingAssignments] = await Promise.all([
     listStudentInterviews(),
     listStudentPlacements(),
+    listStudentEmployerTrainingAssignments(),
   ]);
+  const activeTrainingCount = trainingAssignments.filter(
+    (assignment) => assignment.status !== "cancelled",
+  ).length;
 
   return (
     <>
@@ -29,7 +35,8 @@ export default async function StudentWorkspacePage() {
           <SignOutButton />
         </div>
       </header>
-      <main className="page-wrap">
+      <StudentWorkspaceNav active="workspace" trainingCount={activeTrainingCount} />
+      <main className="page-wrap student-training-page">
         <div className="page-heading">
           <div>
             <p className="eyebrow">Student workspace</p>
@@ -41,7 +48,34 @@ export default async function StudentWorkspacePage() {
           <span className="pill pill-good">{context.firstName || "Student"}</span>
         </div>
 
-        <section className="card">
+        <section className="card student-workspace-training-summary">
+          <div className="card-header">
+            <div>
+              <p className="eyebrow">Employer Training</p>
+              <h2>Assigned company training</h2>
+              <p className="card-sub">
+                Company-specific readiness training stays separate from Instructor Verified Skills.
+              </p>
+            </div>
+            <span className="pill pill-info">{activeTrainingCount}</span>
+          </div>
+          <div className="student-workspace-training-actions">
+            <a className="button button-brand" href="/student/employer-training">
+              Open Employer Training
+            </a>
+            <span className="muted">
+              {trainingAssignments.some((assignment) => assignment.status === "in_progress")
+                ? "You have training in progress."
+                : trainingAssignments.some((assignment) => assignment.status === "assigned")
+                  ? "You have training ready to start."
+                  : activeTrainingCount
+                    ? "Review your completed Employer Training."
+                    : "No Employer Training has been assigned yet."}
+            </span>
+          </div>
+        </section>
+
+        <section className="card" style={{ marginTop: 18 }}>
           <div className="card-header">
             <div>
               <h2>Interview Requests</h2>
