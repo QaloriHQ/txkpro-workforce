@@ -30,8 +30,10 @@ import {
   Textarea,
 } from "@/components/design-system";
 import { LearningBlockRenderer } from "@/components/employer/learning/learning-block-renderer";
+import { MediaLibraryPanel } from "@/components/employer/learning/media-library-panel";
 import type {
   EmployerLearningLessonBlock,
+  EmployerLearningMediaAsset,
   EmployerLearningReusableLibrary,
   EmployerMicroCertAuthoringDetail,
   LessonBlockType,
@@ -47,6 +49,7 @@ const palette: Array<{ type: LessonBlockType; label: string; group: string }> = 
   { type: "safety_note", label: "Safety note", group: "Content" },
   { type: "image", label: "Image", group: "Media" },
   { type: "video", label: "Video", group: "Media" },
+  { type: "audio", label: "Audio", group: "Media" },
   { type: "document", label: "Document", group: "Resources" },
   { type: "download", label: "Download", group: "Resources" },
   { type: "link", label: "Link", group: "Resources" },
@@ -107,6 +110,7 @@ function defaultPayload(type: LessonBlockType) {
     }
     case "image":
     case "video":
+    case "audio":
     case "document":
     case "download":
     case "link":
@@ -360,6 +364,91 @@ export function LessonEditor({
     }
   }
 
+  async function insertMediaAsset(
+    asset: EmployerLearningMediaAsset,
+    blockType: LessonBlockType,
+  ) {
+    if (!canEdit) return;
+    const url =
+      blockType === "download"
+        ? asset.downloadUrl ?? asset.contentUrl
+        : asset.contentUrl;
+    if (!url) {
+      setError("Media delivery URL is unavailable.");
+      return;
+    }
+
+    setSaveState("Saving…");
+    setError(null);
+    try {
+      const body = await requestJson(`${base}/blocks`, {
+        method: "POST",
+        body: JSON.stringify({
+          blockType,
+          title: asset.displayName,
+          content: {
+            url,
+            mediaAssetId: asset.mediaAssetId,
+            label: asset.displayName,
+            alt: "",
+            caption: "",
+          },
+          required: true,
+        }),
+      });
+      adopt(body);
+      const nextLesson = body.course
+        ? findLesson(body.course, lesson.lessonId)
+        : null;
+      setSelectedId(nextLesson?.blocks.at(-1)?.lessonBlockId ?? null);
+      setSaveState("Saved");
+    } catch (cause) {
+      setSaveState("Save failed");
+      setError(
+        cause instanceof Error ? cause.message : "Unable to insert media.",
+      );
+    }
+  }
+
+  async function replaceSelectedMedia(asset: EmployerLearningMediaAsset) {
+    if (!selected || !canEdit) return;
+    const blockType = selected.blockType;
+    const url =
+      blockType === "download"
+        ? asset.downloadUrl ?? asset.contentUrl
+        : asset.contentUrl;
+    if (!url) {
+      setError("Media delivery URL is unavailable.");
+      return;
+    }
+
+    await saveBlock(selected, {
+      title: selected.title || asset.displayName,
+      content: {
+        ...selected.content,
+        url,
+        mediaAssetId: asset.mediaAssetId,
+        label:
+          String(selected.content.label ?? "").trim() || asset.displayName,
+      },
+    });
+  }
+
+  async function usePosterAsset(asset: EmployerLearningMediaAsset) {
+    if (!selected || selected.blockType !== "video" || !canEdit) return;
+    if (!asset.contentUrl) {
+      setError("Poster delivery URL is unavailable.");
+      return;
+    }
+    await saveBlock(selected, {
+      content: {
+        ...selected.content,
+        posterUrl: asset.contentUrl,
+        posterMediaAssetId: asset.mediaAssetId,
+      },
+    });
+  }
+
   async function saveLessonSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -416,6 +505,7 @@ export function LessonEditor({
         break;
       case "image":
         content = {
+          ...selected.content,
           url: String(form.get("url") ?? "").trim(),
           alt: String(form.get("alt") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
@@ -423,12 +513,27 @@ export function LessonEditor({
         break;
       case "video":
         content = {
+          ...selected.content,
+          url: String(form.get("url") ?? "").trim(),
+          caption: String(form.get("caption") ?? "").trim(),
+          posterUrl: String(form.get("posterUrl") ?? "").trim() || null,
+        };
+        break;
+      case "audio":
+        content = {
+          ...selected.content,
           url: String(form.get("url") ?? "").trim(),
           caption: String(form.get("caption") ?? "").trim(),
         };
         break;
       case "document":
       case "download":
+        content = {
+          ...selected.content,
+          url: String(form.get("url") ?? "").trim(),
+          label: String(form.get("label") ?? "").trim(),
+        };
+        break;
       case "link":
       case "embed":
         content = {
@@ -710,7 +815,9 @@ export function LessonEditor({
 
                 {selected.blockType === "image" ? (
                   <>
-                    <FormField label="Image URL"><Input type="url" name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="Image URL" help="Use an uploaded Employer asset or an HTTPS image URL.">
+                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                    </FormField>
                     <FormField label="Alt text"><Input name="alt" defaultValue={String(selected.content.alt ?? "")} disabled={!canEdit} /></FormField>
                     <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
                   </>
@@ -718,14 +825,31 @@ export function LessonEditor({
 
                 {selected.blockType === "video" ? (
                   <>
-                    <FormField label="Video URL"><Input type="url" name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField
+                      label="Video URL"
+                      help="Supports uploaded video plus YouTube, Vimeo, Loom, Wistia and Dailymotion URLs."
+                    >
+                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                    </FormField>
+                    <FormField label="Poster / thumbnail URL">
+                      <Input name="posterUrl" defaultValue={String(selected.content.posterUrl ?? "")} disabled={!canEdit} />
+                    </FormField>
+                    <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
+                  </>
+                ) : null}
+
+                {selected.blockType === "audio" ? (
+                  <>
+                    <FormField label="Audio URL">
+                      <Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} />
+                    </FormField>
                     <FormField label="Caption"><Input name="caption" defaultValue={String(selected.content.caption ?? "")} disabled={!canEdit} /></FormField>
                   </>
                 ) : null}
 
                 {["document","download","link","embed","button"].includes(selected.blockType) ? (
                   <>
-                    <FormField label="URL"><Input type="url" name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} /></FormField>
+                    <FormField label="URL"><Input name="url" defaultValue={String(selected.content.url ?? "")} disabled={!canEdit} /></FormField>
                     {selected.blockType !== "embed" ? (
                       <FormField label="Label"><Input name="label" defaultValue={String(selected.content.label ?? "")} disabled={!canEdit} /></FormField>
                     ) : null}
@@ -767,6 +891,14 @@ export function LessonEditor({
             </div>
           </Card>
         ) : null}
+
+        <MediaLibraryPanel
+          canEdit={canEdit}
+          selectedBlock={selected}
+          onInsertAsset={insertMediaAsset}
+          onReplaceSelected={replaceSelectedMedia}
+          onUsePoster={usePosterAsset}
+        />
 
         <Card>
           <p className="txk-eyebrow">Employer library</p>
