@@ -112,7 +112,8 @@ export function CourseStructureBuilder({
 
   async function createSection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy("section");
     setError(null);
     try {
@@ -123,7 +124,7 @@ export function CourseStructureBuilder({
           description: String(form.get("description") ?? "").trim() || null,
         }),
       });
-      event.currentTarget.reset();
+      formElement.reset();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to create section.");
@@ -134,7 +135,8 @@ export function CourseStructureBuilder({
 
   async function createLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setBusy("lesson");
     setError(null);
     try {
@@ -147,7 +149,7 @@ export function CourseStructureBuilder({
           status: "draft",
         }),
       });
-      event.currentTarget.reset();
+      formElement.reset();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to create lesson.");
