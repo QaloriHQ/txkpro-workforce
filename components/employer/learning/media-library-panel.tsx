@@ -45,7 +45,7 @@ type UploadState = {
 };
 
 const ACCEPTED =
-  ".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.mov,.mp3,.m4a,.wav,.ogg,.pdf,.txt,.csv,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
+  ".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.mov,.mp3,.m4a,.wav,.ogg,.pdf,.txt,.csv,.vtt,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx";
 
 const EXTENSION_FALLBACK: Record<
   string,
@@ -66,6 +66,7 @@ const EXTENSION_FALLBACK: Record<
   pdf: { kind: "document", mime: "application/pdf" },
   txt: { kind: "document", mime: "text/plain" },
   csv: { kind: "document", mime: "text/csv" },
+  vtt: { kind: "document", mime: "text/vtt" },
   zip: { kind: "document", mime: "application/zip" },
   doc: { kind: "document", mime: "application/msword" },
   docx: {
@@ -100,7 +101,30 @@ function inferFile(file: File) {
         ? "audio"
         : "document";
 
-  return { kind, mime };
+  return { kind, mime, extension };
+}
+
+function validateFileLocally(
+  file: File,
+  kind: EmployerLearningMediaKind,
+  extension: string,
+) {
+  const maxBytes =
+    extension === "vtt"
+      ? 5 * 1024 * 1024
+      : kind === "image"
+        ? 15 * 1024 * 1024
+        : kind === "video"
+          ? 500 * 1024 * 1024
+          : kind === "audio"
+            ? 100 * 1024 * 1024
+            : 50 * 1024 * 1024;
+  if (file.size <= 0) throw new Error("Media file must not be empty.");
+  if (file.size > maxBytes) {
+    throw new Error(
+      `This ${kind} file is larger than the allowed upload size.`,
+    );
+  }
 }
 
 function iconFor(kind: EmployerLearningMediaKind) {
@@ -160,6 +184,7 @@ export function MediaLibraryPanel({
   onInsertAsset,
   onReplaceSelected,
   onUsePoster,
+  onUseCaptions,
 }: {
   canEdit: boolean;
   selectedBlock: EmployerLearningLessonBlock | null;
@@ -171,6 +196,9 @@ export function MediaLibraryPanel({
     asset: EmployerLearningMediaAsset,
   ) => Promise<void>;
   onUsePoster: (
+    asset: EmployerLearningMediaAsset,
+  ) => Promise<void>;
+  onUseCaptions: (
     asset: EmployerLearningMediaAsset,
   ) => Promise<void>;
 }) {
@@ -219,7 +247,8 @@ export function MediaLibraryPanel({
   }, []);
 
   async function reserve(file: File): Promise<UploadReservation> {
-    const { kind, mime } = inferFile(file);
+    const { kind, mime, extension } = inferFile(file);
+    validateFileLocally(file, kind, extension);
     const displayName = file.name.replace(/\.[^.]+$/, "");
     const response = await fetch("/api/employer/learning/media", {
       method: "POST",
@@ -460,7 +489,7 @@ export function MediaLibraryPanel({
             <ArrowUpTrayIcon aria-hidden="true" />
             <strong>Upload media</strong>
             <span>
-              Images · video · audio · PDF/Office/documents
+              Images · video · audio · documents · VTT captions
             </span>
             <Button
               size="sm"
@@ -518,6 +547,8 @@ export function MediaLibraryPanel({
           const canReplace = compatible(selectedBlock, asset);
           const posterCandidate =
             selectedBlock?.blockType === "video" && asset.mediaKind === "image";
+          const captionCandidate =
+            selectedBlock?.blockType === "video" && asset.extension === "vtt";
           return (
             <div className="txk-media-asset" key={asset.mediaAssetId}>
               <div className="txk-media-asset-icon">
@@ -567,6 +598,15 @@ export function MediaLibraryPanel({
                       onClick={() => onUsePoster(asset)}
                     >
                       Use as poster
+                    </Button>
+                  ) : null}
+                  {captionCandidate ? (
+                    <Button
+                      size="sm"
+                      type="button"
+                      onClick={() => onUseCaptions(asset)}
+                    >
+                      Use as captions
                     </Button>
                   ) : null}
                   <Button
