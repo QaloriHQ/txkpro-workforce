@@ -1159,9 +1159,21 @@ export function LessonEditor({
               </div>
             </div>
           ))}
-          <div className="txk-palette-future">
+          <div className="txk-palette-future txk-palette-assessment">
             <strong>Assessment</strong>
-            <small>Attach assessment/checkpoint references here after W11-05A. Answer keys remain outside lesson content.</small>
+            <small>
+              Build a lesson checkpoint or quiz separately from lesson content.
+              Answer keys remain outside learner content blocks.
+            </small>
+            <Link
+              className="txk-button txk-button-default txk-button-sm"
+              href={`/employer/learning/${encodeURIComponent(
+                course.microCertId,
+              )}/assessments?lesson=${encodeURIComponent(lesson.lessonId)}`}
+            >
+              <PlusIcon aria-hidden="true" />
+              Add lesson assessment
+            </Link>
           </div>
         </Card>
 
