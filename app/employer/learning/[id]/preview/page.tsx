@@ -7,7 +7,7 @@ import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
-import { getEmployerMicroCertAuthoringDetail } from "@/lib/employer/learning-repository";
+import { getEmployerMicroCertModuleDetail } from "@/lib/employer/learning-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function CoursePreviewPage({
   const { id } = await params;
   const query = await searchParams;
   const context = await requireEmployerContext({ approved: true });
-  const course = await getEmployerMicroCertAuthoringDetail(
+  const course = await getEmployerMicroCertModuleDetail(
     context,
     decodeURIComponent(id),
   );
