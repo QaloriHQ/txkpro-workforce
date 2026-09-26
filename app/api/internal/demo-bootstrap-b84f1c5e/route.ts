@@ -65,20 +65,38 @@ export async function GET() {
     return new Response("Not found", { status: 404 });
   }
 
-  const [student, instructor] = await Promise.all([
-    upsertDemoUser({
-      email: "student.demo@txkpro.com",
-      firstName: "Demo",
-      lastName: "Student",
-      requestedRole: "student",
-    }),
-    upsertDemoUser({
-      email: "instructor.demo@txkpro.com",
-      firstName: "Demo",
-      lastName: "Instructor",
-      requestedRole: "educator",
-    }),
-  ]);
+  try {
+    const [student, instructor] = await Promise.all([
+      upsertDemoUser({
+        email: "student.demo@txkpro.com",
+        firstName: "Demo",
+        lastName: "Student",
+        requestedRole: "student",
+      }),
+      upsertDemoUser({
+        email: "instructor.demo@txkpro.com",
+        firstName: "Demo",
+        lastName: "Instructor",
+        requestedRole: "educator",
+      }),
+    ]);
 
-  return Response.json({ ok: true, student, instructor });
+    return Response.json({ ok: true, student, instructor });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown demo bootstrap error.";
+    return Response.json(
+      {
+        ok: false,
+        error: message,
+        hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+        hasSecret: Boolean(
+          process.env.SUPABASE_SECRET_KEY ??
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+        ),
+        vercelEnv: process.env.VERCEL_ENV ?? null,
+      },
+      { status: 500 },
+    );
+  }
 }
