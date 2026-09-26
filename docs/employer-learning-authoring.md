@@ -13,6 +13,12 @@ Implementation note only. Canonical product/authorization/status rules remain in
   - lesson architecture and ordering
   - drag/drop plus keyboard move controls
   - Employer-wide lesson templates
+- `/employer/learning/:courseId/checkpoints` — Module Detail + Checkpoints
+  - learning objective, primary content reference, process/equipment context and safety notes
+  - simple interactive checkpoints
+  - deterministic completion requirements
+  - Company Badge / Employer Certification linkage summary
+  - assessment metadata summary only; answer keys remain outside this surface
 - `/employer/learning/:courseId/lessons/:lessonId` — Lesson Editor
   - course outline
   - rich editing canvas
@@ -29,8 +35,9 @@ Implementation note only. Canonical product/authorization/status rules remain in
 - Publication is course-version based.
 - Reusable blocks and lesson templates are Employer-wide.
 - Live/archived versions are immutable.
-- Student Preview is interactive but non-persistent.
-- Assessment authoring remains owned by W11-05A.
+- Student Preview is interactive but non-persistent, including checkpoint simulation.
+- Simple course checkpoints and deterministic completion requirement configuration are owned by W11-05.
+- Full assessment/question/answer-key authoring remains owned by W11-05A.
 - Public human-readable URLs and SEO remain owned by W11-04B.
 
 ## Lesson component types
@@ -53,3 +60,19 @@ Implementation note only. Canonical product/authorization/status rules remain in
 
 Resource URLs are validated server-side and unsafe schemes such as `javascript:` are rejected.
 Rich HTML is sanitized before learner rendering.
+
+
+## W11-05 checkpoint semantics
+
+Simple W11-05 checkpoints are versioned course interactions with type:
+- acknowledgement
+- confirmation
+- reflection
+
+They do not contain assessment answer keys. Course completion requirements are deterministic:
+- every checkpoint marked `required` remains mandatory;
+- `all_required` requires all required checkpoints;
+- `weighted_percent` requires all required checkpoints plus the configured percentage of total checkpoint weight;
+- required lessons and required assessments can be independently required by the course rule.
+
+W11-08 owns production completion evaluation and persistence against Student assignments.
