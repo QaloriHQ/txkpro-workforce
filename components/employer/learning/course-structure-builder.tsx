@@ -15,7 +15,6 @@ import {
 import Link from "next/link";
 import {
   FormEvent,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -102,16 +101,13 @@ export function CourseStructureBuilder({
   canManage: boolean;
 }) {
   const router = useRouter();
-  const [groups, setGroups] = useState<Group[]>(() => initialGroups(course));
+  const [optimisticGroups, setOptimisticGroups] = useState<Group[] | null>(null);
+  const groups = optimisticGroups ?? initialGroups(course);
   const [modal, setModal] = useState<StructureModal>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const immutable = ["live", "archived"].includes(course.currentVersion.status);
   const canEdit = canManage && !immutable;
-
-  useEffect(() => {
-    setGroups(initialGroups(course));
-  }, [course]);
 
   const lessonMap = useMemo(
     () => new Map(course.lessons.map((lesson) => [lesson.lessonId, lesson])),
@@ -130,7 +126,7 @@ export function CourseStructureBuilder({
 
   async function persist(next: Group[]) {
     if (!canEdit) return;
-    setGroups(next);
+    setOptimisticGroups(next);
     setBusy("structure");
     setError(null);
     try {
@@ -138,9 +134,10 @@ export function CourseStructureBuilder({
         method: "PUT",
         body: JSON.stringify({ structure: next }),
       });
+      setOptimisticGroups(null);
       router.refresh();
     } catch (cause) {
-      setGroups(initialGroups(course));
+      setOptimisticGroups(null);
       setError(
         cause instanceof Error
           ? cause.message
