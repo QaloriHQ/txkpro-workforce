@@ -3838,3 +3838,1008 @@ body:has(.institution-sidebar) .topbar > .header-actions {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ============================================================
+   W11-07 — Student Employer Training
+   ============================================================ */
+.student-workspace-nav {
+  position: sticky;
+  top: 0;
+  z-index: 16;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(145%);
+}
+.student-workspace-nav-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.student-workspace-nav-link svg {
+  width: 19px;
+  height: 19px;
+}
+.student-workspace-nav-link strong {
+  min-width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 10px;
+}
+.student-workspace-nav-link:hover,
+.student-workspace-nav-link.active {
+  color: var(--ink);
+  background: var(--surface-hover);
+  border-color: var(--line);
+}
+.student-workspace-nav-link.active {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+}
+
+.student-training-page {
+  padding-bottom: 72px;
+}
+.student-training-page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.student-training-page-heading .card-sub {
+  max-width: 760px;
+  line-height: 1.65;
+}
+.student-training-context,
+.student-training-distinction {
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr);
+  gap: 14px;
+  align-items: start;
+}
+.student-training-context > svg,
+.student-training-distinction > svg {
+  width: 30px;
+  height: 30px;
+  color: var(--brand);
+}
+.student-training-context strong,
+.student-training-distinction strong {
+  display: block;
+  font-size: 14px;
+}
+.student-training-context p,
+.student-training-distinction p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 12px;
+}
+
+.student-training-library {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.student-training-card {
+  display: grid;
+  gap: 16px;
+}
+.student-training-card-top,
+.student-training-card-footer,
+.student-training-section-heading,
+.student-course-section-header,
+.student-lesson-header,
+.student-assessment-meta,
+.student-assessment-submit,
+.student-lesson-nav,
+.student-checkpoint-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.student-training-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--line));
+  border-radius: 12px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.student-training-icon svg {
+  width: 21px;
+  height: 21px;
+}
+.student-training-kicker {
+  margin: 0 0 5px;
+  color: var(--brand);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.student-training-card h2,
+.student-training-section-heading h2,
+.student-course-section-header h3,
+.student-lesson-header h1,
+.student-assessment-intro h1 {
+  margin: 0;
+}
+.student-training-card h2 {
+  font-size: 20px;
+}
+.student-training-card > div > p:not(.student-training-kicker) {
+  margin: 7px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 12px;
+}
+.student-training-facts {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+  margin: 0;
+}
+.student-training-facts > div,
+.student-training-assignment-facts dl > div {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.student-training-facts dt,
+.student-training-assignment-facts dt {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.student-training-facts dd,
+.student-training-assignment-facts dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+.student-training-progress {
+  display: grid;
+  gap: 7px;
+}
+.student-training-progress > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+}
+.student-training-progress > div:first-child span,
+.student-training-progress small {
+  color: var(--muted);
+}
+.student-training-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+}
+.student-training-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+}
+.student-training-progress small {
+  font-size: 9px;
+  line-height: 1.4;
+}
+.student-training-card-footer {
+  padding-top: 4px;
+}
+.student-training-card-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.student-training-card-footer > span svg,
+.student-training-primary-action svg,
+.student-lesson-completion button svg,
+.student-lesson-nav svg,
+.student-training-back svg,
+.student-training-assessment-row > svg {
+  width: 17px;
+  height: 17px;
+}
+.student-training-card-footer .button,
+.student-training-primary-action,
+.student-lesson-completion .button,
+.student-lesson-nav .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.student-training-empty {
+  grid-column: 1 / -1;
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  text-align: center;
+  color: var(--muted);
+}
+.student-training-empty > svg {
+  width: 38px;
+  height: 38px;
+  color: var(--brand);
+}
+.student-training-empty h2,
+.student-training-empty p {
+  margin: 0;
+}
+.student-training-empty.compact {
+  min-height: 120px;
+}
+
+.student-training-back {
+  margin-bottom: 14px;
+}
+.student-training-back a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.student-training-back a:hover {
+  color: var(--brand);
+}
+.student-training-hero {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 24px;
+  align-items: center;
+}
+.student-training-hero-main h1 {
+  margin: 0;
+  font-size: clamp(30px,4vw,46px);
+  letter-spacing: -.035em;
+}
+.student-training-hero-main > p:not(.student-training-kicker) {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.student-training-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 15px;
+}
+.student-training-hero-meta span {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.student-training-start {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+.student-training-error {
+  max-width: 280px;
+  color: var(--danger);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.student-training-message {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.student-training-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.student-training-progress-card {
+  display: grid;
+  grid-template-columns: 40px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 14px;
+}
+.student-training-progress-card small,
+.student-training-progress-card strong,
+.student-training-progress-card span {
+  display: block;
+}
+.student-training-progress-card small,
+.student-training-progress-card span {
+  color: var(--muted);
+  font-size: 9px;
+}
+.student-training-progress-card strong {
+  margin: 2px 0;
+  font-size: 20px;
+}
+
+.student-training-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1.7fr) minmax(270px,.7fr);
+  gap: 16px;
+  align-items: start;
+}
+.student-training-detail-main,
+.student-training-detail-aside,
+.student-training-checkpoint-list {
+  display: grid;
+  gap: 16px;
+}
+.student-training-section-heading.standalone {
+  margin: 28px 0 12px;
+}
+.student-training-section-heading > span {
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+}
+.student-training-section-heading p:not(.student-training-kicker) {
+  max-width: 640px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.student-course-sections {
+  display: grid;
+  gap: 18px;
+  margin-top: 16px;
+}
+.student-course-section {
+  display: grid;
+  gap: 9px;
+}
+.student-course-section-header {
+  align-items: flex-start;
+}
+.student-course-section-header h3 {
+  font-size: 14px;
+}
+.student-course-section-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+.student-course-lesson-list {
+  display: grid;
+  gap: 6px;
+}
+.student-course-lesson-row,
+.student-training-assessment-row {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 36px minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+.student-course-lesson-row:hover,
+.student-training-assessment-row:hover {
+  border-color: color-mix(in srgb, var(--brand) 28%, var(--line));
+  background: var(--surface-hover);
+}
+.student-course-lesson-number {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 850;
+}
+.student-course-lesson-number svg {
+  width: 19px;
+  height: 19px;
+}
+.student-course-lesson-row strong,
+.student-course-lesson-row small,
+.student-training-assessment-row strong,
+.student-training-assessment-row small {
+  display: block;
+}
+.student-course-lesson-row strong,
+.student-training-assessment-row strong {
+  font-size: 11px;
+}
+.student-course-lesson-row small,
+.student-training-assessment-row small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+.student-course-lesson-row > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.student-checkpoint-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.student-checkpoint-heading {
+  display: grid;
+  grid-template-columns: 40px minmax(0,1fr);
+  gap: 12px;
+}
+.student-checkpoint-heading h3,
+.student-checkpoint-heading p {
+  margin: 0;
+}
+.student-checkpoint-heading h3 {
+  font-size: 15px;
+}
+.student-checkpoint-heading p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.student-checkpoint-confirm,
+.student-assessment-ack {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  font-size: 11px;
+  font-weight: 750;
+}
+.student-checkpoint-confirm input,
+.student-assessment-ack input,
+.student-assessment-options input {
+  width: 18px;
+  height: 18px;
+}
+.student-training-field {
+  display: grid;
+  gap: 6px;
+}
+.student-training-field > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.student-checkpoint-actions {
+  flex-wrap: wrap;
+}
+
+.student-training-assessment-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+.student-training-assessment-row {
+  grid-template-columns: 40px minmax(0,1fr) auto 18px;
+}
+.student-training-assessment-row > svg {
+  color: var(--muted);
+}
+.student-assessment-status {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.student-training-safety {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr);
+  gap: 11px;
+}
+.student-training-safety > svg {
+  width: 28px;
+  height: 28px;
+  color: #b7791f;
+}
+.student-training-detail-aside .card h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.student-training-detail-aside .card > p:not(.student-training-kicker),
+.student-training-detail-aside .card div > p:not(.student-training-kicker) {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.student-training-assignment-facts dl {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0;
+}
+.student-training-footer-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.student-training-footer-note svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.student-lesson-page {
+  width: min(900px,calc(100% - 48px));
+}
+.student-lesson-header {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.student-lesson-header h1 {
+  font-size: clamp(30px,4vw,44px);
+}
+.student-lesson-header > div:first-child > p:not(.student-training-kicker) {
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.student-lesson-meta {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.student-lesson-meta > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.student-lesson-meta svg {
+  width: 17px;
+  height: 17px;
+}
+.student-lesson-objective {
+  margin-bottom: 14px;
+}
+.student-lesson-objective p:last-child {
+  margin: 0;
+  line-height: 1.6;
+}
+.student-lesson-content {
+  display: grid;
+  gap: 18px;
+}
+.student-lesson-block {
+  min-width: 0;
+}
+.student-lesson-content .txk-learner-media img,
+.student-lesson-content .txk-learner-media video,
+.student-lesson-content .txk-learner-video-embed iframe {
+  width: 100%;
+  max-width: 100%;
+}
+.student-lesson-content .txk-learner-media video {
+  border-radius: 12px;
+  background: #000;
+}
+.student-lesson-content .txk-learner-video-embed {
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: #000;
+}
+.student-lesson-content .txk-learner-video-embed iframe {
+  height: 100%;
+  border: 0;
+}
+.student-lesson-content .txk-learner-rich-text,
+.student-lesson-content p,
+.student-lesson-content li {
+  line-height: 1.7;
+}
+.student-lesson-assessments {
+  margin-top: 14px;
+}
+.student-lesson-completion {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.student-lesson-completion.read-only {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.student-lesson-completion.read-only svg {
+  width: 20px;
+  height: 20px;
+  color: #157347;
+}
+.student-lesson-nav {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.student-assessment-page {
+  width: min(900px,calc(100% - 48px));
+}
+.student-assessment-runtime {
+  display: grid;
+  gap: 14px;
+}
+.student-assessment-intro {
+  display: grid;
+  gap: 16px;
+}
+.student-assessment-intro h1 {
+  font-size: clamp(28px,4vw,42px);
+}
+.student-assessment-intro p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.student-assessment-meta {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.student-assessment-meta span {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+  font-size: 10px;
+}
+.student-assessment-meta strong {
+  color: var(--ink);
+}
+.student-assessment-result {
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr);
+  gap: 13px;
+  align-items: start;
+}
+.student-assessment-result > svg {
+  width: 36px;
+  height: 36px;
+}
+.student-assessment-result.passed > svg {
+  color: #157347;
+}
+.student-assessment-result.not-passed > svg {
+  color: #b7791f;
+}
+.student-assessment-result h2,
+.student-assessment-result p {
+  margin: 0;
+}
+.student-assessment-result p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.student-assessment-feedback {
+  display: grid;
+  gap: 9px;
+}
+.student-assessment-feedback > div {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.student-assessment-feedback strong {
+  font-size: 10px;
+}
+.student-assessment-feedback p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+.student-assessment-gate {
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+.student-assessment-gate > svg {
+  width: 34px;
+  height: 34px;
+  color: var(--brand);
+}
+.student-assessment-gate h2,
+.student-assessment-gate p {
+  margin: 0;
+}
+.student-assessment-gate p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.student-assessment-form {
+  display: grid;
+  gap: 12px;
+}
+.student-assessment-question {
+  min-width: 0;
+}
+.student-assessment-question legend {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 0 10px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.student-assessment-question legend strong {
+  color: var(--brand);
+}
+.student-assessment-question legend em {
+  font-style: normal;
+}
+.student-assessment-question h2 {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.student-assessment-options {
+  display: grid;
+  gap: 7px;
+}
+.student-assessment-options label {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 20px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+  font-size: 11px;
+}
+.student-assessment-options label:has(input:checked),
+.student-assessment-ack:has(input:checked) {
+  border-color: color-mix(in srgb,var(--brand) 38%,var(--line));
+  background: var(--brand-soft);
+}
+.student-assessment-submit {
+  position: sticky;
+  bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb,var(--card) 94%,transparent);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(14px);
+}
+
+.student-workspace-training-summary {
+  margin-bottom: 0;
+}
+.student-workspace-training-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.student-workspace-training-actions .muted {
+  font-size: 11px;
+}
+
+@media (max-width: 1000px) {
+  .student-training-progress-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .student-training-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-training-detail-aside {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body:has(.student-workspace-nav) {
+    padding-bottom: 78px;
+  }
+  .student-workspace-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 70;
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 4px;
+    padding: 8px max(12px,env(safe-area-inset-right))
+      calc(8px + env(safe-area-inset-bottom))
+      max(12px,env(safe-area-inset-left));
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+    box-shadow: 0 -10px 30px rgba(16,24,40,.08);
+  }
+  .student-workspace-nav-link {
+    min-height: 52px;
+    justify-content: center;
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+  .student-workspace-nav-link svg {
+    width: 21px;
+    height: 21px;
+  }
+  .student-workspace-nav-link strong {
+    position: absolute;
+    transform: translate(21px,-12px);
+  }
+  .student-training-page,
+  .student-lesson-page,
+  .student-assessment-page {
+    width: min(100% - 28px,900px);
+    padding-top: 28px;
+    padding-bottom: 38px;
+  }
+  .student-training-page-heading,
+  .student-training-hero,
+  .student-lesson-header,
+  .student-assessment-gate {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  .student-training-page-heading {
+    align-items: flex-start;
+  }
+  .student-training-library {
+    grid-template-columns: 1fr;
+  }
+  .student-training-hero-action,
+  .student-training-start,
+  .student-training-primary-action {
+    width: 100%;
+  }
+  .student-training-start {
+    justify-items: stretch;
+  }
+  .student-training-primary-action {
+    justify-content: center;
+    min-height: 48px;
+  }
+  .student-training-detail-aside {
+    grid-template-columns: 1fr;
+  }
+  .student-lesson-meta {
+    justify-items: start;
+  }
+  .student-training-assessment-row {
+    grid-template-columns: 40px minmax(0,1fr) 18px;
+  }
+  .student-assessment-status {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .student-training-assessment-row > svg {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+  .student-assessment-gate {
+    display: grid;
+  }
+  .student-assessment-gate .button {
+    width: 100%;
+  }
+  .student-assessment-submit {
+    bottom: 78px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .student-assessment-submit .button {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .student-training-facts,
+  .student-training-progress-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-training-card-footer,
+  .student-training-section-heading,
+  .student-course-section-header,
+  .student-checkpoint-actions,
+  .student-lesson-nav,
+  .student-assessment-submit {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .student-training-card-footer .button,
+  .student-lesson-nav .button,
+  .student-checkpoint-actions .button {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+  .student-training-card-footer > span {
+    min-height: 34px;
+  }
+  .student-checkpoint-heading {
+    grid-template-columns: 34px minmax(0,1fr);
+  }
+  .student-training-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .student-assessment-submit {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
