@@ -312,17 +312,23 @@ export function AssessmentWorkspace({
               </div>
 
               <div className="txk-form-actions">
-                <Link
-                  className="txk-button txk-button-primary txk-button-sm"
-                  href={`/employer/learning/${encodeURIComponent(
-                    course.microCertId,
-                  )}/assessments/${encodeURIComponent(
-                    assessment.assessmentId,
-                  )}`}
-                >
-                  <PencilSquareIcon aria-hidden="true" />
-                  {canManage ? "Open builder" : "View"}
-                </Link>
+                {canManage ? (
+                  <Link
+                    className="txk-button txk-button-primary txk-button-sm"
+                    href={`/employer/learning/${encodeURIComponent(
+                      course.microCertId,
+                    )}/assessments/${encodeURIComponent(
+                      assessment.assessmentId,
+                    )}`}
+                  >
+                    <PencilSquareIcon aria-hidden="true" />
+                    Open builder
+                  </Link>
+                ) : (
+                  <StatusBadge tone="neutral">
+                    Student-safe summary only
+                  </StatusBadge>
+                )}
 
                 {canEdit ? (
                   <>
