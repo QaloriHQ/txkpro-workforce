@@ -10,6 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/institutions`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${siteUrl}/institutions/pilot`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${siteUrl}/institutions/pilot/timeline`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/employers`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${siteUrl}/students`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/platform`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
