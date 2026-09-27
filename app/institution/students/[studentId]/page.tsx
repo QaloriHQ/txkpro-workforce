@@ -4,6 +4,7 @@ import {
   BriefcaseIcon,
   CheckBadgeIcon,
   CheckCircleIcon,
+  DocumentCheckIcon,
   UserGroupIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
@@ -25,7 +26,10 @@ import {
   canManageInstitutionLearningAssignments,
   requireInstitutionPageContext,
 } from "@/lib/institution/auth";
-import { getInstitutionStudentReadinessSummary } from "@/lib/institution/learning-repository";
+import {
+  getInstitutionStudentReadinessEvidence,
+  getInstitutionStudentReadinessSummary,
+} from "@/lib/institution/learning-repository";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -47,8 +51,13 @@ export default async function InstitutionStudentProfilePage({
   const scopeLabel = institutionScopeLabel(context);
 
   let profile;
+  let evidence;
   try {
     profile = await getInstitutionStudentReadinessSummary(
+      context,
+      decodeURIComponent(studentId),
+    );
+    evidence = await getInstitutionStudentReadinessEvidence(
       context,
       decodeURIComponent(studentId),
     );
@@ -57,7 +66,7 @@ export default async function InstitutionStudentProfilePage({
     throw error;
   }
 
-  const activeBadges = profile.companyBadges.filter(
+  const activeBadges = evidence.companyBadges.filter(
     (badge) => badge.status === "active",
   ).length;
   const completedTraining = profile.employerTraining.filter(
@@ -181,16 +190,20 @@ export default async function InstitutionStudentProfilePage({
                 <h2>Company Badges</h2>
               </div>
             </div>
-            {profile.companyBadges.length ? (
+            {evidence.companyBadges.length ? (
               <div className="institution-evidence-stack">
-                {profile.companyBadges.map((badge) => (
-                  <div className="institution-evidence-compact" key={badge.companyBadgeAwardId}>
+                {evidence.companyBadges.map((badge) => (
+                  <div className="institution-evidence-compact" key={badge.awardId}>
                     <CheckBadgeIcon aria-hidden="true" />
                     <span>
                       <strong>{badge.title}</strong>
                       <small>
                         {badge.employerName} · earned{" "}
                         {new Date(badge.issuedAt).toLocaleDateString()}
+                      </small>
+                      <small>
+                        {badge.courseTitle ? `${badge.courseTitle} v${badge.versionNumber}` : badge.evidenceType}
+                        {badge.completedAt ? ` · passed ${new Date(badge.completedAt).toLocaleDateString()}` : ""}
                       </small>
                     </span>
                     <StatusBadge
@@ -212,6 +225,46 @@ export default async function InstitutionStudentProfilePage({
                 title="No Company Badges earned"
                 description="Pending Employer Training assignments are not presented as earned evidence."
               />
+            )}
+          </Card>
+        </section>
+
+        <section className="txk-section">
+          <div className="txk-section-heading">
+            <div>
+              <p className="txk-eyebrow">Employer-specific readiness</p>
+              <h2>Employer Certifications</h2>
+              <p>Formal Employer credentials are separate from Company Badges and Instructor Verified Skills.</p>
+            </div>
+          </div>
+          <Card>
+            {evidence.employerCertifications.length ? (
+              <div className="institution-evidence-stack">
+                {evidence.employerCertifications.map((certification) => (
+                  <div className="institution-evidence-compact" key={certification.credentialId}>
+                    <DocumentCheckIcon aria-hidden="true" />
+                    <span>
+                      <strong>{certification.title}</strong>
+                      <small>
+                        Issued by {certification.employerName} · {certification.courseTitle} v{certification.versionNumber}
+                      </small>
+                      <small>
+                        Passed completion {new Date(certification.completedAt).toLocaleDateString()} · issued {new Date(certification.issuedAt).toLocaleDateString()}
+                        {certification.expiresAt ? ` · expires ${new Date(certification.expiresAt).toLocaleDateString()}` : ""}
+                      </small>
+                      <small>Credential {certification.credentialId} · Employer Training evidence</small>
+                      <ButtonLink href={`/credentials/${encodeURIComponent(certification.credentialId)}`} size="sm">
+                        Verify credential
+                      </ButtonLink>
+                    </span>
+                    <StatusBadge tone={certification.status === "active" ? "success" : certification.status === "expired" ? "warning" : "danger"}>
+                      {certification.status}
+                    </StatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No Employer Certifications issued" description="Course assignments and Company Badges do not automatically count as formal credentials." />
             )}
           </Card>
         </section>

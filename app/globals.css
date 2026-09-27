@@ -169,6 +169,10 @@ button, input, select, textarea { font: inherit; }
 .metric-card span { color: var(--muted); font-size: 13px; font-weight: 700; }
 .metric-card strong { display: block; margin-top: 18px; font-size: 34px; letter-spacing: -.045em; }
 .metric-card small { display: block; margin-top: 5px; color: var(--muted); }
+.student-readiness-profile > .card { margin-top: 18px; }
+.student-readiness-profile .metric-card { min-width: 0; }
+.student-readiness-profile .metric-card strong { font-size: 18px; letter-spacing: -.015em; margin-top: 0; }
+.student-readiness-profile .metric-card a { display: inline-block; margin-top: 12px; }
 
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 6px 9px; font-size: 11px; font-weight: 850; white-space: nowrap; }
 .pill-neutral { background: #eef1ef; color: #4d5550; }

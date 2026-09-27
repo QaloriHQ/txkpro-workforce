@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AcademicCapIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { AcademicCapIcon, HomeIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 
-type StudentSection = "workspace" | "training";
+type StudentSection = "workspace" | "training" | "profile";
 
 export function StudentWorkspaceNav({
   active,
@@ -25,6 +25,12 @@ export function StudentWorkspaceNav({
       label: "Employer Training",
       icon: AcademicCapIcon,
       count: trainingCount,
+    },
+    {
+      key: "profile" as const,
+      href: "/student/profile",
+      label: "Profile",
+      icon: UserCircleIcon,
     },
   ];
 
