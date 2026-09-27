@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { PageHeader } from "@/components/design-system";
 import { InstitutionAssignmentWizard } from "@/components/institution/learning/assignment-wizard";
+import { InstitutionRoleContext } from "@/components/institution/role-context";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,6 +11,10 @@ import {
   requireInstitutionContext,
 } from "@/lib/institution/auth";
 import { getInstitutionEmployerLearningContext } from "@/lib/institution/learning-repository";
+import {
+  institutionScopeLabel,
+  primaryInstitutionRole,
+} from "@/lib/institution/presentation";
 
 export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ id: string }> };
@@ -21,6 +26,9 @@ export default async function InstitutionAssignmentPage({
   const microCertId = decodeURIComponent(id);
   const context = await requireInstitutionContext();
   const learning = await getInstitutionEmployerLearningContext(context);
+  const role = primaryInstitutionRole(context);
+  const scopeLabel = institutionScopeLabel(context);
+  const canManage = canManageInstitutionLearningAssignments(context);
   const course = learning.courses.find(
     (item) => item.microCertId === microCertId,
   );
@@ -33,6 +41,8 @@ export default async function InstitutionAssignmentPage({
         <InstitutionWorkspaceNav
           active="learning"
           institutionName={context.institutionName}
+          roleLabel={role.label}
+          scopeLabel={scopeLabel}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -47,10 +57,16 @@ export default async function InstitutionAssignmentPage({
           description="Select the authorized Program, Cohort, or Students; review eligibility and existing assignments; then create canonical per-Student assignment records."
         />
 
+        <InstitutionRoleContext
+          roleLabel={role.label}
+          scopeLabel={scopeLabel}
+          canManage={canManage}
+        />
+
         <InstitutionAssignmentWizard
           learning={learning}
           course={course}
-          canManage={canManageInstitutionLearningAssignments(context)}
+          canManage={canManage}
         />
       </main>
     </>
