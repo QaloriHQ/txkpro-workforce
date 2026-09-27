@@ -1,10 +1,12 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ButtonLink, Card, MetricCard, PageHeader, RoleViewBanner } from "@/components/design-system";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { requireEmployerContext } from "@/lib/employer/auth";
+import { getAccountContext } from "@/lib/auth";
+import { getEmployerContext } from "@/lib/employer/auth";
 import { getEmployerTrainingAnalytics } from "@/lib/employer/learning-repository";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,15 @@ export default async function EmployerTrainingAnalyticsPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const context = await requireEmployerContext({ approved: true });
+  const account = await getAccountContext();
+  if (!account) redirect("/login");
+  const context = await getEmployerContext();
+  if (!context) redirect("/onboarding");
+  if (
+    context.approvalStatus !== "approved" ||
+    context.accountStatus === "suspended" ||
+    context.accountStatus === "closed"
+  ) redirect("/employer");
   const requested = (await searchParams).period;
   const period: Period = requested === "90" || requested === "all" ? requested : "30";
   const end = new Date();
