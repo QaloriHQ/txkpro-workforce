@@ -73,7 +73,14 @@ export default async function EmployerLearningPage() {
           eyebrow="Readiness & Outcomes"
           title="Employer Learning"
           description="Create company-specific Micro-Certification courses, build versioned lessons and content, and track completion signals. Employer Training remains distinct from Instructor Verified Skills."
-          actions={canManage ? <CourseCreatePanel /> : undefined}
+          actions={
+            <>
+              <ButtonLink href="/employer/learning/badges">
+                Company Badges
+              </ButtonLink>
+              {canManage ? <CourseCreatePanel /> : null}
+            </>
+          }
         />
 
         <RoleViewBanner title="Employer-owned training">

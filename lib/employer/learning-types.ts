@@ -483,3 +483,57 @@ export type EmployerLearningMediaReserveInput = {
   sizeBytes: number;
   metadata?: Record<string, unknown>;
 };
+
+
+export type EmployerCompanyBadgeCriteria = {
+  criteriaVersion: 1;
+  evidenceType: "micro_cert_completion";
+  requiredOutcome: "passed";
+};
+
+export type EmployerCompanyBadgeDefinition = {
+  companyBadgeId: string;
+  employerId: string;
+  title: string;
+  description: string | null;
+  criteria: EmployerCompanyBadgeCriteria;
+  version: number;
+  active: boolean;
+  expiresAfterDays: number | null;
+  locked: boolean;
+  linkedVersionCount: number;
+  awardCount: number;
+  activeAwardCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerCompanyBadgeAward = {
+  companyBadgeAwardId: string;
+  companyBadgeId: string;
+  badgeTitle: string;
+  badgeVersion: number;
+  studentId: string;
+  employerId: string;
+  evidenceType: "micro_cert_completion";
+  evidenceId: string;
+  completionId: string;
+  microCertId: string;
+  microCertVersionId: string;
+  courseTitle: string | null;
+  versionNumber: number | null;
+  issuedAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  status: "active" | "expired" | "revoked";
+  metadata: Record<string, unknown>;
+};
+
+export type EmployerCompanyBadgeInput = {
+  title?: string;
+  description?: string | null;
+  criteria?: EmployerCompanyBadgeCriteria;
+  expiresAfterDays?: number | null;
+  active?: boolean;
+};

@@ -12,7 +12,10 @@ import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
-import { getEmployerMicroCertModuleDetail } from "@/lib/employer/learning-repository";
+import {
+  getEmployerMicroCertModuleDetail,
+  listEmployerCompanyBadges,
+} from "@/lib/employer/learning-repository";
 
 export const dynamic = "force-dynamic";
 type RouteContext = { params: Promise<{ id: string }> };
@@ -20,10 +23,11 @@ type RouteContext = { params: Promise<{ id: string }> };
 export default async function CourseCheckpointsPage({ params }: RouteContext) {
   const { id } = await params;
   const context = await requireEmployerContext({ approved: true });
-  const course = await getEmployerMicroCertModuleDetail(
-    context,
-    decodeURIComponent(id),
-  );
+  const microCertId = decodeURIComponent(id);
+  const [course, badges] = await Promise.all([
+    getEmployerMicroCertModuleDetail(context, microCertId),
+    listEmployerCompanyBadges(context),
+  ]);
   const canManage =
     context.role === "employer_owner" || context.role === "employer_admin";
 
@@ -78,7 +82,11 @@ export default async function CourseCheckpointsPage({ params }: RouteContext) {
           </RoleViewBanner>
         ) : null}
 
-        <CourseCheckpointsWorkspace course={course} canManage={canManage} />
+        <CourseCheckpointsWorkspace
+          course={course}
+          badges={badges}
+          canManage={canManage}
+        />
       </main>
     </>
   );

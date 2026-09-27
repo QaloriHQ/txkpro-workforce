@@ -26,6 +26,7 @@ import type {
   EmployerLearningCheckpoint,
   EmployerLearningCheckpointType,
   EmployerLearningPassingRequirement,
+  EmployerCompanyBadgeDefinition,
   EmployerMicroCertModuleDetail,
 } from "@/lib/employer/learning-types";
 
@@ -73,9 +74,11 @@ function move<T>(items: T[], from: number, to: number) {
 
 export function CourseCheckpointsWorkspace({
   course,
+  badges,
   canManage,
 }: {
   course: EmployerMicroCertModuleDetail;
+  badges: EmployerCompanyBadgeDefinition[];
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -212,7 +215,8 @@ export function CourseCheckpointsWorkspace({
         method: "PUT",
         body: JSON.stringify({
           requirement: next,
-          companyBadgeId: course.currentVersion.companyBadgeId,
+          companyBadgeId:
+            String(form.get("companyBadgeId") ?? "").trim() || null,
           certificationDefinitionId:
             course.currentVersion.certificationDefinitionId,
         }),
@@ -591,6 +595,30 @@ export function CourseCheckpointsWorkspace({
               />
               <span>Require all required assessments</span>
             </label>
+
+            <FormField
+              label="Company Badge"
+              help="Optional Employer-specific readiness signal awarded automatically after this exact course version is completed. It is not an Instructor Verified Skill."
+            >
+              <select
+                className="txk-input"
+                name="companyBadgeId"
+                defaultValue={course.currentVersion.companyBadgeId ?? ""}
+                disabled={!canEdit}
+              >
+                <option value="">No Company Badge</option>
+                {badges.map((badge) => (
+                  <option
+                    key={badge.companyBadgeId}
+                    value={badge.companyBadgeId}
+                    disabled={!badge.active && badge.companyBadgeId !== course.currentVersion.companyBadgeId}
+                  >
+                    {badge.title} · v{badge.version}
+                    {badge.active ? "" : " · inactive"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
 
             {canEdit ? (
               <Button type="submit" tone="primary" disabled={Boolean(busy)}>

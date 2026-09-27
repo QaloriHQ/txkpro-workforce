@@ -18,6 +18,9 @@ import type {
   EmployerLearningAssessmentQuestionInput,
   EmployerLearningStudentAssessment,
   EmployerLearningAssessmentScoreResult,
+  EmployerCompanyBadgeAward,
+  EmployerCompanyBadgeDefinition,
+  EmployerCompanyBadgeInput,
   MicroCertEligibility,
   MicroCertInput,
   MicroCertStatus,
@@ -756,4 +759,45 @@ export async function scoreEmployerLearningAssessmentPreview(
       p_responses: responses,
     },
   );
+}
+
+
+export async function listEmployerCompanyBadges(
+  context: EmployerContext,
+) {
+  return rpc<EmployerCompanyBadgeDefinition[]>("employer_company_badges", {
+    p_employer_id: context.employerId,
+  });
+}
+
+export async function listEmployerCompanyBadgeAwards(
+  context: EmployerContext,
+  companyBadgeId?: string | null,
+) {
+  return rpc<EmployerCompanyBadgeAward[]>("employer_company_badge_awards", {
+    p_employer_id: context.employerId,
+    p_company_badge_id: companyBadgeId ?? null,
+  });
+}
+
+export async function createEmployerCompanyBadge(
+  context: EmployerContext,
+  input: EmployerCompanyBadgeInput,
+) {
+  return rpc<EmployerCompanyBadgeDefinition>("employer_company_badge_create", {
+    p_employer_id: context.employerId,
+    p_payload: input,
+  });
+}
+
+export async function updateEmployerCompanyBadge(
+  context: EmployerContext,
+  companyBadgeId: string,
+  input: EmployerCompanyBadgeInput,
+) {
+  return rpc<EmployerCompanyBadgeDefinition>("employer_company_badge_update", {
+    p_employer_id: context.employerId,
+    p_company_badge_id: companyBadgeId,
+    p_payload: input,
+  });
 }
