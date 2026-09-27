@@ -69,25 +69,27 @@ export default async function EmployerLearningPage() {
       </header>
 
       <main className="page-wrap txk-prototype-content">
-        <PageHeader
-          eyebrow="Readiness & Outcomes"
-          title="Employer Learning"
-          description="Create company-specific Micro-Certification courses, build versioned lessons and content, and track completion signals. Employer Training remains distinct from Instructor Verified Skills."
-          actions={
-            <>
-              <ButtonLink href="/employer/learning/analytics">
-                Training analytics
-              </ButtonLink>
-              <ButtonLink href="/employer/learning/badges">
-                Company Badges
-              </ButtonLink>
-              <ButtonLink href="/employer/learning/certifications">
-                Employer Certifications
-              </ButtonLink>
-              {canManage ? <CourseCreatePanel /> : null}
-            </>
-          }
-        />
+        <div className="employer-learning-header">
+          <PageHeader
+            eyebrow="Readiness & Outcomes"
+            title="Employer Learning"
+            description="Create company-specific Micro-Certification courses, build versioned lessons and content, and track completion signals. Employer Training remains distinct from Instructor Verified Skills."
+            actions={
+              <>
+                <ButtonLink href="/employer/learning/analytics">
+                  Training analytics
+                </ButtonLink>
+                <ButtonLink href="/employer/learning/badges">
+                  Company Badges
+                </ButtonLink>
+                <ButtonLink href="/employer/learning/certifications">
+                  Employer Certifications
+                </ButtonLink>
+                {canManage ? <CourseCreatePanel /> : null}
+              </>
+            }
+          />
+        </div>
 
         <RoleViewBanner title="Employer-owned training">
           {canManage
