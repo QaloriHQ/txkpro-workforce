@@ -15,11 +15,16 @@ export async function GET(request: Request) {
     const context = await requireInstitutionContext({
       institutionId: url.searchParams.get("institutionId"),
     });
-    const assignments = await listInstitutionMicroCertAssignments(
-      context,
-      url.searchParams.get("status"),
-      url.searchParams.get("microCertId"),
-    );
+    const assignments = await listInstitutionMicroCertAssignments(context, {
+      status: url.searchParams.get("status"),
+      studentId: url.searchParams.get("studentId"),
+      query: url.searchParams.get("q"),
+      employerId: url.searchParams.get("employerId"),
+      microCertId: url.searchParams.get("microCertId"),
+      programName: url.searchParams.get("programName"),
+      cohortId: url.searchParams.get("cohortId"),
+      companyBadgeId: url.searchParams.get("companyBadgeId"),
+    });
     return Response.json({ assignments });
   } catch (error) {
     return jsonError(error);
