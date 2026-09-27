@@ -82,18 +82,36 @@ export type EmployerTrainingAnalytics = {
     title: string; assigned: number; not_started: number; in_progress: number;
     completed: number; cancelled: number;
   }>;
+  institutions: Array<{ id: string | null; label: string; assigned: number; completed: number }>;
+  programs: Array<{ label: string; assigned: number; completed: number }>;
+  cohorts: Array<{
+    id: string | null; label: string; institution_id: string | null;
+    program_name: string; assigned: number; completed: number;
+  }>;
   recentDays: Array<{ day: string; completions: number }>;
+};
+
+export type EmployerTrainingAnalyticsFilters = {
+  microCertVersionId?: string | null;
+  institutionId?: string | null;
+  programName?: string | null;
+  cohortId?: string | null;
 };
 
 export async function getEmployerTrainingAnalytics(
   context: EmployerContext,
   from: string | null,
   to: string | null,
+  filters: EmployerTrainingAnalyticsFilters = {},
 ) {
-  return rpc<EmployerTrainingAnalytics>("employer_training_analytics", {
+  return rpc<EmployerTrainingAnalytics>("employer_training_analytics_v2", {
     p_employer_id: context.employerId,
     p_from: from,
     p_to: to,
+    p_micro_cert_version_id: filters.microCertVersionId ?? null,
+    p_institution_id: filters.institutionId ?? null,
+    p_program_name: filters.programName ?? null,
+    p_cohort_id: filters.cohortId ?? null,
   });
 }
 
