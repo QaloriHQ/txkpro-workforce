@@ -102,19 +102,25 @@ export function CompanyBadgeLibrary({
     const form = new FormData(event.currentTarget);
     const expiryRaw = String(form.get("expiresAfterDays") ?? "").trim();
 
+    const payload = badge.locked
+      ? {
+          active: form.get("active") === "on",
+        }
+      : {
+          title: String(form.get("title") ?? "").trim(),
+          description: String(form.get("description") ?? "").trim() || null,
+          expiresAfterDays: expiryRaw ? Number(expiryRaw) : null,
+          active: form.get("active") === "on",
+          criteria: badge.criteria,
+        };
+
     await run(badge.companyBadgeId, async () => {
       await requestJson(
         "/api/employer/learning/badges/" +
           encodeURIComponent(badge.companyBadgeId),
         {
           method: "PATCH",
-          body: JSON.stringify({
-            title: String(form.get("title") ?? "").trim(),
-            description: String(form.get("description") ?? "").trim() || null,
-            expiresAfterDays: expiryRaw ? Number(expiryRaw) : null,
-            active: form.get("active") === "on",
-            criteria: badge.criteria,
-          }),
+          body: JSON.stringify(payload),
         },
       );
     });
