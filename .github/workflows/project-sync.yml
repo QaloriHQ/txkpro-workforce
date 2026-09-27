@@ -547,4 +547,33 @@ jobs:
               await syncIssue(issue, context.payload.action || "");
             }
 
+            // Manual full backfill also reconciles existing Project items whose
+            // issue bodies lack roadmap metadata, including pull requests.
+            // Never add unrelated repository items to the Project here.
+            if (
+              context.eventName === "workflow_dispatch" &&
+              !String(context.payload.inputs?.issue_number || "").trim()
+            ) {
+              for (const item of itemMap.values()) {
+                const number = item.content?.number;
+                if (!number) continue;
+                const { data: linked } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: number
+                });
+                if (linked.state !== "closed") continue;
+                if (normalize(getCurrentFieldValue(item, "Status")) === "done") {
+                  continue;
+                }
+                core.info(`Reconciling closed Project item #${number}`);
+                await setSingleSelect(item.id, "Status", "Done");
+                await setDate(
+                  item.id,
+                  "Actual completion",
+                  String(linked.closed_at).slice(0, 10)
+                );
+              }
+            }
+
             core.info("Project synchronization complete.");
