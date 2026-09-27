@@ -24,7 +24,7 @@ export default async function DashboardPage() {
   if (account.role === "admin") redirect("/admin");
   if (account.role === "employer") redirect("/employer");
   if (account.role === "student") redirect("/student");
-  if (account.role === "educator") redirect("/institution/learning");
+  if (account.role === "educator") redirect("/institution");
 
   redirect("/onboarding");
 }
