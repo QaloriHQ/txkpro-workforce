@@ -5,41 +5,88 @@ import { useState } from "react";
 import {
   AcademicCapIcon,
   Bars3Icon,
+  BriefcaseIcon,
+  BuildingOffice2Icon,
+  ChartBarIcon,
+  CheckBadgeIcon,
   ClipboardDocumentCheckIcon,
+  DocumentChartBarIcon,
   HomeIcon,
+  RectangleGroupIcon,
+  UserGroupIcon,
+  UsersIcon,
+  WrenchScrewdriverIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
-type InstitutionSection = "overview" | "learning" | "assignments";
+export type InstitutionSection =
+  | "dashboard"
+  | "students"
+  | "programs"
+  | "readiness"
+  | "learning"
+  | "assignments"
+  | "badges"
+  | "employers"
+  | "referrals"
+  | "placements"
+  | "retention"
+  | "reports";
+
+type Item = {
+  key: InstitutionSection;
+  href: string;
+  label: string;
+  icon: typeof HomeIcon;
+};
+
+const groups: Array<{ label: string; items: Item[] }> = [
+  {
+    label: "Workspace",
+    items: [
+      { key: "dashboard", href: "/institution", label: "Dashboard", icon: HomeIcon },
+      { key: "students", href: "/institution/students", label: "Students", icon: UsersIcon },
+      { key: "programs", href: "/institution/programs", label: "Programs & Cohorts", icon: RectangleGroupIcon },
+    ],
+  },
+  {
+    label: "Workforce Readiness",
+    items: [
+      { key: "readiness", href: "/institution/readiness", label: "Readiness", icon: CheckBadgeIcon },
+      { key: "learning", href: "/institution/learning", label: "Employer Training", icon: AcademicCapIcon },
+      { key: "assignments", href: "/institution/learning/assignments", label: "Assignments", icon: ClipboardDocumentCheckIcon },
+      { key: "badges", href: "/institution/learning/badges", label: "Company Badges", icon: WrenchScrewdriverIcon },
+    ],
+  },
+  {
+    label: "Employer Connections",
+    items: [
+      { key: "employers", href: "/institution/employers", label: "Employers", icon: BuildingOffice2Icon },
+      { key: "referrals", href: "/institution/referrals", label: "Referrals", icon: UserGroupIcon },
+    ],
+  },
+  {
+    label: "Outcomes",
+    items: [
+      { key: "placements", href: "/institution/placements", label: "Placements", icon: BriefcaseIcon },
+      { key: "retention", href: "/institution/retention", label: "Retention", icon: ChartBarIcon },
+      { key: "reports", href: "/institution/reports", label: "Reports", icon: DocumentChartBarIcon },
+    ],
+  },
+];
 
 export function InstitutionWorkspaceNav({
   active,
   institutionName,
+  roleLabel,
+  scopeLabel,
 }: {
   active?: InstitutionSection;
   institutionName: string;
+  roleLabel?: string;
+  scopeLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const items = [
-    {
-      key: "overview" as const,
-      href: "/institution/learning",
-      label: "Overview",
-      icon: HomeIcon,
-    },
-    {
-      key: "learning" as const,
-      href: "/institution/learning",
-      label: "Employer Training",
-      icon: AcademicCapIcon,
-    },
-    {
-      key: "assignments" as const,
-      href: "/institution/learning/assignments",
-      label: "Assignments",
-      icon: ClipboardDocumentCheckIcon,
-    },
-  ];
 
   return (
     <>
@@ -61,29 +108,36 @@ export function InstitutionWorkspaceNav({
       >
         <div className="institution-sidebar-heading">
           <span>Workforce</span>
-          <strong>Institution workspace</strong>
-          <small>{institutionName}</small>
+          <strong>{institutionName}</strong>
+          <small>
+            {roleLabel ?? "Institution workspace"}
+            {scopeLabel ? ` · ${scopeLabel}` : ""}
+          </small>
         </div>
 
         <div className="institution-sidebar-links">
-          <span className="institution-nav-label">Workforce Readiness</span>
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`institution-sidebar-link ${
-                  active === item.key ? "active" : ""
-                }`}
-                aria-current={active === item.key ? "page" : undefined}
-                onClick={() => setOpen(false)}
-              >
-                <Icon className="institution-sidebar-icon" aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+          {groups.map((group) => (
+            <div className="institution-nav-group" key={group.label}>
+              <span className="institution-nav-label">{group.label}</span>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={`institution-sidebar-link ${
+                      active === item.key ? "active" : ""
+                    }`}
+                    aria-current={active === item.key ? "page" : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    <Icon className="institution-sidebar-icon" aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         <div className="institution-sidebar-footer">
