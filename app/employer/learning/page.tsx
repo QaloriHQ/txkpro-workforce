@@ -75,6 +75,9 @@ export default async function EmployerLearningPage() {
           description="Create company-specific Micro-Certification courses, build versioned lessons and content, and track completion signals. Employer Training remains distinct from Instructor Verified Skills."
           actions={
             <>
+              <ButtonLink href="/employer/learning/analytics">
+                Training analytics
+              </ButtonLink>
               <ButtonLink href="/employer/learning/badges">
                 Company Badges
               </ButtonLink>
