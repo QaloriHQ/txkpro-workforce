@@ -32,25 +32,33 @@ export default function PlatformPage() {
       { "@type": "ListItem", position: 2, name: "Platform", item: `${siteUrl}/platform` },
     ],
   };
-  const software = {
+  const platformSchema = {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "TXKPRO Workforce",
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    url: siteUrl,
+    "@type": "WebPage",
+    name: "TXKPRO Workforce Platform",
+    url: `${siteUrl}/platform`,
     description:
       "A Greater Texarkana workforce platform connecting technical programs, verified skills, vetted employers, placements, and early retention workflows.",
-    audience: {
-      "@type": "Audience",
-      audienceType: "Technical institutions, skilled-trade employers, educators, and students",
+    about: {
+      "@type": "Service",
+      name: "TXKPRO Workforce",
+      serviceType: "Skilled trades workforce platform",
+      provider: {
+        "@type": "Organization",
+        name: "TXKPRO Workforce",
+        url: siteUrl,
+      },
+      areaServed: {
+        "@type": "AdministrativeArea",
+        name: "Greater Texarkana",
+      },
     },
   };
 
   return (
     <>
       <JsonLd data={breadcrumb} />
-      <JsonLd data={software} />
+      <JsonLd data={platformSchema} />
       <MarketingHeader />
       <main className="marketing-main">
         <nav className="marketing-breadcrumb marketing-shell" aria-label="Breadcrumb">
