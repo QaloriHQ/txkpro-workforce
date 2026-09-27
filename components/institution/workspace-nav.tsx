@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -107,12 +108,41 @@ export function InstitutionWorkspaceNav({
         aria-label="Institution workspace"
       >
         <div className="institution-sidebar-heading">
-          <span>Workforce</span>
-          <strong>{institutionName}</strong>
-          <small>
-            {roleLabel ?? "Institution workspace"}
-            {scopeLabel ? ` · ${scopeLabel}` : ""}
-          </small>
+          <Link
+            className="institution-sidebar-brand"
+            href="/institution"
+            aria-label="TXKPRO Workforce Institution dashboard"
+            onClick={() => setOpen(false)}
+          >
+            <span className="brand-logo-wrap" aria-hidden="true">
+              <Image
+                className="brand-logo brand-logo-light"
+                src="/txkpro-logo-light.svg"
+                alt=""
+                width={786}
+                height={192}
+                unoptimized
+                priority
+              />
+              <Image
+                className="brand-logo brand-logo-dark"
+                src="/txkpro-logo-dark.svg"
+                alt=""
+                width={1575}
+                height={385}
+                unoptimized
+                priority
+              />
+            </span>
+          </Link>
+          <div className="institution-sidebar-context">
+            <span>Workforce</span>
+            <strong>{institutionName}</strong>
+            <small>
+              {roleLabel ?? "Institution workspace"}
+              {scopeLabel ? ` · ${scopeLabel}` : ""}
+            </small>
+          </div>
         </div>
 
         <div className="institution-sidebar-links">
