@@ -16,7 +16,10 @@ type Period = "30" | "90" | "all";
 export default async function EmployerTrainingAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{
+    period?: string; courseVersion?: string; institution?: string;
+    program?: string; cohort?: string;
+  }>;
 }) {
   const account = await getAccountContext();
   if (!account) redirect("/login");
@@ -27,15 +30,21 @@ export default async function EmployerTrainingAnalyticsPage({
     context.accountStatus === "suspended" ||
     context.accountStatus === "closed"
   ) redirect("/employer");
-  const requested = (await searchParams).period;
-  const period: Period = requested === "90" || requested === "all" ? requested : "30";
+  const params = await searchParams;
+  const period: Period = params.period === "90" || params.period === "all" ? params.period : "30";
   const end = new Date();
   const start = period === "all" ? null : new Date(end.getTime() - Number(period) * 86400000);
-  const data = await getEmployerTrainingAnalytics(
-    context,
-    start?.toISOString() ?? null,
-    period === "all" ? null : end.toISOString(),
-  );
+  const filters = {
+    microCertVersionId: params.courseVersion || null,
+    institutionId: params.institution || null,
+    programName: params.program || null,
+    cohortId: params.cohort || null,
+  };
+  const [data, options] = await Promise.all([
+    getEmployerTrainingAnalytics(context, start?.toISOString() ?? null,
+      period === "all" ? null : end.toISOString(), filters),
+    getEmployerTrainingAnalytics(context, null, null),
+  ]);
   const eligible = data.lifecycle.assigned - data.lifecycle.cancelled;
   const rate = eligible ? Math.round((data.lifecycle.completed / eligible) * 100) : 0;
 
@@ -58,19 +67,63 @@ export default async function EmployerTrainingAnalyticsPage({
           Assessment outcomes, badge and certification awards, and recent completions use their own event dates.
           No student names or hiring scores appear in this report.
         </RoleViewBanner>
-        <nav aria-label="Analytics date range" className="txk-inline-heading">
-          <div><p className="txk-eyebrow">Date range</p><h2>{period === "all" ? "All time" : `Last ${period} days`}</h2></div>
-          <div className="header-actions">
-            <ButtonLink href="/employer/learning/analytics?period=30">30 days</ButtonLink>
-            <ButtonLink href="/employer/learning/analytics?period=90">90 days</ButtonLink>
-            <ButtonLink href="/employer/learning/analytics?period=all">All time</ButtonLink>
-          </div>
-        </nav>
+        <section className="txk-section" aria-label="Analytics filters">
+          <div className="txk-section-heading"><div><p className="txk-eyebrow">Reporting scope</p><h2>Filter aggregate results</h2></div></div>
+          <form method="get" action="/employer/learning/analytics" className="txk-analytics-filters">
+            <label className="txk-form-field"><span className="txk-form-label">Date range</span>
+              <select className="select" name="period" defaultValue={period}>
+                <option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All time</option>
+              </select>
+            </label>
+            <label className="txk-form-field"><span className="txk-form-label">Course version</span>
+              <select className="select" name="courseVersion" defaultValue={filters.microCertVersionId ?? ""}>
+                <option value="">All course versions</option>
+                {options.courses.map((course) => <option key={course.micro_cert_version_id} value={course.micro_cert_version_id}>{course.title} · v{course.version_number}</option>)}
+              </select>
+            </label>
+            <label className="txk-form-field"><span className="txk-form-label">Institution</span>
+              <select className="select" name="institution" defaultValue={filters.institutionId ?? ""}>
+                <option value="">All institutions</option>
+                {options.institutions.filter((item) => item.id).map((item) => <option key={item.id} value={item.id!}>{item.label}</option>)}
+              </select>
+            </label>
+            <label className="txk-form-field"><span className="txk-form-label">Program</span>
+              <select className="select" name="program" defaultValue={filters.programName ?? ""}>
+                <option value="">All programs</option>
+                {options.programs.filter((item) => item.label !== "Program not recorded").map((item) => <option key={item.label} value={item.label}>{item.label}</option>)}
+              </select>
+            </label>
+            <label className="txk-form-field"><span className="txk-form-label">Cohort</span>
+              <select className="select" name="cohort" defaultValue={filters.cohortId ?? ""}>
+                <option value="">All cohorts</option>
+                {options.cohorts.filter((item) => item.id).map((item) => <option key={item.id} value={item.id!}>{item.label}</option>)}
+              </select>
+            </label>
+            <button className="txk-button txk-button-primary" type="submit">Apply filters</button>
+            <ButtonLink href="/employer/learning/analytics">Clear filters</ButtonLink>
+          </form>
+          <p className="txk-form-help">Assignment counts use the selected assignment-date cohort. Outcomes use their own event dates within the selected range.</p>
+        </section>
         <section className="txk-metric-grid txk-learning-metrics" aria-label="Assignment lifecycle">
           <MetricCard label="Assigned" value={data.lifecycle.assigned} detail="Includes cancelled assignments" />
           <MetricCard label="Not started" value={data.lifecycle.not_started} detail="Assigned, awaiting start" />
           <MetricCard label="In progress" value={data.lifecycle.in_progress} detail="Started training" />
           <MetricCard label="Completed" value={data.lifecycle.completed} detail={`${rate}% of non-cancelled assignments`} />
+          <MetricCard label="Cancelled" value={data.lifecycle.cancelled} detail="Excluded from completion rate" />
+        </section>
+        <section className="txk-section">
+          <div className="txk-section-heading"><div><p className="txk-eyebrow">Permitted dimensions</p><h2>Institution, program and cohort</h2></div></div>
+          <div className="txk-learning-grid">
+            <Card><h3>Institutions</h3>{data.institutions.length ? data.institutions.map((row) =>
+              <p key={row.id ?? row.label}>{row.label}: {row.completed} completed / {row.assigned} assigned</p>
+            ) : <p>No assignments in this range.</p>}</Card>
+            <Card><h3>Programs</h3>{data.programs.length ? data.programs.map((row) =>
+              <p key={row.label}>{row.label}: {row.completed} completed / {row.assigned} assigned</p>
+            ) : <p>No assignments in this range.</p>}</Card>
+            <Card><h3>Cohorts</h3>{data.cohorts.length ? data.cohorts.map((row) =>
+              <p key={row.id ?? row.label}>{row.label}: {row.completed} completed / {row.assigned} assigned</p>
+            ) : <p>No assignments in this range.</p>}</Card>
+          </div>
         </section>
         <section className="txk-section">
           <div className="txk-section-heading"><div><p className="txk-eyebrow">Evidence outcomes</p><h2>Separate signals</h2></div></div>
