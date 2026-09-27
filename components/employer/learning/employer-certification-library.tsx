@@ -461,6 +461,15 @@ export function EmployerCertificationLibrary({
                     <ShieldCheckIcon aria-hidden="true" />
                     Verify
                   </Link>
+                  <Link
+                    className="txk-button txk-button-default txk-button-sm"
+                    href={
+                      "/credentials/" +
+                      encodeURIComponent(award.credentialId)
+                    }
+                  >
+                    Public page
+                  </Link>
                   {canManage && award.status !== "revoked" ? (
                     <Button
                       type="button"
