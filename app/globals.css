@@ -584,6 +584,13 @@ button:disabled,
 }
 .txk-table-wrap { overflow-x: auto; }
 .txk-table-wrap table { width: 100%; border-collapse: collapse; }
+.txk-analytics-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.txk-analytics-filters .txk-button { justify-content: center; }
 
 .txk-section { margin-top: 28px; }
 .txk-section-heading {
