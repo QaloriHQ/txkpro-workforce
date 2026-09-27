@@ -27,6 +27,7 @@ import type {
   EmployerLearningCheckpointType,
   EmployerLearningPassingRequirement,
   EmployerCompanyBadgeDefinition,
+  EmployerCertificationDefinition,
   EmployerMicroCertModuleDetail,
 } from "@/lib/employer/learning-types";
 
@@ -75,10 +76,12 @@ function move<T>(items: T[], from: number, to: number) {
 export function CourseCheckpointsWorkspace({
   course,
   badges,
+  certifications,
   canManage,
 }: {
   course: EmployerMicroCertModuleDetail;
   badges: EmployerCompanyBadgeDefinition[];
+  certifications: EmployerCertificationDefinition[];
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -218,7 +221,8 @@ export function CourseCheckpointsWorkspace({
           companyBadgeId:
             String(form.get("companyBadgeId") ?? "").trim() || null,
           certificationDefinitionId:
-            course.currentVersion.certificationDefinitionId,
+            String(form.get("certificationDefinitionId") ?? "").trim() ||
+            null,
         }),
       }),
     );
@@ -615,6 +619,36 @@ export function CourseCheckpointsWorkspace({
                   >
                     {badge.title} · v{badge.version}
                     {badge.active ? "" : " · inactive"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <FormField
+              label="Employer Certification"
+              help="Optional formal Employer-issued credential created automatically after this exact course version reaches canonical passed completion. It remains distinct from Company Badges and Instructor Verified Skills."
+            >
+              <select
+                className="txk-input"
+                name="certificationDefinitionId"
+                defaultValue={
+                  course.currentVersion.certificationDefinitionId ?? ""
+                }
+                disabled={!canEdit}
+              >
+                <option value="">No Employer Certification</option>
+                {certifications.map((certification) => (
+                  <option
+                    key={certification.certificationDefinitionId}
+                    value={certification.certificationDefinitionId}
+                    disabled={
+                      !certification.active &&
+                      certification.certificationDefinitionId !==
+                        course.currentVersion.certificationDefinitionId
+                    }
+                  >
+                    {certification.title} · v{certification.version}
+                    {certification.active ? "" : " · inactive"}
                   </option>
                 ))}
               </select>
