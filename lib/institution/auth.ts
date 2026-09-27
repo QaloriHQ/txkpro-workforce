@@ -1,5 +1,7 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
+
 import { getAccountContext } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
@@ -56,6 +58,18 @@ export async function requireInstitutionContext(options?: {
   if (!context) {
     throw new Response("Institution membership required", { status: 403 });
   }
+  return context;
+}
+
+export async function requireInstitutionPageContext(options?: {
+  institutionId?: string | null;
+}) {
+  const account = await getAccountContext();
+  if (!account) redirect("/login");
+
+  const context = await getInstitutionContext(options?.institutionId);
+  if (!context) redirect("/login?institutionAccess=required");
+
   return context;
 }
 
