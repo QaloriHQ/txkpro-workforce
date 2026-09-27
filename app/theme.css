@@ -4900,3 +4900,878 @@ body:has(.institution-sidebar) .topbar > .header-actions {
     height: 40px;
   }
 }
+
+
+/* ============================================================
+   Institution workspace operations upgrade — Issue #66
+   ============================================================ */
+
+.institution-nav-group {
+  display: grid;
+  gap: 4px;
+}
+.institution-sidebar-heading {
+  padding: 8px 10px 18px;
+}
+.institution-sidebar-heading span {
+  font-size: 17px;
+}
+.institution-sidebar-heading strong {
+  margin-top: 4px;
+  color: var(--txk-text-primary);
+  font-size: 12px;
+}
+.institution-sidebar-heading small {
+  margin-top: 5px;
+  font-size: 10px;
+}
+.institution-sidebar-links {
+  gap: 2px;
+  padding-bottom: 14px;
+}
+.institution-nav-label {
+  padding-top: 16px;
+  font-size: 10px;
+}
+.institution-sidebar-link {
+  min-height: 42px;
+  font-size: 12px;
+}
+
+.institution-role-context {
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: -8px 0 18px;
+  padding: 8px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 10px;
+  background: var(--txk-bg-subtle);
+  color: var(--txk-text-primary);
+}
+.institution-role-context > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--txk-info);
+  flex: 0 0 auto;
+}
+.institution-role-context span,
+.institution-role-context strong,
+.institution-role-context small {
+  display: block;
+}
+.institution-role-context strong {
+  font-size: 12px;
+}
+.institution-role-context small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+
+.institution-learning-metrics-five {
+  grid-template-columns: repeat(5,minmax(0,1fr));
+}
+.institution-attention-list {
+  display: grid;
+  gap: 9px;
+}
+.institution-attention-card {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 26px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  box-shadow: none;
+}
+.institution-attention-card > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--txk-warning);
+}
+.institution-attention-card strong {
+  font-size: 13px;
+}
+.institution-attention-card p {
+  margin: 3px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 12px;
+}
+.institution-course-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.institution-course-badge svg {
+  width: 18px;
+  height: 18px;
+  color: var(--txk-info);
+}
+.institution-recent-training-list {
+  display: grid;
+  gap: 9px;
+}
+.institution-recent-training-row {
+  display: grid;
+  grid-template-columns: minmax(170px,1.1fr) minmax(200px,1.4fr) minmax(135px,.8fr) auto;
+  align-items: center;
+  gap: 14px;
+  box-shadow: none;
+}
+.institution-recent-training-row > div > strong,
+.institution-recent-training-row > div > span,
+.institution-recent-training-row > div > small {
+  display: block;
+}
+.institution-recent-training-row > div > strong {
+  font-size: 13px;
+}
+.institution-recent-training-row > div > span,
+.institution-recent-training-row > div > small {
+  margin-top: 3px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+.institution-recent-training-row > div:nth-child(3) {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+}
+.institution-student-link {
+  color: var(--txk-text-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+.institution-student-link:hover {
+  color: var(--txk-info);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.institution-learning-connection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 18px;
+  border: 1px solid var(--txk-border);
+  border-radius: var(--txk-radius-card);
+  background: var(--txk-bg-panel);
+}
+.institution-learning-connection h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.institution-learning-connection p:not(.txk-eyebrow) {
+  max-width: 820px;
+  margin: 5px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.institution-assignment-filters a {
+  min-height: 40px;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.institution-assignment-filters a strong {
+  min-width: 19px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--txk-bg-subtle);
+  font-size: 9px;
+}
+.institution-assignment-filter-panel {
+  margin-bottom: 14px;
+  border: 1px solid var(--txk-border);
+  border-radius: var(--txk-radius-card);
+  background: var(--txk-bg-panel);
+}
+.institution-assignment-filter-panel > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+.institution-assignment-filter-panel > summary svg {
+  width: 18px;
+  height: 18px;
+}
+.institution-assignment-filter-form {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 11px;
+  padding: 14px;
+  border-top: 1px solid var(--txk-border);
+}
+.institution-assignment-filter-form label,
+.institution-student-directory-filters label {
+  display: grid;
+  gap: 6px;
+}
+.institution-assignment-filter-form label > span,
+.institution-student-directory-filters label > span {
+  color: var(--txk-text-muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+.institution-assignment-filter-form select,
+.institution-student-directory-filters select,
+.institution-filter-search > div {
+  min-height: 42px;
+  border: 1px solid var(--txk-border);
+  border-radius: 10px;
+  background: var(--txk-bg-panel);
+  color: var(--txk-text-primary);
+}
+.institution-assignment-filter-form select,
+.institution-student-directory-filters select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.institution-filter-search > div {
+  display: grid;
+  grid-template-columns: 18px minmax(0,1fr);
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+}
+.institution-filter-search svg {
+  width: 18px;
+  height: 18px;
+  color: var(--txk-text-muted);
+}
+.institution-filter-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--txk-text-primary);
+  font-size: 12px;
+}
+.institution-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.institution-assignment-result-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 12px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+
+.institution-assignment-record {
+  gap: 14px;
+  padding: 18px;
+}
+.institution-assignment-record-head h3,
+.institution-assignment-record-head .institution-student-link {
+  font-size: 14px;
+}
+.institution-assignment-record-head > div > span,
+.institution-assignment-subject > span {
+  margin-top: 4px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+.institution-assignment-course-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 2px;
+}
+.institution-assignment-course-line h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.institution-assignment-course-line > div > span {
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+.institution-assignment-badge-status {
+  max-width: 320px;
+  display: grid;
+  grid-template-columns: 24px minmax(0,1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb,var(--txk-info) 24%,var(--txk-border));
+  border-radius: 10px;
+  background: var(--txk-info-bg);
+}
+.institution-assignment-badge-status > svg {
+  width: 21px;
+  height: 21px;
+  color: var(--txk-info);
+}
+.institution-assignment-badge-status strong,
+.institution-assignment-badge-status small {
+  display: block;
+}
+.institution-assignment-badge-status strong {
+  font-size: 11px;
+}
+.institution-assignment-badge-status small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-assignment-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 8px;
+}
+.institution-assignment-progress-grid > div {
+  padding: 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+}
+.institution-assignment-progress-grid span,
+.institution-assignment-progress-grid strong {
+  display: block;
+}
+.institution-assignment-progress-grid span {
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-assignment-progress-grid strong {
+  margin-top: 4px;
+  font-size: 12px;
+}
+.institution-assignment-record-meta dt {
+  font-size: 10px;
+}
+.institution-assignment-record-meta dd {
+  font-size: 11px;
+}
+.institution-assignment-record-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 2px;
+}
+.institution-assignment-evidence-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-assignment-evidence-note svg {
+  width: 16px;
+  height: 16px;
+}
+
+.institution-assignment-detail-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  box-shadow: none;
+}
+.institution-assignment-detail-hero h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.institution-assignment-detail-hero p:not(.txk-eyebrow) {
+  margin: 5px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 12px;
+}
+.institution-assignment-detail-metrics {
+  margin-top: 14px;
+}
+.institution-assignment-detail-metrics .txk-metric-card strong {
+  font-size: 20px;
+  line-height: 1.15;
+}
+.institution-assignment-detail-grid,
+.institution-student-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.institution-requirement-list,
+.institution-evidence-stack {
+  display: grid;
+  gap: 8px;
+}
+.institution-requirement-list > div,
+.institution-evidence-compact {
+  display: grid;
+  grid-template-columns: 24px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 10px;
+  background: var(--txk-bg-subtle);
+}
+.institution-requirement-list svg,
+.institution-evidence-compact svg {
+  width: 21px;
+  height: 21px;
+  color: var(--txk-text-muted);
+}
+.institution-requirement-list .is-complete svg,
+.institution-evidence-compact > svg:first-child {
+  color: var(--txk-success);
+}
+.institution-requirement-list strong,
+.institution-requirement-list small,
+.institution-evidence-compact strong,
+.institution-evidence-compact small {
+  display: block;
+}
+.institution-requirement-list strong,
+.institution-evidence-compact strong {
+  font-size: 12px;
+}
+.institution-requirement-list small,
+.institution-evidence-compact small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-evidence-list {
+  display: grid;
+  gap: 9px;
+}
+.institution-evidence-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr) auto minmax(130px,auto);
+  align-items: center;
+  gap: 12px;
+  box-shadow: none;
+}
+.institution-evidence-row > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--txk-info);
+}
+.institution-evidence-row strong,
+.institution-evidence-row span,
+.institution-evidence-row small {
+  display: block;
+}
+.institution-evidence-row strong {
+  font-size: 12px;
+}
+.institution-evidence-row span,
+.institution-evidence-row small {
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-badge-evidence-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.institution-badge-evidence-card > svg {
+  width: 30px;
+  height: 30px;
+  color: var(--txk-info);
+}
+.institution-badge-evidence-card strong,
+.institution-badge-evidence-card span,
+.institution-badge-evidence-card small {
+  display: block;
+}
+.institution-badge-evidence-card strong {
+  font-size: 14px;
+}
+.institution-badge-evidence-card span,
+.institution-badge-evidence-card small {
+  margin-top: 3px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-muted-copy {
+  color: var(--txk-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.institution-badge-metrics,
+.institution-student-profile-metrics,
+.institution-section-metrics {
+  margin-top: 18px;
+}
+.institution-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+}
+.institution-badge-card {
+  display: grid;
+  gap: 14px;
+  box-shadow: none;
+}
+.institution-badge-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.institution-badge-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.institution-badge-card p:not(.txk-eyebrow) {
+  margin: 5px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.institution-badge-linked-courses,
+.institution-badge-awards {
+  display: grid;
+  gap: 7px;
+}
+.institution-badge-linked-courses > div,
+.institution-badge-awards > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+}
+.institution-badge-linked-courses svg,
+.institution-badge-awards svg {
+  width: 19px;
+  height: 19px;
+  color: var(--txk-info);
+}
+.institution-badge-linked-courses strong,
+.institution-badge-linked-courses small,
+.institution-badge-awards small {
+  display: block;
+}
+.institution-badge-linked-courses strong {
+  font-size: 11px;
+}
+.institution-badge-linked-courses small,
+.institution-badge-awards small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-badge-pending {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px dashed var(--txk-border-strong);
+  border-radius: 9px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+.institution-badge-pending svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+}
+
+.institution-dashboard-metrics {
+  margin-top: 18px;
+}
+.institution-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.institution-dashboard-action-list,
+.institution-readiness-composition {
+  display: grid;
+  gap: 8px;
+}
+.institution-dashboard-action-list > a {
+  display: grid;
+  grid-template-columns: 26px minmax(0,1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 9px 10px;
+  border: 1px solid var(--txk-border);
+  border-radius: 10px;
+  background: var(--txk-bg-subtle);
+}
+.institution-dashboard-action-list svg {
+  width: 20px;
+  height: 20px;
+  color: var(--txk-info);
+}
+.institution-dashboard-action-list strong,
+.institution-dashboard-action-list small {
+  display: block;
+}
+.institution-dashboard-action-list strong {
+  font-size: 12px;
+}
+.institution-dashboard-action-list small {
+  margin-top: 2px;
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-readiness-composition {
+  grid-template-columns: repeat(2,minmax(0,1fr));
+}
+.institution-readiness-composition > a {
+  padding: 12px;
+  border: 1px solid var(--txk-border);
+  border-radius: 10px;
+  background: var(--txk-bg-subtle);
+}
+.institution-readiness-composition span,
+.institution-readiness-composition strong {
+  display: block;
+}
+.institution-readiness-composition span {
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+.institution-readiness-composition strong {
+  margin-top: 5px;
+  font-size: 13px;
+}
+.institution-dashboard-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+}
+.institution-dashboard-resource-grid > .txk-card,
+.institution-program-grid > .txk-card,
+.institution-readiness-category-grid > .txk-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.institution-dashboard-resource-grid svg,
+.institution-program-grid svg,
+.institution-readiness-category-grid svg,
+.institution-guidance-card > svg {
+  width: 28px;
+  height: 28px;
+  color: var(--txk-info);
+}
+.institution-dashboard-resource-grid h3,
+.institution-program-grid h3,
+.institution-readiness-category-grid h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.institution-dashboard-resource-grid p,
+.institution-program-grid p,
+.institution-readiness-category-grid p {
+  margin: 4px 0 0;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+
+.institution-student-directory-filters {
+  display: grid;
+  grid-template-columns: minmax(240px,1.6fr) repeat(2,minmax(160px,1fr)) auto auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.institution-student-directory {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+.institution-student-directory-card {
+  display: grid;
+  gap: 14px;
+  box-shadow: none;
+}
+.institution-student-directory-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.institution-student-directory-head > svg {
+  width: 30px;
+  height: 30px;
+  color: var(--txk-info);
+}
+.institution-student-directory-head span {
+  display: block;
+  margin-top: 3px;
+  color: var(--txk-text-muted);
+  font-size: 11px;
+}
+.institution-student-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 8px;
+}
+.institution-student-signal-grid > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0,1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid var(--txk-border);
+  border-radius: 9px;
+  background: var(--txk-bg-subtle);
+}
+.institution-student-signal-grid svg {
+  width: 19px;
+  height: 19px;
+  color: var(--txk-info);
+}
+.institution-student-signal-grid strong,
+.institution-student-signal-grid small {
+  display: block;
+}
+.institution-student-signal-grid strong {
+  font-size: 14px;
+}
+.institution-student-signal-grid small {
+  color: var(--txk-text-muted);
+  font-size: 9px;
+}
+.institution-student-directory-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.institution-student-directory-footer > span {
+  color: var(--txk-text-muted);
+  font-size: 10px;
+}
+
+.institution-program-grid,
+.institution-readiness-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.institution-guidance-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+.institution-guidance-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.institution-guidance-card p {
+  margin: 5px 0 0;
+  max-width: 800px;
+  color: var(--txk-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1180px) {
+  .institution-learning-metrics-five {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+  .institution-assignment-filter-form {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .institution-recent-training-row {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .institution-recent-training-row > .txk-button {
+    justify-self: start;
+  }
+}
+@media (max-width: 900px) {
+  .institution-learning-metrics-five,
+  .institution-dashboard-metrics,
+  .institution-badge-metrics,
+  .institution-student-profile-metrics,
+  .institution-section-metrics {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .institution-dashboard-grid,
+  .institution-dashboard-resource-grid,
+  .institution-assignment-detail-grid,
+  .institution-student-profile-grid,
+  .institution-badge-grid,
+  .institution-student-directory,
+  .institution-program-grid,
+  .institution-readiness-category-grid {
+    grid-template-columns: 1fr;
+  }
+  .institution-student-directory-filters {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .institution-student-directory-filters .institution-filter-search {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .institution-learning-metrics-five,
+  .institution-dashboard-metrics,
+  .institution-badge-metrics,
+  .institution-student-profile-metrics,
+  .institution-section-metrics,
+  .institution-assignment-progress-grid,
+  .institution-assignment-filter-form,
+  .institution-student-directory-filters {
+    grid-template-columns: 1fr;
+  }
+  .institution-attention-card,
+  .institution-recent-training-row,
+  .institution-evidence-row,
+  .institution-guidance-card,
+  .institution-dashboard-resource-grid > .txk-card,
+  .institution-program-grid > .txk-card,
+  .institution-readiness-category-grid > .txk-card {
+    grid-template-columns: 1fr;
+  }
+  .institution-attention-card > svg,
+  .institution-guidance-card > svg {
+    display: none;
+  }
+  .institution-assignment-course-line,
+  .institution-assignment-record-footer,
+  .institution-learning-connection,
+  .institution-student-directory-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .institution-assignment-badge-status {
+    max-width: none;
+    width: 100%;
+  }
+  .institution-assignment-result-summary {
+    flex-direction: column;
+  }
+}
