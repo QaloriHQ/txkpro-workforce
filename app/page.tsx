@@ -10,7 +10,7 @@ export default function HomePage() {
         <nav className="topnav" aria-label="Workforce previews">
           <Link className="nav-link" href="/demo/student">Student</Link>
           <Link className="nav-link" href="/demo/educator">Educator</Link>
-          <Link className="nav-link" href="/demo/employer">Employer</Link>
+          <Link className="nav-link" href="/demo/employer">Employer</Link>\n          <Link className="nav-link" href="/credentials">Verify credential</Link>
         </nav>
         <div className="header-actions">
           <ThemeToggle />
