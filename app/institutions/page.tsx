@@ -13,6 +13,7 @@ import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingHeader } from "@/components/marketing-header";
+import { PilotFunnelNav } from "@/components/pilot-funnel-nav";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
@@ -104,6 +105,10 @@ export default function InstitutionsPage() {
           <Link href="/">Home</Link><span>/</span><span>Institutions</span>
         </nav>
 
+        <div className="marketing-shell">
+          <PilotFunnelNav current="institution" />
+        </div>
+
         <section className="marketing-hero marketing-shell marketing-hero-single">
           <div className="marketing-hero-copy">
             <p className="marketing-kicker">TXKPRO Workforce for Institutions</p>
@@ -114,11 +119,11 @@ export default function InstitutionsPage() {
               training, referrals, placements, and early retention activity.
             </p>
             <div className="marketing-actions">
-              <Link className="button button-brand" href="/signup">
-                Start an institution account <ArrowRightIcon aria-hidden="true" />
+              <Link className="button button-brand" href="/institutions/pilot">
+                Explore the 12-week pilot <ArrowRightIcon aria-hidden="true" />
               </Link>
-              <Link className="button button-ghost" href="/employers">
-                See the employer experience
+              <Link className="button button-ghost" href="/institutions/request-pilot?intent=meeting">
+                Request a meeting
               </Link>
             </div>
           </div>
@@ -194,8 +199,8 @@ export default function InstitutionsPage() {
             <p>Build the workforce loop around real verification, referral, placement, and retention activity before expanding.</p>
           </div>
           <div className="marketing-actions">
-            <Link className="button button-brand" href="/signup">Create institution account</Link>
-            <Link className="button button-ghost" href="/login">Sign in</Link>
+            <Link className="button button-brand" href="/institutions/pilot">View pilot overview</Link>
+            <Link className="button button-ghost" href="/institutions/request-pilot">Request pilot / meeting</Link>
           </div>
         </section>
       </main>
