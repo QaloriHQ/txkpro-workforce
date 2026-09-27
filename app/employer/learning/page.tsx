@@ -78,6 +78,9 @@ export default async function EmployerLearningPage() {
               <ButtonLink href="/employer/learning/badges">
                 Company Badges
               </ButtonLink>
+              <ButtonLink href="/employer/learning/certifications">
+                Employer Certifications
+              </ButtonLink>
               {canManage ? <CourseCreatePanel /> : null}
             </>
           }
