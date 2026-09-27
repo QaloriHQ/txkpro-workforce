@@ -2,6 +2,7 @@ import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { InstitutionContext } from "@/lib/institution/types";
+import type { StudentReadinessEvidence } from "@/lib/student/readiness";
 import type {
   InstitutionAssignmentInput,
   InstitutionAssignmentPreview,
@@ -148,6 +149,16 @@ export async function getInstitutionStudentReadinessSummary(
       p_student_id: studentId,
     },
   );
+}
+
+export async function getInstitutionStudentReadinessEvidence(
+  context: InstitutionContext,
+  studentId: string,
+) {
+  return rpc<StudentReadinessEvidence>("student_profile_readiness_evidence", {
+    p_student_id: studentId,
+    p_institution_id: context.institutionId,
+  });
 }
 
 export async function cancelInstitutionMicroCertAssignment(

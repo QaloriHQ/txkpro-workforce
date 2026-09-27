@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { StudentReadinessEvidence } from "@/lib/student/readiness";
 import type {
   StudentEmployerTrainingAssignmentSummary,
   StudentEmployerTrainingAssessmentRuntime,
@@ -45,6 +46,13 @@ async function rpc<T>(
   const { data, error } = await supabase.rpc(fn, args);
   if (error) learningError(error);
   return data as T;
+}
+
+export async function getStudentReadinessEvidence(studentId: string) {
+  return rpc<StudentReadinessEvidence>("student_profile_readiness_evidence", {
+    p_student_id: studentId,
+    p_institution_id: null,
+  });
 }
 
 function mediaUrl(
