@@ -72,6 +72,31 @@ export async function listEmployerMicroCerts(
   });
 }
 
+export type EmployerTrainingAnalytics = {
+  lifecycle: { assigned: number; not_started: number; in_progress: number; completed: number; cancelled: number };
+  assessments: { passed: number; not_passed: number };
+  badges: { active: number; expired: number; revoked: number };
+  certifications: { active: number; expired: number; revoked: number };
+  courses: Array<{
+    micro_cert_id: string; micro_cert_version_id: string; version_number: number;
+    title: string; assigned: number; not_started: number; in_progress: number;
+    completed: number; cancelled: number;
+  }>;
+  recentDays: Array<{ day: string; completions: number }>;
+};
+
+export async function getEmployerTrainingAnalytics(
+  context: EmployerContext,
+  from: string | null,
+  to: string | null,
+) {
+  return rpc<EmployerTrainingAnalytics>("employer_training_analytics", {
+    p_employer_id: context.employerId,
+    p_from: from,
+    p_to: to,
+  });
+}
+
 export async function getEmployerMicroCert(
   context: EmployerContext,
   microCertId: string,
