@@ -61,10 +61,7 @@ export default async function StudentEmployerTrainingDetailPage({
     throw error;
   }
 
-  const [assignments, completionStatus] = await Promise.all([
-    listStudentEmployerTrainingAssignments(),
-    getStudentEmployerTrainingCompletionStatus(decodedAssignmentId),
-  ]);
+  const assignments = await listStudentEmployerTrainingAssignments();
   const activeCount = assignments.filter(
     (assignment) => assignment.status !== "cancelled",
   ).length;
