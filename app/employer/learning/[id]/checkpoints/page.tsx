@@ -15,6 +15,7 @@ import { requireEmployerContext } from "@/lib/employer/auth";
 import {
   getEmployerMicroCertModuleDetail,
   listEmployerCompanyBadges,
+  listEmployerCertificationDefinitions,
 } from "@/lib/employer/learning-repository";
 
 export const dynamic = "force-dynamic";
@@ -24,9 +25,10 @@ export default async function CourseCheckpointsPage({ params }: RouteContext) {
   const { id } = await params;
   const context = await requireEmployerContext({ approved: true });
   const microCertId = decodeURIComponent(id);
-  const [course, badges] = await Promise.all([
+  const [course, badges, certifications] = await Promise.all([
     getEmployerMicroCertModuleDetail(context, microCertId),
     listEmployerCompanyBadges(context),
+    listEmployerCertificationDefinitions(context, microCertId),
   ]);
   const canManage =
     context.role === "employer_owner" || context.role === "employer_admin";
@@ -85,6 +87,7 @@ export default async function CourseCheckpointsPage({ params }: RouteContext) {
         <CourseCheckpointsWorkspace
           course={course}
           badges={badges}
+          certifications={certifications}
           canManage={canManage}
         />
       </main>
