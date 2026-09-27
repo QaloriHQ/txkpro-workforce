@@ -5932,3 +5932,433 @@ body:has(.institution-sidebar) .topbar > .brand {
     background: rgba(5,10,16,.48);
   }
 }
+
+
+/* ============================================================
+   W11-09B — Public Employer Certification verification
+   ============================================================ */
+
+.public-credential-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.public-credential-page {
+  padding-bottom: 72px;
+}
+
+.public-credential-search-grid,
+.public-credential-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.public-credential-search-card,
+.public-credential-trust-card {
+  min-height: 100%;
+}
+
+.public-credential-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, var(--line));
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.public-credential-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.public-credential-search-card h2,
+.public-credential-trust-card h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -.03em;
+}
+
+.public-credential-search-card p:not(.txk-eyebrow),
+.public-credential-trust-card p:not(.txk-eyebrow) {
+  margin: 7px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.public-credential-search-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.public-credential-search-form > label {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.public-credential-search-form > div {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 9px;
+}
+
+.public-credential-search-form input {
+  min-height: 46px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  background: var(--card-elevated);
+  color: var(--ink);
+  font: inherit;
+}
+
+.public-credential-search-form input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.public-credential-search-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.public-credential-search-form button svg,
+.public-credential-not-found .button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.public-credential-search-form small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.public-credential-trust-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.public-credential-trust-card > svg {
+  width: 42px;
+  height: 42px;
+  color: var(--brand);
+}
+
+.public-credential-boundary {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--line));
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.public-credential-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: clamp(24px,4vw,42px);
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--line));
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--brand) 18%, transparent), transparent 19rem),
+    var(--card);
+  box-shadow: var(--shadow-md);
+}
+
+.public-credential-hero-copy h1 {
+  max-width: 850px;
+  margin: 4px 0 10px;
+  color: var(--ink);
+  font-size: clamp(32px,5vw,58px);
+  line-height: .98;
+  letter-spacing: -.055em;
+}
+
+.public-credential-hero-copy > p:not(.txk-eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.public-credential-hero-copy > p strong {
+  color: var(--ink);
+}
+
+.public-credential-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.public-credential-id > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.public-credential-id code {
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.public-credential-seal {
+  width: clamp(84px,10vw,126px);
+  height: clamp(84px,10vw,126px);
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--line));
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.public-credential-seal svg {
+  width: 54%;
+  height: 54%;
+}
+
+.public-credential-status {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr);
+  align-items: start;
+  gap: 13px;
+  margin-bottom: 16px;
+  box-shadow: none;
+}
+
+.public-credential-status > svg {
+  width: 30px;
+  height: 30px;
+}
+
+.public-credential-status-success > svg {
+  color: #16845b;
+}
+
+.public-credential-status-warning > svg {
+  color: #b7791f;
+}
+
+.public-credential-status-danger > svg {
+  color: var(--danger);
+}
+
+.public-credential-status-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.public-credential-status-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.public-credential-status p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.public-credential-metrics {
+  margin-bottom: 18px;
+}
+
+.public-credential-metrics .metric-card strong,
+.public-credential-metrics .txk-metric-card strong {
+  font-size: clamp(19px,2vw,28px);
+  line-height: 1.1;
+}
+
+.public-credential-detail-grid {
+  margin-bottom: 18px;
+}
+
+.public-credential-section-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--brand);
+}
+
+.public-credential-facts {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.public-credential-facts > div {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+
+.public-credential-facts dt,
+.public-credential-facts dd {
+  margin: 0;
+}
+
+.public-credential-facts dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.public-credential-facts dd {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.public-credential-capitalize {
+  text-transform: capitalize;
+}
+
+.public-credential-detail-grid .public-credential-boundary {
+  margin-top: 13px;
+}
+
+.public-credential-privacy {
+  display: grid;
+  grid-template-columns: 40px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 15px;
+  box-shadow: none;
+}
+
+.public-credential-privacy > svg {
+  width: 34px;
+  height: 34px;
+  color: var(--brand);
+}
+
+.public-credential-privacy h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.public-credential-privacy p:not(.txk-eyebrow) {
+  max-width: 780px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.public-credential-not-found {
+  max-width: 760px;
+  display: grid;
+  grid-template-columns: 48px minmax(0,1fr);
+  gap: 16px;
+  margin: 44px auto 0;
+  padding: 30px;
+}
+
+.public-credential-not-found > svg {
+  width: 42px;
+  height: 42px;
+  color: #b7791f;
+}
+
+.public-credential-not-found h1 {
+  margin: 0;
+  font-size: clamp(28px,4vw,42px);
+  letter-spacing: -.04em;
+}
+
+.public-credential-not-found p:not(.txk-eyebrow) {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.public-credential-not-found .button {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 820px) {
+  .public-credential-search-grid,
+  .public-credential-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-credential-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .public-credential-seal {
+    width: 76px;
+    height: 76px;
+  }
+
+  .public-credential-privacy {
+    grid-template-columns: 34px minmax(0,1fr);
+  }
+
+  .public-credential-privacy > .button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .public-credential-topbar .topnav {
+    display: none;
+  }
+
+  .public-credential-search-form > div,
+  .public-credential-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .public-credential-search-form button {
+    width: 100%;
+  }
+
+  .public-credential-status-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-credential-not-found {
+    grid-template-columns: 1fr;
+    margin-top: 24px;
+    padding: 22px;
+  }
+}
