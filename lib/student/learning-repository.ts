@@ -5,6 +5,7 @@ import type {
   StudentEmployerTrainingAssignmentSummary,
   StudentEmployerTrainingAssessmentRuntime,
   StudentEmployerTrainingAssessmentSubmitResult,
+  StudentEmployerTrainingCompletionStatus,
   StudentEmployerTrainingMediaAuthorization,
   StudentEmployerTrainingRuntime,
 } from "@/lib/student/types";
@@ -216,5 +217,15 @@ export async function authorizeStudentEmployerTrainingMedia(
       p_assignment_id: assignmentId,
       p_media_asset_id: mediaAssetId,
     },
+  );
+}
+
+
+export async function getStudentEmployerTrainingCompletionStatus(
+  assignmentId: string,
+) {
+  return rpc<StudentEmployerTrainingCompletionStatus>(
+    "student_employer_training_completion_status",
+    { p_assignment_id: assignmentId },
   );
 }

@@ -321,3 +321,71 @@ export type StudentEmployerTrainingMediaAuthorization = {
   extension: string;
   sizeBytes: number;
 };
+
+
+export type StudentEmployerTrainingCompletionEvaluation = {
+  assignmentId: string;
+  assignmentStatus: StudentEmployerTrainingAssignmentStatus;
+  microCertId: string;
+  microCertVersionId: string;
+  versionNumber: number;
+  versionStatus: string;
+  rule: {
+    completionRuleVersion: 1;
+    checkpointMode: "all_required" | "weighted_percent";
+    minimumCheckpointPercent: number;
+    requireAllRequiredLessons: boolean;
+    requireAllRequiredAssessments: boolean;
+  };
+  lessons: {
+    gateEnabled: boolean;
+    requiredTotal: number;
+    requiredCompleted: number;
+    requiredLessonIds: string[];
+    completedRequiredLessonIds: string[];
+    passed: boolean;
+  };
+  checkpoints: {
+    mode: "all_required" | "weighted_percent";
+    minimumPercent: number;
+    requiredTotal: number;
+    requiredSatisfied: number;
+    weightTotal: number;
+    weightSatisfied: number;
+    percent: number;
+    requiredCheckpointIds: string[];
+    satisfiedRequiredCheckpointIds: string[];
+    passed: boolean;
+  };
+  assessments: {
+    gateEnabled: boolean;
+    requiredTotal: number;
+    requiredPassed: number;
+    requiredExhausted: number;
+    requiredInProgress: number;
+    requiredAssessmentIds: string[];
+    passedRequiredAssessmentIds: string[];
+    exhaustedRequiredAssessmentIds: string[];
+    passed: boolean;
+  };
+  eligibleForCompletion: boolean;
+  blockedReasons: string[];
+  completionId: string | null;
+  outcome: "passed" | null;
+  technicalSkillVerified: false;
+  evidenceCategory: "employer_training";
+};
+
+export type StudentEmployerTrainingCompletion = {
+  completionId: string;
+  assignmentId: string;
+  outcome: "passed";
+  score: number | null;
+  evidence: Record<string, unknown>;
+  completedAt: string;
+};
+
+export type StudentEmployerTrainingCompletionStatus = {
+  completion: StudentEmployerTrainingCompletion | null;
+  evaluation: StudentEmployerTrainingCompletionEvaluation;
+};

@@ -19,6 +19,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
   getStudentEmployerTrainingAssignment,
+  getStudentEmployerTrainingCompletionStatus,
   listStudentEmployerTrainingAssignments,
 } from "@/lib/student/learning-repository";
 import type {
@@ -49,8 +50,12 @@ export default async function StudentEmployerTrainingDetailPage({
   const decodedAssignmentId = decodeURIComponent(assignmentId);
 
   let runtime;
+  let completionStatus;
   try {
-    runtime = await getStudentEmployerTrainingAssignment(decodedAssignmentId);
+    [runtime, completionStatus] = await Promise.all([
+      getStudentEmployerTrainingAssignment(decodedAssignmentId),
+      getStudentEmployerTrainingCompletionStatus(decodedAssignmentId),
+    ]);
   } catch (error) {
     if (error instanceof Response && error.status === 404) notFound();
     throw error;
@@ -147,6 +152,43 @@ export default async function StudentEmployerTrainingDetailPage({
             ) : null}
           </div>
         </section>
+
+        {completionStatus.completion ? (
+          <section className="card student-training-completion-banner">
+            <span className="student-training-completion-icon">
+              <CheckCircleIcon aria-hidden="true" />
+            </span>
+            <div>
+              <p className="student-training-kicker">Employer Training complete</p>
+              <h2>Passed</h2>
+              <p>
+                Completed{" "}
+                {new Date(
+                  completionStatus.completion.completedAt,
+                ).toLocaleDateString()}{" "}
+                against pinned version v
+                {completionStatus.evaluation.versionNumber}. This is
+                company-specific readiness evidence and is not an Instructor
+                Verified Skill.
+              </p>
+            </div>
+          </section>
+        ) : (
+          <section className="card student-training-completion-pending">
+            <div>
+              <p className="student-training-kicker">Completion requirements</p>
+              <strong>
+                {completionStatus.evaluation.eligibleForCompletion
+                  ? "Completion is being recorded"
+                  : "Complete the required course evidence"}
+              </strong>
+              <p>
+                Completion is determined from the pinned course version&apos;s
+                required lessons, checkpoint rule, and required assessments.
+              </p>
+            </div>
+          </section>
+        )}
 
         <section className="student-training-progress-grid">
           <div className="card student-training-progress-card">
@@ -448,9 +490,9 @@ export default async function StudentEmployerTrainingDetailPage({
 
         <div className="student-training-footer-note">
           <ClockIcon aria-hidden="true" />
-          Progress is derived from your completed required lessons, satisfied
-          checkpoints, and passed required assessments. Final course completion is
-          evaluated separately.
+          Progress is derived from completed required lessons, satisfied checkpoints,
+          and passed required assessments. Canonical completion is evaluated
+          automatically against the assignment’s pinned course version.
         </div>
       </main>
     </>

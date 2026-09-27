@@ -4843,3 +4843,60 @@ body:has(.institution-sidebar) .topbar > .header-actions {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* W11-08 — canonical Employer Training completion outcome */
+.student-training-completion-banner,
+.student-training-completion-pending {
+  display: grid;
+  grid-template-columns: 46px minmax(0,1fr);
+  gap: 14px;
+  align-items: start;
+  margin-top: 16px;
+}
+.student-training-completion-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  border: 1px solid color-mix(in srgb,var(--brand) 28%,var(--line));
+}
+.student-training-completion-icon svg {
+  width: 26px;
+  height: 26px;
+}
+.student-training-completion-banner h2,
+.student-training-completion-banner p,
+.student-training-completion-pending p,
+.student-training-completion-pending strong {
+  margin: 0;
+}
+.student-training-completion-banner h2 {
+  font-size: 22px;
+}
+.student-training-completion-banner p:not(.student-training-kicker),
+.student-training-completion-pending p {
+  margin-top: 5px;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.student-training-completion-pending strong {
+  display: block;
+  font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .student-training-completion-banner,
+  .student-training-completion-pending {
+    grid-template-columns: 40px minmax(0,1fr);
+  }
+  .student-training-completion-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
