@@ -149,6 +149,75 @@ export type InstitutionAssignmentResult = {
   }>;
 };
 
+export type InstitutionTrainingProgress = {
+  rule: {
+    completionRuleVersion: 1;
+    checkpointMode: "all_required" | "weighted_percent";
+    minimumCheckpointPercent: number;
+    requireAllRequiredLessons: boolean;
+    requireAllRequiredAssessments: boolean;
+  };
+  lessons: {
+    passed: boolean;
+    gateEnabled: boolean;
+    requiredTotal: number;
+    requiredCompleted: number;
+    requiredLessonIds: string[];
+    completedRequiredLessonIds: string[];
+  };
+  checkpoints: {
+    mode: "all_required" | "weighted_percent";
+    passed: boolean;
+    percent: number;
+    weightTotal: number;
+    requiredTotal: number;
+    minimumPercent: number;
+    weightSatisfied: number;
+    requiredSatisfied: number;
+    requiredCheckpointIds: string[];
+    satisfiedRequiredCheckpointIds: string[];
+  };
+  assessments: {
+    passed: boolean;
+    gateEnabled: boolean;
+    requiredTotal: number;
+    requiredPassed: number;
+    requiredExhausted: number;
+    requiredInProgress: number;
+    requiredAssessmentIds: string[];
+    passedRequiredAssessmentIds: string[];
+    exhaustedRequiredAssessmentIds: string[];
+  };
+  assignmentId: string;
+  assignmentStatus: "assigned" | "in_progress" | "completed" | "cancelled";
+  microCertId: string;
+  microCertVersionId: string;
+  versionNumber: number;
+  versionStatus: string;
+  blockedReasons: string[];
+  eligibleForCompletion: boolean;
+  completionId: string | null;
+  outcome: "passed" | null;
+  evidenceCategory: "employer_training";
+  technicalSkillVerified: false;
+};
+
+export type InstitutionCompanyBadgeSummary = {
+  companyBadgeId: string;
+  title: string;
+  version: number;
+  active: boolean;
+  expiresAfterDays: number | null;
+};
+
+export type InstitutionCompanyBadgeAwardSummary = {
+  companyBadgeAwardId: string;
+  issuedAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  status: "active" | "expired" | "revoked";
+};
+
 export type InstitutionMicroCertAssignment = {
   assignmentId: string;
   microCertId: string;
@@ -164,6 +233,7 @@ export type InstitutionMicroCertAssignment = {
   cohortId: string | null;
   cohortName: string | null;
   programName: string | null;
+  tradeId: string | null;
   assignedByUserId: string | null;
   assignedByName: string | null;
   status: "assigned" | "in_progress" | "completed" | "cancelled";
@@ -171,7 +241,9 @@ export type InstitutionMicroCertAssignment = {
   startedAt: string | null;
   completedAt: string | null;
   cancelledAt: string | null;
+  lastActivityAt: string | null;
   metadata: Record<string, unknown>;
+  progress: InstitutionTrainingProgress;
   latestCompletion: {
     completionId: string;
     attemptNumber: number;
@@ -179,4 +251,176 @@ export type InstitutionMicroCertAssignment = {
     score: number | null;
     completedAt: string;
   } | null;
+  companyBadge: InstitutionCompanyBadgeSummary | null;
+  companyBadgeAward: InstitutionCompanyBadgeAwardSummary | null;
+};
+
+export type InstitutionAssignmentFilters = {
+  status?: string | null;
+  studentId?: string | null;
+  query?: string | null;
+  employerId?: string | null;
+  microCertId?: string | null;
+  programName?: string | null;
+  cohortId?: string | null;
+  companyBadgeId?: string | null;
+};
+
+export type InstitutionAssignmentDetail = {
+  assignment: InstitutionMicroCertAssignment;
+  lessons: Array<{
+    lessonId: string;
+    title: string;
+    sequenceNo: number;
+    required: boolean;
+    estimatedMinutes: number | null;
+    status: string;
+    startedAt: string | null;
+    lastViewedAt: string | null;
+    completedAt: string | null;
+  }>;
+  checkpoints: Array<{
+    checkpointId: string;
+    title: string;
+    sequenceNo: number;
+    required: boolean;
+    weight: number;
+    satisfied: boolean;
+    latestScore: number | null;
+    submittedAt: string | null;
+  }>;
+  assessments: Array<{
+    assessmentId: string;
+    title: string;
+    assessmentType: string;
+    sequenceNo: number;
+    required: boolean;
+    passingScore: number;
+    maxAttempts: number | null;
+    attemptCount: number;
+    passed: boolean;
+    latestAttempt: {
+      attemptNumber: number;
+      status: string;
+      score: number | null;
+      startedAt: string;
+      submittedAt: string | null;
+      gradedAt: string | null;
+    } | null;
+  }>;
+  notifications: Array<{
+    notificationId: string;
+    eventType: string;
+    channel: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  activity: Array<{
+    eventType: string;
+    targetType: string;
+    result: string;
+    createdAt: string;
+  }>;
+};
+
+export type InstitutionCompanyBadgeEvidence = {
+  companyBadgeId: string;
+  title: string;
+  description: string | null;
+  version: number;
+  active: boolean;
+  expiresAfterDays: number | null;
+  employerId: string;
+  employerName: string;
+  linkedCourses: Array<{
+    microCertId: string;
+    title: string;
+    microCertVersionId: string;
+    versionNumber: number;
+    status: string;
+  }>;
+  awards: Array<{
+    companyBadgeAwardId: string;
+    studentId: string;
+    studentName: string;
+    microCertId: string | null;
+    microCertVersionId: string | null;
+    issuedAt: string;
+    expiresAt: string | null;
+    revokedAt: string | null;
+    status: "active" | "expired" | "revoked";
+    evidenceType: string;
+    evidenceId: string;
+  }>;
+};
+
+export type InstitutionWorkforceSummary = {
+  activeStudents: number;
+  verifiedSkills: number;
+  activeInterviews: number;
+  activePlacements: number;
+  availableCourses: number;
+  totalAssignments: number;
+  companyBadgesEarned: number;
+  cancelledAssignments: number;
+  completedAssignments: number;
+  inProgressAssignments: number;
+  notStartedAssignments: number;
+  assessmentExhaustedAssignments: number;
+};
+
+export type InstitutionStudentReadinessSummary = {
+  student: {
+    studentId: string;
+    displayName: string;
+    programName: string | null;
+    cohortId: string | null;
+    cohortName: string | null;
+    graduationDate: string | null;
+    profileStatus: string | null;
+    availabilityStatus: string | null;
+  };
+  verifiedSkills: Array<{
+    studentSkillId: string;
+    skillId: string;
+    name: string;
+    category: string | null;
+    tradeId: string | null;
+    verifiedAt: string | null;
+    provenance: string | null;
+  }>;
+  employerTraining: InstitutionMicroCertAssignment[];
+  companyBadges: Array<{
+    companyBadgeAwardId: string;
+    companyBadgeId: string;
+    title: string;
+    employerName: string;
+    issuedAt: string;
+    expiresAt: string | null;
+    revokedAt: string | null;
+    status: "active" | "expired" | "revoked";
+    evidenceType: string;
+    evidenceId: string;
+    microCertVersionId: string | null;
+  }>;
+  interviews: Array<{
+    interviewRequestId: string;
+    employerId: string;
+    employerName: string;
+    roleTitle: string | null;
+    status: string;
+    scheduledFor: string | null;
+    interviewFormat: string | null;
+  }>;
+  placements: Array<{
+    placementId: string;
+    employerId: string;
+    employerName: string;
+    roleTitle: string | null;
+    employmentType: string | null;
+    status: string;
+    hireDate: string | null;
+    startedAt: string | null;
+  }>;
 };

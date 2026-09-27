@@ -7,7 +7,12 @@ import type {
   InstitutionAssignmentPreview,
   InstitutionAssignmentResult,
   InstitutionEmployerLearningContext,
+  InstitutionAssignmentDetail,
+  InstitutionAssignmentFilters,
+  InstitutionCompanyBadgeEvidence,
   InstitutionMicroCertAssignment,
+  InstitutionStudentReadinessSummary,
+  InstitutionWorkforceSummary,
 } from "@/lib/institution/types";
 
 function institutionLearningError(error: { message?: string }) {
@@ -84,15 +89,63 @@ export async function assignInstitutionMicroCert(
 
 export async function listInstitutionMicroCertAssignments(
   context: InstitutionContext,
-  status?: string | null,
-  microCertId?: string | null,
+  filters: InstitutionAssignmentFilters = {},
 ) {
   return rpc<InstitutionMicroCertAssignment[]>(
-    "institution_micro_cert_assignments",
+    "institution_micro_cert_assignment_search",
     {
       p_institution_id: context.institutionId,
-      p_status: status ?? null,
-      p_micro_cert_id: microCertId ?? null,
+      p_status: filters.status ?? null,
+      p_student_id: filters.studentId ?? null,
+      p_query: filters.query ?? null,
+      p_employer_id: filters.employerId ?? null,
+      p_micro_cert_id: filters.microCertId ?? null,
+      p_program_name: filters.programName ?? null,
+      p_cohort_id: filters.cohortId ?? null,
+      p_company_badge_id: filters.companyBadgeId ?? null,
+    },
+  );
+}
+
+export async function getInstitutionMicroCertAssignmentDetail(
+  context: InstitutionContext,
+  assignmentId: string,
+) {
+  return rpc<InstitutionAssignmentDetail>(
+    "institution_micro_cert_assignment_detail",
+    {
+      p_institution_id: context.institutionId,
+      p_assignment_id: assignmentId,
+    },
+  );
+}
+
+export async function listInstitutionCompanyBadgeEvidence(
+  context: InstitutionContext,
+) {
+  return rpc<InstitutionCompanyBadgeEvidence[]>(
+    "institution_company_badge_evidence",
+    { p_institution_id: context.institutionId },
+  );
+}
+
+export async function getInstitutionWorkforceSummary(
+  context: InstitutionContext,
+) {
+  return rpc<InstitutionWorkforceSummary>("institution_workforce_summary", {
+    p_institution_id: context.institutionId,
+  });
+}
+
+export async function getInstitutionStudentReadinessSummary(
+  context: InstitutionContext,
+  studentId: string,
+) {
+  return rpc<InstitutionStudentReadinessSummary>(
+    "institution_student_readiness_summary",
+    {
+      p_institution_id: context.institutionId,
+      p_student_id: studentId,
     },
   );
 }
