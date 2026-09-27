@@ -23,7 +23,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import { getInstitutionStudentReadinessSummary } from "@/lib/institution/learning-repository";
 import {
@@ -41,7 +41,7 @@ export default async function InstitutionStudentProfilePage({
   params,
 }: RouteContext) {
   const { studentId } = await params;
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const canManage = canManageInstitutionLearningAssignments(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);

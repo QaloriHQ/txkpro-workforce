@@ -22,7 +22,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
   getInstitutionEmployerLearningContext,
@@ -38,7 +38,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionDashboardPage() {
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const [learning, summary, assignments, badges] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
     getInstitutionWorkforceSummary(context),

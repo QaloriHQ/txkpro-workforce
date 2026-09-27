@@ -28,7 +28,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
   getInstitutionEmployerLearningContext,
@@ -110,7 +110,7 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
   const config = sections[section];
   if (!config) notFound();
 
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const [summary, learning, assignments, badges] = await Promise.all([
     getInstitutionWorkforceSummary(context),
     getInstitutionEmployerLearningContext(context),

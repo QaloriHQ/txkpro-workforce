@@ -20,7 +20,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
   listInstitutionCompanyBadgeEvidence,
@@ -34,7 +34,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionCompanyBadgesPage() {
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const [badges, assignments] = await Promise.all([
     listInstitutionCompanyBadgeEvidence(context),
     listInstitutionMicroCertAssignments(context),

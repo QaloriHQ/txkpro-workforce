@@ -21,7 +21,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
   getInstitutionEmployerLearningContext,
@@ -47,7 +47,7 @@ function formatActivity(value: string | null) {
 }
 
 export default async function InstitutionLearningPage() {
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const [learning, assignments, summary, badges] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
     listInstitutionMicroCertAssignments(context),

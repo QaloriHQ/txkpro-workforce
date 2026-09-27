@@ -17,7 +17,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   canManageInstitutionLearningAssignments,
-  requireInstitutionContext,
+  requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
   listInstitutionCompanyBadgeEvidence,
@@ -58,7 +58,7 @@ export default async function InstitutionAssignmentsPage({
   searchParams,
 }: RouteContext) {
   const query = await searchParams;
-  const context = await requireInstitutionContext();
+  const context = await requireInstitutionPageContext();
   const canManage = canManageInstitutionLearningAssignments(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
