@@ -3,6 +3,9 @@ name: Sync TXKPRO Roadmap to GitHub Project
 on:
   issues:
     types: [opened, edited, reopened, closed]
+  push:
+    branches: [main]
+    paths: [.github/workflows/project-sync.yml]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -547,11 +550,12 @@ jobs:
               await syncIssue(issue, context.payload.action || "");
             }
 
-            // Manual full backfill also reconciles existing Project items whose
+            // Full backfill also reconciles existing Project items whose
             // issue bodies lack roadmap metadata, including pull requests.
             // Never add unrelated repository items to the Project here.
             if (
-              context.eventName === "workflow_dispatch" &&
+              (context.eventName === "workflow_dispatch" ||
+                context.eventName === "push") &&
               !String(context.payload.inputs?.issue_number || "").trim()
             ) {
               for (const item of itemMap.values()) {
