@@ -21,6 +21,10 @@ import type {
   EmployerCompanyBadgeAward,
   EmployerCompanyBadgeDefinition,
   EmployerCompanyBadgeInput,
+  EmployerCertificationAward,
+  EmployerCertificationDefinition,
+  EmployerCertificationInput,
+  EmployerCertificationVerification,
   MicroCertEligibility,
   MicroCertInput,
   MicroCertStatus,
@@ -799,5 +803,79 @@ export async function updateEmployerCompanyBadge(
     p_employer_id: context.employerId,
     p_company_badge_id: companyBadgeId,
     p_payload: input,
+  });
+}
+
+
+export async function listEmployerCertificationDefinitions(
+  context: EmployerContext,
+  microCertId?: string | null,
+) {
+  return rpc<EmployerCertificationDefinition[]>(
+    "employer_certification_definitions",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId ?? null,
+    },
+  );
+}
+
+export async function listEmployerCertificationAwards(
+  context: EmployerContext,
+  certificationDefinitionId?: string | null,
+) {
+  return rpc<EmployerCertificationAward[]>("employer_certification_awards", {
+    p_employer_id: context.employerId,
+    p_certification_definition_id: certificationDefinitionId ?? null,
+  });
+}
+
+export async function createEmployerCertificationDefinition(
+  context: EmployerContext,
+  microCertId: string,
+  input: EmployerCertificationInput,
+) {
+  return rpc<EmployerCertificationDefinition>(
+    "employer_certification_definition_create",
+    {
+      p_employer_id: context.employerId,
+      p_micro_cert_id: microCertId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function updateEmployerCertificationDefinition(
+  context: EmployerContext,
+  certificationDefinitionId: string,
+  input: EmployerCertificationInput,
+) {
+  return rpc<EmployerCertificationDefinition>(
+    "employer_certification_definition_update",
+    {
+      p_employer_id: context.employerId,
+      p_certification_definition_id: certificationDefinitionId,
+      p_payload: input,
+    },
+  );
+}
+
+export async function revokeEmployerCertification(
+  context: EmployerContext,
+  credentialId: string,
+  reason: string,
+) {
+  return rpc<EmployerCertificationVerification>("employer_certification_revoke", {
+    p_employer_id: context.employerId,
+    p_credential_id: credentialId,
+    p_reason: reason,
+  });
+}
+
+export async function verifyEmployerCertificationCredential(
+  credentialId: string,
+) {
+  return rpc<EmployerCertificationVerification>("employer_certification_verify", {
+    p_credential_id: credentialId,
   });
 }

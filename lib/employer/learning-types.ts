@@ -537,3 +537,110 @@ export type EmployerCompanyBadgeInput = {
   expiresAfterDays?: number | null;
   active?: boolean;
 };
+
+
+export type EmployerCertificationCriteria = {
+  criteriaVersion: 1;
+  evidenceType: "micro_cert_completion";
+  requiredOutcome: "passed";
+};
+
+export type EmployerCertificationDefinition = {
+  certificationDefinitionId: string;
+  employerId: string;
+  microCertId: string;
+  courseTitle: string;
+  title: string;
+  description: string | null;
+  criteria: EmployerCertificationCriteria;
+  version: number;
+  active: boolean;
+  expiresAfterDays: number | null;
+  locked: boolean;
+  linkedVersionCount: number;
+  awardCount: number;
+  activeAwardCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmployerCertificationAward = {
+  certificationAwardId: string;
+  credentialId: string;
+  certificationDefinitionId: string;
+  certificationTitle: string;
+  certificationVersion: number;
+  studentId: string;
+  studentName: string;
+  employerId: string;
+  issuerName: string;
+  microCertId: string;
+  courseTitle: string;
+  microCertVersionId: string;
+  courseVersionNumber: number;
+  assignmentId: string;
+  completionId: string;
+  status: "active" | "expired" | "revoked";
+  canonicalStatus: "active" | "revoked";
+  issuedAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  revokeReason: string | null;
+  evidence: Record<string, unknown>;
+  verificationMetadata: Record<string, unknown>;
+};
+
+export type EmployerCertificationInput = {
+  title?: string;
+  description?: string | null;
+  criteria?: EmployerCertificationCriteria;
+  expiresAfterDays?: number | null;
+  active?: boolean;
+};
+
+export type EmployerCertificationVerification = {
+  found: boolean;
+  credentialId: string;
+  certificationAwardId?: string;
+  status?: "active" | "expired" | "revoked";
+  canonicalStatus?: "active" | "revoked";
+  issuedAt?: string;
+  expiresAt?: string | null;
+  revokedAt?: string | null;
+  revokeReason?: string | null;
+  issuer?: {
+    employerId: string;
+    name: string;
+  };
+  learner?: {
+    studentId: string;
+    name: string;
+  };
+  certification?: {
+    certificationDefinitionId: string;
+    title: string;
+    description: string | null;
+    definitionVersion: number;
+  };
+  course?: {
+    microCertId: string;
+    title: string;
+    microCertVersionId: string;
+    versionNumber: number;
+  };
+  evidence?: {
+    assignmentId: string;
+    completionId: string;
+    evidenceType: "micro_cert_completion";
+    evidenceCategory: "employer_training";
+    technicalSkillVerified: false;
+    snapshot: Record<string, unknown>;
+  };
+  verification?: {
+    verificationVersion: number;
+    issuanceDigest: string | null;
+    digestValid: boolean;
+    algorithm: "SHA-256";
+    metadata: Record<string, unknown>;
+  };
+};
