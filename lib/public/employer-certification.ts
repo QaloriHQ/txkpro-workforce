@@ -68,9 +68,8 @@ async function readPublicEmployerCertification(
   );
 
   if (error) {
-    throw new Error(
-      `Unable to verify Employer Certification: ${error.message}`,
-    );
+    // Provider errors may contain request headers; never echo secrets to logs.
+    throw new Error("Employer Certification verification is unavailable.");
   }
 
   return (data ?? { found: false }) as PublicEmployerCertification;

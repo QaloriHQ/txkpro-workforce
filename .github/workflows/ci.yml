@@ -15,5 +15,6 @@ jobs:
           node-version: 24
       - run: npm install
       - run: npm run typecheck
+      - run: npm run wave11:qa
       - run: npm run lint
       - run: npm run build
