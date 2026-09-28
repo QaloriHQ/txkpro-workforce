@@ -31,6 +31,12 @@ function yesNo(value: unknown) {
   return "Not provided";
 }
 
+function date(value: unknown) {
+  return typeof value === "string" && value
+    ? new Date(value).toLocaleDateString()
+    : "—";
+}
+
 export default async function ReferralDetailPage({ params }: RouteContext) {
   const { id } = await params;
   const context = await requireEmployerContext({ approved: true });
@@ -47,6 +53,10 @@ export default async function ReferralDetailPage({ params }: RouteContext) {
   const technical = objectValue(referral.technicalSnapshot);
   const operational = objectValue(referral.operationalSnapshot);
   const technicalSkills = arrayValue(technical.verifiedSkills);
+  const companyTraining = referral.companyTrainingSnapshot;
+  const training = arrayValue(companyTraining?.training);
+  const badges = arrayValue(companyTraining?.companyBadges);
+  const certifications = arrayValue(companyTraining?.employerCertifications);
 
   return (
     <>
@@ -71,10 +81,99 @@ export default async function ReferralDetailPage({ params }: RouteContext) {
 
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Referral evidence snapshot</strong>
-          The technical and operational evidence below reflects the information
+          The technical, operational, and Company Training groups reflect the information
           shared when the referral was created. Employer-private notes are stored
           separately and are not visible to the Student or Institution.
         </div>
+
+        <section className="card referral-company-training" aria-labelledby="referral-company-training-heading">
+          <div className="card-header">
+            <div>
+              <h2 id="referral-company-training-heading">Company Training</h2>
+              <p className="card-sub">
+                Employer-specific evidence captured at referral time. It does not verify Instructor technical skills or create a combined readiness score.
+              </p>
+            </div>
+          </div>
+          {companyTraining ? (
+            <>
+              <p className="card-sub">
+                Issuer: {String(companyTraining.employerName ?? "Employer")} · Captured {date(companyTraining.capturedAt)}.
+                Statuses below reflect that date; verify a credential for its current status.
+              </p>
+              <div className="grid grid-2 referral-company-training-groups">
+                <div>
+                  <h3>Employer Training</h3>
+                  <div className="skill-list">
+                    {training.map((raw, index) => {
+                      const item = objectValue(raw);
+                      return (
+                        <div className="skill-row" key={String(item.assignmentId ?? index)}>
+                          <div>
+                            <div className="skill-title">{String(item.courseTitle ?? "Company course")} · v{String(item.versionNumber ?? "—")}</div>
+                            <div className="skill-meta">
+                              {String(item.statusAtReferral ?? "assigned").replaceAll("_", " ")} at referral
+                              {item.passedAt ? ` · passed ${date(item.passedAt)}` : " · no passed completion captured"}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {!training.length ? <div className="empty">No training assignment from this Employer was captured.</div> : null}
+                  </div>
+                </div>
+                <div>
+                  <h3>Company Badges</h3>
+                  <div className="skill-list">
+                    {badges.map((raw, index) => {
+                      const item = objectValue(raw);
+                      return (
+                        <div className="skill-row" key={String(item.awardId ?? index)}>
+                          <div>
+                            <div className="skill-title">{String(item.badgeTitle ?? "Company Badge")}</div>
+                            <div className="skill-meta">
+                              {String(item.issuer ?? "Employer")} · {String(item.courseTitle ?? "Company course")} v{String(item.versionNumber ?? "—")}
+                              {` · issued ${date(item.issuedAt)}`}
+                              {item.expiresAt ? ` · expires ${date(item.expiresAt)}` : ""}
+                            </div>
+                          </div>
+                          <span className="pill pill-neutral">{String(item.statusAtReferral ?? "unknown")}</span>
+                        </div>
+                      );
+                    })}
+                    {!badges.length ? <div className="empty">No Company Badge was captured.</div> : null}
+                  </div>
+                </div>
+                <div>
+                  <h3>Employer Certifications</h3>
+                  <div className="skill-list">
+                    {certifications.map((raw, index) => {
+                      const item = objectValue(raw);
+                      const credentialId = String(item.credentialId ?? "");
+                      return (
+                        <div className="skill-row" key={credentialId || index}>
+                          <div>
+                            <div className="skill-title">{String(item.title ?? "Employer Certification")}</div>
+                            <div className="skill-meta">
+                              Issued by {String(item.issuer ?? "Employer")} · {String(item.courseTitle ?? "Company course")} v{String(item.versionNumber ?? "—")}
+                              {` · passed ${date(item.passedAt)} · issued ${date(item.issuedAt)}`}
+                              {item.expiresAt ? ` · expires ${date(item.expiresAt)}` : ""}
+                            </div>
+                            {credentialId ? <div className="skill-meta"><Link href={`/credentials/${encodeURIComponent(credentialId)}`}>Verify {credentialId}</Link></div> : null}
+                          </div>
+                          <span className="pill pill-neutral">{String(item.statusAtReferral ?? "unknown")}</span>
+                        </div>
+                      );
+                    })}
+                    {!certifications.length ? <div className="empty">No formal Employer Certification was captured.</div> : null}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="empty">This referral predates Company Training snapshots. Historical evidence was not reconstructed from current records.</div>
+          )}
+        </section>
 
         <div className="grid grid-2">
           <section className="card">

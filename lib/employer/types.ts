@@ -253,6 +253,7 @@ export type ReferralDetail = ReferralSummary & {
   technicalSnapshot: Record<string, unknown>;
   professionalSnapshot: Record<string, unknown>;
   operationalSnapshot: Record<string, unknown>;
+  companyTrainingSnapshot: Record<string, unknown> | null;
   privateNotes: EmployerPrivateNote[];
 };
 
