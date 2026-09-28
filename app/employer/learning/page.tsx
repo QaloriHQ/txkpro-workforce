@@ -79,6 +79,9 @@ export default async function EmployerLearningPage() {
                 <ButtonLink href="/employer/learning/analytics">
                   Training analytics
                 </ButtonLink>
+                <ButtonLink href="/employer/learning/production">
+                  Production requests
+                </ButtonLink>
                 <ButtonLink href="/employer/learning/badges">
                   Company Badges
                 </ButtonLink>

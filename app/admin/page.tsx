@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireRole } from "@/lib/auth";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export default async function AdminPage() {
         </div>
 
         <EmployerApprovalQueue initialItems={pendingEmployers} />
+        <p style={{ marginTop: 24 }}><Link className="txk-button txk-button-default" href="/admin/concierge">Concierge production queue</Link></p>
       </main>
     </>
   );
