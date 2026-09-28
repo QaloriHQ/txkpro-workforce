@@ -5,7 +5,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
-import { getStudentReadinessEvidence } from "@/lib/student/learning-repository";
+import { getStudentReadinessEvidence, getStudentTrainingExposure } from "@/lib/student/learning-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,10 @@ function date(value: string) {
 export default async function StudentProfilePage() {
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
-  const evidence = await getStudentReadinessEvidence(context.studentId);
+  const [evidence, exposure] = await Promise.all([
+    getStudentReadinessEvidence(context.studentId),
+    getStudentTrainingExposure(),
+  ]);
 
   return (
     <>
@@ -61,6 +64,19 @@ export default async function StudentProfilePage() {
             ))}
           </div>
           {!evidence.employerTraining.length ? <div className="empty">No Employer Training assignments yet.</div> : null}
+        </section>
+
+        <section className="card">
+          <div className="card-header"><div><p className="eyebrow">Observed engagement</p><h2>Employer Training activity</h2><p className="card-sub">Previews, starts, and passed completions reflect recorded activity only. They do not indicate employment intent or Instructor Verified Skills.</p></div></div>
+          <div className="grid grid-2">
+            {exposure.map((item) => (
+              <div className="metric-card" key={item.exposureEventId}>
+                <strong>{item.courseTitle ?? "Employer Training"}</strong>
+                <small>{item.employerName} · {item.eventType === "EMPLOYER_TRAINING_PREVIEWED" ? "Previewed" : item.eventType === "EMPLOYER_TRAINING_STARTED" ? "Started" : "Completed"} · {date(item.occurredAt)}</small>
+              </div>
+            ))}
+          </div>
+          {!exposure.length ? <div className="empty">No observed Employer Training activity yet.</div> : null}
         </section>
 
         <section className="card">
