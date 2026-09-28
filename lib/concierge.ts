@@ -73,16 +73,10 @@ export async function listProductionRequests(view: "institution" | "employer" | 
     query = query.eq("institution_id", context.institutionId);
     // Narrow program/cohort memberships to their actual records.
     if (!context.scopes.some((s) => s.scopeType === "institution")) {
-      const cohorts = context.scopes.filter((s) => s.scopeType === "cohort").map((s) => s.scopeId);
-      const programs = context.scopes.filter((s) => s.scopeType === "program").map((s) => s.scopeId);
-      if (!cohorts.length && !programs.length) return [];
-      // Scope filtering below avoids building a PostgREST expression from
-      // membership data and keeps the same rule for all request reads.
-      const { data, error } = await query;
-      if (error) throw error;
-      return ((data ?? []) as ProductionRequest[]).filter((item) =>
-        (item.cohort_id !== null && cohorts.includes(item.cohort_id)) ||
-        (item.program_name !== null && programs.includes(item.program_name)));
+      const learning = await getInstitutionEmployerLearningContext(context);
+      const cohorts = new Set(learning.cohorts.map((c) => c.cohortId));
+      if (!cohorts.size) return [];
+      query = query.in("cohort_id", [...cohorts]);
     }
   } else if (view === "employer") {
     const context = await getEmployerContext();
