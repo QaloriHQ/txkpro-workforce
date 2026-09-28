@@ -36,7 +36,9 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionDashboardPage() {
-  const context = await requireInstitutionPageContext({ capability: "dashboard" });
+  const context = await requireInstitutionPageContext({
+    capability: "dashboard",
+  });
   const [learning, summary, assignments, badges] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
     getInstitutionWorkforceSummary(context),
@@ -47,7 +49,11 @@ export default async function InstitutionDashboardPage() {
   const scopeLabel = institutionScopeLabel(context);
 
   const attentionCount =
-    summary.notStartedAssignments + summary.assessmentExhaustedAssignments;
+    summary.notStartedAssignments +
+    summary.assessmentExhaustedAssignments +
+    summary.openReferrals +
+    summary.retentionMilestonesDue +
+    summary.openRetentionCases;
 
   return (
     <>
@@ -70,7 +76,7 @@ export default async function InstitutionDashboardPage() {
         <PageHeader
           eyebrow="Institution Workspace"
           title="Workforce dashboard"
-          description="Monitor technical readiness, Employer Training, Company Badge evidence, interviews, placements, and current operational work without collapsing them into one hidden score."
+          description="Monitor scoped Student readiness, referral-to-hire activity, and retention follow-up from canonical TXKPRO records without collapsing the evidence into one hidden score."
           actions={
             <ButtonLink href="/institution/learning">
               <AcademicCapIcon aria-hidden="true" />
@@ -85,31 +91,120 @@ export default async function InstitutionDashboardPage() {
           accessLevel={institutionAccess(context, "dashboard")}
         />
 
-        <section className="txk-metric-grid institution-dashboard-metrics">
-          <MetricCard
-            label="Active Students"
-            value={summary.activeStudents}
-            detail="Authorized Institution scope"
-            href="/institution/students"
-          />
-          <MetricCard
-            label="Verified Skills"
-            value={summary.verifiedSkills}
-            detail="Instructor-verified competency evidence"
-            href="/institution/readiness"
-          />
-          <MetricCard
-            label="Employer Training"
-            value={summary.totalAssignments}
-            detail={`${summary.inProgressAssignments} in progress`}
-            href="/institution/learning/assignments"
-          />
-          <MetricCard
-            label="Company Badges"
-            value={summary.companyBadgesEarned}
-            detail="Active Employer-specific readiness signals"
-            href="/institution/learning/badges"
-          />
+        <section className="txk-section">
+          <div className="txk-section-heading">
+            <div>
+              <p className="txk-eyebrow">Students and readiness</p>
+              <h2>Current authorized scope</h2>
+              <p>
+                Profile completion and Verified Skills are reported separately.
+              </p>
+            </div>
+          </div>
+          <div className="txk-metric-grid institution-dashboard-metrics">
+            <MetricCard
+              label="Active Students"
+              value={summary.activeStudents}
+              detail="Authorized Institution scope"
+              href="/institution/students"
+            />
+            <MetricCard
+              label="Profile Completion"
+              value={`${summary.profileCompletionPercent}%`}
+              detail={`${summary.profileCompleteStudents} of ${summary.activeStudents} core profiles complete`}
+              href="/institution/students"
+            />
+            <MetricCard
+              label="Verified Skills"
+              value={summary.verifiedSkills}
+              detail={`${summary.verifiedSkillsLast30Days} verified in the last 30 days`}
+              href="/institution/readiness"
+            />
+            <MetricCard
+              label="Employer Training"
+              value={summary.totalAssignments}
+              detail={`${summary.inProgressAssignments} in progress`}
+              href="/institution/learning/assignments"
+            />
+          </div>
+        </section>
+
+        <section className="txk-section">
+          <div className="txk-section-heading">
+            <div>
+              <p className="txk-eyebrow">Employer pipeline</p>
+              <h2>Referral-to-hire activity</h2>
+              <p>
+                Counts reflect workflow state only; Employer-private interview
+                evaluations are excluded.
+              </p>
+            </div>
+          </div>
+          <div className="txk-metric-grid institution-dashboard-metrics">
+            <MetricCard
+              label="Referrals"
+              value={summary.totalReferrals}
+              detail={`${summary.openReferrals} open · ${summary.referralsLast30Days} in the last 30 days`}
+              href="/institution/referrals"
+            />
+            <MetricCard
+              label="Interviews"
+              value={summary.totalInterviews}
+              detail={`${summary.activeInterviews} active · ${summary.completedInterviews} completed`}
+              href="/institution/referrals"
+            />
+            <MetricCard
+              label="Hires"
+              value={summary.totalHires}
+              detail={`${summary.activePlacements} active placements`}
+              href="/institution/placements"
+            />
+            <MetricCard
+              label="Company Badges"
+              value={summary.companyBadgesEarned}
+              detail="Active Employer-specific readiness signals"
+              href="/institution/learning/badges"
+            />
+          </div>
+        </section>
+
+        <section className="txk-section">
+          <div className="txk-section-heading">
+            <div>
+              <p className="txk-eyebrow">Retention</p>
+              <h2>Day 30 / 60 / 90 follow-up</h2>
+              <p>
+                Milestone response and intervention cases remain consequences
+                of canonical placement state.
+              </p>
+            </div>
+          </div>
+          <div className="txk-metric-grid institution-dashboard-metrics">
+            <MetricCard
+              label="Milestone Completion"
+              value={`${summary.retentionMilestoneCompletionPercent}%`}
+              detail={`${summary.retentionMilestonesCompleted} due milestones responded`}
+              href="/institution/retention"
+            />
+            <MetricCard
+              label="Milestones Due"
+              value={summary.retentionMilestonesDue}
+              detail="Student follow-up awaiting response"
+              href="/institution/retention"
+            />
+            <MetricCard
+              label="Open Cases"
+              value={summary.openRetentionCases}
+              detail="Human follow-up required"
+              href="/institution/retention"
+            />
+            <MetricCard
+              label="High-Priority Cases"
+              value={summary.urgentRetentionCases}
+              detail="High or urgent risk flags"
+              href="/institution/retention"
+            />
+          </div>
         </section>
 
         <section className="institution-dashboard-grid">
@@ -145,16 +240,16 @@ export default async function InstitutionDashboardPage() {
               <Link href="/institution/referrals">
                 <UserGroupIcon aria-hidden="true" />
                 <span>
-                  <strong>{summary.activeInterviews} active interviews</strong>
-                  <small>Current Student interview activity</small>
+                  <strong>{summary.openReferrals} open referrals</strong>
+                  <small>Referral workflow awaiting an outcome</small>
                 </span>
                 <ArrowRightIcon aria-hidden="true" />
               </Link>
-              <Link href="/institution/placements">
+              <Link href="/institution/retention">
                 <BriefcaseIcon aria-hidden="true" />
                 <span>
-                  <strong>{summary.activePlacements} active placements</strong>
-                  <small>Known active employment outcomes</small>
+                  <strong>{summary.openRetentionCases} open retention cases</strong>
+                  <small>{summary.retentionMilestonesDue} milestones currently due</small>
                 </span>
                 <ArrowRightIcon aria-hidden="true" />
               </Link>

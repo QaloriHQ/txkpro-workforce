@@ -357,9 +357,23 @@ export type InstitutionCompanyBadgeEvidence = {
 
 export type InstitutionWorkforceSummary = {
   activeStudents: number;
+  profileCompleteStudents: number;
+  profileCompletionPercent: number;
   verifiedSkills: number;
+  verifiedSkillsLast30Days: number;
+  totalReferrals: number;
+  openReferrals: number;
+  referralsLast30Days: number;
+  totalInterviews: number;
   activeInterviews: number;
+  completedInterviews: number;
+  totalHires: number;
   activePlacements: number;
+  retentionMilestonesDue: number;
+  retentionMilestonesCompleted: number;
+  retentionMilestoneCompletionPercent: number;
+  openRetentionCases: number;
+  urgentRetentionCases: number;
   availableCourses: number;
   totalAssignments: number;
   companyBadgesEarned: number;
