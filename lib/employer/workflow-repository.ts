@@ -129,6 +129,9 @@ function mapReferralDetail(value: unknown): ReferralDetail {
     technicalSnapshot: objectValue(row.technicalSnapshot),
     professionalSnapshot: objectValue(row.professionalSnapshot),
     operationalSnapshot: objectValue(row.operationalSnapshot),
+    companyTrainingSnapshot: row.companyTrainingSnapshot == null
+      ? null
+      : objectValue(row.companyTrainingSnapshot),
     privateNotes: arrayValue(row.privateNotes).map(
       (note): EmployerPrivateNote => ({
         noteId: String(note.noteId ?? ""),
