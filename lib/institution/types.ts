@@ -1,5 +1,5 @@
 export type InstitutionLearningScope = {
-  scopeType: "institution" | "program" | "cohort";
+  scopeType: "institution" | "department" | "program" | "cohort";
   scopeId: string;
   role: string;
 };

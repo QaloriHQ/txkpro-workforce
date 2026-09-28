@@ -3,7 +3,18 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/types";
 
 const ADMIN_ROLES = new Set(["super_admin", "admin", "platform_admin"]);
-const EDUCATOR_ROLES = new Set(["instructor", "institution", "institution_admin"]);
+const EDUCATOR_ROLES = new Set([
+  "institution_super_admin",
+  "institution_admin",
+  "department_head",
+  "program_coordinator",
+  "instructor",
+  "assistant_instructor",
+  "career_services",
+  "read_only_analyst",
+  "institution",
+  "educator",
+]);
 const EMPLOYER_ROLES = new Set(["employer_owner", "employer_admin", "recruiter", "hiring_manager", "employer_read_only", "contractor_owner", "contractor_recruiter"]);
 
 export type Membership = {
@@ -43,7 +54,13 @@ export type AuthContext = AccountContext & {
 export function normalizeRole(memberships: Membership[]): Role | null {
   const active = memberships.filter((membership) => membership.status.toLowerCase() === "active");
   if (active.some((membership) => ADMIN_ROLES.has(membership.role.toLowerCase()))) return "admin";
-  if (active.some((membership) => EDUCATOR_ROLES.has(membership.role.toLowerCase()))) return "educator";
+  if (active.some((membership) =>
+    EDUCATOR_ROLES.has(membership.role.toLowerCase())
+    && !(
+      membership.role.toLowerCase() === "read_only_analyst"
+      && membership.scope_type.toLowerCase() === "platform"
+    )
+  )) return "educator";
   if (active.some((membership) => EMPLOYER_ROLES.has(membership.role.toLowerCase()))) return "employer";
   if (active.some((membership) => membership.role.toLowerCase() === "student")) return "student";
   return null;

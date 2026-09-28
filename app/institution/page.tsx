@@ -20,16 +20,14 @@ import { InstitutionRoleContext } from "@/components/institution/role-context";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  canManageInstitutionLearningAssignments,
-  requireInstitutionPageContext,
-} from "@/lib/institution/auth";
+import { requireInstitutionPageContext } from "@/lib/institution/auth";
 import {
   getInstitutionEmployerLearningContext,
   getInstitutionWorkforceSummary,
   listInstitutionCompanyBadgeEvidence,
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -38,14 +36,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionDashboardPage() {
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "dashboard" });
   const [learning, summary, assignments, badges] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
     getInstitutionWorkforceSummary(context),
     listInstitutionMicroCertAssignments(context),
     listInstitutionCompanyBadgeEvidence(context),
   ]);
-  const canManage = canManageInstitutionLearningAssignments(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
 
@@ -61,6 +58,7 @@ export default async function InstitutionDashboardPage() {
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -84,7 +82,7 @@ export default async function InstitutionDashboardPage() {
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "dashboard")}
         />
 
         <section className="txk-metric-grid institution-dashboard-metrics">

@@ -27,7 +27,6 @@ import {
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  canManageInstitutionLearningAssignments,
   requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import {
@@ -36,6 +35,10 @@ import {
   listInstitutionCompanyBadgeEvidence,
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
+import {
+  institutionAccess,
+  type InstitutionCapability,
+} from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -49,6 +52,7 @@ const sections: Record<
   string,
   {
     active: InstitutionSection;
+    capability: InstitutionCapability;
     eyebrow: string;
     title: string;
     description: string;
@@ -56,6 +60,7 @@ const sections: Record<
 > = {
   programs: {
     active: "programs",
+    capability: "programs",
     eyebrow: "Institution Workspace · Programs",
     title: "Programs & Cohorts",
     description:
@@ -63,6 +68,7 @@ const sections: Record<
   },
   readiness: {
     active: "readiness",
+    capability: "readiness",
     eyebrow: "Workforce Readiness",
     title: "Readiness",
     description:
@@ -70,6 +76,7 @@ const sections: Record<
   },
   employers: {
     active: "employers",
+    capability: "employers",
     eyebrow: "Employer Connections",
     title: "Employers",
     description:
@@ -77,6 +84,7 @@ const sections: Record<
   },
   referrals: {
     active: "referrals",
+    capability: "referrals",
     eyebrow: "Employer Connections",
     title: "Referrals & Interviews",
     description:
@@ -84,6 +92,7 @@ const sections: Record<
   },
   placements: {
     active: "placements",
+    capability: "placements",
     eyebrow: "Outcomes",
     title: "Placements",
     description:
@@ -91,6 +100,7 @@ const sections: Record<
   },
   retention: {
     active: "retention",
+    capability: "retention",
     eyebrow: "Outcomes",
     title: "Retention",
     description:
@@ -98,10 +108,35 @@ const sections: Record<
   },
   reports: {
     active: "reports",
+    capability: "reports",
     eyebrow: "Institution Reporting",
     title: "Reports",
     description:
       "Review Institution workforce telemetry using separate technical, training, Employer engagement, placement, and retention measures.",
+  },
+  team: {
+    active: "team",
+    capability: "team",
+    eyebrow: "Institution Administration",
+    title: "Team",
+    description:
+      "Review Institution memberships, role responsibilities, and delegated access within your authorized scope.",
+  },
+  audit: {
+    active: "audit",
+    capability: "audit",
+    eyebrow: "Institution Administration",
+    title: "Audit",
+    description:
+      "Review role, scope, and workflow activity available to your Institution role.",
+  },
+  settings: {
+    active: "settings",
+    capability: "settings",
+    eyebrow: "Institution Administration",
+    title: "Settings",
+    description:
+      "Review Institution configuration available to your role and authorized scope.",
   },
 };
 
@@ -110,7 +145,9 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
   const config = sections[section];
   if (!config) notFound();
 
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({
+    capability: config.capability,
+  });
   const [summary, learning, assignments, badges] = await Promise.all([
     getInstitutionWorkforceSummary(context),
     getInstitutionEmployerLearningContext(context),
@@ -119,7 +156,6 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
-  const canManage = canManageInstitutionLearningAssignments(context);
 
   const employers = new Map<string, string>();
   for (const course of learning.courses) {
@@ -138,6 +174,7 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -155,7 +192,7 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, config.capability)}
         />
 
         {section === "programs" ? (
@@ -336,6 +373,49 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
               <ButtonLink href="/institution">Dashboard</ButtonLink>
             </Card>
           </>
+        ) : null}
+
+        {section === "team" ? (
+          <Card className="institution-guidance-card">
+            <UserGroupIcon aria-hidden="true" />
+            <div>
+              <h2>Role and scope govern team actions</h2>
+              <p>
+                Department Heads and Program Coordinators may request access
+                within their scope. Institution Admins approve instructors and
+                assistant instructors. Institution Super Admins govern other
+                Institution roles.
+              </p>
+            </div>
+          </Card>
+        ) : null}
+
+        {section === "audit" ? (
+          <Card className="institution-guidance-card">
+            <DocumentChartBarIcon aria-hidden="true" />
+            <div>
+              <h2>Audit visibility follows authorized scope</h2>
+              <p>
+                Membership, workflow, and evidence activity remains limited to
+                the Institution, Department, Program, or Cohort assigned to the
+                current role.
+              </p>
+            </div>
+          </Card>
+        ) : null}
+
+        {section === "settings" ? (
+          <Card className="institution-guidance-card">
+            <BuildingOffice2Icon aria-hidden="true" />
+            <div>
+              <h2>Institution configuration</h2>
+              <p>
+                Configuration access is displayed according to the current
+                role. Changes that affect membership or scope must also pass
+                server authorization.
+              </p>
+            </div>
+          </Card>
         ) : null}
 
         <section className="txk-section institution-learning-connection">

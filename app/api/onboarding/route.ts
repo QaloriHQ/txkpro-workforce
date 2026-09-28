@@ -5,7 +5,18 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/types";
 
 const ALLOWED_ROLES = new Set<Role>(["student", "educator", "employer", "admin"]);
-const EDUCATOR_ROLES = new Set(["instructor", "institution", "institution_admin"]);
+const EDUCATOR_ROLES = new Set([
+  "institution_super_admin",
+  "institution_admin",
+  "department_head",
+  "program_coordinator",
+  "instructor",
+  "assistant_instructor",
+  "career_services",
+  "read_only_analyst",
+  "institution",
+  "educator",
+]);
 const NATIVE_SOURCE = "txkpro_workforce_native";
 
 type JsonObject = Record<string, unknown>;
@@ -203,7 +214,14 @@ async function provisionEducator(admin: ReturnType<typeof createAdminClient>, ac
   const { data: institution } = await admin.from("wf_institutions").select("institution_id").eq("institution_id", institutionId).eq("active", true).maybeSingle();
   if (!institution) throw new Error("That institution is not currently available for educator onboarding.");
 
-  const alreadyApproved = account.memberships.some((membership) => membership.status.toLowerCase() === "active" && EDUCATOR_ROLES.has(membership.role.toLowerCase()));
+  const alreadyApproved = account.memberships.some((membership) =>
+    membership.status.toLowerCase() === "active"
+    && EDUCATOR_ROLES.has(membership.role.toLowerCase())
+    && !(
+      membership.role.toLowerCase() === "read_only_analyst"
+      && membership.scope_type.toLowerCase() === "platform"
+    )
+  );
   const membershipStatus = alreadyApproved ? "active" : "pending";
 
   const { data: seat } = await admin.from("wf_instructor_seats").select("seat_id").eq("institution_id", institutionId).eq("user_id", account.legacyUserId).maybeSingle();

@@ -23,6 +23,7 @@ import {
   listInstitutionCompanyBadgeEvidence,
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -58,7 +59,7 @@ export default async function InstitutionAssignmentsPage({
   searchParams,
 }: RouteContext) {
   const query = await searchParams;
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "assignments" });
   const canManage = canManageInstitutionLearningAssignments(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
@@ -141,6 +142,7 @@ export default async function InstitutionAssignmentsPage({
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -164,7 +166,7 @@ export default async function InstitutionAssignmentsPage({
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "assignments")}
         />
 
         <nav className="institution-assignment-filters" aria-label="Assignment status">

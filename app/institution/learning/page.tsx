@@ -29,6 +29,7 @@ import {
   listInstitutionCompanyBadgeEvidence,
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -47,7 +48,7 @@ function formatActivity(value: string | null) {
 }
 
 export default async function InstitutionLearningPage() {
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "learning" });
   const [learning, assignments, summary, badges] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
     listInstitutionMicroCertAssignments(context),
@@ -76,6 +77,7 @@ export default async function InstitutionLearningPage() {
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -112,7 +114,7 @@ export default async function InstitutionLearningPage() {
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "learning")}
         />
 
         <section className="txk-metric-grid institution-learning-metrics institution-learning-metrics-five">
