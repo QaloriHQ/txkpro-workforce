@@ -1,37 +1,9 @@
 import type { InstitutionContext } from "@/lib/institution/types";
-
-const ROLE_LABELS: Record<string, string> = {
-  institution_admin: "Institution Admin",
-  department_head: "Department Head",
-  program_coordinator: "Program Coordinator",
-  instructor: "Instructor",
-  assistant_instructor: "Assistant Instructor",
-  career_services: "Career Services",
-  read_only_analyst: "Analyst",
-  educator: "Educator",
-};
-
-const ROLE_PRIORITY = [
-  "institution_admin",
-  "department_head",
-  "program_coordinator",
-  "career_services",
-  "instructor",
-  "assistant_instructor",
-  "read_only_analyst",
-  "educator",
-];
+import { primaryInstitutionRolePolicy } from "@/lib/institution/policy";
 
 export function primaryInstitutionRole(context: InstitutionContext) {
-  const role =
-    ROLE_PRIORITY.find((candidate) =>
-      context.roles.some((value) => value.toLowerCase() === candidate),
-    ) ?? context.roles[0] ?? "educator";
-
-  return {
-    role,
-    label: ROLE_LABELS[role] ?? role.replaceAll("_", " "),
-  };
+  const policy = primaryInstitutionRolePolicy(context);
+  return { role: policy.role, label: policy.label };
 }
 
 export function institutionScopeLabel(context: InstitutionContext) {
@@ -51,6 +23,14 @@ export function institutionScopeLabel(context: InstitutionContext) {
   );
   if (programScopes.length === 1) return "Assigned program";
   if (programScopes.length > 1) return `${programScopes.length} programs`;
+
+  const departmentScopes = context.scopes.filter(
+    (scope) => scope.scopeType === "department",
+  );
+  if (departmentScopes.length === 1) return "Assigned department";
+  if (departmentScopes.length > 1) {
+    return `${departmentScopes.length} departments`;
+  }
 
   return "Scoped access";
 }

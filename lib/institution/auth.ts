@@ -1,6 +1,6 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getAccountContext } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -8,6 +8,11 @@ import type {
   InstitutionAccessContext,
   InstitutionContext,
 } from "@/lib/institution/types";
+import {
+  institutionCanManage,
+  institutionCanView,
+  type InstitutionCapability,
+} from "@/lib/institution/policy";
 
 export async function getInstitutionContexts(): Promise<
   InstitutionAccessContext[]
@@ -63,12 +68,16 @@ export async function requireInstitutionContext(options?: {
 
 export async function requireInstitutionPageContext(options?: {
   institutionId?: string | null;
+  capability?: InstitutionCapability;
 }) {
   const account = await getAccountContext();
   if (!account) redirect("/login");
 
   const context = await getInstitutionContext(options?.institutionId);
   if (!context) redirect("/login?institutionAccess=required");
+  if (options?.capability && !institutionCanView(context, options.capability)) {
+    notFound();
+  }
 
   return context;
 }
@@ -76,12 +85,5 @@ export async function requireInstitutionPageContext(options?: {
 export function canManageInstitutionLearningAssignments(
   context: InstitutionContext,
 ) {
-  return context.roles.some((role) =>
-    [
-      "institution_admin",
-      "department_head",
-      "program_coordinator",
-      "career_services",
-    ].includes(role.toLowerCase()),
-  );
+  return institutionCanManage(context, "assignments");
 }

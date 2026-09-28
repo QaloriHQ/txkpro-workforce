@@ -12,7 +12,7 @@ import { institutionProductionEmployers, listProductionRequests } from "@/lib/co
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionProductionPage() {
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "learning" });
   const [items, learning, employers] = await Promise.all([
     listProductionRequests("institution"),
     getInstitutionEmployerLearningContext(context),
@@ -23,7 +23,8 @@ export default async function InstitutionProductionPage() {
     <header className="topbar institution-topbar">
       <Brand />
       <InstitutionWorkspaceNav active="learning" institutionName={context.institutionName}
-        roleLabel={role.label} scopeLabel={institutionScopeLabel(context)} />
+        roleLabel={role.label} scopeLabel={institutionScopeLabel(context)}
+        roles={context.roles} />
       <div className="header-actions"><ThemeToggle /><SignOutButton /></div>
     </header>
     <main className="page-wrap txk-prototype-content">

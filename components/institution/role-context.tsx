@@ -1,21 +1,26 @@
 import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import {
+  institutionAccessLabel,
+  type InstitutionAccessLevel,
+} from "@/lib/institution/policy";
 
 export function InstitutionRoleContext({
   roleLabel,
   scopeLabel,
-  canManage,
+  accessLevel,
 }: {
   roleLabel: string;
   scopeLabel: string;
-  canManage: boolean;
+  accessLevel: InstitutionAccessLevel;
 }) {
-  const Icon = canManage ? PencilSquareIcon : EyeIcon;
+  const canAct = !["read", "none"].includes(accessLevel);
+  const Icon = canAct ? PencilSquareIcon : EyeIcon;
   return (
     <div className="institution-role-context" aria-label="Current Institution role and access">
       <Icon aria-hidden="true" />
       <span>
         <strong>{roleLabel}</strong>
-        <small>{scopeLabel} · {canManage ? "Assignment management" : "View only"}</small>
+        <small>{scopeLabel} · {institutionAccessLabel(accessLevel)}</small>
       </span>
     </div>
   );

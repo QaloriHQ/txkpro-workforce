@@ -11,6 +11,7 @@ import {
   requireInstitutionPageContext,
 } from "@/lib/institution/auth";
 import { getInstitutionEmployerLearningContext } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -24,7 +25,7 @@ export default async function InstitutionAssignmentPage({
 }: RouteContext) {
   const { id } = await params;
   const microCertId = decodeURIComponent(id);
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "assignments" });
   const learning = await getInstitutionEmployerLearningContext(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
@@ -43,6 +44,7 @@ export default async function InstitutionAssignmentPage({
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -60,7 +62,7 @@ export default async function InstitutionAssignmentPage({
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "assignments")}
         />
 
         <InstitutionAssignmentWizard

@@ -8,7 +8,6 @@ import {
   UserIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import {
@@ -22,11 +21,9 @@ import { InstitutionRoleContext } from "@/components/institution/role-context";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  canManageInstitutionLearningAssignments,
-  requireInstitutionPageContext,
-} from "@/lib/institution/auth";
+import { requireInstitutionPageContext } from "@/lib/institution/auth";
 import { getInstitutionMicroCertAssignmentDetail } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -65,8 +62,9 @@ export default async function InstitutionAssignmentDetailPage({
   params,
 }: RouteContext) {
   const { assignmentId } = await params;
-  const context = await requireInstitutionPageContext();
-  const canManage = canManageInstitutionLearningAssignments(context);
+  const context = await requireInstitutionPageContext({
+    capability: "assignments",
+  });
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
 
@@ -95,6 +93,7 @@ export default async function InstitutionAssignmentDetailPage({
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -133,7 +132,7 @@ export default async function InstitutionAssignmentDetailPage({
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "assignments")}
         />
 
         <Card className="institution-assignment-detail-hero">

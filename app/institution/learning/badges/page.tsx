@@ -18,14 +18,12 @@ import { InstitutionRoleContext } from "@/components/institution/role-context";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  canManageInstitutionLearningAssignments,
-  requireInstitutionPageContext,
-} from "@/lib/institution/auth";
+import { requireInstitutionPageContext } from "@/lib/institution/auth";
 import {
   listInstitutionCompanyBadgeEvidence,
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
+import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -34,12 +32,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function InstitutionCompanyBadgesPage() {
-  const context = await requireInstitutionPageContext();
+  const context = await requireInstitutionPageContext({ capability: "badges" });
   const [badges, assignments] = await Promise.all([
     listInstitutionCompanyBadgeEvidence(context),
     listInstitutionMicroCertAssignments(context),
   ]);
-  const canManage = canManageInstitutionLearningAssignments(context);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
 
@@ -65,6 +62,7 @@ export default async function InstitutionCompanyBadgesPage() {
           institutionName={context.institutionName}
           roleLabel={role.label}
           scopeLabel={scopeLabel}
+          roles={context.roles}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -88,7 +86,7 @@ export default async function InstitutionCompanyBadgesPage() {
         <InstitutionRoleContext
           roleLabel={role.label}
           scopeLabel={scopeLabel}
-          canManage={canManage}
+          accessLevel={institutionAccess(context, "badges")}
         />
 
         <section className="txk-metric-grid institution-badge-metrics">
