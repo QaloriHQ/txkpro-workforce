@@ -4,13 +4,21 @@ import { ProductionWorkspace } from "@/components/concierge/production-workspace
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { PageHeader } from "@/components/design-system";
-import { canManageCompany, requireEmployerContext } from "@/lib/employer/auth";
+import { canManageCompany, getEmployerContext } from "@/lib/employer/auth";
+import { getAccountContext } from "@/lib/auth";
 import { listProductionRequests } from "@/lib/concierge";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function EmployerProductionPage() {
-  const context = await requireEmployerContext({ approved: true });
+  const account = await getAccountContext();
+  if (!account) redirect("/login");
+  const context = await getEmployerContext();
+  if (!context) redirect("/login?employerAccess=required");
+  if (context.approvalStatus !== "approved" ||
+      context.accountStatus === "suspended" || context.accountStatus === "closed")
+    redirect("/employer");
   const items = await listProductionRequests("employer");
   return <>
     <header className="topbar employer-topbar">

@@ -4,10 +4,19 @@ import { PageHeader, ButtonLink } from "@/components/design-system";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { listProductionRequests } from "@/lib/concierge";
+import { getAccountContext } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminConciergePage() {
+  const account = await getAccountContext();
+  if (!account) redirect("/login");
+  if (!account.memberships.some((m) =>
+    m.status.toLowerCase() === "active" &&
+    ["super_admin", "admin", "platform_admin"].includes(m.role.toLowerCase()) &&
+    ["platform", "global", "system"].includes(m.scope_type.toLowerCase())
+  )) redirect("/dashboard");
   const items = await listProductionRequests("admin");
   return <>
     <header className="topbar"><Brand />
