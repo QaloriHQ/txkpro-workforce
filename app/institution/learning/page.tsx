@@ -102,6 +102,9 @@ export default async function InstitutionLearningPage() {
                 <ClipboardDocumentCheckIcon aria-hidden="true" />
                 View assignments
               </ButtonLink>
+              <ButtonLink href="/institution/learning/production">
+                Production requests
+              </ButtonLink>
             </>
           }
         />
