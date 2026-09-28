@@ -15,6 +15,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { CheckpointResponse } from "@/components/student/checkpoint-response";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
 import { TrainingStartButton } from "@/components/student/training-start-button";
+import { TrainingPreviewBeacon } from "@/components/student/training-preview-beacon";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
@@ -99,6 +100,9 @@ export default async function StudentEmployerTrainingDetailPage({
       <StudentWorkspaceNav active="training" trainingCount={activeCount} />
 
       <main className="page-wrap student-training-page">
+        {runtime.assignment.status === "assigned" ? (
+          <TrainingPreviewBeacon assignmentId={runtime.assignment.assignmentId} />
+        ) : null}
         <div className="student-training-back">
           <Link href="/student/employer-training">
             <ArrowLeftIcon aria-hidden="true" />

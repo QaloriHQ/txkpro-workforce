@@ -55,6 +55,18 @@ export async function getStudentReadinessEvidence(studentId: string) {
   });
 }
 
+export type StudentTrainingExposure = {
+  exposureEventId: string;
+  eventType: "EMPLOYER_TRAINING_PREVIEWED" | "EMPLOYER_TRAINING_STARTED" | "EMPLOYER_TRAINING_COMPLETED";
+  employerName: string;
+  courseTitle: string | null;
+  occurredAt: string;
+};
+
+export async function getStudentTrainingExposure() {
+  return rpc<StudentTrainingExposure[]>("student_employer_training_exposure");
+}
+
 function mediaUrl(
   assignmentId: string,
   mediaAssetId: string,
