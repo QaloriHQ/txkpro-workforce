@@ -28,6 +28,14 @@
 - Report changed files, test results, commit SHA, branch, and push status.
 
 ## GITHUB ROADMAP
+- The canonical TXKPRO Workforce roadmap is GitHub Projects v2 Project #1 owned by the GitHub **user** `QaloriHQ`, not an organization.
+- The canonical repository is `QaloriHQ/txkpro-workforce`.
+- The Project `Status` field is authoritative. Never infer Planned/Backlog/In Progress/Done solely from issue state, issue labels, or a `Status tag` in the issue body.
+- For "what's next", "next issue", roadmap priority, or equivalent requests, run:
+  - `node scripts/roadmap-next-planned.mjs --json`
+- "Next" means the earliest-added GitHub Project item among open issues in `QaloriHQ/txkpro-workforce` whose authoritative Project `Status` is `Planned`. Use Project item `createdAt`; use issue creation time and issue number only as deterministic tie-breakers.
+- The roadmap helper uses the Codespaces secret `PROJECTS_TOKEN` only for its `gh api graphql` subprocess. Do not export `PROJECTS_TOKEN` as the session-wide `GH_TOKEN`; normal repository operations must continue using the Codespace's regular GitHub identity.
+- If `PROJECTS_TOKEN` is unavailable or Project access is forbidden, report the exact access error and stop. Do not fall back to guessing from repository issues.
 - For roadmap, backlog, or issue requests, use live GitHub CLI data rather than stale local assumptions.
 - Never mark an issue complete unless its acceptance criteria are actually implemented and verified.
 
