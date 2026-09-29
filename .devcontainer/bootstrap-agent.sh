@@ -35,7 +35,7 @@ cat > "$HOME/.txkpro-agent-env.sh" <<'EOF'
 export PATH="$HOME/.local/bin:$HOME/.supabase/bin:$PATH"
 export CLINE_API_PROVIDER="openrouter"
 export CLINE_PROVIDER="openrouter"
-export CLINE_PLAN_MODEL="qwen/qwen-2.5-coder-32b-instruct"
+export CLINE_PLAN_MODEL="qwen/qwen3-coder"
 export CLINE_ACT_MODEL="deepseek/deepseek-chat"
 export DISCORD_APPLICATION_ID="1554545511946526761"
 export CLINE_CONNECTOR_PORT="8788"
