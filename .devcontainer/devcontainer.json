@@ -20,6 +20,8 @@
     "CLINE_PROVIDER": "openrouter",
     "CLINE_PLAN_MODEL": "qwen/qwen3-coder",
     "CLINE_ACT_MODEL": "deepseek/deepseek-chat",
+    "CLINE_PLAN_MAX_TOKENS": "8192",
+    "CLINE_ACT_MAX_TOKENS": "16384",
     "DISCORD_APPLICATION_ID": "1554545511946526761",
     "CLINE_CONNECTOR_PORT": "8788"
   },
