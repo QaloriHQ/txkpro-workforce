@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/discord-access-hook.sh
+      - run: node --check .devcontainer/configure-cline.mjs
       - run: npm install
       - run: npm run typecheck
       - run: npm run lint
