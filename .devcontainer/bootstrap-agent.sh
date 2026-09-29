@@ -58,14 +58,14 @@ echo "[bootstrap] installing repository dependencies"
 retry 3 npm install
 
 echo "[bootstrap] installing Cline and Vercel CLIs into user-global npm prefix"
-retry 3 npm install --global --prefix "$HOME/.local" "cline@${CLINE_VERSION}" "vercel@${VERCEL_VERSION}"
+retry 3 npm install --global --prefix "$HOME/.local" --allow-scripts=cline,esbuild,protobufjs "cline@${CLINE_VERSION}" "vercel@${VERCEL_VERSION}"
 
 if ! command -v supabase >/dev/null 2>&1 || [[ "$(supabase --version 2>/dev/null || true)" != "$SUPABASE_VERSION" ]]; then
   echo "[bootstrap] installing Supabase CLI ${SUPABASE_VERSION}"
   installer="$(mktemp)"
   trap 'rm -f "$installer"' EXIT
   retry 3 curl -fsSL https://raw.githubusercontent.com/supabase/cli/main/install -o "$installer"
-  env VERSION="$SUPABASE_VERSION" SUPABASE_INSTALL_DIR="$HOME/.supabase/bin" sh "$installer" --no-modify-path
+  env VERSION="$SUPABASE_VERSION" SUPABASE_INSTALL_DIR="$HOME/.supabase/bin" bash "$installer" --no-modify-path
   rm -f "$installer"
   trap - EXIT
 fi
