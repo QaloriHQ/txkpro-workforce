@@ -19,7 +19,7 @@ Do not commit secret values to this repository.
 ## Fixed runtime configuration
 
 - Provider: OpenRouter
-- Plan model: `qwen/qwen-2.5-coder-32b-instruct`
+- Plan model: `qwen/qwen3-coder`
 - Act model: `deepseek/deepseek-chat`
 - Discord application ID: `1554545511946526761`
 - Discord connector port: `8788`
