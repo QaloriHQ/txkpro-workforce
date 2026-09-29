@@ -18,7 +18,7 @@
   "containerEnv": {
     "CLINE_API_PROVIDER": "openrouter",
     "CLINE_PROVIDER": "openrouter",
-    "CLINE_PLAN_MODEL": "qwen/qwen-2.5-coder-32b-instruct",
+    "CLINE_PLAN_MODEL": "qwen/qwen3-coder",
     "CLINE_ACT_MODEL": "deepseek/deepseek-chat",
     "DISCORD_APPLICATION_ID": "1554545511946526761",
     "CLINE_CONNECTOR_PORT": "8788"
