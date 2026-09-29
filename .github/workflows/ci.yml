@@ -15,6 +15,7 @@ jobs:
           node-version: 24
       - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/discord-access-hook.sh
       - run: node --check .devcontainer/configure-cline.mjs
+      - run: node --check scripts/roadmap-next-planned.mjs
       - name: Validate Cline model token overrides
         env:
           CLINE_PLAN_MODEL: qwen/qwen3-coder
@@ -43,6 +44,145 @@ jobs:
           }
           if (overrides["deepseek/deepseek-chat"]?.maxTokens !== 16384) {
             throw new Error("Act model maxTokens override was not persisted");
+          }
+          NODE
+      - name: Validate authoritative roadmap selection
+        run: |
+          TEST_BIN="$RUNNER_TEMP/roadmap-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "roadmap helper did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "id": "PVT_test",
+                  "title": "TXKPRO Product Roadmap",
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "item_done",
+                        "createdAt": "2026-09-01T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Done",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 20,
+                          "title": "Older done issue",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-01T00:00:00Z",
+                          "body": "**Dependencies:** None",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/20",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_closed",
+                        "createdAt": "2026-09-02T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 10,
+                          "title": "Closed planned issue",
+                          "state": "CLOSED",
+                          "createdAt": "2026-07-01T00:00:00Z",
+                          "body": "**Dependencies:** None",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/10",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_next",
+                        "createdAt": "2026-09-10T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 30,
+                          "title": "[W11-15] Run Employer Learning security and UX QA",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-20T00:00:00Z",
+                          "body": "## Roadmap metadata\n- **Dependencies:** W11-13",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/30",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_later",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 90,
+                          "title": "Later planned issue",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-10T00:00:00Z",
+                          "body": "**Dependencies:** W14-25",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/90",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          PATH="$TEST_BIN:$PATH" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/roadmap-next-planned.mjs --json > "$RUNNER_TEMP/roadmap-result.json"
+
+          RESULT_PATH="$RUNNER_TEMP/roadmap-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+          if (result.issue !== 30) {
+            throw new Error(`Expected earliest-added Planned issue #30, received #${result.issue}`);
+          }
+          if (result.projectStatus !== "Planned") {
+            throw new Error("Roadmap status was not read from the Project field");
+          }
+          if (result.dependencies !== "W11-13") {
+            throw new Error(`Unexpected dependencies: ${result.dependencies}`);
           }
           NODE
       - run: npm install

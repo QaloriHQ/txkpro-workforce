@@ -39,6 +39,9 @@ export CLINE_PLAN_MODEL="qwen/qwen3-coder"
 export CLINE_ACT_MODEL="deepseek/deepseek-chat"
 export CLINE_PLAN_MAX_TOKENS="8192"
 export CLINE_ACT_MAX_TOKENS="16384"
+export TXKPRO_ROADMAP_OWNER="QaloriHQ"
+export TXKPRO_ROADMAP_PROJECT_NUMBER="1"
+export TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce"
 export DISCORD_APPLICATION_ID="1554545511946526761"
 export CLINE_CONNECTOR_PORT="8788"
 EOF
@@ -78,6 +81,12 @@ echo "[bootstrap] configuring OpenRouter credentials in Cline"
 cline auth --provider "$CLINE_PROVIDER" --apikey "$OPENROUTER_API_KEY" --modelid "$CLINE_ACT_MODEL" >/dev/null
 
 node "$WORKSPACE_ROOT/.devcontainer/configure-cline.mjs"
+
+if [[ -z "${PROJECTS_TOKEN:-}" ]]; then
+  echo "[bootstrap] warning: PROJECTS_TOKEN is not available; GitHub Project #1 roadmap reads will be unavailable" >&2
+else
+  echo "[bootstrap] PROJECTS_TOKEN available for isolated read-only roadmap queries"
+fi
 
 echo "[bootstrap] verified toolchain"
 printf 'node: %s\n' "$(node --version)"
