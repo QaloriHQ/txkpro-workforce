@@ -81,6 +81,12 @@ echo "[cline-discord] refreshing Cline OpenRouter configuration"
 cline auth --provider "$CLINE_PROVIDER" --apikey "$OPENROUTER_API_KEY" --modelid "$CLINE_ACT_MODEL" >/dev/null
 node "$WORKSPACE_ROOT/.devcontainer/configure-cline.mjs"
 
+if [[ -z "${PROJECTS_TOKEN:-}" ]]; then
+  echo "[cline-discord] warning: PROJECTS_TOKEN is missing; roadmap Project #${TXKPRO_ROADMAP_PROJECT_NUMBER:-1} queries will fail until it is added as a Codespaces secret" >&2
+else
+  echo "[cline-discord] roadmap auth: PROJECTS_TOKEN available for ${TXKPRO_ROADMAP_OWNER:-QaloriHQ} Project #${TXKPRO_ROADMAP_PROJECT_NUMBER:-1}"
+fi
+
 # Codespaces resets public port visibility on restart, so restore it each start.
 echo "[cline-discord] publishing Codespaces port ${PORT}"
 if ! gh codespace ports visibility "${PORT}:public" -c "$CODESPACE_NAME"; then
