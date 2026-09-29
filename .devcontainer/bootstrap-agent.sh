@@ -37,6 +37,8 @@ export CLINE_API_PROVIDER="openrouter"
 export CLINE_PROVIDER="openrouter"
 export CLINE_PLAN_MODEL="qwen/qwen3-coder"
 export CLINE_ACT_MODEL="deepseek/deepseek-chat"
+export CLINE_PLAN_MAX_TOKENS="8192"
+export CLINE_ACT_MAX_TOKENS="16384"
 export DISCORD_APPLICATION_ID="1554545511946526761"
 export CLINE_CONNECTOR_PORT="8788"
 EOF

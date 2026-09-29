@@ -20,11 +20,15 @@ Do not commit secret values to this repository.
 
 - Provider: OpenRouter
 - Plan model: `qwen/qwen3-coder`
+- Plan output limit: `8192` tokens
 - Act model: `deepseek/deepseek-chat`
+- Act output limit: `16384` tokens
 - Discord application ID: `1554545511946526761`
 - Discord connector port: `8788`
 
 The Cline state is configured with separate Plan and Act models. The connector starts in Plan mode. Repository rules require explicit owner approval before mutation.
+
+Cline model output limits are persisted as OpenRouter model overrides in `~/.cline/data/settings/models.json`. This prevents the OpenRouter catalog's larger model default from causing a request to reserve more output tokens than the configured API key can afford.
 
 ## Lifecycle
 
@@ -34,7 +38,7 @@ On initial Codespace creation:
 2. Cline and Vercel install in the user-global npm prefix.
 3. Supabase CLI installs from the official Supabase CLI installer.
 4. Cline authenticates to OpenRouter without writing the API key into Git.
-5. Cline Plan/Act model state is configured.
+5. Cline Plan/Act model state and output-token overrides are configured.
 
 On every Codespace start:
 
@@ -65,7 +69,21 @@ cline --version
 vercel --version
 supabase --version
 cline config
+cat ~/.cline/data/settings/models.json
 curl "https://${CODESPACE_NAME}-8788.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}/health"
+```
+
+The OpenRouter section in `models.json` should include:
+
+```json
+{
+  "qwen/qwen3-coder": {
+    "maxTokens": 8192
+  },
+  "deepseek/deepseek-chat": {
+    "maxTokens": 16384
+  }
+}
 ```
 
 To restart the bridge manually:
