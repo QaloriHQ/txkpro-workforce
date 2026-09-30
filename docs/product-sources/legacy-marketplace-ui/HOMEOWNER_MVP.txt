@@ -1,0 +1,119 @@
+TXK PRO — HOMEOWNER APP MVP
+
+PRIMARY PURPOSE
+===============
+Make requesting and managing home services simple.
+
+
+MVP FLOW
+========
+Homeowner Registration
+→ Property
+→ Select Service
+→ Describe Need
+→ Upload Photos
+→ Submit Request
+→ Match/Route
+→ Receive Estimate
+→ Approve
+→ Schedule
+→ Track Job
+→ Complete
+→ Review
+
+
+CORE SCREENS
+============
+
+1. HOME / SERVICE CATALOG
+- Search services
+- Browse categories
+- Popular services
+- Emergency/urgent indicators if supported
+
+2. REQUEST SERVICE
+Dynamic questions based on service type:
+- What do you need?
+- Property/location
+- Problem description
+- Desired timing
+- Budget range if applicable
+- Photos/videos
+- Access notes
+
+3. REQUEST STATUS
+Show:
+- Submitted
+- Matching
+- Contractor responding
+- Estimate received
+- Scheduled
+- In progress
+- Complete
+
+4. CONTRACTOR / MATCH
+Depending on TXK Pro model:
+- Marketplace selection, or
+- TXK Pro assignment/routing
+
+Possible homeowner info:
+- Company
+- Rating
+- Services
+- Experience
+- Verification indicators
+- Profile
+
+5. ESTIMATE REVIEW
+- Price
+- Scope
+- Line items
+- Notes
+- Expiration
+- Accept/decline
+- Ask question
+
+6. SCHEDULING
+- Proposed times
+- Confirm appointment
+- Reschedule request
+
+7. MESSAGING
+- Chat with contractor
+- Share photos/documents
+- Receive system notifications
+
+8. JOB TRACKING
+- Appointment
+- Contractor
+- Scope
+- Status
+- Timeline
+
+9. INVOICES / PAYMENTS
+- View invoice
+- Payment status
+- Receipt
+
+10. REVIEWS
+- Star rating
+- Written review
+- Service feedback
+
+11. SUPPORT
+- Report issue
+- Cancel request/job
+- Dispute/complaint
+
+
+HOMEOWNER MVP SUCCESS CONDITION
+===============================
+A homeowner can go from:
+Need Service
+→ Submit Request
+→ Receive/Approve Estimate
+→ Schedule
+→ Complete
+→ Review
+
+without needing TXK Pro staff to manually communicate each step.
