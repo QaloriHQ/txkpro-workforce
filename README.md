@@ -132,8 +132,11 @@ app/
 components/              Shared UI
 lib/                     Auth, Supabase, audit, SMS, types
 supabase/migrations/     Incremental migrations for the established TXKPRO backend
+docs/product-sources/ui/ Canonical UI/design-system/content-style sources
 .devcontainer/           Codespaces config
 .github/workflows/       CI + retention scheduler
 ```
 
 See `docs/ARCHITECTURE.md` for trust boundaries and next increments.
+
+For UI, UX, branding, component, responsive, accessibility, and content-style work, start with `docs/product-sources/ui/README.md` and follow the source precedence documented there.
