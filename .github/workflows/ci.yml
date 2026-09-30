@@ -16,6 +16,45 @@ jobs:
       - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/discord-access-hook.sh
       - run: node --check .devcontainer/configure-cline.mjs
       - run: node --check scripts/roadmap-next-planned.mjs
+      - run: node --check scripts/repo-latest.mjs
+      - name: Validate live repository discovery without worktree mutation
+        run: |
+          REMOTE="$RUNNER_TEMP/repo-latest-remote.git"
+          SEED="$RUNNER_TEMP/repo-latest-seed"
+          CLONE="$RUNNER_TEMP/repo-latest-clone"
+
+          git init --bare "$REMOTE"
+          git init "$SEED"
+          git -C "$SEED" config user.name "TXKPRO CI"
+          git -C "$SEED" config user.email "ci@txkpro.local"
+          printf 'base\n' > "$SEED/README.md"
+          git -C "$SEED" add README.md
+          git -C "$SEED" commit -m "base"
+          git -C "$SEED" branch -M main
+          git -C "$SEED" remote add origin "$REMOTE"
+          git -C "$SEED" push -u origin main
+          git --git-dir="$REMOTE" symbolic-ref HEAD refs/heads/main
+
+          git clone "$REMOTE" "$CLONE"
+          BASE_SHA="$(git -C "$CLONE" rev-parse HEAD)"
+
+          mkdir -p "$SEED/docs"
+          printf 'AUTHORITATIVE DESIGN SOURCE\n' > "$SEED/docs/NEW_DESIGN_DOC.txt"
+          git -C "$SEED" add docs/NEW_DESIGN_DOC.txt
+          git -C "$SEED" commit -m "add remote-only design doc"
+          git -C "$SEED" push origin main
+
+          printf 'local-only-change\n' >> "$CLONE/README.md"
+
+          (
+            cd "$CLONE"
+            node "$GITHUB_WORKSPACE/scripts/repo-latest.mjs" find NEW_DESIGN_DOC.txt               | grep -Fx "docs/NEW_DESIGN_DOC.txt"
+            node "$GITHUB_WORKSPACE/scripts/repo-latest.mjs" read docs/NEW_DESIGN_DOC.txt               | grep -Fx "AUTHORITATIVE DESIGN SOURCE"
+          )
+
+          test "$(git -C "$CLONE" rev-parse HEAD)" = "$BASE_SHA"
+          grep -Fx "local-only-change" "$CLONE/README.md"
+          test "$(git -C "$CLONE" status --short README.md)" = " M README.md"
       - name: Validate Cline model token overrides
         env:
           CLINE_PLAN_MODEL: qwen/qwen3-coder

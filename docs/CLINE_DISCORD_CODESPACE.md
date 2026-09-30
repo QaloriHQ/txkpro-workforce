@@ -36,6 +36,25 @@ The Cline state is configured with separate Plan and Act models. The connector s
 
 Cline model output limits are persisted as OpenRouter model overrides in `~/.cline/data/settings/models.json`. This prevents the OpenRouter catalog's larger model default from causing a request to reserve more output tokens than the configured API key can afford.
 
+## Live repository discovery
+
+The running Codespace may intentionally contain local edits or may lag behind GitHub `main`. Cline must not treat the local working tree as the only repository view.
+
+For file/document discovery, use:
+
+```bash
+node scripts/repo-latest.mjs status
+node scripts/repo-latest.mjs find "design"
+node scripts/repo-latest.mjs grep "design system|style guide"
+node scripts/repo-latest.mjs read docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt
+```
+
+Each helper invocation first fetches `origin/main`, then reads directly from that remote ref. It never merges, checks out, resets, stages, or overwrites working-tree files. This lets Cline see newly committed repository files even when the active Codespace has unrelated local changes.
+
+On bridge startup, `.devcontainer/start-agent.sh` also refreshes `origin/main` and prints the local and remote short SHAs.
+
+The Cline rules explicitly prohibit claiming that a repository file is missing until `origin/main` has been refreshed and searched.
+
 ## Roadmap authentication
 
 Normal repository work continues to use the Codespace's regular GitHub identity.

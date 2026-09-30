@@ -13,6 +13,22 @@
 - Never expose tokens, API keys, bot tokens, service-role keys, or other secret values in output, files, commits, or logs.
 - Never weaken role/scope authorization, tenant isolation, RLS, or audit requirements to make a test pass.
 
+## LIVE REPOSITORY DISCOVERY
+- The Codespace working tree may intentionally contain local changes or may lag behind GitHub `main`. Do not assume a local file search represents the latest repository state.
+- For requests to find, inspect, review, or verify repository files or documentation, use the live remote helper:
+  - `node scripts/repo-latest.mjs status`
+  - `node scripts/repo-latest.mjs find <path-substring>`
+  - `node scripts/repo-latest.mjs grep <extended-regex>`
+  - `node scripts/repo-latest.mjs read <path>`
+- The helper fetches `origin/main` before every query and does not merge, reset, checkout, stage, or otherwise modify the working tree.
+- NEVER say a repository file or document does not exist until you have refreshed and searched `origin/main`.
+- If a file exists on `origin/main` but not in the local working tree, treat it as available for analysis and read it from the remote ref. Do not copy, merge, checkout, or overwrite local files merely to inspect it.
+- When implementation requires a remote-only file, first report that the local checkout is behind or divergent and preserve unrelated local work before bringing the required source into the implementation branch.
+- For TXKPRO UI/design work, the authoritative design-system entry point is:
+  - `docs/product-sources/ui/README.md`
+  - authoritative standard: `docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt`
+- Do not replace repository source discovery with guesses, external web search, or generic best practices when repository sources are available.
+
 ## VERIFICATION
 - Run task-specific tests plus the repository baseline:
   - `npm run typecheck`
