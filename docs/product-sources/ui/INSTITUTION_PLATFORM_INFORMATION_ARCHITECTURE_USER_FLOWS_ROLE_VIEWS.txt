@@ -1,0 +1,1831 @@
+TXKPRO™ WORKFORCE — INSTITUTION PLATFORM
+INFORMATION ARCHITECTURE + USER FLOWS + ROLE VIEWS
+Version 1.1 — Expanded Institution Prototype
+Date: September 2026
+Scope: Institution Prototype Only
+Status: Canonical Institution IA Update
+
+======================================================================
+1. CHANGE SUMMARY
+======================================================================
+
+This update expands the Institution prototype to include:
+
+- Branded institution subdomains (example: schoolname.txkpro.com)
+- Prototype-only SSO / white-label entry experience
+- PRO Points:
+  - Reliability
+  - Skill Mastery
+  - Community
+- Automated System / Employer Engagement Badges
+- Company-Specific Video Micro-Certifications
+- Company-Specific Badges
+- TXKPRO Concierge Video Production workflow
+- Expanded executive/compliance dashboards
+- 12-month regional workforce outcome reporting
+- Revised 14-week Phase 1 Pilot Center
+- Expanded Student Readiness profile
+- Updated referral evidence and reporting
+
+IMPORTANT PRODUCT RULE
+PRO Points augment, but do not replace, Instructor Verified Skills.
+
+Verified Skills remain the authoritative source for demonstrated technical competency.
+PRO Points capture transparent, observable professional-readiness and engagement activity.
+
+External statistics contained in the Institution pitch strategy are treated as source-provided
+benchmarks and must remain visually separate from TXKPRO platform telemetry unless
+independently validated and intentionally published.
+
+======================================================================
+2. STRATEGIC PRODUCT MODEL
+======================================================================
+
+PROGRAM / COHORT
+      ↓
+STUDENT ONBOARDING
+      ↓
+VERIFIED TECHNICAL SKILLS
+      +
+PRO POINTS
+      +
+SYSTEM BADGES
+      +
+EMPLOYER VIDEO MICRO-CERTIFICATIONS
+      +
+COMPANY-SPECIFIC BADGES
+      ↓
+EMPLOYER EXPOSURE
+      ↓
+REFERRAL / INTERVIEW
+      ↓
+PLACEMENT
+      ↓
+30 / 60 / 90 DAY RETENTION
+      ↓
+6 / 12 MONTH OUTCOME
+      ↓
+REGIONAL WORKFORCE CONTINUITY REPORTING
+
+Readiness is now represented in four distinct layers:
+
+1. Technical Readiness
+   Instructor Verified Skills
+
+2. Professional Readiness
+   PRO Points + readiness attestations
+
+3. Employer-Specific Readiness
+   Micro-Certifications + Company Badges
+
+4. Observable Employer Engagement
+   Employer page visits, training starts/completions, referrals, interview activity
+
+Do not collapse these layers into one opaque employability score.
+
+======================================================================
+3. PROTOTYPE-ONLY ROLE VIEW SWITCHER
+======================================================================
+
+Persistent control:
+
+[ View as: Instructor ▼ ]
+
+Options:
+- Super Admin
+- Admin
+- Department Head
+- Program Coordinator
+- Instructor
+- Assistant Instructor
+- Career Services
+- Read-Only Analyst
+
+Role switching changes:
+- navigation
+- dashboard emphasis
+- data scope
+- available actions
+- disabled controls
+- Action Center content
+- reporting detail
+
+Persistent prototype notice:
+
+"Demo mode: Role switching simulates Institution permissions.
+Production access is server-controlled."
+
+======================================================================
+4. UPDATED GLOBAL IA
+======================================================================
+
+PRIMARY NAVIGATION
+
+1. Dashboard
+2. Students
+3. Programs & Cohorts
+4. Workforce Readiness
+5. Referrals
+6. Employers
+7. Placements
+8. Retention
+9. Reports
+10. Administration
+
+WORKFORCE READINESS
+
+4.1 Verified Skills Matrix
+4.2 PRO Points
+4.3 System Badges
+4.4 Employer Micro-Certifications
+4.5 Company-Specific Badges
+4.6 Readiness Queue
+
+ADMINISTRATION
+
+10.1 Pilot Center
+10.2 Imports
+10.3 Team & Permissions
+10.4 Action Center
+10.5 Audit Log
+10.6 Institution Experience
+10.7 Settings
+
+GLOBAL UTILITIES
+
+- Institution branding
+- Institution / campus context
+- Department / Program / Cohort context
+- Global Search
+- View As
+- Notifications
+- Help
+- Theme
+- Account
+
+======================================================================
+5. UPDATED ROLE ACCESS MATRIX
+======================================================================
+
+Legend:
+FULL = manage in authorized scope
+READ = view-only
+SCOPED = assigned program/cohort only
+LIMITED = selected actions
+PREP = prepare for authoritative approval
+HIDDEN = unavailable
+
+CAPABILITY                    SUPER  ADMIN  DEPT  PROG  INSTR  ASST  CAREER ANALYST
+                              ADMIN         HEAD  COORD
+-----------------------------------------------------------------------------------
+Dashboard                     FULL   FULL   FULL  FULL  SCOPED SCOPED FULL   READ
+Students                      FULL   FULL   FULL  FULL  SCOPED SCOPED FULL   LIMITED
+Programs & Cohorts            FULL   FULL   FULL  FULL  READ   READ   READ   READ
+
+Verified Skills               FULL   FULL   FULL  FULL  FULL   PREP   READ   READ
+PRO Points                    FULL   FULL   FULL  FULL  READ   READ   READ   READ
+System Badges                 FULL   FULL   READ  READ  READ   READ   READ   READ
+Micro-Certifications          FULL   FULL   FULL  FULL  READ   READ   FULL   READ
+Company Badges                FULL   FULL   READ  READ  READ   READ   FULL   READ
+Readiness Queue               FULL   FULL   FULL  FULL  FULL   PREP   FULL   READ
+
+Referrals                     FULL   FULL   FULL  FULL  FULL   LIMITED FULL   READ
+Employers                     FULL   FULL   READ  FULL  READ   READ   FULL   READ
+Placements                    FULL   FULL   READ  FULL  READ   READ   FULL   READ
+Retention                     FULL   FULL   READ  FULL  SCOPED SCOPED FULL   READ
+Reports                       FULL   FULL   FULL  FULL  READ   READ   FULL   FULL
+
+Pilot Center                  FULL   FULL   FULL  FULL  READ   READ   FULL   READ
+Imports                       FULL   FULL   LIMITED FULL HIDDEN HIDDEN LIMITED READ
+Team & Permissions            FULL   FULL   LIMITED READ HIDDEN HIDDEN HIDDEN HIDDEN
+Action Center                 FULL   FULL   FULL  FULL  SCOPED SCOPED FULL   READ
+Audit Log                     FULL   READ   READ  READ  HIDDEN HIDDEN HIDDEN READ
+Institution Experience        FULL   FULL   READ  READ  HIDDEN HIDDEN HIDDEN READ
+Settings                      FULL   LIMITED READ READ  HIDDEN HIDDEN HIDDEN HIDDEN
+
+======================================================================
+6. DASHBOARD
+======================================================================
+
+PURPOSE
+Role-specific workforce command center.
+
+PRIMARY METRICS
+
+- Active Students
+- Workforce-Ready Students
+- Verified Skills
+- PRO Points Participation
+- System Badges Earned
+- Company Badges Earned
+- Employer Exposure
+- Referrals
+- Interviews
+- Placements
+- Day-90 Retained
+- Open Retention Cases
+
+LAB-TO-FIELD FUNNEL
+
+Enrolled
+→ Profile Complete
+→ Verified Competencies
+→ Employer Exposed
+→ Company Certified
+→ Referred
+→ Interviewed
+→ Hired
+→ Day 90
+→ Long-Term Outcome
+
+READINESS COMPOSITION
+
+Technical Verification
+Professional Readiness
+Employer Exposure
+Company Certification
+
+ACTION REQUIRED
+
+Examples:
+- 7 technical skills awaiting verification
+- 11 students without employer exposure
+- 9 students eligible for LiveWire micro-certification
+- 4 company modules incomplete
+- 3 referrals awaiting employer response
+- 2 retention cases open
+
+PILOT PROGRESS CARD
+
+Example:
+Phase 1 Pilot
+Spring 2027 Electrical
+Week 6 of 14
+Current Phase: Student Onboarding & Gamification Launch
+
+[Open Pilot Center]
+
+ROLE EMPHASIS
+
+Instructor:
+verification backlog, assigned students, referral-ready students
+
+Career Services:
+employer exposure, company badges, interviews, placements, retention
+
+Department Head:
+program comparison, readiness distribution, employer engagement, outcomes
+
+Analyst:
+aggregate outcomes, benchmark/reference panel, exports
+
+======================================================================
+7. STUDENTS
+======================================================================
+
+DIRECTORY FIELDS
+
+- Student
+- Program
+- Cohort
+- Graduation
+- Profile Completion
+- Verified Skills
+- PRO Points
+- System Badges
+- Company Badges
+- Employer Exposure
+- Referrals
+- Interviews
+- Placement
+- Retention
+
+FILTERS
+
+- Program
+- Cohort
+- Technical readiness
+- PRO Points category/range
+- System Badge
+- Company Badge
+- Micro-Certification
+- Employer exposure
+- Employer
+- Referral state
+- Placement state
+- Retention state
+
+STUDENT PROFILE IA
+
+Student Profile
+├─ Overview
+├─ Verified Skills
+├─ PRO Points
+├─ Badges
+├─ Employer Training
+├─ Readiness
+├─ Employer Exposure
+├─ Referrals
+├─ Interviews
+├─ Placement
+├─ Retention
+└─ Activity
+
+OVERVIEW EXAMPLE
+
+Brandon Carter
+Electrical Technology
+Spring 2027
+
+12 / 18 Verified Skills
+1,480 PRO Points
+5 System Badges
+2 Company Badges
+3 Employers Engaged
+2 Micro-Certifications Complete
+1 Interview Active
+
+PRIMARY ACTIONS
+
+- Verify Skills
+- Refer to Employer
+- Assign Employer Training
+- View Employer Exposure
+- Contact Student
+
+======================================================================
+8. VERIFIED SKILLS
+======================================================================
+
+Verified Skills remain authoritative technical competency evidence.
+
+Statuses:
+
+- Not Started
+- Self-Attested
+- In Progress
+- Ready for Review
+- Instructor Verified
+- Needs More Practice
+- Revoked
+
+FLOW
+
+Student self-attests / progresses
+→ Instructor reviews
+→ Verify / Needs Practice / Not Assessed
+→ Verification record stored
+→ Employer-visible technical evidence
+
+ASSISTANT INSTRUCTOR FLOW
+
+Assistant:
+Ready for Instructor Review
+
+Instructor:
+Reviews
+→ authoritative verification
+
+PRO POINTS CONNECTION
+
+A verified skill may trigger a transparent Skill Mastery point event.
+
+Example:
+Residential Rough-In verified
++75 Skill Mastery PRO Points
+
+The point event is a consequence of verification.
+It does not become the verification itself.
+
+======================================================================
+9. PRO POINTS
+======================================================================
+
+PURPOSE
+Capture transparent professional-readiness activity.
+
+CATEGORIES
+
+A. Reliability
+- Daily safety check-ins
+- Safety trivia streaks
+- Attendance events where institution supplies valid data
+
+B. Skill Mastery
+- Instructor-verified competencies
+- Approved lab completions
+- Approved safety milestones
+- Employer micro-certification completion where configured
+
+C. Community
+- Helpful peer mentoring
+- Approved trade tips
+- Cohort accountability activity
+
+STUDENT BREAKDOWN EXAMPLE
+
+Total: 1,480
+
+Reliability: 620
+Skill Mastery: 710
+Community: 150
+
+Last 30 Days: +340
+
+EVENT HISTORY
+
+Date
+Category
+Event
+Points
+Source
+Actor/System
+
+INSTITUTION CONTROLS
+
+Super/Admin may:
+- view rules
+- enable/disable optional institution-supported event types
+- review correction requests
+- audit corrections
+
+Instructor:
+- sees student breakdown
+- does not arbitrarily type points
+
+ANTI-ABUSE
+
+- event source required
+- duplicate prevention
+- Community daily cap
+- transparent criteria
+- correction event rather than silent history rewrite
+
+LEADERBOARD RULE
+
+Optional prototype leaderboard label:
+
+"Engagement Leaderboard — not an employability ranking."
+
+Do not present "Top PRO Points" as equivalent to "best candidate."
+
+======================================================================
+10. SYSTEM BADGES
+======================================================================
+
+PURPOSE
+Translate observable repeated behavior into explainable readiness signals.
+
+EXAMPLES
+
+5-Day Reliability Streak
+Safety Consistency
+Early Completer
+Employer Explorer
+High Employer Engagement
+Consistent Learner
+
+BADGE DETAIL
+
+- Title
+- Category
+- Criteria
+- Trigger events
+- Date earned
+- Issuer = TXKPRO System
+- Evidence
+
+IMPORTANT
+
+System badges represent observed behavior.
+They do not imply verified technical competence unless specifically based on a verified
+competency event.
+
+Example employer-engagement label:
+
+"High observed engagement with LiveWire Electric"
+
+Avoid:
+"Will accept a LiveWire job."
+
+======================================================================
+11. EMPLOYER MICRO-CERTIFICATIONS
+======================================================================
+
+PURPOSE
+Bridge lab-to-field expectation gaps using company-specific video training.
+
+IA
+
+Employer Micro-Certifications
+├─ Library
+├─ Assigned
+├─ Production Requests
+├─ Module Detail
+└─ Completion Analytics
+
+MODULE EXAMPLE
+
+Employer:
+LiveWire Electric
+
+Title:
+Residential Video Inspection Training
+
+Format:
+Loom Video
+
+Duration:
+14 minutes
+
+Checkpoints:
+5
+
+Badge:
+LiveWire Video Inspection Ready
+
+Eligible:
+Electrical Technology / Spring 2027
+
+MODULE STATUS
+
+Draft
+In Production
+Review
+Ready
+Live
+Archived
+
+MODULE DETAIL
+
+- Employer
+- Learning objective
+- Video/Loom embed
+- Equipment/process context
+- Safety notes
+- Interactive checkpoints
+- Passing requirement
+- Company Badge
+- Assignment count
+- Completion rate
+
+ASSIGNMENT FLOW
+
+Open Module
+→ Select Program
+→ Select Cohort
+→ Select Students
+→ Review
+→ Assign
+→ Notify Students
+→ Track Completion
+→ Award Company Badge when criteria met
+
+======================================================================
+12. TXKPRO CONCIERGE VIDEO PRODUCTION
+======================================================================
+
+PURPOSE
+Allow institutions to request/track employer-specific training content without burdening instructors
+with video production.
+
+FLOW
+
+Institution/employer identifies field gap
+→ Request Module
+→ Select Employer
+→ Select Program/Cohort
+→ Describe equipment/process
+→ Define desired student outcome
+→ TXKPRO Production Review
+→ Filming Scheduled
+→ Editing / Interactive Build
+→ Employer Review
+→ Institution Preview
+→ Ready
+→ Assign to Students
+
+PROTOTYPE PRODUCTION CARD
+
+Tri-State HVAC
+Variable Speed Equipment Orientation
+
+Status:
+Editing
+
+Target Launch:
+Oct 2
+
+COMMERCIAL BOUNDARY
+
+The supplied strategy references initial concierge production in the $2,500–$5,000 range.
+
+Institution prototype should display:
+
+"Concierge production managed by TXKPRO / contracted separately."
+
+Do not add institution payment checkout.
+Payments remain outside the Institution prototype.
+
+======================================================================
+13. COMPANY-SPECIFIC BADGES
+======================================================================
+
+PURPOSE
+Show successful completion of employer-specific readiness content.
+
+EXAMPLE
+
+LiveWire Electric
+Residential Service Ready
+
+Student:
+Brandon Carter
+
+Earned:
+Sep 14
+
+Evidence:
+Residential Service Readiness Micro-Certification Complete
+
+FIELDS
+
+- Employer
+- Badge title
+- Criteria
+- Module/version
+- Issue date
+- Expiration if configured
+- Evidence
+
+USES
+
+- Student readiness profile
+- Referral evidence
+- Employer pipeline
+- Cohort certification reporting
+- Employer partnership analytics
+
+======================================================================
+14. READINESS QUEUE
+======================================================================
+
+PURPOSE
+Centralize work required to move students toward employer readiness.
+
+QUEUE TYPES
+
+- Skills awaiting verification
+- Assistant Instructor reviews ready
+- Students with low employer exposure
+- Micro-Certifications incomplete
+- Students eligible for Company Badge
+- Readiness profiles incomplete
+- Referral-ready students not referred
+
+ROLE EMPHASIS
+
+Instructor:
+technical verification
+
+Career Services:
+exposure, training, referral readiness
+
+Program Coordinator:
+cohort readiness
+
+Department Head:
+program readiness gaps
+
+======================================================================
+15. PROGRAMS & COHORTS
+======================================================================
+
+PROGRAM TABS
+
+- Overview
+- Cohorts
+- Verified Skills
+- PRO Points Activity
+- Employer Training
+- Employer Partners
+- Placements
+- Outcomes
+
+COHORT TABS
+
+- Overview
+- Students
+- Skills
+- PRO Points
+- Badges
+- Micro-Certifications
+- Employer Exposure
+- Referrals
+- Placements
+- Retention
+
+COHORT METRICS
+
+- verified skill coverage
+- PRO Points participation
+- streak participation
+- company certification completion
+- employer exposure
+- referral rate
+- interview rate
+- placement rate
+- retention
+
+======================================================================
+16. REFERRALS
+======================================================================
+
+UPDATED REFERRAL FLOW
+
+Student
+→ Select Employer
+→ Select Opportunity
+→ Review Verified Skills
+→ Review PRO Points Breakdown
+→ Review System Badges
+→ Review Company Badges
+→ Review Employer Exposure
+→ Review Readiness Attestations
+→ Add Optional Institution Note
+→ Visibility/consent check
+→ Send Referral
+
+REFERRAL EVIDENCE GROUPS
+
+Technical Readiness
+Professional Readiness
+Company Training
+Employer Engagement
+Operational Readiness
+
+Do not combine these into one hidden score.
+
+REFERRAL SNAPSHOT
+
+Preserve the key readiness evidence visible at the time of referral for historical/audit purposes.
+
+======================================================================
+17. EMPLOYERS
+======================================================================
+
+EMPLOYER DETAIL
+
+Employer
+├─ Overview
+├─ Hiring Needs
+├─ Employer Exposure
+├─ Micro-Certifications
+├─ Company Badges
+├─ Referred Students
+├─ Interviews
+├─ Placements
+└─ Retention
+
+OVERVIEW EXAMPLE
+
+LiveWire Electric
+Verified Regional Employer
+
+Hiring:
+Electrical Apprentices
+Residential Service Technicians
+
+Students Engaged: 28
+Micro-Certifications: 2
+Company Badges Earned: 17
+Students Referred: 8
+Students Hired: 3
+
+EMPLOYER EXPOSURE METRICS
+
+- profile views
+- unique student visitors
+- repeat engagement
+- training previews
+- module starts
+- completions
+- company badges
+
+Use "Observed Engagement" terminology.
+
+======================================================================
+18. PLACEMENTS
+======================================================================
+
+PIPELINE
+
+Interview
+→ Offer / Decision
+→ Hire Scheduled
+→ Active Placement
+→ Day 30
+→ Day 60
+→ Day 90
+→ Long-Term Outcome
+
+PLACEMENT DETAIL adds:
+
+Readiness at placement:
+- Verified Skills
+- PRO Points breakdown
+- System Badges
+- Company Badges
+- Employer Exposure
+- Referral source
+
+Future analysis may compare these signals with placement retention.
+
+Prototype must not imply correlation equals causation.
+
+======================================================================
+19. RETENTION
+======================================================================
+
+CORE INTERVENTION
+
+Hire
+→ Day 30
+→ Day 60
+→ Day 90
+
+Risk response:
+3 — Need Help
+→ Case
+→ Assign
+→ Contact
+→ Monitor
+→ Resolve
+
+LONG-TERM OUTCOME
+
+Day 90
+→ Known 6-Month Outcome
+→ Known 12-Month Outcome
+
+Day 30/60/90 remain the main automated intervention workflow.
+
+6/12-month states are outcome tracking/reporting unless later specified otherwise.
+
+======================================================================
+20. REPORTS
+======================================================================
+
+UPDATED REPORT IA
+
+Reports
+├─ Executive Workforce Summary
+├─ Program / Cohort Outcomes
+├─ Skills Readiness
+├─ Professional Readiness
+├─ Employer Exposure
+├─ Company Certification
+├─ Referral Velocity
+├─ Placement
+├─ Retention
+├─ Regional Talent Continuity
+└─ Compliance / Accreditation
+
+EXECUTIVE SUMMARY
+
+Questions:
+- Are students becoming technically ready?
+- Are they demonstrating professional readiness?
+- Are employers engaging before graduation?
+- Are company certifications being completed?
+- Are referrals converting?
+- Are hires retaining?
+- Is local talent staying in the regional economy?
+
+PROGRAM PLACEMENT OUTCOME
+
+- Cohort size
+- Workforce ready
+- Employer exposed
+- Company certified
+- Referred
+- Interviewed
+- Placed
+- Day-90 retained
+
+REFERRAL VELOCITY
+
+- referrals per week
+- employer view rate
+- referral-to-interview
+- interview-to-hire
+- median referral-to-hire
+
+REGIONAL TALENT CONTINUITY
+
+- local placements
+- regional employer share
+- retained local talent
+- placements outside region
+- unknown outcome
+- known 12-month status
+
+COMPLIANCE / ACCREDITATION
+
+- participation
+- skills verification
+- employer exposure
+- placement outcomes
+- retention outcomes
+- exportable program/cohort summaries
+
+EXTERNAL BENCHMARK PANEL
+
+Use label:
+"External Reference Data — not TXKPRO telemetry."
+
+Keep external statistics visually separate from platform metrics.
+
+======================================================================
+21. PILOT CENTER
+======================================================================
+
+PURPOSE
+Operationalize the revised 14-week non-disruptive pilot.
+
+HEADER EXAMPLE
+
+Phase 1 Pilot
+Electrical Technology
+Spring 2027
+Week 6 of 14
+Overall Progress: 42%
+
+PHASE 1 — WEEKS 1–3
+CURRICULAR ALIGNMENT & EMPLOYER PRODUCTION
+
+Tasks:
+- Select pilot cohort
+- Map Verified Skills Matrix to syllabus
+- Confirm instructor owners
+- Confirm first employers
+- Identify field expectation gaps
+- Create production briefs
+- Schedule TXKPRO filming
+- Track video production
+
+Outputs:
+- approved Skills Matrix
+- employer pilot list
+- production queue
+- micro-certification plan
+
+PHASE 2 — WEEKS 4–6
+STUDENT ONBOARDING & GAMIFICATION LAUNCH
+
+Tasks:
+- CSV roster import
+- activate student accounts
+- complete workforce profiles
+- launch Daily Safety Trivia
+- activate PRO Points
+- establish streak baseline
+- launch employer exposure
+
+Outputs:
+- active cohort
+- baseline readiness
+- PRO Points participation
+- first System Badges
+PHASE 3 — WEEKS 7–10
+ACTIVE MATCHING & CERTIFICATION
+
+Tasks:
+- publish employer micro-certifications
+- assign modules
+- track Company Badge completion
+- verify technical skills
+- employers browse pipelines
+- send referrals
+- SMS interview requests
+
+Outputs:
+- company-specific badges
+- verified readiness
+- active referrals
+- interviews
+
+PHASE 4 — WEEKS 11–14 & BEYOND
+PLACEMENT & RETENTION
+
+Tasks:
+- record hires
+- activate Day 30/60/90
+- manage intervention cases
+- generate first Institution Outcome Report
+- establish 12-month tracking cohort
+
+PILOT CENTER PROTOTYPE FUNCTIONALITY
+
+- phase progress
+- checkable tasks
+- owners
+- due dates
+- dependency indicators
+- deep links
+- production cards
+- completion simulation
+
+======================================================================
+22. IMPORTS
+======================================================================
+
+Existing CSV flow remains:
+
+Select Program/Cohort
+→ Upload
+→ Map Columns
+→ Validate
+→ Review
+→ Import
+→ Invite / Link
+
+Updated post-import:
+
+Students Imported
+→ Accounts Activated
+→ Profile Completion
+→ Daily Safety Trivia
+→ PRO Points Activated
+→ Readiness Baseline Established
+
+======================================================================
+23. TEAM & PERMISSIONS
+======================================================================
+
+Existing role model remains.
+
+New capability labels:
+
+- Manage Workforce Readiness
+- View PRO Points
+- Manage Micro-Certification Assignments
+- Request Concierge Production
+- View Employer Exposure
+- Manage Pilot Center
+
+Production authorization remains server-controlled.
+
+======================================================================
+24. ACTION CENTER
+======================================================================
+
+NEW ACTION TYPES
+
+- Micro-Certification ready for Institution review
+- Production module ready for preview
+- Student eligible for Company Badge
+- Student has low/no employer exposure
+- PRO Points correction requested
+- Pilot task overdue
+
+Examples by role:
+
+Instructor:
+- 7 Skills Awaiting Verification
+- 4 Assistant Reviews Ready
+
+Career Services:
+- 9 Students Ready for Employer Training
+- 3 Referrals Waiting
+- 2 Retention Risks
+
+Program Coordinator:
+- Module Completion Below Target
+- Pilot Task Overdue
+
+======================================================================
+25. AUDIT LOG
+======================================================================
+
+NEW EVENTS
+
+- PRO_POINTS_EVENT_CREATED
+- PRO_POINTS_EVENT_CORRECTED
+- SYSTEM_BADGE_AWARDED
+- MICRO_CERT_ASSIGNED
+- MICRO_CERT_COMPLETED
+- COMPANY_BADGE_AWARDED
+- PRODUCTION_REQUEST_CREATED
+- PRODUCTION_STATUS_CHANGED
+- PILOT_TASK_COMPLETED
+
+Original events remain:
+skills, referrals, interviews, placements, retention, team/access, imports, reports.
+
+======================================================================
+26. INSTITUTION EXPERIENCE
+======================================================================
+
+PURPOSE
+Demonstrate branded tenant experience.
+
+SUB-NODES
+
+- Branding
+- Branded URL
+- SSO Preview
+- Login Experience
+- Student Entry Experience
+
+BRANDED URL EXAMPLE
+
+texarkana-college.txkpro.com
+
+Prototype preview includes:
+- Institution logo
+- Institution name
+- Institution accent
+- TXKPRO Powered By treatment
+
+No real DNS change occurs in prototype.
+
+SSO PREVIEW FLOW
+
+User visits:
+texarkana-college.txkpro.com
+
+→ Institution context resolved
+→ Branded login
+
+[Continue with Microsoft]
+[Continue with Google]
+[Institution Email]
+
+→ Demo login simulation
+→ Institution Dashboard
+
+Banner:
+"SSO simulation only — no identity provider connected."
+
+TENANT RULE
+
+Subdomain provides:
+- branding
+- context
+- SSO discovery
+
+Subdomain does not provide authorization.
+
+======================================================================
+27. SETTINGS
+======================================================================
+
+GROUPS
+
+- Institution Profile
+- Workforce Configuration
+- PRO Points
+- Employer Exposure
+- Micro-Certifications
+- Retention
+- Branding & Access
+- Notifications
+- Data & Privacy
+- Integrations
+
+PRO POINTS SETTINGS
+
+- View base rules
+- Enable optional event types
+- Community cap
+- Streak visibility
+- Engagement leaderboard toggle
+
+MICRO-CERT SETTINGS
+
+- Who may assign
+- Auto-award Company Badge after passing
+- Default notifications
+
+BRANDING & ACCESS
+
+- Logo
+- Accent
+- Demo subdomain
+- SSO placeholder
+
+COMMERCIAL BOUNDARY
+
+No institution payment processing.
+
+Concierge production:
+"Contracted separately with TXKPRO."
+
+======================================================================
+28. GLOBAL SEARCH
+======================================================================
+
+Searchable:
+
+- Students
+- Programs
+- Cohorts
+- Skills
+- PRO Points events
+- Badges
+- Micro-Certifications
+- Employers
+- Referrals
+- Placements
+
+Example search:
+LiveWire
+
+Results:
+Employer — LiveWire Electric
+Micro-Cert — Residential Service Readiness
+Company Badge — LiveWire Service Ready
+Students — 17 with LiveWire badge
+
+Search respects simulated role scope.
+
+======================================================================
+29. MOBILE / RESPONSIVE IA
+======================================================================
+
+INSTRUCTOR
+Home / Students / Readiness / Referrals / More
+
+CAREER SERVICES
+Home / Students / Employers / Placements / More
+
+PROGRAM COORDINATOR
+Home / Cohort / Readiness / Pilot / More
+
+ADMIN
+Home / Students / Pilot / Action Center / More
+
+READINESS MOBILE MENU
+
+- Verified Skills
+- PRO Points
+- Badges
+- Employer Training
+
+======================================================================
+30. NEW CROSS-NODE EVENTS
+======================================================================
+
+DAILY_SAFETY_COMPLETED
+→ PRO Points
+→ Reliability category
+→ Streak
+→ Badge evaluation
+→ Cohort engagement
+
+PRO_POINTS_AWARDED
+→ Student Profile
+→ PRO Points Dashboard
+→ Cohort Analytics
+→ Audit
+
+SYSTEM_BADGE_AWARDED
+→ Student Profile
+→ Workforce Readiness
+→ Reports
+→ Employer-visible candidate profile where allowed
+
+MICRO_CERT_ASSIGNED
+→ Student Employer Training
+→ Readiness Queue
+→ Employer Module Analytics
+
+MICRO_CERT_COMPLETED
+→ Student Training
+→ Skill Mastery Points if configured
+→ Company Badge evaluation
+→ Institution/Employer Analytics
+
+COMPANY_BADGE_AWARDED
+→ Student Profile
+→ Workforce Readiness
+→ Employer Detail
+→ Referral Evidence
+→ Reports
+
+EMPLOYER_PAGE_VIEWED
+→ Employer Exposure
+→ Badge evaluation
+→ Employer Engagement Analytics
+
+PRODUCTION_REQUEST_CREATED
+→ Pilot Center
+→ Production Queue
+→ Action Center
+
+PRODUCTION_STATUS_CHANGED
+→ Pilot Center
+→ Module Library
+→ Action Center
+
+PILOT_TASK_COMPLETED
+→ Pilot Progress
+→ Dashboard
+→ Audit
+
+======================================================================
+31. NEW LOGICAL PROTOTYPE OBJECTS
+======================================================================
+
+PRO POINT EVENT
+- id
+- student_id
+- category
+- event_type
+- points
+- source_type
+- source_id
+- awarded_at
+- awarded_by/system
+- correction_of
+
+SYSTEM BADGE AWARD
+- id
+- student_id
+- badge_type
+- criteria_version
+- source_events
+- awarded_at
+
+EMPLOYER MICRO-CERT
+- id
+- employer_id
+- title
+- description
+- program_ids
+- content_type
+- video_url/demo_embed
+- status
+- passing_requirement
+- company_badge_id
+- version
+
+MICRO-CERT ASSIGNMENT
+- id
+- micro_cert_id
+- student_id
+- assigned_by
+- assigned_at
+- status
+- completed_at
+- score
+
+COMPANY BADGE
+- id
+- employer_id
+- title
+- criteria
+- version
+- active
+
+COMPANY BADGE AWARD
+- id
+- company_badge_id
+- student_id
+- evidence_type
+- evidence_id
+- awarded_at
+
+EMPLOYER EXPOSURE EVENT
+- id
+- student_id
+- employer_id
+- event_type
+- source_id
+- occurred_at
+
+PRODUCTION REQUEST
+- id
+- employer_id
+- program_id
+- requested_by
+- field_gap
+- equipment_process
+- status
+- target_launch_date
+
+PILOT TASK
+- id
+- pilot_id
+- phase
+- title
+- owner
+- due_date
+- dependency
+- status
+
+======================================================================
+32. 14-WEEK PILOT USER FLOW
+======================================================================
+
+Program Coordinator / Admin
+
+Open Pilot Center
+→ Create Phase 1 Pilot
+→ Select Program
+→ Select Cohort
+→ Confirm Instructor Team
+→ Confirm Employer Partners
+
+Weeks 1–3
+→ Map Curriculum
+→ Identify Field Gaps
+→ Request Video Modules
+→ Track Production
+
+Weeks 4–6
+→ Import Roster
+→ Invite Students
+→ Monitor Profile Completion
+→ Launch Safety Trivia
+→ Activate PRO Points
+→ Monitor Streak Adoption
+
+Weeks 7–10
+→ Publish Micro-Certs
+→ Assign Students
+→ Monitor Completion
+→ Award Company Badges
+→ Verify Skills
+→ Refer Students
+→ Track Interviews
+
+Weeks 11–14
+→ Record Placements
+→ Trigger Retention
+→ Generate Outcome Report
+
+Beyond
+→ Day 30
+→ Day 60
+→ Day 90
+→ 6-Month Outcome
+→ 12-Month Outcome
+
+======================================================================
+33. EMPLOYER MICRO-CERTIFICATION USER FLOW
+======================================================================
+
+Career Services / Program Coordinator
+
+Employers
+→ Open Employer
+→ Micro-Certifications
+→ Request New Module
+
+Form:
+- Employer
+- Program
+- Field Gap
+- Equipment / Process
+- Desired Outcome
+- Target Cohort
+- Target Launch
+
+Submit
+→ Production Request
+
+Status:
+Requested
+→ Discovery
+→ Filming Scheduled
+→ Editing
+→ Employer Review
+→ Institution Preview
+→ Ready
+
+Institution
+→ Preview
+→ Assign Cohort
+→ Publish
+
+Student
+→ Watch Video
+→ Complete Checkpoints
+→ Pass
+
+System
+→ Completion
+→ Optional Skill Mastery points
+→ Company Badge
+→ Analytics
+
+======================================================================
+34. PRO POINTS USER FLOW
+======================================================================
+
+STUDENT EVENT
+
+Daily Safety Trivia
+→ completed
+→ Reliability point event
+→ streak recalculated
+→ badge criteria evaluated
+→ totals updated
+
+INSTRUCTOR EVENT
+
+Skill Verified
+→ verification stored
+→ Skill Mastery point event
+→ totals updated
+→ badge criteria evaluated
+
+COMMUNITY EVENT
+
+Helpful contribution
+→ event validation
+→ daily cap check
+→ Community point event
+→ totals updated
+
+CORRECTION FLOW
+
+Workforce Readiness
+→ PRO Points
+→ Student
+→ Event History
+→ Request Correction
+→ Reason
+→ Admin Review
+→ Correction Event
+→ Audit
+
+Never silently rewrite original event history.
+
+======================================================================
+35. SYSTEM BADGE USER FLOW
+======================================================================
+
+Observable events
+→ Badge rules evaluate
+→ criteria met?
+
+No:
+→ no award
+
+Yes:
+→ badge award
+→ evidence attached
+→ Student Profile
+→ Institution Readiness
+→ Employer view where permitted
+→ Audit
+
+Example:
+
+Employer page viewed 10 times
+→ High Employer Engagement
+→ badge awarded
+
+Display:
+"High observed engagement with LiveWire Electric."
+
+======================================================================
+36. BRANDED SUBDOMAIN / SSO DEMO FLOW
+======================================================================
+
+Institution Experience
+→ Branding
+→ Select Institution Logo
+→ Preview Accent
+→ Demo Slug: texarkana-college
+
+Preview:
+texarkana-college.txkpro.com
+
+[Preview Branded Portal]
+
+Portal:
+Texarkana College Workforce
+Powered by TXKPRO
+
+[Continue with Microsoft]
+[Continue with Google]
+[Use Email]
+
+→ simulated authentication
+→ role-specific Institution Dashboard
+
+======================================================================
+37. EXECUTIVE / COMPLIANCE REPORT FLOW
+======================================================================
+
+Reports
+→ Executive Workforce Summary
+→ Program / Cohort / Date
+
+View:
+- Technical Readiness
+- Professional Readiness
+- Employer Exposure
+- Company Certification
+- Referral Velocity
+- Placement
+- Retention
+- Regional Continuity
+
+Separate panel:
+External Reference Data
+
+Do not merge external benchmark numbers into TXKPRO institution telemetry.
+
+Export:
+PDF / CSV / Print simulation
+→ audit export event
+
+======================================================================
+38. UPDATED HI-FI BUILD STATUS
+======================================================================
+
+WAVE 1 — COMPLETE
+- Dashboard
+- Programs & Cohorts
+- Import
+- Students
+- Verified Skills
+- Referrals
+
+WAVE 2 — COMPLETE
+- Employers
+- Referral Outcomes
+- Placements
+- Retention
+
+WAVE 3 — COMPLETE
+- Reports
+- Team & Permissions
+- Action Center
+- Audit
+- Settings
+
+WAVE 4 — NEW STRATEGY EXPANSION
+
+A. Workforce Readiness
+- PRO Points
+- System Badges
+- Readiness Queue
+
+B. Employer Learning
+- Micro-Certification Library
+- Module Detail
+- Assignments
+- Company Badges
+- Concierge Production Requests
+
+C. Pilot Center
+- 14-week timeline
+- phases
+- tasks
+- dependencies
+- production status
+
+D. Institution Experience
+- branded subdomain preview
+- white-label experience
+- SSO simulation
+
+E. Reporting Expansion
+- Professional Readiness
+- Employer Exposure
+- Company Certification
+- Regional Talent Continuity
+- External benchmark separation
+
+F. Student Profile Expansion
+- PRO Points
+- Badges
+- Employer Training
+- Employer Exposure
+
+======================================================================
+39. RECOMMENDED WAVE 4 DEMO STORY
+======================================================================
+
+1. Program Coordinator opens Pilot Center.
+2. Shows Spring 2027 Electrical at Week 7.
+3. Opens LiveWire Electric training module.
+4. Assigns Residential Service Readiness to Brandon Carter.
+5. Switches View As → Instructor.
+6. Verifies Residential Troubleshooting.
+7. Skill verification generates a Skill Mastery point event.
+8. Opens Brandon's Student Profile.
+9. Shows:
+   - Verified Skill
+   - PRO Points increase
+   - Employer Training assignment
+10. Simulates training completion.
+11. Company Badge appears:
+    LiveWire Service Ready.
+12. Employer Exposure shows repeated LiveWire engagement.
+13. Career Services creates referral.
+14. Referral evidence displays:
+    - Verified Skills
+    - PRO Points categories
+    - Company Badge
+    - Employer Exposure
+15. Simulate Interview → Hire.
+16. Placement creates 30/60/90 retention milestones.
+17. Executive Report reflects the outcome.
+
+This should become the core Institution prototype demonstration story.
+
+======================================================================
+40. PITCH DECK → IA TRACEABILITY
+======================================================================
+
+Slide 1 — Strategic Vision
+Dashboard / Executive Workforce Summary / Reports
+
+Slide 2 — Vetting Void
+Verified Skills / Students / Referrals / Placement Funnel
+
+Slide 3 — Turnover
+Retention / Executive Dashboard / Employer Outcomes
+
+Slide 4 — Branded Ecosystem
+Institution Experience / Branding / SSO Preview / Settings
+
+Slide 5 — Verified Skills & PRO Points
+Workforce Readiness / Verified Skills / PRO Points / Student Profile
+
+Slide 6 — Real-World Video Exposure
+Employer Micro-Certifications / Production Requests / Company Badges
+
+Slide 7 — Employer System Badges
+System Badges / Employer Exposure / Student Profile / Referrals
+
+Slide 8 — 90-Day Retention Pulse
+Retention / Placements / Action Center
+
+Slide 9 — Features & Benefits
+Dashboard / Reports / Workforce Readiness / Employers / Retention
+
+Slide 10 — Executive Data / Compliance
+Reports / Compliance / Executive Summary
+
+Slide 11 — 12-Month Shared Outcome
+Regional Talent Continuity / Retention / Executive Reports
+
+Slide 12 — 14-Week Pilot
+Pilot Center
+
+======================================================================
+41. DESIGN RULES
+======================================================================
+
+1. Use official TXKPRO logos only.
+2. Preserve light/dark mode.
+3. Use Tailwind / Heroicons-style SVG icons.
+4. Institution branding should coexist with TXKPRO attribution.
+5. PRO Points never visually replace Instructor Verified competency.
+6. Every System Badge shows criteria/evidence.
+7. Every Company Badge shows issuer and source module.
+8. Employer Exposure is observable behavior, not inferred intent.
+9. External benchmarks remain separate from platform telemetry.
+10. Concierge video production is a service workflow, not in-app payment processing.
+11. Branded subdomains/SSO remain simulated in the Institution prototype.
+12. Role switching remains demonstration-only.
+13. Every correction is auditable.
+14. Readiness signals should remain explainable.
+15. Mobile Institution navigation stays role-sensitive.
+
+======================================================================
+42. NEXT IMPLEMENTATION ORDER — WAVE 4
+======================================================================
+
+1. Rename / expand Skills Matrix → Workforce Readiness.
+2. Add PRO Points dashboard + student breakdown.
+3. Add System Badges.
+4. Expand Student Profile:
+   - PRO Points
+   - Badges
+   - Employer Training
+   - Employer Exposure
+5. Add Employer Micro-Certification Library + Module Detail.
+6. Add Company-Specific Badges.
+7. Add Concierge Production Request flow.
+8. Add Pilot Center with 14-week phase tracking.
+9. Add Institution Experience:
+   - branded subdomain preview
+   - SSO simulation
+10. Expand Reports:
+    - Professional Readiness
+    - Employer Exposure
+    - Company Certification
+    - Regional Talent Continuity
+11. Update Referrals to surface new readiness evidence.
+12. Connect all Wave 4 state changes across the Institution prototype.
+
+END OF DOCUMENT
