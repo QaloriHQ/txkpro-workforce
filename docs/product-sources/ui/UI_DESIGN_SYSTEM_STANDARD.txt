@@ -1,0 +1,1769 @@
+TXKPRO™
+UI DESIGN SYSTEM STANDARD
+Version 1.0 — September 2026
+Status: AUTHORITATIVE SOURCE OF TRUTH
+Applies to: ALL TXKPRO-branded applications, prototypes, dashboards, portals, internal tools, responsive web experiences, and future TXKPRO application surfaces
+
+======================================================================
+0. AUTHORITY
+======================================================================
+
+THIS DOCUMENT IS THE AUTHORITATIVE UI / UX DESIGN SYSTEM SOURCE OF TRUTH
+FOR ALL TXKPRO APPLICATIONS.
+
+It exists to prevent visual drift, inconsistent components, incorrect iconography,
+invented branding, inconsistent responsive behavior, and application-specific
+design decisions that conflict with the TXKPRO product family.
+
+Effective immediately:
+
+- New TXKPRO UI work MUST follow this standard.
+- Existing TXKPRO UI work SHOULD be brought into conformance as it is modified.
+- App-specific IA / UX specifications may define product-specific navigation,
+  screens, roles, workflows, and content, but must not silently override this
+  visual / interaction standard.
+- Any intentional exception must be explicitly documented as an approved
+  "TXKPRO UI Standard Exception."
+
+This document supersedes conflicting visual implementation guidance in older
+TXKPRO prototype documents.
+
+This document DOES NOT supersede canonical sources for:
+
+- product requirements;
+- technical architecture;
+- authorization;
+- role permissions;
+- data ownership;
+- lifecycle statuses;
+- privacy;
+- event synchronization;
+- compliance;
+- business logic.
+
+Where a UI screen displays canonical product state, the UI must render the
+canonical state correctly rather than inventing its own status model.
+
+======================================================================
+1. SOURCE PRECEDENCE
+======================================================================
+
+Use this precedence order when building a TXKPRO application.
+
+1. PRODUCT / DOMAIN SOURCE OF TRUTH
+   Controls:
+   - feature behavior;
+   - workflows;
+   - user roles;
+   - scope;
+   - permissions;
+   - data ownership;
+   - canonical lifecycle state;
+   - privacy;
+   - security;
+   - event behavior.
+
+2. TXKPRO UI DESIGN SYSTEM STANDARD — THIS DOCUMENT
+   Controls:
+   - branding;
+   - logo usage;
+   - icons;
+   - typography;
+   - color semantics;
+   - spacing;
+   - component behavior;
+   - navigation patterns;
+   - responsiveness;
+   - feedback;
+   - accessibility;
+   - visual hierarchy;
+   - prototype conventions;
+   - UI QA.
+
+3. APP-SPECIFIC IA / USER FLOW SPECIFICATION
+   Controls:
+   - information architecture;
+   - product-specific screen hierarchy;
+   - role-specific views;
+   - application-specific content;
+   - application-specific workflow presentation.
+
+4. INDIVIDUAL IMPLEMENTATION
+   HTML, React, Next.js, Apps Script, prototype, or other code must implement
+   the sources above.
+
+RULE
+
+Lower-precedence sources must not silently contradict higher-precedence sources.
+
+======================================================================
+2. CORE DESIGN PRINCIPLES
+======================================================================
+
+TXKPRO interfaces must be:
+
+1. TRUSTWORTHY
+   Clear, consistent, professional, and explicit about data provenance.
+
+2. EXPLAINABLE
+   Users should understand why a status, badge, metric, or action appears.
+
+3. ROLE-AWARE
+   The same platform may emphasize different work for different authorized roles.
+
+4. LOW-FRICTION
+   Common actions should require minimal steps without hiding critical context.
+
+5. SCANNABLE
+   Strong hierarchy, concise labels, useful whitespace, and predictable layouts.
+
+6. RESPONSIVE
+   Every core workflow must work at mobile widths.
+
+7. ACCESSIBLE
+   Do not rely on color, icons, hover, or visual position alone to convey meaning.
+
+8. CONSISTENT
+   A component or status should look and behave the same across TXKPRO apps.
+
+9. AUDIT-FRIENDLY
+   Trust-critical state should display source, actor, status, or history where relevant.
+
+10. HUMAN-CENTERED
+    Do not present opaque scores, false certainty, or inferred intent as fact.
+
+======================================================================
+3. BRAND IDENTITY
+======================================================================
+
+3.1 OFFICIAL TXKPRO LOGOS ONLY
+
+Use official TXKPRO logo assets.
+
+REQUIRED:
+- use approved light logo on appropriate backgrounds;
+- use approved dark logo on appropriate backgrounds;
+- preserve official proportions;
+- preserve official colors;
+- preserve official clear space;
+- preserve legibility.
+
+PROHIBITED:
+- recreating the TXKPRO wordmark with HTML text;
+- drawing a substitute "TX" mark;
+- approximating the logo in CSS;
+- recoloring the logo without an approved variant;
+- stretching or distorting the logo;
+- rebuilding the logo from a screenshot when an official asset is available;
+- using third-party or AI-generated TXKPRO logo variants.
+
+If an official asset is not available:
+STOP and request the approved asset rather than inventing one.
+
+3.2 BRANDING + TENANT BRANDING
+
+Institution, Employer, Partner, or tenant branding may coexist with TXKPRO.
+
+Preferred hierarchy:
+
+[ Tenant / partner identity ]
+Powered by TXKPRO
+
+or
+
+TXKPRO Workforce
+[ tenant context ]
+
+Tenant branding must never visually imply that tenant context grants authorization.
+
+3.3 PRODUCT NAMING
+
+Use the current approved product label consistently.
+
+Examples:
+TXKPRO™
+TXKPRO™ Workforce
+TXKPRO Workforce — Employer
+TXKPRO Workforce — Institution
+
+Do not invent abbreviations or alternate product names inside UI.
+
+======================================================================
+4. ICON SYSTEM — MANDATORY HEROICONS
+======================================================================
+
+4.1 AUTHORITATIVE ICON SOURCE
+
+ALL TXKPRO INTERFACE ICONS MUST USE HEROICONS.
+
+Canonical source:
+Heroicons by Tailwind Labs.
+
+Preferred implementation:
+- official @heroicons package in React / Next.js;
+- official Heroicons SVG markup for static HTML / Apps Script / prototypes.
+
+DEFAULT STYLE:
+Heroicons Outline.
+
+USE SOLID ONLY WHEN:
+- a selected/active state benefits from stronger visual emphasis;
+- the same semantic icon is still used;
+- the application intentionally uses a documented Outline/Solid state pair.
+
+4.2 PROHIBITED ICON SUBSTITUTES
+
+NEVER use any of the following as interface icons:
+
+- emoji;
+- Unicode symbols;
+- ASCII symbols;
+- arbitrary glyphs;
+- icon fonts;
+- Font Awesome;
+- Material Icons;
+- Bootstrap Icons;
+- lucide icons;
+- manually drawn SVG approximations;
+- AI-generated icon approximations;
+- decorative text characters.
+
+Examples of prohibited substitutes:
+
+⌂
+✓
+▣
+♟
+＋
+◎
+↗
+◫
+≋
+↻
+▥
+◐
+☰
+×
+←
+→
+
+These characters may appear in ordinary written content where linguistically
+appropriate, but must not act as UI icons.
+
+4.3 INLINE SVG RULE
+
+For standalone HTML prototypes:
+- embed official Heroicons as inline SVG;
+- use currentColor for strokes/fills where appropriate;
+- do not load an external icon CDN;
+- preserve SVG viewBox;
+- preserve Heroicons path geometry;
+- use aria-hidden="true" for decorative icons.
+
+4.4 ICON LABEL RULE
+
+Icons do not replace important labels unless:
+- the action is universally understood;
+- an accessible label / title exists;
+- the component has sufficient surrounding context.
+
+Critical actions should use:
+[Heroicon] + Text Label
+
+Examples:
++ New Hiring Need
+should be implemented as:
+[PlusIcon] New Hiring Need
+
+not:
++
+
+4.5 SEMANTIC CONSISTENCY
+
+The same meaning should use the same Heroicon family across all apps.
+
+Recommended canonical mappings:
+
+Dashboard / Home
+→ HomeIcon
+
+Search
+→ MagnifyingGlassIcon
+
+Students / People / Team
+→ UsersIcon or UserGroupIcon
+
+Individual User
+→ UserIcon
+
+Institution / Company / Organization
+→ BuildingOfficeIcon or BuildingLibraryIcon as appropriate
+
+Hiring / Work / Opportunity
+→ BriefcaseIcon
+
+Calendar / Interviews / Scheduling
+→ CalendarDaysIcon
+
+Notifications
+→ BellIcon
+
+Messages
+→ ChatBubbleLeftRightIcon
+
+Reports / Analytics
+→ ChartBarSquareIcon or PresentationChartLineIcon
+
+Settings
+→ Cog6ToothIcon
+
+Permissions / Security
+→ ShieldCheckIcon
+
+Audit / History
+→ ClockIcon or ClipboardDocumentListIcon depending context
+
+Imports / Upload
+→ ArrowUpTrayIcon
+
+Exports / Download
+→ ArrowDownTrayIcon
+
+Add
+→ PlusIcon
+
+Edit
+→ PencilSquareIcon
+
+Delete
+→ TrashIcon
+
+Close Modal
+→ XMarkIcon
+
+Back
+→ ArrowLeftIcon
+
+Next
+→ ArrowRightIcon
+
+Expand
+→ ChevronDownIcon / ChevronRightIcon
+
+Menu
+→ Bars3Icon
+
+Success / Verified
+→ CheckCircleIcon
+
+Warning
+→ ExclamationTriangleIcon
+
+Information
+→ InformationCircleIcon
+
+Theme
+→ SunIcon / MoonIcon
+
+Retention / Refresh / Follow-up
+→ ArrowPathIcon only when the semantic meaning fits
+
+Do not reuse a visually convenient icon for an unrelated meaning.
+
+4.6 ICON SIZING
+
+Recommended:
+- 16px: dense secondary controls;
+- 20px: standard buttons/navigation;
+- 24px: prominent standalone controls;
+- 28–32px: rare illustrative feature icon.
+
+Avoid oversized decorative icons in data-dense dashboards.
+
+======================================================================
+5. TYPOGRAPHY
+======================================================================
+
+5.1 TYPOGRAPHIC INTENT
+
+TXKPRO typography should feel:
+- modern;
+- operational;
+- clear;
+- trustworthy;
+- dense enough for dashboards;
+- readable on mobile.
+
+5.2 FONT STACK
+
+Use the approved application font where one exists.
+
+If no separate approved font is provided, use the established modern system stack:
+
+Inter,
+ui-sans-serif,
+-apple-system,
+BlinkMacSystemFont,
+"Segoe UI",
+Roboto,
+Arial,
+sans-serif
+
+Do not introduce a new display font for a single TXKPRO app without an approved exception.
+
+5.3 HIERARCHY
+
+Recommended hierarchy:
+
+Page title
+- visually dominant;
+- concise;
+- one primary H1 per view.
+
+Section title
+- strong but subordinate to page title.
+
+Card title
+- short;
+- functional;
+- not decorative.
+
+Eyebrow / overline
+- uppercase or compact label;
+- used sparingly;
+- supports hierarchy.
+
+Body text
+- plain language;
+- readable;
+- avoid long dense paragraphs inside dashboards.
+
+Helper text
+- visibly secondary;
+- not so faint that accessibility suffers.
+
+5.4 WRITING STYLE
+
+UI text should be:
+- direct;
+- concise;
+- professional;
+- task-oriented;
+- plain-language.
+
+Prefer:
+"Save profile"
+
+Avoid:
+"Persist configuration"
+
+Prefer:
+"3 skills awaiting verification"
+
+Avoid:
+"Verification items currently requiring action: 3"
+
+======================================================================
+6. COLOR SYSTEM
+======================================================================
+
+6.1 SEMANTIC TOKENS
+
+All applications should use semantic design tokens rather than scattered
+hard-coded colors.
+
+Required semantic families:
+
+BACKGROUND
+- app background
+- panel/card
+- secondary panel
+- elevated overlay
+
+TEXT
+- primary
+- secondary/muted
+- disabled
+- inverse
+
+BORDER
+- default
+- strong
+- focus
+
+BRAND
+- approved TXKPRO accent(s)
+
+STATUS
+- success
+- warning
+- danger
+- information
+- neutral
+
+6.2 DO NOT INVENT BRAND COLORS
+
+If an exact TXKPRO brand hex/RGB value is not present in the approved brand asset
+or shared theme tokens, do not invent one.
+
+Centralize approved values in shared theme tokens.
+
+6.3 STATUS COLOR IS SECONDARY
+
+Never use color alone to convey state.
+
+Correct:
+[green dot] Approved
+
+Incorrect:
+green pill with no label
+
+6.4 EXTERNAL / BENCHMARK DATA
+
+External benchmark/reference data must be visually separated from TXKPRO telemetry.
+
+Preferred label:
+"External Reference Data — not TXKPRO telemetry."
+
+======================================================================
+7. LIGHT / DARK MODE
+======================================================================
+
+7.1 REQUIRED
+
+TXKPRO applications that expose theme selection must preserve the user's
+light/dark preference.
+
+7.2 COMPONENT PARITY
+
+Every component must remain:
+- readable;
+- distinguishable;
+- accessible;
+- visually consistent
+
+in both themes.
+
+7.3 LOGO VARIANT
+
+Use the official logo variant appropriate to the current surface.
+
+7.4 DO NOT
+
+- invert an official logo using CSS filters unless explicitly approved;
+- make dark mode an afterthought;
+- use dark backgrounds with insufficient contrast;
+- change semantic status meaning between themes.
+
+======================================================================
+8. LAYOUT SYSTEM
+======================================================================
+
+8.1 DESKTOP
+
+Dashboard-oriented applications should normally use:
+- persistent left navigation;
+- sticky or stable global top bar;
+- centered/max-width content region;
+- card/grid-based operational content.
+
+8.2 MOBILE
+
+Mobile layout must prioritize task completion.
+
+Student flows:
+mobile-first.
+
+Institution / Employer / Admin:
+desktop dashboard patterns may collapse into mobile task-focused navigation.
+
+App-specific IA determines which destinations are primary, but the layout must
+remain role-sensitive where roles materially change the user's work.
+
+8.3 PAGE HEADER
+
+Standard page header:
+
+Eyebrow / context
+Page title
+Short explanatory text
+Primary actions
+
+Actions should align to the right on desktop and stack/wrap naturally on mobile.
+
+8.4 CONTENT WIDTH
+
+Avoid:
+- edge-to-edge dense text on large displays;
+- extremely narrow dashboard content;
+- cards stretched so wide that relationships become hard to scan.
+
+Use consistent max-width and gutters across apps.
+
+======================================================================
+9. NAVIGATION
+======================================================================
+
+9.1 DESKTOP NAVIGATION
+
+Preferred for dashboard applications:
+left navigation.
+
+Navigation items contain:
+- Heroicon;
+- text label;
+- optional count/status indicator.
+
+9.2 ACTIVE STATE
+
+The active destination must be visually obvious.
+
+Do not rely only on a color difference.
+
+9.3 MOBILE NAVIGATION
+
+App-specific IA decides the exact destinations.
+
+Preferred:
+- Student: mobile-first bottom navigation for primary destinations.
+- Institution/Employer/Admin: role-sensitive bottom navigation or compact mobile nav
+  when it improves task completion.
+
+9.4 FUTURE / DISABLED MODULES
+
+If a prototype displays future waves:
+- clearly label them;
+- visually distinguish disabled state;
+- do not make disabled items appear interactive;
+- do not imply a feature exists in production.
+
+9.5 NAVIGATION COUNTS
+
+Counts should represent actionable or meaningful state.
+
+Examples:
+6/6 onboarding
+3 open cases
+2 pending invitations
+
+Do not use arbitrary decorative badges.
+
+======================================================================
+10. CARDS
+======================================================================
+
+10.1 CARD PURPOSE
+
+A card should group one coherent concept.
+
+Examples:
+- metric;
+- action queue;
+- employer approval;
+- student readiness;
+- Hiring Need;
+- retention case.
+
+10.2 CARD HIERARCHY
+
+Recommended:
+
+Card heading
+Optional supporting sentence
+Primary value/content
+Secondary detail
+Primary action
+
+10.3 AVOID
+
+- excessive nested cards;
+- card-within-card-within-card structures;
+- decorative borders without information hierarchy;
+- using cards for every single line of content.
+
+======================================================================
+11. METRICS
+======================================================================
+
+11.1 METRIC CARD
+
+A metric should contain:
+
+- concise label;
+- primary value;
+- supporting context;
+- optional Heroicon;
+- optional deep link.
+
+11.2 DEEP-LINK RULE
+
+Every metric should deep-link where practical.
+
+Example:
+"7 Skills Awaiting Verification"
+→ opens Readiness Queue filtered to those 7 records.
+
+11.3 TELEMETRY RULE
+
+Do not show mock metrics as actual production telemetry without labeling them.
+
+Prototype values must be recognizable as sample/demo data where needed.
+
+11.4 EXTERNAL BENCHMARK RULE
+
+Do not merge external statistics into platform-observed metric cards.
+
+======================================================================
+12. STATUS + BADGE SYSTEM
+======================================================================
+
+12.1 CANONICAL STATE
+
+UI labels may be friendly, but canonical internal states must come from the
+approved status dictionary / product source.
+
+Example:
+
+verified
+→ display "Instructor Verified"
+
+needs_practice
+→ display "Needs More Practice"
+
+12.2 STATUS COMPONENT
+
+Status should include:
+- text label;
+- semantic color;
+- optional Heroicon or dot;
+- sufficient contrast.
+
+12.3 DO NOT
+
+- invent free-text workflow statuses;
+- create competing per-app status names for the same state;
+- silently rewrite historical state;
+- overload one status field with multiple workflows.
+
+12.4 PROVENANCE
+
+Where a status depends on evidence, show source.
+
+Examples:
+Instructor Verified
+Self-Attested
+Institution Verified
+Third-Party Verified
+Not Verified
+
+Self-attested data must never visually look authoritative or institution-verified.
+
+======================================================================
+13. BUTTONS + ACTION HIERARCHY
+======================================================================
+
+13.1 PRIMARY ACTION
+
+One visually dominant primary action per action group where possible.
+
+Examples:
+Save profile
+Request Interview
+Create Hiring Need
+Verify Skill
+
+13.2 SECONDARY ACTION
+
+Use secondary buttons for:
+- cancel;
+- view;
+- alternate workflow;
+- non-destructive supporting actions.
+
+13.3 DESTRUCTIVE ACTION
+
+Destructive actions:
+- use danger styling;
+- require confirmation for meaningful data/state loss;
+- describe what will happen.
+
+13.4 ICON BUTTON
+
+Icon-only button must include:
+- Heroicon;
+- accessible label;
+- tooltip/title when helpful.
+
+======================================================================
+14. FORMS
+======================================================================
+
+14.1 LABELS
+
+Every input must have a visible label.
+
+Placeholder text is not a replacement for a label.
+
+14.2 HELP TEXT
+
+Use helper text for:
+- provenance;
+- privacy boundaries;
+- format requirements;
+- irreversible consequences;
+- eligibility rules.
+
+14.3 VALIDATION
+
+Validation must:
+- appear near the affected field;
+- explain how to fix the problem;
+- preserve entered data;
+- not rely only on color.
+
+14.4 REQUIRED FIELDS
+
+Clearly indicate required inputs.
+
+Do not mark every field as required unless the product actually requires it.
+
+14.5 LONG FORMS
+
+Use:
+- steps;
+- sections;
+- progress;
+- save-and-continue;
+- review before final submission
+
+when the workflow is complex.
+
+======================================================================
+15. TABLES + DATA DENSITY
+======================================================================
+
+15.1 DESKTOP
+
+Use tables for:
+- comparable records;
+- operational scanning;
+- admin/institution/employer directories;
+- reports.
+
+15.2 MOBILE
+
+Tables should become:
+- cards;
+- stacked rows;
+- drawers;
+- responsive record summaries
+
+rather than forcing horizontal scrolling for core workflows.
+
+Horizontal scrolling may be used for secondary analytical tables only when
+a responsive transformation would destroy meaning.
+
+15.3 TABLE ACTIONS
+
+Avoid multiple unlabeled icon-only actions in every row.
+
+Prefer:
+- one primary row action;
+- overflow menu;
+- detail drawer;
+- clearly labeled control.
+
+======================================================================
+16. MODALS, DRAWERS + OVERLAYS
+======================================================================
+
+16.1 USE MODALS FOR
+
+- focused create/edit workflows;
+- confirmation;
+- short review steps;
+- compact settings.
+
+16.2 USE DRAWERS FOR
+
+- record detail while preserving list context;
+- mobile detail;
+- secondary review.
+
+16.3 CLOSE CONTROL
+
+Must use Heroicons XMarkIcon.
+
+Do not use the Unicode multiplication symbol as a close icon.
+
+16.4 MODAL BEHAVIOR
+
+- close on explicit Cancel/X;
+- preserve form data unless discard is intentional;
+- destructive dismissal should confirm when data loss matters;
+- trap focus in production implementations;
+- support Escape where appropriate.
+
+======================================================================
+17. EMPTY STATES
+======================================================================
+
+Every empty state must explain:
+1. what is empty;
+2. why it matters where helpful;
+3. what the user should do next.
+
+Preferred:
+
+No active Hiring Needs
+Create or activate hiring demand before Talent discovery.
+[Create Hiring Need]
+
+Avoid:
+
+No data.
+
+======================================================================
+18. LOADING, SUCCESS + ERROR FEEDBACK
+======================================================================
+
+18.1 SUCCESS
+
+Every meaningful workflow should provide success feedback.
+
+Examples:
+Profile saved
+Skill verified
+Invitation sent
+Hiring Need created
+
+18.2 LOADING
+
+Longer actions should show:
+- progress;
+- disabled duplicate submission;
+- current step/state.
+
+18.3 ERROR
+
+Errors should:
+- state what failed;
+- retain user work when possible;
+- offer a next action;
+- avoid exposing sensitive technical detail.
+
+18.4 SYSTEM FAILURE
+
+Operationally important failures should surface in appropriate Admin/Action Center
+views rather than disappearing into logs only.
+
+======================================================================
+19. ACTION CENTER PATTERN
+======================================================================
+
+Action Center should surface work that needs attention.
+
+Each item should include:
+
+- action type;
+- subject;
+- relevant context;
+- age/due state;
+- owner when useful;
+- current status;
+- one obvious next action;
+- deep link.
+
+Role views should change which action items appear.
+
+Do not use Action Center as a generic notification feed.
+
+======================================================================
+20. SEARCH + FILTERS
+======================================================================
+
+20.1 GLOBAL SEARCH
+
+Search must respect role and scope.
+
+Never leak the existence of restricted records through search/autocomplete.
+
+20.2 FILTERS
+
+Filters should use explicit canonical fields.
+
+In Workforce talent discovery:
+- deterministic filters only;
+- show matching criteria;
+- show provenance.
+
+Do not create an opaque "best match" UI.
+20.3 FILTER CHIPS
+
+Use readable chips for active filters.
+
+Provide:
+Clear all
+or
+Reset
+
+when multiple filters are active.
+
+======================================================================
+21. DATA PROVENANCE + TRUST SIGNALS
+======================================================================
+
+21.1 VERIFIED SKILLS
+
+Instructor Verified Skills remain authoritative technical competency evidence.
+
+Do not visually merge them with:
+- self-attested skills;
+- PRO Points;
+- System Badges;
+- Company Badges;
+- employer engagement;
+- inferred readiness.
+
+21.2 SELF-ATTESTED DATA
+
+Always label self-attested data clearly.
+
+Never style it as equivalent to institution verification.
+
+21.3 PRO POINTS
+
+PRO Points represent transparent readiness/engagement activity.
+
+They must not:
+- replace Verified Skills;
+- become an opaque employability score;
+- imply "best candidate."
+
+21.4 BADGES
+
+Every System Badge should show:
+- criteria;
+- evidence;
+- issuer;
+- date.
+
+Every Company Badge should show:
+- employer issuer;
+- criteria;
+- source module/version;
+- evidence;
+- date.
+
+21.5 EMPLOYER ENGAGEMENT
+
+Use language such as:
+"Observed Engagement"
+
+Do not convert behavior into unsupported intent.
+
+Preferred:
+"High observed engagement with LiveWire Electric"
+
+Avoid:
+"Will accept a LiveWire job"
+
+======================================================================
+22. ROLE-AWARE UI
+======================================================================
+
+22.1 AUTHORIZATION VS PRESENTATION
+
+UI may vary by role.
+
+Authorization is always server-controlled in production.
+
+Never treat:
+- visible navigation;
+- hidden buttons;
+- client role state;
+- URL;
+- subdomain;
+- localStorage;
+- prototype toggle
+
+as authorization proof.
+
+22.2 PROTOTYPE ROLE SWITCHER
+
+Prototype "View as" controls are allowed only when clearly labeled.
+
+Required persistent notice:
+
+"Demo mode: role switching simulates permissions.
+Production access is server-controlled."
+
+Exact app name may be added.
+
+22.3 PRODUCTION
+
+Production must derive authorized role/scope from trusted server-controlled membership.
+
+======================================================================
+23. PROTOTYPE RULES
+======================================================================
+
+23.1 LABEL SIMULATION
+
+Any simulated behavior must be labeled.
+
+Examples:
+Demo mode
+Prototype
+Simulation only
+No identity provider connected
+
+23.2 LOCAL STORAGE
+
+Prototype localStorage may simulate state.
+
+It must not claim:
+- backend synchronization;
+- production persistence;
+- real authorization;
+- real notifications;
+- real audit guarantees.
+
+23.3 SAMPLE DATA
+
+Sample records must remain internally consistent across connected prototype nodes.
+
+Examples:
+If Brandon Carter is "Hired" in Employer,
+the Institution/Student mock state should not show him as never interviewed
+unless intentionally demonstrating stale state.
+
+23.4 FUTURE WAVES
+
+Future modules shown in navigation must be clearly disabled or labeled.
+
+======================================================================
+24. RESPONSIVE STANDARDS
+======================================================================
+
+24.1 BREAKPOINT INTENT
+
+Do not design for desktop first and simply shrink.
+
+At minimum verify:
+- phone;
+- tablet / small laptop;
+- desktop.
+
+24.2 MOBILE PRIORITY
+
+On small screens:
+- primary task appears first;
+- secondary analytics collapse;
+- dense tables become record cards/drawers;
+- primary actions remain reachable;
+- navigation remains clear;
+- modal forms fit viewport;
+- horizontal overflow is minimized.
+
+24.3 TOUCH TARGETS
+
+Interactive targets should be comfortably tappable.
+
+Recommended minimum:
+approximately 44 x 44 CSS pixels for primary touch controls when layout permits.
+
+======================================================================
+25. ACCESSIBILITY
+======================================================================
+
+All TXKPRO apps should target practical WCAG-aligned accessibility.
+
+REQUIRED:
+- semantic headings;
+- labels on controls;
+- keyboard access;
+- visible focus;
+- sufficient contrast;
+- alt text for meaningful images;
+- aria-label for icon-only buttons;
+- aria-hidden for decorative icons;
+- readable error states;
+- no color-only meaning;
+- no hover-only essential information.
+
+TOOLTIPS
+
+Hover tooltips must also be reachable by keyboard/focus.
+
+Do not put critical instructions only in a tooltip.
+
+======================================================================
+26. HOVER + TOOLTIP STANDARD
+======================================================================
+
+Use tooltips for concise clarification.
+
+Good:
+explaining sponsorship benefit details
+explaining unfamiliar status/source
+clarifying disabled action
+
+Do not use tooltip for:
+- full paragraphs;
+- critical warnings;
+- required workflow instructions;
+- content that mobile users cannot access.
+
+Tooltip trigger should normally use:
+InformationCircleIcon
+or contextual focus/hover on the relevant element.
+
+======================================================================
+27. CHARTS + REPORTING UI
+======================================================================
+
+27.1 PURPOSE
+
+Charts should answer a real operational question.
+
+27.2 LABELS
+
+Every chart should have:
+- title;
+- metric definition where ambiguity exists;
+- timeframe;
+- source context where needed.
+
+27.3 PLATFORM VS EXTERNAL DATA
+
+TXKPRO telemetry and external reference data must not be visually blended.
+
+27.4 AVOID
+
+- decorative charts with no decision value;
+- unlabeled percentages;
+- causal language from correlation;
+- fake precision;
+- rankings that imply employability.
+
+======================================================================
+28. PRIVACY-AWARE UI
+======================================================================
+
+UI must reflect canonical data ownership boundaries.
+
+Examples:
+
+Employer-private hiring notes:
+Employer only.
+
+Institution-private educator notes:
+not visible to Employer unless explicitly shared.
+
+Retention case notes:
+restricted according to policy.
+
+Exports:
+must show only role/scope-permitted data.
+
+Never solve a privacy restriction by merely hiding a client-side component.
+Production enforcement is server-side.
+
+======================================================================
+29. COMPONENT NAMING + REUSE
+======================================================================
+
+Shared component names should be semantic and reusable.
+
+Examples:
+
+AppShell
+SideNav
+MobileNav
+PageHeader
+MetricCard
+StatusBadge
+ProvenanceBadge
+ActionCard
+EmptyState
+DataTable
+RecordCard
+FilterBar
+SearchField
+Modal
+Drawer
+ConfirmDialog
+FormField
+HelpText
+Toast
+HeroiconButton
+RoleViewBanner
+
+Do not create app-specific duplicate components that differ only cosmetically
+unless product requirements require distinct behavior.
+
+======================================================================
+30. DESIGN TOKENS
+======================================================================
+
+Shared applications should centralize:
+
+- typography;
+- spacing;
+- radii;
+- shadows;
+- border colors;
+- backgrounds;
+- semantic text;
+- focus ring;
+- brand accent;
+- status colors;
+- navigation dimensions;
+- z-index layers.
+
+Do not scatter hard-coded theme values across screens.
+
+Recommended naming style:
+
+--txk-bg-app
+--txk-bg-panel
+--txk-bg-subtle
+--txk-text-primary
+--txk-text-muted
+--txk-border
+--txk-border-strong
+--txk-brand-primary
+--txk-success
+--txk-warning
+--txk-danger
+--txk-info
+--txk-radius-card
+--txk-radius-control
+--txk-shadow-elevated
+
+Actual brand values must come from approved theme assets/tokens.
+
+======================================================================
+31. IMPLEMENTATION RULES — NEXT.JS / REACT
+======================================================================
+
+Preferred:
+- Tailwind CSS;
+- official @heroicons package;
+- shared TXKPRO component layer;
+- shared theme tokens;
+- semantic HTML.
+
+Example icon import pattern:
+
+import {
+  HomeIcon,
+  UserGroupIcon,
+  BriefcaseIcon,
+  BellIcon,
+  Cog6ToothIcon
+} from "@heroicons/react/24/outline";
+
+Do not mix multiple icon libraries inside one TXKPRO application.
+
+======================================================================
+32. IMPLEMENTATION RULES — STATIC HTML / APPS SCRIPT
+======================================================================
+
+Use:
+- inline official Heroicons SVG;
+- shared CSS tokens;
+- semantic controls;
+- no external icon CDN;
+- no Unicode symbol stand-ins;
+- responsive CSS;
+- accessible labels.
+
+Recommended file header comment:
+
+TXKPRO UI BUILD GATE
+- Official TXKPRO logo assets only.
+- Interface icons must be official Heroicons.
+- No emoji, Unicode icon symbols, icon fonts, or arbitrary SVG substitutes.
+- Preserve light/dark mode.
+- Preserve role/scope UI boundaries.
+- Run UI QA before export.
+
+======================================================================
+33. ICON QA GATE
+======================================================================
+
+BEFORE ANY TXKPRO UI IS DELIVERED OR MERGED:
+
+[ ] All UI icons are official Heroicons.
+[ ] No emoji are acting as interface icons.
+[ ] No Unicode symbols are acting as interface icons.
+[ ] No Font Awesome / Material / Bootstrap / Lucide icons are present.
+[ ] No manually approximated "Heroicons-style" SVG is present.
+[ ] Close buttons use XMarkIcon.
+[ ] Add buttons use PlusIcon.
+[ ] Menu uses Bars3Icon.
+[ ] Theme toggle uses SunIcon / MoonIcon.
+[ ] Navigation meanings use consistent Heroicons across apps.
+[ ] Icon-only controls have accessible labels.
+
+AUTOMATED SCAN
+
+Build scripts should fail or warn when prohibited icon substitutes are detected
+in UI markup.
+
+Example prohibited-character scan set:
+
+⌂ ✓ ▣ ♟ ＋ ◎ ↗ ◫ ≋ ↻ ▥ ◐ ☰ × ← →
+
+This scan is not sufficient by itself because emoji and arbitrary glyphs may vary.
+Human review is still required.
+
+======================================================================
+34. BRAND QA GATE
+======================================================================
+
+[ ] Official TXKPRO logo asset used.
+[ ] Logo not recreated with text/CSS.
+[ ] Logo not distorted.
+[ ] Correct light/dark variant.
+[ ] Tenant branding does not obscure TXKPRO attribution where attribution is required.
+[ ] No unauthorized colors applied to official logo.
+[ ] Product name is correct.
+
+======================================================================
+35. RESPONSIVE QA GATE
+======================================================================
+
+Test at minimum:
+
+PHONE
+- primary workflow completes;
+- no critical horizontal overflow;
+- primary action reachable;
+- modal fits viewport;
+- table transforms appropriately;
+- text remains readable.
+
+TABLET / SMALL LAPTOP
+- navigation remains usable;
+- grid collapses predictably;
+- controls do not overlap.
+
+DESKTOP
+- content width remains intentional;
+- dashboard relationships remain scannable;
+- no excessive empty space;
+- navigation hierarchy is clear.
+
+======================================================================
+36. INTERACTION QA GATE
+======================================================================
+
+[ ] Primary actions work.
+[ ] Cancel works.
+[ ] Close works.
+[ ] Save gives success feedback.
+[ ] Error states explain recovery.
+[ ] Destructive actions confirm.
+[ ] Empty states provide next step.
+[ ] Disabled controls are visibly disabled.
+[ ] Disabled future features do not appear operational.
+[ ] Keyboard focus is visible.
+[ ] Tooltips are accessible.
+[ ] Role-aware actions match permission intent.
+[ ] Prototype role switcher is labeled demo-only.
+
+======================================================================
+37. DATA / TRUST QA GATE
+======================================================================
+
+[ ] Verified and self-attested data are visually distinct.
+[ ] Verification provenance is visible.
+[ ] PRO Points do not replace Verified Skills.
+[ ] System Badges show evidence/criteria.
+[ ] Company Badges show issuer/source.
+[ ] Observed engagement is not described as inferred intent.
+[ ] No opaque employability score.
+[ ] No automatic candidate recommendation language unless separately approved.
+[ ] External benchmarks are separated from TXKPRO telemetry.
+[ ] Sample/demo numbers are not presented as live results.
+[ ] Private data is not surfaced in the wrong role view.
+
+======================================================================
+38. STATUS QA GATE
+======================================================================
+
+[ ] UI states map to canonical status values.
+[ ] Friendly labels do not create new workflow states.
+[ ] No free-text canonical status storage.
+[ ] Separate workflows use separate states.
+[ ] Historical state is not silently rewritten.
+[ ] Authorization-significant state change is auditable in production.
+
+======================================================================
+39. ACCESSIBILITY QA GATE
+======================================================================
+
+[ ] Heading hierarchy is semantic.
+[ ] Inputs have labels.
+[ ] Icon-only buttons have accessible names.
+[ ] Images have appropriate alt text.
+[ ] Decorative Heroicons use aria-hidden.
+[ ] Focus state visible.
+[ ] No color-only meaning.
+[ ] Contrast acceptable in both themes.
+[ ] Keyboard can reach core workflow.
+[ ] Essential information does not require hover.
+
+======================================================================
+40. PRE-EXPORT / PRE-MERGE MASTER CHECKLIST
+======================================================================
+
+A TXKPRO UI artifact is NOT considered complete until this checklist passes.
+
+BRAND
+[ ] Official logo
+[ ] Correct naming
+[ ] Correct light/dark behavior
+
+ICONS
+[ ] Heroicons only
+[ ] Consistent semantics
+[ ] No Unicode/emoji/icon-font substitutes
+
+LAYOUT
+[ ] Desktop verified
+[ ] Mobile verified
+[ ] No overlapping controls
+[ ] No cutoff content
+
+INTERACTIONS
+[ ] Navigation works
+[ ] Forms work
+[ ] Modals work
+[ ] Feedback works
+[ ] Destructive actions confirm
+
+DATA
+[ ] Statuses canonical
+[ ] Provenance correct
+[ ] Sample data internally consistent
+[ ] Private data boundaries respected
+
+PROTOTYPE
+[ ] Simulated functionality labeled
+[ ] Role switcher labeled demo-only
+[ ] Future modules clearly disabled
+[ ] localStorage not presented as production backend
+
+ACCESSIBILITY
+[ ] Keyboard/focus
+[ ] labels
+[ ] contrast
+[ ] accessible icon buttons
+
+FINAL REVIEW
+[ ] Compare visually against latest approved TXKPRO app
+[ ] Confirm no new visual language was invented
+[ ] Confirm shared components were reused where applicable
+
+======================================================================
+41. EXCEPTION PROCESS
+======================================================================
+
+An app may deviate from this standard only when:
+
+1. a product requirement materially requires a different pattern;
+2. accessibility requires a different pattern;
+3. platform limitations require a different implementation;
+4. an approved design-system evolution intentionally replaces this rule.
+
+Every exception should record:
+
+TXKPRO UI STANDARD EXCEPTION
+
+Application:
+Screen / Component:
+Standard section:
+Requested deviation:
+Reason:
+Alternative considered:
+Accessibility impact:
+Cross-app impact:
+Approved by:
+Date:
+Expiration / revisit date if temporary:
+
+Do not create an exception merely because a developer or designer prefers
+a different icon library or local visual treatment.
+
+======================================================================
+42. CHANGE CONTROL
+======================================================================
+
+This is a living canonical source.
+
+Changes should be:
+
+- explicit;
+- versioned;
+- reviewed for cross-app impact;
+- propagated to active applications;
+- reflected in shared components/tokens;
+- documented in a change summary.
+
+A change to one app should not silently redefine the TXKPRO design language.
+
+Recommended versioning:
+
+Major:
+breaking design-system change.
+
+Minor:
+new component/pattern or meaningful rule expansion.
+
+Patch:
+clarification, correction, or example change.
+
+======================================================================
+43. OWNERSHIP
+======================================================================
+
+The shared TXKPRO design system owns:
+
+- brand implementation rules;
+- icon source;
+- shared visual tokens;
+- shared components;
+- responsive patterns;
+- accessibility standards;
+- interaction conventions;
+- UI QA gates.
+
+Application IA owns:
+
+- what screens exist;
+- what users can see;
+- workflow-specific screen structure;
+- role-specific content.
+
+Product/architecture sources own:
+
+- whether an action is allowed;
+- who owns data;
+- canonical status;
+- server authorization;
+- privacy rules;
+- business logic.
+
+======================================================================
+44. CANONICAL BUILD HEADER
+======================================================================
+
+Include the following comment near the top of generated TXKPRO HTML/prototype files
+or equivalent project documentation:
+
+------------------------------------------------------------
+TXKPRO UI DESIGN SYSTEM BUILD GATE
+
+This interface must conform to:
+TXKPRO_UI_DESIGN_SYSTEM_STANDARD.txt
+
+Mandatory:
+- Official TXKPRO logo assets only.
+- Heroicons by Tailwind Labs only.
+- No emoji or Unicode symbols used as interface icons.
+- No alternate icon libraries without approved exception.
+- Preserve light/dark mode.
+- Responsive core workflows.
+- Visible provenance for trust-critical data.
+- Canonical product statuses only.
+- Prototype role switching must be labeled demo-only.
+- Production authorization is server-controlled.
+- Run brand, icon, responsive, interaction, data/trust,
+  status, and accessibility QA before delivery.
+------------------------------------------------------------
+
+======================================================================
+45. AUTHORITATIVE QUICK RULES
+======================================================================
+
+If there is uncertainty, default to these rules:
+
+1. Use the official TXKPRO logo.
+2. Use an official Heroicon.
+3. Do not invent a visual substitute.
+4. Reuse the shared TXKPRO component pattern.
+5. Use semantic design tokens.
+6. Preserve light/dark compatibility.
+7. Show source/provenance when trust matters.
+8. Do not turn engagement into inferred intent.
+9. Do not turn points into employability.
+10. Do not invent lifecycle statuses.
+11. Do not trust client-side role UI for authorization.
+12. Make the next action obvious.
+13. Explain empty states.
+14. Confirm destructive actions.
+15. Provide success/error feedback.
+16. Make the core workflow work on mobile.
+17. Keep sample data internally consistent.
+18. Label simulations as simulations.
+19. Test accessibility.
+20. Run the master QA checklist before export.
+
+======================================================================
+46. SOURCE ALIGNMENT NOTES
+======================================================================
+
+This shared standard consolidates existing TXKPRO principles already present
+across the Workforce source materials, including:
+
+- responsive web UI;
+- light/dark theme;
+- TXKPRO branding;
+- mobile-first Student flows;
+- dashboard-oriented Institution/Employer/Admin flows;
+- official TXKPRO logos;
+- Tailwind/Heroicons-based iconography;
+- role-sensitive navigation;
+- responsive table/card behavior;
+- deep-linkable metrics;
+- success feedback;
+- useful empty states;
+- destructive-action confirmation;
+- visible verification provenance;
+- explicit distinction between self-attested and verified data;
+- prototype role switching as demonstration-only;
+- server-controlled production authorization;
+- separation of verified technical competency from PRO Points,
+  system badges, company badges, and observed employer engagement;
+- separation of external benchmarks from TXKPRO telemetry.
+
+NEW CANONICAL CLARIFICATION ESTABLISHED BY THIS DOCUMENT
+
+The prior phrase "Heroicons-style SVG icons" is now standardized as:
+
+"OFFICIAL HEROICONS BY TAILWIND LABS ONLY."
+
+This removes ambiguity and prohibits Unicode symbol stand-ins, emoji,
+manual approximations, and alternate icon libraries unless an explicit
+TXKPRO UI Standard Exception is approved.
+
+======================================================================
+47. FINAL RULE
+======================================================================
+
+TXKPRO should feel like one product family even when users move between
+Student, Institution, Employer, Admin, internal, marketplace, or future
+TXKPRO experiences.
+
+ONE BRAND.
+ONE ICON SYSTEM.
+ONE COMPONENT LANGUAGE.
+ONE RESPONSIVE STANDARD.
+ONE TRUST MODEL.
+ROLE-SPECIFIC EXPERIENCES.
+
+END OF DOCUMENT
