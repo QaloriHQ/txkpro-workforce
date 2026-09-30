@@ -87,6 +87,17 @@ else
   echo "[cline-discord] roadmap auth: PROJECTS_TOKEN available for ${TXKPRO_ROADMAP_OWNER:-QaloriHQ} Project #${TXKPRO_ROADMAP_PROJECT_NUMBER:-1}"
 fi
 
+echo "[cline-discord] refreshing origin/main for live repository discovery"
+if git -C "$WORKSPACE_ROOT" fetch --quiet origin main; then
+  local_repo_sha="$(git -C "$WORKSPACE_ROOT" rev-parse --short HEAD 2>/dev/null || true)"
+  remote_repo_sha="$(git -C "$WORKSPACE_ROOT" rev-parse --short origin/main 2>/dev/null || true)"
+  if [[ -n "$local_repo_sha" && -n "$remote_repo_sha" ]]; then
+    printf '[cline-discord] repository view: local=%s origin/main=%s\n' "$local_repo_sha" "$remote_repo_sha"
+  fi
+else
+  echo "[cline-discord] warning: could not refresh origin/main; live repository discovery may be stale" >&2
+fi
+
 # Codespaces resets public port visibility on restart, so restore it each start.
 echo "[cline-discord] publishing Codespaces port ${PORT}"
 if ! gh codespace ports visibility "${PORT}:public" -c "$CODESPACE_NAME"; then
