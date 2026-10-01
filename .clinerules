@@ -40,13 +40,15 @@ For `What's next?` and next-eligible planning:
 - the workspace hooks under `.cline/hooks/` are mandatory;
 - first read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; never guess the schema;
 - inspect the authoritative source or execute the relevant non-secret live-state check for every required confirmation;
-- create `semantic-provenance-v2` evidence and run `node scripts/txkpro-confirmation-check.mjs --evidence <path>`;
-- every evidence item must include `source`, `finding`, either `locator` or `checkType`, and a supported machine-verifiable `verification` object;
-- supported verification types are `source_text_match`, `source_text_absence`, `env_presence`, `git_ref_exists`, and `github_issue_text_match`;
-- plain strings, vague source labels, invented locators/findings, inferred facts, and assumed environment/credential availability are invalid evidence;
+- create `semantic-provenance-v3` evidence and run `node scripts/txkpro-confirmation-check.mjs --evidence <path>`;
+- every evidence item must include `source`, `finding`, either `locator` or `checkType`, typed `assertion {subject,predicate,values}`, and supported machine-verifiable `verification` bound to that assertion;
+- source/issue text used as proof must contain the assertion subject and every asserted value; unrelated text may not prove a broader claim;
+- include `implementationPlan.contract: "sourced-plan-v1"`;
+- every API route, database field, status, event, URL pattern, credential, and owner in the plan must be `SOURCED` from a confirmation evidence entry or labeled exactly `PROPOSED — requires product/technical decision`;
+- plain strings, vague source labels, invented locators/findings, semantic extrapolation, inferred facts, and assumed environment/credential availability are invalid evidence;
 - do not use `attempt_completion`, `ask_followup_question`, or switch mode while the gate is pending;
 - validator status `INVALID` means read the validator errors/template, keep gathering concrete provenance, and retry automatically;
-- only `TXKPRO_CONFIRMATIONS_CONFIRMED` clears the read-only confirmation gate;
+- only the combination of `TXKPRO_CONFIRMATIONS_CONFIRMED` and `TXKPRO_PLAN_CONTRACT_CONFIRMED` clears the read-only confirmation gate;
 - `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
 - never ask the owner whether to continue read-only confirmation work.
 

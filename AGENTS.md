@@ -151,26 +151,28 @@ Cline uses workspace lifecycle hooks under `.cline/hooks/` plus the validator:
 node scripts/txkpro-confirmation-check.mjs --evidence <path>
 ```
 
-Before Cline may ask a follow-up question or attempt task completion for a next-eligible request, the confirmation validator must return:
+Before Cline may ask a follow-up question or attempt task completion for a next-eligible request, the validator must return both:
 
 ```text
 TXKPRO_CONFIRMATIONS_CONFIRMED
+TXKPRO_PLAN_CONTRACT_CONFIRMED
 ```
 
-The temporary evidence JSON must use `evidenceContract: "semantic-provenance-v2"` and include all eight required confirmations with:
+The temporary evidence JSON must use `evidenceContract: "semantic-provenance-v3"` and include all eight required confirmations with:
 - `status: "CONFIRMED"`;
 - the selected issue number and Task ID;
 - at least one machine-verifiable provenance object for each confirmation;
 - `source`: the specific authoritative repository file, live GitHub issue reference, or named live-state check;
 - `finding`: the concrete fact actually supported or observed;
 - either `locator` (section, heading, field, route, config key, etc.) or `checkType`;
-- `verification`: a supported executable proof:
-  - `source_text_match` / `source_text_absence` with `needle`;
-  - `env_presence` with an environment-variable `name`;
-  - `git_ref_exists` with an explicit Git ref;
-  - `github_issue_text_match` with issue/repository/needle.
+- typed `assertion` with `subject`, confirmation-specific `predicate`, and exact `values`;
+- `verification`: an executable proof bound to that assertion. Generic source/issue text proof must contain the assertion subject and every asserted value.
 
-Before writing evidence, read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; do not guess the schema. Plain strings, vague labels, invented locators, unsupported findings, assumed environment/credential state, and fabricated statuses/events/UAT owners are invalid. A plausible statement is not confirmation. If the cited source or executable check does not establish the fact, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
+The same evidence JSON must also include `implementationPlan.contract: "sourced-plan-v1"`. Every API route, database field, status, event, URL pattern, credential, and owner in the implementation plan must be either:
+- `SOURCED` from a specific confirmation evidence entry that actually mentions the decision; or
+- labeled exactly `PROPOSED — requires product/technical decision`.
+
+Before writing evidence, read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; do not guess the schema. Plain strings, vague labels, invented locators/findings, semantic extrapolation, assumed environment/credential state, and fabricated statuses/events/UAT owners are invalid. A plausible statement is not confirmation. If the cited source or executable check does not establish the fact, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
 
 If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CONFIRMATIONS_BLOCKED`; the agent must continue automatically to the next provisional candidate and keep mutation authorization at NO.
 

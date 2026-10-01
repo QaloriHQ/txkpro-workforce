@@ -1,7 +1,7 @@
 {
   "issue": 0,
   "taskId": "",
-  "evidenceContract": "semantic-provenance-v2",
+  "evidenceContract": "semantic-provenance-v3",
   "confirmations": {
     "rolesAndScopes": {
       "status": "PENDING",
@@ -11,6 +11,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -30,6 +35,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -49,6 +59,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -68,6 +83,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -87,6 +107,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -106,6 +131,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -125,6 +155,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -144,6 +179,11 @@
           "locator": "",
           "checkType": "",
           "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
           "verification": {
             "type": "",
             "needle": "",
@@ -155,5 +195,18 @@
         }
       ]
     }
+  },
+  "implementationPlan": {
+    "contract": "sourced-plan-v1",
+    "decisions": [
+      {
+        "kind": "",
+        "name": "",
+        "basis": "",
+        "label": "",
+        "confirmation": "",
+        "evidenceIndex": 0
+      }
+    ]
   }
 }

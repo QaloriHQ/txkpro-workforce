@@ -68,14 +68,17 @@ function runUsage(args) {
   };
 }
 
-if (result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED")) {
+if (
+  result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED") &&
+  result.includes("TXKPRO_PLAN_CONTRACT_CONFIRMED")
+) {
   const summary = parseConfirmationSummary(result);
   if (!summary.issue || !summary.roadmapTaskId) {
     process.stdout.write(
       JSON.stringify({
         cancel: false,
         contextModification:
-          "TXKPRO confirmation validation passed, but the runtime gate could not resolve the issue number and Task ID from the validator output. Re-run the confirmation validator and preserve its structured JSON before requesting mutation approval.",
+          "TXKPRO confirmation and plan validation passed, but the runtime gate could not resolve the issue number and Task ID from the validator output. Re-run the validator and preserve its structured JSON before requesting mutation approval.",
       }),
     );
     process.exit(0);
@@ -94,11 +97,25 @@ if (result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED")) {
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO confirmation gate cleared. Read-only confirmations are CONFIRMED for " +
+        "TXKPRO confirmation and sourced-plan gates cleared. Read-only confirmations and the implementation-plan contract are CONFIRMED for " +
         summary.roadmapTaskId +
         " (#" +
         summary.issue +
-        "). Present the implementation/verification plan now. State 'Mutation authorized: NO' and wait for explicit owner approval. When the owner approves implementation, the UserPromptSubmit hook will create the required PRE-RUN token-usage record before mutation.",
+        "). Present only the validated sourced/proposed implementation plan now. Any PROPOSED item must remain labeled 'PROPOSED — requires product/technical decision'. State 'Mutation authorized: NO' and wait for explicit owner approval. When the owner approves implementation, the UserPromptSubmit hook will create the required PRE-RUN token-usage record before mutation.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (
+  result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED") &&
+  !result.includes("TXKPRO_PLAN_CONTRACT_CONFIRMED")
+) {
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO confirmations appeared to pass without the required sourced-plan sentinel. Keep the read-only gate active, rebuild semantic-provenance-v3 evidence with implementationPlan.contract sourced-plan-v1, and re-run the validator. Do not request implementation approval yet.",
     }),
   );
   process.exit(0);
@@ -109,7 +126,7 @@ if (result.includes("\"status\": \"INVALID\"") || result.includes("structured pr
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO confirmation evidence is INVALID. Keep the read-only confirmation gate active. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs before retrying; do not invent another schema. Replace vague, inferred, or unsupported evidence with semantic-provenance-v2 entries containing source, finding, locator/checkType, and a supported machine-verifiable verification object. Re-run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Do not ask the owner for permission to continue.",
+        "TXKPRO confirmation/plan evidence is INVALID. Keep the read-only confirmation gate active. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs before retrying; do not invent another schema. Replace vague, inferred, or unsupported evidence with semantic-provenance-v3 entries containing source, finding, locator/checkType, typed assertion {subject,predicate,values}, and supported machine-verifiable verification. Build sourced-plan-v1 and source each API route, database field, status, event, URL pattern, credential, and owner or label it exactly PROPOSED — requires product/technical decision. Re-run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Do not ask the owner for permission to continue.",
     }),
   );
   process.exit(0);
@@ -145,7 +162,7 @@ if (
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources and actual non-secret environment/repository state. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs first. Do not infer confirmations and do not respond with 'Would you like me to proceed?'. Build semantic-provenance-v2 evidence using source, finding, locator/checkType, and supported machine-verifiable verification for every item, then validate it with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
+        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources and actual non-secret environment/repository state. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs first. Do not infer confirmations and do not respond with 'Would you like me to proceed?'. Build semantic-provenance-v3 evidence with typed assertions plus sourced-plan-v1. Every API route, database field, status, event, URL pattern, credential, and owner must be sourced from a specific confirmation evidence entry or explicitly labeled PROPOSED — requires product/technical decision. Validate it with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
     }),
   );
   process.exit(0);
