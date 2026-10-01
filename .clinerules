@@ -38,8 +38,12 @@ Cline-specific instructions never override the authoritative protocol.
 
 For `What's next?` and next-eligible planning:
 - the workspace hooks under `.cline/hooks/` are mandatory;
+- Cline must inspect the authoritative source or execute the relevant non-secret live-state check for every required confirmation;
 - Cline must create temporary confirmation evidence and run `node scripts/txkpro-confirmation-check.mjs --evidence <path>`;
+- every evidence item must be an object with `source`, `finding`, and either `locator` or `checkType`;
+- plain strings, vague source labels, inferred facts, and assumed environment/credential availability are invalid evidence;
 - do not use `attempt_completion`, `ask_followup_question`, or switch mode while the gate is pending;
+- validator status `INVALID` means keep gathering concrete provenance and retry automatically;
 - only `TXKPRO_CONFIRMATIONS_CONFIRMED` clears the read-only confirmation gate;
 - `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
 - never ask the owner whether to continue read-only confirmation work.
