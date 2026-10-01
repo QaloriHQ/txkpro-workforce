@@ -159,8 +159,13 @@ TXKPRO_CONFIRMATIONS_CONFIRMED
 
 The temporary evidence JSON must include all eight required confirmations with:
 - `status: "CONFIRMED"`;
-- at least one concrete evidence/source entry for each confirmation;
-- the selected issue number and Task ID.
+- the selected issue number and Task ID;
+- at least one **structured provenance object** for each confirmation;
+- `source`: the specific authoritative file, GitHub issue/project reference, URL, repository/config source, or named live-state check;
+- `finding`: the concrete fact actually supported or observed;
+- either `locator` (section, heading, line/range, field, route, config key, etc.) or `checkType` for a live-state/environment check.
+
+Plain evidence strings and vague labels such as `"role matrix"`, `"staging config"`, `"presence checks only"`, or `"issue/source review"` are invalid. A plausible statement is not confirmation. The agent must actually inspect the cited source or execute the named non-secret check. If the source does not establish the claim, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
 
 If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CONFIRMATIONS_BLOCKED`; the agent must continue automatically to the next provisional candidate and keep mutation authorization at NO.
 
