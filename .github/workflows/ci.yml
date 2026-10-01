@@ -89,9 +89,12 @@ jobs:
       - run: node --check scripts/txkpro-completion-report.mjs
       - run: node --check scripts/txkpro-project-transition.mjs
       - run: node --check scripts/txkpro-confirmation-check.mjs
+      - run: node --check scripts/txkpro-agent-usage.mjs
       - run: node --check .cline/hooks/UserPromptSubmit
       - run: node --check .cline/hooks/PreToolUse
       - run: node --check .cline/hooks/PostToolUse
+      - run: node --check .cline/hooks/TaskCancel
+      - run: node --check .cline/hooks/TaskComplete
       - name: Syntax check Project sync GitHub Script
         run: |
           python - <<'PY'
@@ -834,6 +837,90 @@ jobs:
           printf '%s' "$blocked_confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_BLOCKED'
 
           node -e 'JSON.parse(require("fs").readFileSync(".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json","utf8"))'
+
+      - name: Validate per-run agent token usage lifecycle
+        run: |
+          USAGE_STATE="$RUNNER_TEMP/agent-usage-state"
+          mkdir -p "$USAGE_STATE"
+
+          cat > "$RUNNER_TEMP/usage-issue.json" <<'JSON'
+          {
+            "number": 53,
+            "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
+            "body": "**Task ID:** W11-04B\n**Dependencies:** W11-01B, W11-04A\n## Acceptance Criteria\n- [ ] public SEO routes"
+          }
+          JSON
+
+          cat > "$RUNNER_TEMP/cline-usage.json" <<'JSON'
+          [
+            {
+              "id": "usage-task-123",
+              "tokensIn": 240000,
+              "tokensOut": 60000,
+              "cacheReads": 80000,
+              "cacheWrites": 0,
+              "totalCost": 0.1234,
+              "modelId": "deepseek/deepseek-chat",
+              "ts": 1790820000000
+            }
+          ]
+          JSON
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            CLINE_PLAN_MODEL="qwen/qwen3-coder" \
+            CLINE_ACT_MODEL="deepseek/deepseek-chat" \
+            node scripts/txkpro-agent-usage.mjs start \
+              --issue 53 \
+              --task-id W11-04B \
+              --cline-task-id usage-task-123 \
+              --issue-file "$RUNNER_TEMP/usage-issue.json" \
+              --no-sync \
+              > "$RUNNER_TEMP/usage-start.txt"
+
+          grep -F 'TXKPRO_USAGE_RUN_STARTED' "$RUNNER_TEMP/usage-start.txt"
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            node scripts/txkpro-agent-usage.mjs observe \
+              --cline-task-id usage-task-123 \
+              --success false \
+              --execution-ms 1250 \
+              --usage-file "$RUNNER_TEMP/cline-usage.json" \
+              > "$RUNNER_TEMP/usage-observe.json"
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            node scripts/txkpro-agent-usage.mjs finish \
+              --cline-task-id usage-task-123 \
+              --outcome verification \
+              --usage-file "$RUNNER_TEMP/cline-usage.json" \
+              --no-sync \
+              > "$RUNNER_TEMP/usage-finish.txt"
+
+          grep -F 'TXKPRO_USAGE_RUN_FINISHED' "$RUNNER_TEMP/usage-finish.txt"
+
+          STATE_PATH="$USAGE_STATE/usage-task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, "utf8"));
+          if (state.state !== "FINISHED") throw new Error("usage run did not finish");
+          if (state.actual?.tokensIn !== 240000) throw new Error("input tokens mismatch");
+          if (state.actual?.tokensOut !== 60000) throw new Error("output tokens mismatch");
+          if (state.actual?.totalTokens !== 300000) throw new Error("cache tokens were incorrectly double-counted");
+          if (state.actual?.cacheReads !== 80000) throw new Error("cache read telemetry missing");
+          if (state.actual?.totalCostUsd !== 0.1234) throw new Error("cost telemetry mismatch");
+          if (state.operations?.toolCalls !== 1) throw new Error("tool-call observation missing");
+          if (state.operations?.failedToolCalls !== 1) throw new Error("failed-tool observation missing");
+          if (state.operations?.toolExecutionMs !== 1250) throw new Error("tool execution time mismatch");
+          NODE
+
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const policy = JSON.parse(fs.readFileSync("config/txkpro-agent-policy.json", "utf8"));
+          if (policy.agentUsageTelemetry?.requiredForEveryImplementationRun !== true) {
+            throw new Error("agent usage telemetry must be mandatory for every implementation run");
+          }
+          if (policy.agentUsageTelemetry?.postRun?.tokenAccounting !== "tokensIn_plus_tokensOut_cache_reported_separately") {
+            throw new Error("token accounting policy must avoid cache double-counting");
+          }
+          NODE
 
       - run: npm install
       - run: npm run typecheck

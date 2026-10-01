@@ -9,4 +9,6 @@ The authoritative process is `docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCO
 
 For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Treat its result as provisional until all required read-only agent confirmations are resolved from authoritative sources. Continue context, dependency, source-review, preflight, confirmation resolution, and planning automatically in the same turn. If a candidate fails confirmation, continue to the next provisional candidate. Never report mutation authorized before explicit owner approval.
 
+For every implementation run, use `scripts/txkpro-agent-usage.mjs` to record the PRE-RUN estimate in the issue before mutation and POST-RUN actual usage before completion; never invent missing telemetry.
+
 Use the repository's TXKPRO preflight, wave-manifest, protocol-check, and completion-report scripts. Never bypass evidence-gated Verification/Done transitions or the separate production-authorization gate.

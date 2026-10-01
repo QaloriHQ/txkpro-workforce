@@ -359,6 +359,45 @@ Before writing code, translate the issue into a concrete contract.
 - Deployment evidence.
 - Completion evidence.
 
+10.6 Agent run usage contract
+
+Every roadmap implementation run must be token/cost-budgeted and auditable in the GitHub issue.
+
+Before mutation:
+
+- Create or update the single issue comment marked `<!-- txkpro-agent-usage:v1 -->`.
+- Assign a unique run ID and agent/session ID.
+- Record the estimated cumulative model-token budget and expected range.
+- Record complexity classification and configured Plan/Act models.
+- Record warning, soft-budget, and escalation thresholds.
+- The estimate is planning telemetry, not a hard promise and not authorization to weaken scope.
+
+During the run:
+
+- Track tool-call count, failed tool calls, and execution time where the agent runtime exposes them.
+- Observe cumulative Cline/provider usage without placing raw per-request telemetry in GitHub.
+- At warning/soft thresholds, reduce redundant repository rereads and repeated repair loops while preserving required verification.
+- At escalation, explicitly check for circular debugging, repeated identical failures, or lack of measurable progress. If the run is genuinely stuck, stop safely and report the blocker.
+
+After every run:
+
+- Update the same issue comment with actual input and output tokens.
+- Calculate total model tokens as input + output.
+- Report cache reads/writes separately; do not double-count cache counters whose provider semantics are already included in input.
+- Record provider/Cline-reported cost when available.
+- Record estimate variance, outcome, tool counts, and cumulative issue totals.
+- Successful, failed, blocked, and cancelled runs all require a post-run record when telemetry is available.
+- Never fabricate actual usage or cost. If telemetry is unavailable, the run is not fully finalized until the telemetry source is reconciled or the missing telemetry is explicitly recorded as a blocker.
+
+Canonical commands:
+
+```bash
+node scripts/txkpro-agent-usage.mjs start --issue <number> --task-id <Task ID> --cline-task-id <session>
+node scripts/txkpro-agent-usage.mjs finish --cline-task-id <session> --outcome <outcome>
+```
+
+For Cline, repository hooks enforce this boundary for approved next-eligible implementation runs. Other coding agents must execute the same usage protocol explicitly.
+
 ======================================================================
 11. PHASE 5 — ENVIRONMENT AND SECRET VALIDATION
 ======================================================================
@@ -885,6 +924,7 @@ Every completed task or wave should end with a concise report containing:
 - GitHub Project status.
 - Known blockers or follow-up issues.
 - Next eligible roadmap task.
+- Agent run estimated token budget, actual token/cost usage, estimate variance, and cumulative issue usage.
 
 Do not state “complete” without explaining whether that means:
 
