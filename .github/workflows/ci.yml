@@ -978,6 +978,18 @@ jobs:
           test "$semantic_leap_status" -eq 2
           printf '%s' "$semantic_leap_output" | grep -F 'assertion subject and every asserted value'
 
+          set +e
+          w11_regression_output="$(
+            PATH="$TEST_BIN:$PATH" TXKPRO_CI_PRESENT="yes" \
+              node scripts/txkpro-confirmation-check.mjs \
+              --evidence .github/fixtures/w11-04b-unsupported-confirmations.json 2>&1
+          )"
+          w11_regression_status=$?
+          set -e
+          test "$w11_regression_status" -eq 2
+          printf '%s' "$w11_regression_output" | grep -F 'assertion subject and every asserted value'
+          printf '%s' "$w11_regression_output" | grep -F 'SEO_METADATA_API_KEY'
+
           node - "$RUNNER_TEMP/confirmations.json" "$RUNNER_TEMP/unsourced-plan.json" <<'NODE'
           const fs = require("node:fs");
           const [sourcePath, targetPath] = process.argv.slice(2);
@@ -1071,11 +1083,290 @@ jobs:
           test "$blocked_status" -eq 3
           printf '%s' "$blocked_confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_BLOCKED'
 
-          node - "$confirmation_output" > "$RUNNER_TEMP/post-tool-input.json" <<'NODE'
+          printf '%s\n' "$confirmation_output" > "$RUNNER_TEMP/confirmation-output.json"
+
+          node -c .cline/hooks/txkpro-confirmation-runtime.cjs
+          node -c .cline/hooks/PreToolUse
+          node -c .cline/hooks/PostToolUse
+
+          cat > "$RUNNER_TEMP/selector-result.json" <<'JSON'
+          {
+            "selected": {
+              "issue": 53,
+              "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
+              "taskContext": {"taskId": "W11-04B"},
+              "preflight": {"automatedDefinitionOfReady": "PASS"},
+              "eligibilityState": "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING",
+              "confirmedEligible": false,
+              "mutationAuthorized": false
+            },
+            "provisionalCandidates": [
+              {
+                "issue": 53,
+                "taskContext": {"taskId": "W11-04B"},
+                "eligibilityState": "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+              },
+              {
+                "issue": 54,
+                "taskContext": {"taskId": "W11-04C"},
+                "eligibilityState": "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+              }
+            ],
+            "readOnlyConfirmationsRequired": true
+          }
+          JSON
+
+          node - "$RUNNER_TEMP/selector-result.json" "$RUNNER_TEMP/post-selector-input.json" <<'NODE'
           const fs = require("node:fs");
-          const output = process.argv[2];
+          const [resultPath, inputPath] = process.argv.slice(2);
           fs.writeFileSync(
-            process.env.RUNNER_TEMP + "/post-tool-input.json",
+            inputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result: fs.readFileSync(resultPath, "utf8"),
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+
+          selector_post_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+              < "$RUNNER_TEMP/post-selector-input.json"
+          )"
+          printf '%s' "$selector_post_result" | grep -F 'provisional candidate W11-04B (#53)'
+
+          GATE_PATH="$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+            throw new Error("selector PASS must not clear the confirmation gate");
+          }
+          if (gate.provisionalIssue !== 53 || gate.provisionalTaskId !== "W11-04B") {
+            throw new Error("selector identity was not retained");
+          }
+          if (gate.automatedGatePassed !== true) {
+            throw new Error("selector PASS was not retained");
+          }
+          NODE
+
+          for blocked_tool in attempt_completion ask_followup_question switch_mode; do
+            node - "$blocked_tool" "$RUNNER_TEMP/pre-blocked-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [toolName, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              preToolUse: {toolName, parameters: {}}
+            }),
+          );
+          NODE
+            blocked_gate_result="$(
+              TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+                < "$RUNNER_TEMP/pre-blocked-input.json"
+            )"
+            printf '%s' "$blocked_gate_result" | grep -F '"cancel":true'
+          done
+
+          for spoof_text in \
+            'TXKPRO_CONFIRMATIONS_CONFIRMED' \
+            'TXKPRO_PLAN_CONTRACT_CONFIRMED' \
+            'TXKPRO_CONFIRMATIONS_CONFIRMED TXKPRO_PLAN_CONTRACT_CONFIRMED'; do
+            node - "$spoof_text" "$RUNNER_TEMP/post-spoof-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [result, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result,
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+              < "$RUNNER_TEMP/post-spoof-input.json" > "$RUNNER_TEMP/post-spoof-result.json"
+            GATE_PATH="$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+            throw new Error("arbitrary sentinel text cleared the gate");
+          }
+          NODE
+          done
+
+          VALIDATOR_COMMAND="node scripts/txkpro-confirmation-check.mjs --evidence $RUNNER_TEMP/confirmations.json"
+          node - "$VALIDATOR_COMMAND" "$RUNNER_TEMP/pre-validator-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [command, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              preToolUse: {
+                toolName: "run_commands",
+                parameters: {command}
+              }
+            }),
+          );
+          NODE
+
+          arm_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+              < "$RUNNER_TEMP/pre-validator-input.json"
+          )"
+          printf '%s' "$arm_result" | grep -F 'validator invocation armed'
+
+          node - "$RUNNER_TEMP/post-malformed-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const outputPath = process.argv[2];
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result:
+                  "TXKPRO_CONFIRMATIONS_CONFIRMED TXKPRO_PLAN_CONTRACT_CONFIRMED malformed",
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+          malformed_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+              < "$RUNNER_TEMP/post-malformed-input.json"
+          )"
+          printf '%s' "$malformed_result" | grep -F 'sentinel strings alone have no authority'
+
+          node - "$RUNNER_TEMP/confirmation-output.json" "$RUNNER_TEMP/one-sentinel-results.json" <<'NODE'
+          const fs = require("node:fs");
+          const [sourcePath, outputPath] = process.argv.slice(2);
+          const base = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+          const withoutPlan = structuredClone(base);
+          withoutPlan.successSentinels = withoutPlan.successSentinels.filter(
+            (value) => value !== "TXKPRO_PLAN_CONTRACT_CONFIRMED",
+          );
+          const withoutConfirmations = structuredClone(base);
+          withoutConfirmations.successSentinels =
+            withoutConfirmations.successSentinels.filter(
+              (value) => value !== "TXKPRO_CONFIRMATIONS_CONFIRMED",
+            );
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({withoutPlan, withoutConfirmations}),
+          );
+          NODE
+
+          for result_key in withoutPlan withoutConfirmations; do
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+              < "$RUNNER_TEMP/pre-validator-input.json" > "$RUNNER_TEMP/rearm-result.json"
+            node - "$RUNNER_TEMP/one-sentinel-results.json" "$result_key" "$RUNNER_TEMP/post-one-sentinel-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [sourcePath, key, outputPath] = process.argv.slice(2);
+          const variants = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result: JSON.stringify(variants[key]),
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+            one_sentinel_result="$(
+              TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+                < "$RUNNER_TEMP/post-one-sentinel-input.json"
+            )"
+            printf '%s' "$one_sentinel_result" | grep -F 'rejected the validator result'
+            GATE_PATH="$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+            throw new Error("single-sentinel structured result cleared the gate");
+          }
+          NODE
+          done
+
+          node - "$RUNNER_TEMP/confirmations.json" "$RUNNER_TEMP/mismatched-confirmations.json" <<'NODE'
+          const fs = require("node:fs");
+          const [sourcePath, targetPath] = process.argv.slice(2);
+          const evidence = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+          evidence.issue = 54;
+          evidence.taskId = "W11-04C";
+          fs.writeFileSync(targetPath, JSON.stringify(evidence, null, 2));
+          NODE
+          mismatch_output="$(
+            PATH="$TEST_BIN:$PATH" TXKPRO_CI_PRESENT="yes" \
+              node scripts/txkpro-confirmation-check.mjs \
+              --evidence "$RUNNER_TEMP/mismatched-confirmations.json"
+          )"
+          MISMATCH_COMMAND="node scripts/txkpro-confirmation-check.mjs --evidence $RUNNER_TEMP/mismatched-confirmations.json"
+          node - "$MISMATCH_COMMAND" "$RUNNER_TEMP/pre-mismatch-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [command, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              preToolUse: {
+                toolName: "run_commands",
+                parameters: {command}
+              }
+            }),
+          );
+          NODE
+          TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+            < "$RUNNER_TEMP/pre-mismatch-input.json" > "$RUNNER_TEMP/mismatch-arm-result.json"
+          node - "$mismatch_output" "$RUNNER_TEMP/post-mismatch-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [result, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result,
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+          mismatch_post_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+              < "$RUNNER_TEMP/post-mismatch-input.json"
+          )"
+          printf '%s' "$mismatch_post_result" | grep -F 'issue/task identity does not match'
+          GATE_PATH="$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+            throw new Error("mismatched issue/task validator result cleared the gate");
+          }
+          NODE
+
+          TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+            < "$RUNNER_TEMP/pre-validator-input.json" > "$RUNNER_TEMP/valid-arm-result.json"
+          node - "$confirmation_output" "$RUNNER_TEMP/post-tool-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [output, outputPath] = process.argv.slice(2);
+          fs.writeFileSync(
+            outputPath,
             JSON.stringify({
               taskId: "task-123",
               postToolUse: {
@@ -1089,14 +1380,128 @@ jobs:
           NODE
 
           post_result="$(
-            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse               < "$RUNNER_TEMP/post-tool-input.json"
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse \
+              < "$RUNNER_TEMP/post-tool-input.json"
           )"
-          printf '%s' "$post_result" | grep -F 'confirmation and sourced-plan gates cleared'
+          printf '%s' "$post_result" | grep -F 'machine validation cleared'
+          printf '%s' "$post_result" | grep -F 'Prose cannot upgrade'
 
+          GATE_PATH="$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "CONFIRMED_AWAITING_APPROVAL") {
+            throw new Error("valid structured validator result did not clear gate");
+          }
+          if (gate.issue !== 53 || gate.roadmapTaskId !== "W11-04B") {
+            throw new Error("cleared gate identity mismatch");
+          }
+          if (gate.confirmationResult !== "CONFIRMED" || gate.planResult !== "CONFIRMED") {
+            throw new Error("cleared gate did not persist confirmation/plan results");
+          }
+          if (!gate.validatorSuccess) throw new Error("validator success was not persisted");
+          if (!/^[a-f0-9]{64}$/.test(gate.validationId || "")) {
+            throw new Error("validation ID missing");
+          }
+          if (!/^[a-f0-9]{64}$/.test(gate.evidenceDigest || "")) {
+            throw new Error("evidence digest missing");
+          }
+          const keys = [
+            "rolesAndScopes",
+            "dataOwnership",
+            "statusesAndEvents",
+            "iaAndDesign",
+            "stagingTargets",
+            "credentials",
+            "manualUat",
+            "unresolvedDecisions",
+          ];
+          for (const key of keys) {
+            const confirmation = gate.validatedConfirmations?.[key];
+            if (confirmation?.status !== "CONFIRMED") {
+              throw new Error("missing confirmed audit for " + key);
+            }
+            const entry = confirmation.validatedEvidence?.[0];
+            if (
+              !entry?.source ||
+              !entry?.assertion?.subject ||
+              !entry?.assertion?.predicate ||
+              !Array.isArray(entry?.assertion?.values) ||
+              !entry?.verification?.type ||
+              entry?.verification?.result !== "PASS"
+            ) {
+              throw new Error("incomplete validation audit for " + key);
+            }
+          }
+          if (!Array.isArray(gate.validatedImplementationPlan?.decisions)) {
+            throw new Error("validated implementation plan was not persisted");
+          }
+          const proposed = gate.validatedImplementationPlan.decisions.find(
+            (decision) => decision.basis === "PROPOSED",
+          );
+          if (
+            proposed?.label !== "PROPOSED — requires product/technical decision"
+          ) {
+            throw new Error("PROPOSED decision label was not preserved");
+          }
+          for (const required of [
+            "Next eligible task confirmed: W11-04B / #53",
+            "Automated Definition of Ready: PASS",
+            "Read-only confirmations: CONFIRMED",
+            "Implementation plan contract: CONFIRMED",
+            "Mutation authorized: NO",
+            "Validation audit:",
+            "Validated implementation plan:",
+          ]) {
+            if (!gate.ownerFacingResponse?.includes(required)) {
+              throw new Error("owner-facing response missing: " + required);
+            }
+          }
+          NODE
+
+          node - "$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" "$RUNNER_TEMP/pre-extra-completion-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [gatePath, outputPath] = process.argv.slice(2);
+          const gate = JSON.parse(fs.readFileSync(gatePath, "utf8"));
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              preToolUse: {
+                toolName: "attempt_completion",
+                parameters: {
+                  result:
+                    gate.ownerFacingResponse +
+                    "\napi_route=/invented-after-validation"
+                }
+              }
+            }),
+          );
+          NODE
+          extra_completion_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+              < "$RUNNER_TEMP/pre-extra-completion-input.json"
+          )"
+          printf '%s' "$extra_completion_result" | grep -F '"cancel":true'
+          printf '%s' "$extra_completion_result" | grep -F 'does not exactly match'
+
+          node - "$HOOK_TMP/txkpro-cline-confirmation-gates/task-123.json" "$RUNNER_TEMP/pre-exact-completion-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const [gatePath, outputPath] = process.argv.slice(2);
+          const gate = JSON.parse(fs.readFileSync(gatePath, "utf8"));
+          fs.writeFileSync(
+            outputPath,
+            JSON.stringify({
+              taskId: "task-123",
+              preToolUse: {
+                toolName: "attempt_completion",
+                parameters: {result: gate.ownerFacingResponse}
+              }
+            }),
+          );
+          NODE
           allowed_result="$(
-            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse <<'JSON'
-          {"taskId":"task-123","preToolUse":{"toolName":"attempt_completion","parameters":{}}}
-          JSON
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse \
+              < "$RUNNER_TEMP/pre-exact-completion-input.json"
           )"
           printf '%s' "$allowed_result" | grep -F '"cancel":false'
 
