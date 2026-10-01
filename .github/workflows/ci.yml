@@ -305,6 +305,12 @@ jobs:
           if (result.dependencies !== "W11-13") {
             throw new Error(`Unexpected dependencies: ${result.dependencies}`);
           }
+          if (result.selectionType !== "planned_candidate") {
+            throw new Error("Earliest Planned selector must label its result planned_candidate");
+          }
+          if (!String(result.whyCandidate || "").includes("Eligibility still requires")) {
+            throw new Error("Planned selector must explicitly distinguish candidate from eligible");
+          }
           NODE
       - name: Validate dependency-aware next eligible selection
         run: |
