@@ -194,17 +194,17 @@
         {
           "source": "git-staging-ref-check",
           "checkType": "git show-ref --verify",
-          "finding": "The local repository contains the explicit staging branch ref required for implementation.",
+          "finding": "The checkout contains the fetched origin/staging ref required for the staging implementation target.",
           "assertion": {
-            "subject": "refs/heads/staging",
+            "subject": "refs/remotes/origin/staging",
             "predicate": "git_ref_exists",
             "values": [
-              "refs/heads/staging"
+              "refs/remotes/origin/staging"
             ]
           },
           "verification": {
             "type": "git_ref_exists",
-            "ref": "refs/heads/staging"
+            "ref": "refs/remotes/origin/staging"
           }
         },
         {
@@ -462,7 +462,7 @@
       },
       {
         "kind": "test_requirement",
-        "name": "refs/heads/staging",
+        "name": "refs/remotes/origin/staging",
         "basis": "SOURCED",
         "label": "",
         "confirmation": "stagingTargets",
