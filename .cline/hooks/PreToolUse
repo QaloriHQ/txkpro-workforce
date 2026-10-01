@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+let input = {};
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+} catch {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const taskId = String(input?.taskId || "unknown").replace(/[^A-Za-z0-9._-]/g, "_");
+const marker = path.join(
+  os.tmpdir(),
+  "txkpro-cline-confirmation-gates",
+  taskId + ".json",
+);
+const toolName = String(input?.preToolUse?.toolName || "");
+
+if (!fs.existsSync(marker)) {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const blockedTools = new Set([
+  "attempt_completion",
+  "ask_followup_question",
+  "switch_mode",
+]);
+
+if (!blockedTools.has(toolName)) {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+process.stdout.write(
+  JSON.stringify({
+    cancel: true,
+    errorMessage:
+      "TXKPRO read-only confirmation gate is still pending. Continue the mandatory read-only analysis; do not ask the user for permission and do not complete the task yet.",
+    contextModification:
+      "Resolve all eight required confirmations from authoritative sources now. Write the confirmation evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Only a TXKPRO_CONFIRMATIONS_CONFIRMED result clears this gate. If a candidate is blocked/unresolved, continue automatically to the next provisional candidate.",
+  }),
+);
