@@ -19,6 +19,9 @@ const workspaceRoot =
   Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
     ? input.workspaceRoots[0]
     : process.cwd();
+const { extractPresentationText, sha256 } = require(
+  path.join(workspaceRoot, "scripts", "txkpro-eligibility-result.cjs"),
+);
 const marker = path.join(
   os.tmpdir(),
   "txkpro-cline-confirmation-gates",
@@ -73,6 +76,9 @@ function toolLooksMutating(name, params) {
     "write_to_file",
     "replace_in_file",
     "apply_diff",
+    "apply_patch",
+    "editor",
+    "str_replace_editor",
     "search_and_replace",
     "insert_content",
     "edit_file",
@@ -89,20 +95,40 @@ function toolLooksMutating(name, params) {
   return false;
 }
 
+function isAllowedTemporaryEvidenceWrite(name, params) {
+  if (!["write_to_file", "create_file"].includes(name)) return false;
+  const target = String(
+    params?.path ?? params?.file_path ?? params?.filePath ?? "",
+  ).trim();
+  if (!target) return false;
+  const resolved = path.resolve(workspaceRoot, target);
+  const temporaryRoot = path.resolve(os.tmpdir()) + path.sep;
+  return resolved.startsWith(temporaryRoot) && resolved.endsWith(".json");
+}
+
 const gate = readMarker();
 if (!gate) {
   process.stdout.write(JSON.stringify({ cancel: false }));
   process.exit(0);
 }
 
+const completionTools = new Set(["attempt_completion", "submit_and_exit"]);
+const questionTools = new Set(["ask_followup_question", "ask_question"]);
+const modeTools = new Set(["switch_mode", "switch_to_act_mode"]);
+
 if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
   const blockedTools = new Set([
-    "attempt_completion",
-    "ask_followup_question",
-    "switch_mode",
+    ...completionTools,
+    ...questionTools,
+    ...modeTools,
   ]);
 
-  if (!blockedTools.has(toolName)) {
+  if (isAllowedTemporaryEvidenceWrite(toolName, parameters)) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  if (!blockedTools.has(toolName) && !toolLooksMutating(toolName, parameters)) {
     process.stdout.write(JSON.stringify({ cancel: false }));
     process.exit(0);
   }
@@ -113,10 +139,71 @@ if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
       errorMessage:
         "TXKPRO read-only confirmation gate is still pending. Continue the mandatory read-only analysis; do not ask the user for permission and do not complete the task yet.",
       contextModification:
-        "Resolve all eight required confirmations from authoritative sources and actual non-secret state now. First read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs; never guess the schema. Do not infer or assume a confirmation. Each evidence entry must include source, finding, locator or checkType, typed assertion {subject,predicate,values}, and supported verification bound to that assertion. Include implementationPlan.contract sourced-plan-v1 and classify every API route, database field, status, event, URL pattern, credential, and owner as SOURCED from confirmation evidence or PROPOSED — requires product/technical decision. Write semantic-provenance-v3 evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. INVALID evidence means keep the gate active, read the reported error, and gather/fix concrete machine-verifiable provenance; only the combination of TXKPRO_CONFIRMATIONS_CONFIRMED and TXKPRO_PLAN_CONTRACT_CONFIRMED clears this gate. If a source does not establish the needed fact, mark the confirmation BLOCKED or UNRESOLVED and continue automatically to the next provisional candidate.",
+        "Resolve all eight required confirmations from authoritative sources and actual non-secret state now. First read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs; never guess the schema. Do not infer or assume a confirmation. Each evidence entry must include source, finding, locator or checkType, typed assertion {subject,predicate,values}, and supported verification bound to that assertion. Include implementationPlan.contract sourced-plan-v1 with complete constrained-kind coverage. Temporary evidence creation is permitted only as a JSON file under the system temporary directory; repository mutation remains blocked. Run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Sentinel strings alone do not clear the gate: the exact successful invocation and verified canonical result artifact are also required. If a source does not establish the needed fact, mark the confirmation BLOCKED or UNRESOLVED and continue automatically to the next provisional candidate.",
     }),
   );
   process.exit(0);
+}
+
+if (gate.state === "ELIGIBILITY_CONFIRMED_READY_TO_PRESENT") {
+  if (questionTools.has(toolName) || modeTools.has(toolName)) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO eligibility is validator-attested but has not been presented through the canonical completion payload.",
+        contextModification:
+          "Use submit_and_exit or attempt_completion with the exact canonical presentation stored by the runtime. Do not add unsupported claims or switch to mutation mode.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (completionTools.has(toolName)) {
+    const presentation = extractPresentationText(parameters);
+    const expected = String(gate.canonicalPresentation || "").trim();
+    const digestMatches =
+      expected &&
+      gate.presentationSha256 &&
+      sha256(expected) === gate.presentationSha256;
+    if (!digestMatches || presentation !== expected) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO eligibility presentation must exactly match the validator-generated canonical result.",
+          contextModification:
+            "Submit the canonical presentation exactly as stored in the runtime gate. Do not add inferred roles, ownership, statuses, events, routes, credentials, UAT owners, or blockers.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    writeMarker({
+      ...gate,
+      state: "CONFIRMED_AWAITING_APPROVAL",
+      eligibilityPresentedAt: new Date().toISOString(),
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO canonical eligibility result verified for presentation. Mutation remains unauthorized pending explicit owner approval.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (toolLooksMutating(toolName, parameters)) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO mutation is blocked until the canonical eligibility result is presented and the owner explicitly approves implementation.",
+      }),
+    );
+    process.exit(0);
+  }
 }
 
 if (gate.state === "CONFIRMED_AWAITING_APPROVAL") {
@@ -139,7 +226,7 @@ if (gate.state === "CONFIRMED_AWAITING_APPROVAL") {
 
 if (
   gate.state === "IMPLEMENTATION_RUN_ACTIVE" &&
-  toolName === "attempt_completion"
+  completionTools.has(toolName)
 ) {
   const finish = runUsage([
     "finish",

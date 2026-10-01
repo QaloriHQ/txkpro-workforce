@@ -83,14 +83,24 @@
     "clineHooks": [
       ".cline/hooks/UserPromptSubmit",
       ".cline/hooks/PreToolUse",
-      ".cline/hooks/PostToolUse"
+      ".cline/hooks/PostToolUse",
+      ".cline/hooks/TaskComplete"
     ],
     "blockedWhilePending": [
       "attempt_completion",
+      "submit_and_exit",
       "ask_followup_question",
-      "switch_mode"
+      "ask_question",
+      "switch_mode",
+      "switch_to_act_mode"
     ],
     "continueAutomaticallyOnBlockedCandidate": true,
+    "temporaryEvidenceWrite": {
+      "allowed": true,
+      "directory": "system_tmp_only",
+      "extension": ".json",
+      "repositoryMutationWhilePending": false
+    },
     "evidenceContract": {
       "version": "semantic-provenance-v3",
       "template": ".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json",
@@ -125,6 +135,7 @@
       "rejectVagueSources": true,
       "rejectInventedLocators": true,
       "rejectSemanticExtrapolation": true,
+      "candidateSpecificCategoryEvidenceRequired": true,
       "missingSupportAction": "BLOCKED_or_UNRESOLVED",
       "invalidEvidenceAction": "continue_readonly_gathering_read_template_and_retry",
       "secretValuesForbidden": true
@@ -133,6 +144,29 @@
       "TXKPRO_CONFIRMATIONS_CONFIRMED",
       "TXKPRO_PLAN_CONTRACT_CONFIRMED"
     ],
+    "resultArtifact": {
+      "contract": "txkpro-eligibility-result-v1",
+      "requiredStateBeforePresentation": "ELIGIBILITY_CONFIRMED_READY_TO_PRESENT",
+      "requiresExactValidatorInvocation": true,
+      "requiresSuccessfulToolExecution": true,
+      "verifiedFields": [
+        "issue",
+        "taskId",
+        "evidencePath",
+        "evidenceSha256",
+        "validatorSha256",
+        "repositoryHead",
+        "evidenceContract",
+        "planContract",
+        "confirmationSentinelSeen",
+        "planSentinelSeen",
+        "validatedAt",
+        "presentationSha256"
+      ],
+      "maxAgeMinutes": 10,
+      "canonicalPresentationMustMatchExactly": true,
+      "ignoreSentinelsFromUnattestedToolOutput": true
+    },
     "implementationPlanContract": {
       "version": "sourced-plan-v1",
       "required": true,
@@ -150,6 +184,12 @@
         "PROPOSED"
       ],
       "sourcedRequiresConfirmationEvidenceReference": true,
+      "sourcedDecisionNameMustExactlyMatchAssertionSubjectOrValue": true,
+      "completeConstrainedKindCoverageRequired": true,
+      "coverageStates": [
+        "DECISIONS",
+        "NOT_APPLICABLE"
+      ],
       "proposedLabel": "PROPOSED — requires product/technical decision",
       "finalResponseMustNotAddUnvalidatedImplementationDecisions": true
     }

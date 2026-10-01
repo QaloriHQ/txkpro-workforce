@@ -277,6 +277,8 @@ Rules:
 - If the source is missing, contradictory, or does not establish the exact typed assertion, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
 - An `INVALID` evidence document is not itself a blocked product candidate; the agent must read the validator error, continue read-only source gathering, and retry without asking the owner.
 - Only `TXKPRO_CONFIRMATIONS_CONFIRMED` plus `TXKPRO_PLAN_CONTRACT_CONFIRMED` permits the agent to call the task next eligible.
+- Sentinel strings found in arbitrary output are not proof. The runtime must verify the validator-generated result artifact against the selected candidate, evidence hash, validator hash, repository HEAD, contract versions, timestamp, and presentation digest.
+- Candidate-specific categories must contain at least one assertion tied to the live issue's domain and use a category-appropriate predicate. Neighboring role, profile, status, event, or design-system evidence cannot complete a category.
 
 7.2 Sourced implementation plan contract
 
@@ -291,9 +293,11 @@ Every planned API route, database field, status, event, URL pattern, credential,
 - `SOURCED`: linked to a specific confirmation evidence entry whose typed assertion/finding actually mentions that decision; or
 - `PROPOSED`: labeled exactly `PROPOSED — requires product/technical decision`.
 
+`implementationPlan.coverage` must classify each constrained kind as `DECISIONS` or `NOT_APPLICABLE`. Every `NOT_APPLICABLE` classification requires a concrete reason. A `SOURCED` decision name must exactly match the subject or a value in the referenced typed assertion.
+
 A sourced item may not be generalized beyond the evidence it references. If an exact implementation detail is not supported by authoritative sources, it remains proposed and must not be presented as an approved requirement.
 
-The final planning response must be generated from the validated sourced/proposed plan. It must not add extra routes, schema fields, statuses, events, URL structures, credentials, owners, or other implementation contracts outside that validated plan.
+The validator generates the final canonical eligibility presentation and stores its digest in the result artifact. The runtime permits presentation only when the completion payload exactly matches that canonical text. It must not add extra routes, schema fields, statuses, events, URL structures, credentials, owners, UAT claims, or other implementation contracts outside the validated plan.
 
 ======================================================================
 8. PHASE 2 — WAVE EXECUTION MANIFEST

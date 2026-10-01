@@ -172,11 +172,13 @@ The same evidence JSON must also include `implementationPlan.contract: "sourced-
 - `SOURCED` from a specific confirmation evidence entry that actually mentions the decision; or
 - labeled exactly `PROPOSED — requires product/technical decision`.
 
+`implementationPlan.coverage` must classify every constrained kind as `DECISIONS` or `NOT_APPLICABLE`; every not-applicable kind requires a concrete reason. A sourced decision name must exactly equal its referenced assertion subject or value.
+
 Before writing evidence, read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; do not guess the schema. Plain strings, vague labels, invented locators/findings, semantic extrapolation, assumed environment/credential state, and fabricated statuses/events/UAT owners are invalid. A plausible statement is not confirmation. If the cited source or executable check does not establish the fact, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
 
 If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CONFIRMATIONS_BLOCKED`; the agent must continue automatically to the next provisional candidate and keep mutation authorization at NO.
 
-The runtime hook gate blocks premature `attempt_completion`, `ask_followup_question`, and mode switching while confirmation evidence is pending.
+The runtime hook gate blocks both current Cline SDK tools (`submit_and_exit`, `ask_question`, `switch_to_act_mode`) and legacy aliases while evidence is pending. Sentinel text alone never clears the gate. `PostToolUse` accepts only an exact successful validator invocation and verifies the validator-generated result artifact against the selected candidate, evidence hash, validator hash, repository HEAD, contracts, timestamp, and presentation digest. The state must reach `ELIGIBILITY_CONFIRMED_READY_TO_PRESENT`, and the completion payload must exactly equal the artifact's canonical presentation before the gate becomes `CONFIRMED_AWAITING_APPROVAL`.
 
 ## Required "what's next" response contract
 

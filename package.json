@@ -17,6 +17,7 @@
     "protocol:report": "node scripts/txkpro-completion-report.mjs",
     "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs",
     "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs",
+    "protocol:confirm:test": "node scripts/txkpro-confirmation-gate.test.mjs",
     "protocol:usage": "node scripts/txkpro-agent-usage.mjs"
   },
   "dependencies": {
