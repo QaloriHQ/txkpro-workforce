@@ -143,6 +143,29 @@ Only after the owner replies with an accepted approval phrase may a mutation-cap
 
 If a provisional candidate cannot satisfy a required read-only confirmation, Cline should continue to the next provisional candidate automatically rather than asking whether to continue analysis.
 
+## Read-only confirmation runtime gate
+
+TXKPRO now enforces the `What's next?` continuation rule with Cline workspace hooks in addition to prompt instructions.
+
+The relevant files are:
+
+```text
+.cline/hooks/UserPromptSubmit
+.cline/hooks/PreToolUse
+.cline/hooks/PostToolUse
+scripts/txkpro-confirmation-check.mjs
+```
+
+For a next-eligible request, the gate remains pending until Cline validates a temporary evidence JSON and receives:
+
+```text
+TXKPRO_CONFIRMATIONS_CONFIRMED
+```
+
+While pending, Cline is prevented from prematurely using completion/follow-up/mode-switch tools. A blocked/unresolved candidate keeps the gate active and requires Cline to continue to the next provisional candidate automatically.
+
+The connector startup enables Cline hooks and ensures the workspace hook files are executable.
+
 ## Roadmap selector timeout troubleshooting
 
 The canonical `What's next?` command is:
