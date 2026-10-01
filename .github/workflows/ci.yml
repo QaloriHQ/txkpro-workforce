@@ -16,6 +16,7 @@ jobs:
       - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/discord-access-hook.sh
       - run: node --check .devcontainer/configure-cline.mjs
       - run: node --check scripts/roadmap-next-planned.mjs
+      - run: node --check scripts/roadmap-next-eligible.mjs
       - run: node --check scripts/repo-latest.mjs
       - run: node --check scripts/lib/txkpro-evidence.mjs
       - run: node --check scripts/txkpro-task-context.mjs
@@ -303,6 +304,148 @@ jobs:
           }
           if (result.dependencies !== "W11-13") {
             throw new Error(`Unexpected dependencies: ${result.dependencies}`);
+          }
+          NODE
+      - name: Validate dependency-aware next eligible selection
+        run: |
+          TEST_BIN="$RUNNER_TEMP/eligible-roadmap-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "eligible selector did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "id": "PVT_test",
+                  "title": "TXKPRO Product Roadmap",
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "dep_item",
+                        "createdAt": "2026-09-01T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 13,
+                          "title": "[W11-13] Dependency still open",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-01T00:00:00Z",
+                          "body": "**Task ID:** W11-13\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] dependency work",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/13",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "blocked_candidate",
+                        "createdAt": "2026-09-10T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 30,
+                          "title": "[W11-15] Blocked earliest Planned candidate",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-20T00:00:00Z",
+                          "body": "**Task ID:** W11-15\n**Dependencies:** W11-13\n## Acceptance Criteria\n- [ ] run QA",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/30",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "eligible_candidate",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 31,
+                          "title": "[W11-16] First dependency-ready Planned candidate",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-21T00:00:00Z",
+                          "body": "**Task ID:** W11-16\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] complete verification",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/31",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          PATH="$TEST_BIN:$PATH" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/roadmap-next-eligible.mjs --json > "$RUNNER_TEMP/eligible-result.json"
+
+          RESULT_PATH="$RUNNER_TEMP/eligible-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.selected?.issue !== 31) {
+            throw new Error(
+              `Expected dependency-ready issue #31, received #${result.selected?.issue}`,
+            );
+          }
+
+          if (result.selected?.preflight?.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Selected issue did not pass automated Definition of Ready");
+          }
+
+          const blocked = result.skippedCandidates.find((item) => item.issue === 30);
+          if (!blocked) {
+            throw new Error("Earliest Planned candidate #30 was not evaluated/skipped");
+          }
+
+          if (blocked.preflight?.automatedDefinitionOfReady !== "BLOCKED") {
+            throw new Error("Blocked dependency candidate #30 was not classified BLOCKED");
+          }
+
+          if (
+            !blocked.preflight?.dependencies?.some(
+              (dep) => dep.taskId === "W11-13" && dep.classification === "BLOCK",
+            )
+          ) {
+            throw new Error("Dependency W11-13 was not classified BLOCK for issue #30");
+          }
+
+          if (result.finalAgentConfirmationRequired !== true) {
+            throw new Error("Selector must preserve the final read-only agent confirmation step");
           }
           NODE
       - run: npm install
