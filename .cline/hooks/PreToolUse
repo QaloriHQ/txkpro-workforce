@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { notifySlackLifecycle } = require("./txkpro-slack-lifecycle.cjs");
 const {
   completionMatches,
   parseValidatorInvocation,
@@ -360,11 +361,25 @@ if (gate.state === "EXECUTION_VALIDATED_AWAITING_CHAT_REVIEW") {
       process.exit(0);
     }
 
-    writeMarker({
+    const finalGate = {
       ...gate,
       state: "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION",
       usageRunFinishedAt: new Date().toISOString(),
+    };
+    writeMarker(finalGate);
+
+    const slackLifecycleStop = notifySlackLifecycle({
+      workspaceRoot,
+      rawTaskId,
+      state:
+        gate.executionStatus === "BLOCKED"
+          ? "STOPPED_BLOCKED"
+          : "STOPPED_AWAITING_CHAT_VERIFICATION",
+      issue: gate.issue,
+      roadmapTaskId: gate.roadmapTaskId,
+      contractId: gate.chatContractId,
     });
+    writeMarker({ ...finalGate, slackLifecycleStop });
 
     process.stdout.write(
       JSON.stringify({
