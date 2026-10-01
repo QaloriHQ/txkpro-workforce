@@ -69,7 +69,11 @@ jobs:
           );
           const slackConnectCommand = slackLauncher
             .split(/\r?\n/)
-            .find((line) => line.trim().startsWith("cline connect slack "));
+            .find(
+              (line) =>
+                line.trim().startsWith("cline connect slack ") &&
+                line.includes("--bot-token"),
+            );
           if (!slackConnectCommand) {
             throw new Error("Primary Slack connector command was not found");
           }
