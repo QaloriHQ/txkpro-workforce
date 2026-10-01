@@ -341,7 +341,7 @@ jobs:
                         "fieldValues": {
                           "nodes": [
                             {
-                              "name": "Planned",
+                              "name": "In Progress",
                               "field": {"name": "Status"}
                             }
                           ]
