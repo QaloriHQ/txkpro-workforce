@@ -79,7 +79,6 @@
       "next_eligible"
     ],
     "validator": "node scripts/txkpro-confirmation-check.mjs --evidence <path>",
-    "successSentinel": "TXKPRO_CONFIRMATIONS_CONFIRMED",
     "blockedSentinel": "TXKPRO_CONFIRMATIONS_BLOCKED",
     "clineHooks": [
       ".cline/hooks/UserPromptSubmit",
