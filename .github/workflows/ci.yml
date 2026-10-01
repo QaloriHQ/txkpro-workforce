@@ -62,6 +62,33 @@ jobs:
           ) {
             throw new Error("Slack must be the primary Cline connector");
           }
+
+          const slackLauncher = fs.readFileSync(
+            ".devcontainer/start-slack-agent.sh",
+            "utf8",
+          );
+          const slackConnectCommand = slackLauncher
+            .split(/\r?\n/)
+            .find(
+              (line) =>
+                line.trim().startsWith("cline connect slack ") &&
+                line.includes("--bot-token"),
+            );
+          if (!slackConnectCommand) {
+            throw new Error("Primary Slack connector command was not found");
+          }
+          if (
+            /--mode\s+plan\b|(?:^|\s)--plan\b/.test(slackConnectCommand)
+          ) {
+            throw new Error(
+              "Primary Slack connector must not force Cline Plan mode",
+            );
+          }
+          if (!slackConnectCommand.includes("--enable-tools")) {
+            throw new Error(
+              "Primary Slack connector must keep implementation tools enabled",
+            );
+          }
           NODE
 
           allowed="$(
@@ -250,6 +277,11 @@ jobs:
           const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
           if (state.hooksEnabled !== true) {
             throw new Error("Cline workspace hooks were not enabled");
+          }
+          if (state.planActMode !== "act") {
+            throw new Error(
+              `Cline persisted mode must be act for executor-only Slack runs; received ${state.planActMode}`,
+            );
           }
           NODE
       - name: Validate authoritative roadmap selection

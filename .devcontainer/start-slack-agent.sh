@@ -127,10 +127,12 @@ printf -v HOOK_COMMAND 'bash %q' "$HOOK_SCRIPT"
 BOT_NAME="${SLACK_BOT_USERNAME:-TXKPRO-Cline}"
 
 echo "[cline-slack] starting secured Slack socket-mode connector"
-cline connect slack   --bot-token "$SLACK_BOT_TOKEN"   --app-token "$SLACK_APP_TOKEN"   --user-name "$BOT_NAME"   --cwd "$WORKSPACE_ROOT"   --mode plan   --enable-tools   --hook-command "$HOOK_COMMAND"
+# Cline CLI starts in Act mode by default. Do not add --plan/--mode plan here:
+# the TXKPRO Chat contract hooks, not Cline Plan mode, are the mutation boundary.
+cline connect slack   --bot-token "$SLACK_BOT_TOKEN"   --app-token "$SLACK_APP_TOKEN"   --user-name "$BOT_NAME"   --cwd "$WORKSPACE_ROOT"   --enable-tools   --hook-command "$HOOK_COMMAND"
 
 printf '[cline-slack] workspace: %s (%s)\n' "${resolved_team_name:-unknown}" "$resolved_team_id"
 printf '[cline-slack] bot user id: %s\n' "${resolved_bot_user_id:-unknown}"
 printf '[cline-slack] allowed owner user id: %s\n' "$SLACK_ALLOWED_USER_ID"
 printf '[cline-slack] transport: socket mode (no public Codespaces webhook required)\n'
-printf '[cline-slack] mode: plan | plan model: %s | act model: %s\n' "$CLINE_PLAN_MODEL" "$CLINE_ACT_MODEL"
+printf '[cline-slack] mode: act (default) | act model: %s | plan model retained for legacy compatibility: %s\n' "$CLINE_ACT_MODEL" "$CLINE_PLAN_MODEL"

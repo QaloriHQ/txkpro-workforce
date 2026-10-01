@@ -10,6 +10,8 @@ TXKPRO roadmap implementation uses an explicit separation of duties:
 
 Cline may execute a decision, but Cline may not create a product or technical decision during execution.
 
+The primary Slack connector starts Cline in Act mode (the Cline CLI default) with tools enabled. It must not force Plan mode. Mutation safety comes from the pre-existing ChatGPT implementation contract and lifecycle hooks; entering Act mode alone never authorizes roadmap work.
+
 ## Required flow
 
 1. ChatGPT Chat mode reads the live roadmap, issue, dependencies, governance sources, product sources, and repository state.
