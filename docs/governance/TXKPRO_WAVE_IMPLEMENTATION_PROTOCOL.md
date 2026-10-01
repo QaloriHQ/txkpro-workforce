@@ -242,34 +242,58 @@ If the task fails this gate:
 
 7.1 Read-only confirmation provenance standard
 
-A read-only confirmation is valid only when its evidence is both traceable and machine-verifiable against an authoritative repository source, live GitHub issue, or actual non-secret live-state check.
+A read-only confirmation is valid only when its evidence is traceable, typed, and machine-verifiable against an authoritative repository source, live GitHub issue, or actual non-secret live-state check.
 
-The evidence document must use `evidenceContract: "semantic-provenance-v2"`. Before creating it, the agent must read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; schema guessing is not allowed.
+The evidence document must use `evidenceContract: "semantic-provenance-v3"`. Before creating it, the agent must read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; schema guessing is not allowed.
 
 Every evidence entry must contain:
 
 - `source`: a specific authoritative repository path, GitHub issue identifier, or named live-state check.
 - `finding`: the concrete fact observed or supported.
 - Either `locator`: section, heading, field, route, config key, or equivalent source location; or `checkType`: the exact live-state/environment check.
-- `verification`: executable proof using one supported type:
-  - `source_text_match`: verify an exact `needle` exists in the cited repository file.
-  - `source_text_absence`: verify an exact `needle` does not exist in the cited repository file.
-  - `env_presence`: verify a named environment variable exists without printing its value.
-  - `git_ref_exists`: verify an explicit `refs/heads`, `refs/remotes`, or `refs/tags` ref exists.
-  - `github_issue_text_match`: verify an exact `needle` exists in the live GitHub issue title/body/comments.
+- `assertion`:
+  - `subject`: the exact thing being claimed.
+  - `predicate`: one of the confirmation-specific predicates accepted by the validator.
+  - `values`: the exact claimed value or values.
+- `verification`: executable proof bound to the assertion.
+
+For generic repository or GitHub issue text verification, the exact proof text must contain the assertion subject and every asserted value. Text that merely occurs in the same source but refers to a different domain may not prove the claim.
+
+Examples of prohibited semantic extrapolation:
+
+- `PROGRAM_STATUS` does not establish Course status.
+- An Employer role definition does not establish a Course-management capability unless the capability itself is stated.
+- Employer Profile ownership does not establish Employer Course/Lesson ownership.
+- A UI authority statement does not establish an exact URL pattern.
+- Presence of generic deployment credentials does not establish an invented SEO API credential.
+- A generic Product Manager reference does not override the standing browser-UAT owner rule.
 
 Rules:
 
-- The validator must execute the verification rather than trusting the agent's prose.
-- A source path must exist and remain inside the repository.
-- A file locator supplied by the agent must actually exist in that file.
 - Do not convert a plausible interpretation into `CONFIRMED`.
-- Do not invent statuses, events, roles, fields, routes, credentials, environment names, or UAT owners when the source does not define them.
+- Do not invent statuses, events, roles, fields, routes, credentials, environment names, or UAT owners.
 - Do not claim an environment, branch, staging target, or credential is available unless the relevant non-secret check succeeds.
 - Do not print secret values; credential evidence proves presence/configuration only.
-- If the source is missing, contradictory, or does not establish the needed fact, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
+- If the source is missing, contradictory, or does not establish the exact typed assertion, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
 - An `INVALID` evidence document is not itself a blocked product candidate; the agent must read the validator error, continue read-only source gathering, and retry without asking the owner.
-- Only `TXKPRO_CONFIRMATIONS_CONFIRMED` permits the agent to call the task next eligible.
+- Only `TXKPRO_CONFIRMATIONS_CONFIRMED` plus `TXKPRO_PLAN_CONTRACT_CONFIRMED` permits the agent to call the task next eligible.
+
+7.2 Sourced implementation plan contract
+
+The same evidence document must include:
+
+`implementationPlan.contract: "sourced-plan-v1"`
+
+The implementation plan is not allowed to silently introduce new technical/product decisions.
+
+Every planned API route, database field, status, event, URL pattern, credential, and owner must be represented as a typed plan decision and must be either:
+
+- `SOURCED`: linked to a specific confirmation evidence entry whose typed assertion/finding actually mentions that decision; or
+- `PROPOSED`: labeled exactly `PROPOSED — requires product/technical decision`.
+
+A sourced item may not be generalized beyond the evidence it references. If an exact implementation detail is not supported by authoritative sources, it remains proposed and must not be presented as an approved requirement.
+
+The final planning response must be generated from the validated sourced/proposed plan. It must not add extra routes, schema fields, statuses, events, URL structures, credentials, owners, or other implementation contracts outside that validated plan.
 
 ======================================================================
 8. PHASE 2 — WAVE EXECUTION MANIFEST
