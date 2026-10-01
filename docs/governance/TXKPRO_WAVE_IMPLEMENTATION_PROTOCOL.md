@@ -240,6 +240,26 @@ If the task fails this gate:
 - Mark it Blocked if action is prevented.
 - Record the missing decision, dependency, owner, and next action.
 
+7.1 Read-only confirmation provenance standard
+
+A read-only confirmation is valid only when its evidence is traceable to an authoritative source or an actual non-secret live-state check.
+
+Every evidence entry must be a structured object containing:
+
+- `source`: a specific authoritative artifact or named check, not a generic label.
+- `finding`: the concrete fact observed or supported by that source.
+- Either `locator`: section, heading, line/range, issue field, route, config key, or equivalent location inside the source; or `checkType`: the exact live-state/environment check that was executed.
+
+Rules:
+
+- Do not convert a plausible interpretation into `CONFIRMED`.
+- Do not claim an environment, branch, staging target, or credential is available unless the relevant non-secret state/presence check was actually performed.
+- Do not print secret values; credential evidence proves presence/configuration only.
+- Plain evidence strings and generic labels such as "role matrix", "status dictionary", "UI standard", "staging config", "presence checks only", or "issue/source review" are invalid.
+- If the source is missing, contradictory, or does not directly establish the needed fact, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
+- An `INVALID` evidence document is not a blocked product candidate by itself; the agent must continue read-only source gathering and retry validation.
+- Only a validator result of `TXKPRO_CONFIRMATIONS_CONFIRMED` permits the agent to call the task next eligible.
+
 ======================================================================
 8. PHASE 2 — WAVE EXECUTION MANIFEST
 ======================================================================
