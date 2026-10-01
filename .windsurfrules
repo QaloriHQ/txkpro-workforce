@@ -5,7 +5,7 @@ Mandatory: read `AGENTS.md` first.
 Authoritative protocol:
 `docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
 
-For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Its result is provisional until dependency/Definition-of-Ready and every required read-only confirmation pass. Resolve confirmations automatically in the same planning turn with structured provenance (`source`, `finding`, and either `locator` or `checkType`); vague strings and assumed state are invalid. Continue to the next provisional candidate if one fails. Do not ask whether to gather confirmation details. Mutation authorization remains NO until explicit owner approval.
+For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Its result is provisional until dependency/Definition-of-Ready and every required read-only confirmation pass. Resolve confirmations automatically in the same planning turn using `semantic-provenance-v2` (`source`, `finding`, `locator` or `checkType`, plus supported machine-verifiable `verification`); read the canonical template/validator first, and reject vague strings, invented findings, or assumed state. Continue to the next provisional candidate if one fails. Do not ask whether to gather confirmation details. Mutation authorization remains NO until explicit owner approval.
 
 Every implementation run must write its PRE-RUN estimated token/cost budget and POST-RUN actual usage to the GitHub issue with `scripts/txkpro-agent-usage.mjs`; missing telemetry must not be fabricated.
 
