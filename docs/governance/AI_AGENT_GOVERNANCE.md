@@ -66,6 +66,42 @@ node scripts/txkpro-protocol-check.mjs --evidence <path>
 node scripts/txkpro-completion-report.mjs --evidence <path>
 ```
 
+## Eligibility confirmation boundary
+
+`roadmap-next-eligible.mjs` returns provisional candidates whose automated dependency/Definition-of-Ready gate passed. That result is not permission to mutate and is not yet a fully confirmed "next eligible" task.
+
+Every coding AI must, in the same planning turn:
+
+1. resolve affected roles/scopes;
+2. resolve canonical data ownership/permitted fields;
+3. resolve canonical statuses/events/transitions;
+4. resolve applicable IA/design sources;
+5. confirm target branch and staging environment configuration;
+6. confirm required credential presence without exposing values;
+7. confirm manual UAT ownership/requirements;
+8. confirm no unresolved product/privacy/policy/legal blocker remains.
+
+These checks are read-only and automatically authorized.
+
+If a provisional candidate fails or cannot resolve one of these confirmations, the AI must continue to the next provisional candidate without asking for permission to continue analysis.
+
+Only after all confirmations pass may the AI say:
+
+```text
+Next eligible task confirmed: <Task ID> / #<issue>
+Automated Definition of Ready: PASS
+Read-only confirmations: CONFIRMED
+Mutation authorized: NO
+```
+
+The next step is then to present the implementation/verification plan and wait for explicit owner approval before mutation.
+
+Forbidden planning behavior includes:
+- "Would you like me to gather the confirmation details?";
+- "Mutation Allowed: Yes" before explicit approval;
+- ending immediately after automated preflight PASS;
+- treating a provisional candidate as fully eligible.
+
 ## Evidence-gated Project status automation
 
 The GitHub workflow `.github/workflows/protocol-status.yml` listens for trusted issue comments containing the marker:
