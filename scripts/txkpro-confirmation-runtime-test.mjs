@@ -25,7 +25,7 @@ set -euo pipefail
 cat <<'JSON'
 {
   "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
-  "body": "## Product decision\n\nApproved 2026-09-25: public Courses/Lessons require human-readable URLs and SEO-first rendering.",
+  "body": "Approved 2026-09-25: public Courses/Lessons require human-readable URLs and SEO-first rendering.",
   "comments": []
 }
 JSON
