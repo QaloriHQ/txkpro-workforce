@@ -527,8 +527,39 @@ jobs:
             throw new Error("Dependency W11-13 was not classified BLOCK for issue #30");
           }
 
-          if (result.finalAgentConfirmationRequired !== true) {
-            throw new Error("Selector must preserve the final read-only agent confirmation step");
+          if (result.readOnlyConfirmationsRequired !== true) {
+            throw new Error("Selector must require read-only confirmation resolution");
+          }
+
+          if (result.confirmedEligible !== false) {
+            throw new Error("Selector must not mark automated-gate output fully eligible");
+          }
+
+          if (result.mutationAuthorized !== false) {
+            throw new Error("Selector must never authorize mutation before owner approval");
+          }
+
+          if (
+            result.selected?.eligibilityState !==
+            "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          ) {
+            throw new Error("Selected candidate must remain provisional pending confirmations");
+          }
+
+          if (result.selected?.confirmedEligible !== false) {
+            throw new Error("Selected provisional candidate must not be confirmed eligible");
+          }
+
+          if (result.selected?.mutationAuthorized !== false) {
+            throw new Error("Selected provisional candidate must not authorize mutation");
+          }
+
+          if (result.selected?.preflight?.mutationAllowedByAutomatedGate !== false) {
+            throw new Error("Automated preflight must not grant mutation permission");
+          }
+
+          if (!Array.isArray(result.provisionalCandidates) || result.provisionalCandidates.length < 1) {
+            throw new Error("Selector must return provisional candidates for confirmation review");
           }
 
           if (result.diagnostics?.projectGraphqlCalls !== 1) {
@@ -549,6 +580,147 @@ jobs:
             throw new Error("Selector diagnostics do not confirm the optimized execution model");
           }
           NODE
+      - name: Validate confirmation-before-approval agent governance
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+
+          const files = [
+            "AGENTS.md",
+            ".clinerules",
+            "CLAUDE.md",
+            "GEMINI.md",
+            ".github/copilot-instructions.md",
+            ".cursor/rules/txkpro-wave-protocol.mdc",
+            ".windsurfrules",
+          ];
+
+          for (const file of files) {
+            const text = fs.readFileSync(file, "utf8");
+            if (!/confirm/i.test(text)) {
+              throw new Error(file + " does not require confirmation resolution");
+            }
+            if (!/mutation/i.test(text)) {
+              throw new Error(file + " does not preserve the mutation approval boundary");
+            }
+            if (!/(same turn|same planning turn|automatically|automatic)/i.test(text)) {
+              throw new Error(file + " does not require automatic read-only continuation");
+            }
+          }
+
+          const agents = fs.readFileSync("AGENTS.md", "utf8");
+          const cline = fs.readFileSync(".clinerules", "utf8");
+
+          for (const [name, text] of [["AGENTS.md", agents], [".clinerules", cline]]) {
+            if (!text.includes("Mutation authorized")) {
+              throw new Error(name + " must define explicit mutation authorization language");
+            }
+          }
+
+          const policy = JSON.parse(
+            fs.readFileSync("config/txkpro-agent-policy.json", "utf8"),
+          );
+          if (policy.approvalBoundary?.mutationAuthorizedBeforeExplicitApproval !== false) {
+            throw new Error("Machine policy must keep mutation unauthorized before approval");
+          }
+          if (
+            policy.approvalBoundary?.readOnlyConfirmations !==
+            "mandatory_same_turn_no_user_approval_required"
+          ) {
+            throw new Error("Machine policy must require same-turn read-only confirmations");
+          }
+          NODE
+
+      - name: Validate standalone preflight does not authorize mutation
+        run: |
+          TEST_BIN="$RUNNER_TEMP/preflight-auth-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "preflight did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "eligible_candidate",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 31,
+                          "title": "[W11-16] First dependency-ready Planned candidate",
+                          "state": "OPEN",
+                          "body": "**Task ID:** W11-16\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] complete verification",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/31",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          PATH="$TEST_BIN:$PATH" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/txkpro-preflight.mjs --issue 31 --json > "$RUNNER_TEMP/preflight-result.json"
+
+          RESULT_PATH="$RUNNER_TEMP/preflight-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Fixture should pass automated Definition of Ready");
+          }
+          if (result.automatedGatePassed !== true) {
+            throw new Error("Preflight should distinguish automated gate PASS");
+          }
+          if (
+            result.eligibilityState !==
+            "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          ) {
+            throw new Error("Preflight must remain pending read-only confirmations");
+          }
+          if (result.readOnlyConfirmationsComplete !== false) {
+            throw new Error("Preflight cannot self-complete agent confirmations");
+          }
+          if (result.mutationAllowedByAutomatedGate !== false) {
+            throw new Error("Automated gate must not grant mutation permission");
+          }
+          if (result.mutationAuthorized !== false) {
+            throw new Error("Mutation must remain unauthorized before owner approval");
+          }
+          if (result.approvalRequiredBeforeMutation !== true) {
+            throw new Error("Explicit approval must remain required before mutation");
+          }
+          NODE
+
       - run: npm install
       - run: npm run typecheck
       - run: npm run lint
