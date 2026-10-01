@@ -198,6 +198,24 @@
   },
   "implementationPlan": {
     "contract": "sourced-plan-v1",
+    "coverage": {
+      "api_route": "",
+      "database_field": "",
+      "status": "",
+      "event": "",
+      "url_pattern": "",
+      "credential": "",
+      "owner": ""
+    },
+    "notApplicableReasons": {
+      "api_route": "",
+      "database_field": "",
+      "status": "",
+      "event": "",
+      "url_pattern": "",
+      "credential": "",
+      "owner": ""
+    },
     "decisions": [
       {
         "kind": "",

@@ -156,13 +156,14 @@ The relevant files are:
 scripts/txkpro-confirmation-check.mjs
 ```
 
-For a next-eligible request, the gate remains pending until Cline validates a temporary evidence JSON and receives:
+For a next-eligible request, the gate remains pending until Cline runs the exact validator command, receives both sentinels, and the runtime verifies the canonical result artifact:
 
 ```text
 TXKPRO_CONFIRMATIONS_CONFIRMED
+TXKPRO_PLAN_CONTRACT_CONFIRMED
 ```
 
-While pending, Cline is prevented from prematurely using completion/follow-up/mode-switch tools. A blocked/unresolved candidate keeps the gate active and requires Cline to continue to the next provisional candidate automatically.
+The result artifact binds the selected issue and Task ID to the evidence hash, validator hash, repository HEAD, contracts, timestamp, and canonical presentation digest. Arbitrary tool output containing sentinel words is ignored. While pending, both current SDK tools (`submit_and_exit`, `ask_question`, `switch_to_act_mode`) and legacy completion/follow-up/mode-switch aliases are blocked. A blocked/unresolved candidate keeps the gate active and requires Cline to continue to the next provisional candidate automatically.
 
 The connector startup enables Cline hooks and ensures the workspace hook files are executable.
 

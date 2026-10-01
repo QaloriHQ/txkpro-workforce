@@ -4,6 +4,18 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const {
+  EVIDENCE_CONTRACT,
+  PLAN_CONTRACT,
+  RESULT_CONTRACT,
+  gitHead,
+  resultPathForEvidence,
+  sha256,
+  sha256File,
+} = require("./txkpro-eligibility-result.cjs");
 
 function argValue(name) {
   const index = process.argv.indexOf(name);
@@ -16,6 +28,14 @@ if (!evidencePath) {
   process.exit(2);
 }
 
+const resolvedEvidencePath = path.resolve(evidencePath);
+const resolvedResultPath = path.resolve(
+  argValue("--result") || resultPathForEvidence(resolvedEvidencePath),
+);
+try {
+  fs.rmSync(resolvedResultPath, { force: true });
+} catch {}
+
 let evidence;
 try {
   evidence = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
@@ -27,8 +47,8 @@ try {
 }
 
 const repoRoot = process.cwd();
-const expectedContract = "semantic-provenance-v3";
-const expectedPlanContract = "sourced-plan-v1";
+const expectedContract = EVIDENCE_CONTRACT;
+const expectedPlanContract = PLAN_CONTRACT;
 const requiredConfirmations = [
   "rolesAndScopes",
   "dataOwnership",
@@ -229,11 +249,103 @@ function readGithubIssueText(issueNumber, repository) {
       : [];
     return {
       ok: true,
+      title: String(parsed.title || ""),
+      body: String(parsed.body || ""),
       text: [parsed.title || "", parsed.body || "", ...comments].join("\n"),
     };
   } catch (error) {
     return { ok: false, error: "Could not parse GitHub issue JSON: " + error.message };
   }
+}
+
+const candidateIssue = readGithubIssueText(
+  Number(evidence.issue),
+  "QaloriHQ/txkpro-workforce",
+);
+
+const candidateStopWords = new Set([
+  "build",
+  "create",
+  "update",
+  "implement",
+  "and",
+  "the",
+  "for",
+  "are",
+  "with",
+  "from",
+  "into",
+  "public",
+  "private",
+  "employer",
+  "institution",
+  "student",
+  "admin",
+  "workforce",
+  "txkpro",
+]);
+
+function domainTokens(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/w\d+(?:-[a-z0-9]+)+/g, " ")
+    .split(/[^a-z0-9]+/)
+    .map((token) => (token.length > 4 && token.endsWith("s") ? token.slice(0, -1) : token))
+    .filter(
+      (token) =>
+        (token.length >= 4 || token === "seo") && !candidateStopWords.has(token),
+    );
+}
+
+const candidateDomainTokens = candidateIssue.ok
+  ? [...new Set(domainTokens(candidateIssue.title))]
+  : [];
+
+function entryHasCandidateAffinity(entry) {
+  const claim = normalized(
+    [
+      entry?.assertion?.subject,
+      ...assertionValues(entry?.assertion),
+    ].join(" "),
+  );
+  return candidateDomainTokens.some((token) => claim.includes(token));
+}
+
+const candidateRequiredPredicates = {
+  rolesAndScopes: new Set(["scope_defined", "capability_defined"]),
+  dataOwnership: new Set(["data_class_owner", "writer_defined", "reader_defined"]),
+  statusesAndEvents: new Set([
+    "status_family_defined",
+    "event_defined",
+    "transition_defined",
+  ]),
+  iaAndDesign: new Set(["ia_requirement_defined", "route_pattern_defined"]),
+  unresolvedDecisions: new Set(["decision_resolved", "blocker_state_defined"]),
+};
+
+function validateCandidateSemantics(key, item) {
+  const requiredPredicates = candidateRequiredPredicates[key];
+  if (!requiredPredicates || String(item?.status || "").toUpperCase() !== "CONFIRMED") {
+    return [];
+  }
+  if (!candidateIssue.ok) {
+    return [key + " cannot be confirmed because the live candidate issue could not be read"];
+  }
+  if (candidateDomainTokens.length === 0) {
+    return [key + " cannot be confirmed because the candidate title has no domain terms"];
+  }
+  const entries = Array.isArray(item.evidence) ? item.evidence : [];
+  const supported = entries.some(
+    (entry) =>
+      requiredPredicates.has(textValue(entry?.assertion?.predicate)) &&
+      entryHasCandidateAffinity(entry),
+  );
+  return supported
+    ? []
+    : [
+        key +
+          " requires candidate-specific evidence using an applicable predicate and a subject/value tied to the live issue title; neighboring domain evidence cannot confirm the category",
+      ];
 }
 
 function verifyEvidenceEntry(key, entry, index) {
@@ -354,15 +466,6 @@ function verifyEvidenceEntry(key, entry, index) {
   }
 
   if (type === "github_issue_text_match") {
-    if (
-      key !== "unresolvedDecisions" ||
-      textValue(entry?.assertion?.predicate) !== "decision_resolved"
-    ) {
-      return [
-        prefix +
-          ".verification github_issue_text_match only proves unresolvedDecisions.decision_resolved",
-      ];
-    }
     const issueNumber = Number(verification.issue || evidence.issue);
     const repository =
       textValue(verification.repository) || "QaloriHQ/txkpro-workforce";
@@ -444,6 +547,11 @@ function validateEvidenceEntry(key, entry, index) {
     errors.push(prefix + ".finding is required");
   } else if (finding.length < 12) {
     errors.push(prefix + ".finding must state the concrete result that was observed");
+  } else if (!textContainsAllClaimTerms(finding, entry)) {
+    errors.push(
+      prefix +
+        ".finding must state the assertion subject and every asserted value; a neighboring observation cannot describe the claim",
+    );
   }
 
   errors.push(...validateAssertion(key, entry, prefix));
@@ -457,12 +565,8 @@ function evidenceMentionsDecision(entry, decisionName) {
   const terms = [
     textValue(entry?.assertion?.subject),
     ...assertionValues(entry?.assertion),
-    textValue(entry?.finding),
   ].filter(Boolean);
-  return terms.some((term) => {
-    const candidate = normalized(term);
-    return candidate.includes(needle) || needle.includes(candidate);
-  });
+  return terms.some((term) => normalized(term) === needle);
 }
 
 function validateImplementationPlan() {
@@ -478,6 +582,45 @@ function validateImplementationPlan() {
   if (!Array.isArray(plan.decisions) || plan.decisions.length === 0) {
     errors.push("implementationPlan.decisions must contain at least one typed decision");
     return errors;
+  }
+
+  const coverage = plan.coverage;
+  const notApplicableReasons = plan.notApplicableReasons || {};
+  if (!coverage || typeof coverage !== "object" || Array.isArray(coverage)) {
+    errors.push("implementationPlan.coverage object is required");
+  } else {
+    for (const kind of constrainedPlanKinds) {
+      const status = textValue(coverage[kind]).toUpperCase();
+      const matching = plan.decisions.filter(
+        (decision) => textValue(decision?.kind) === kind,
+      );
+      if (!["DECISIONS", "NOT_APPLICABLE"].includes(status)) {
+        errors.push(
+          "implementationPlan.coverage." +
+            kind +
+            " must be DECISIONS or NOT_APPLICABLE",
+        );
+      } else if (status === "DECISIONS" && matching.length === 0) {
+        errors.push(
+          "implementationPlan.coverage." + kind + " requires at least one typed decision",
+        );
+      } else if (status === "NOT_APPLICABLE") {
+        if (matching.length > 0) {
+          errors.push(
+            "implementationPlan.coverage." +
+              kind +
+              " cannot be NOT_APPLICABLE when decisions of that kind exist",
+          );
+        }
+        if (textValue(notApplicableReasons[kind]).length < 12) {
+          errors.push(
+            "implementationPlan.notApplicableReasons." +
+              kind +
+              " must explain why the constrained kind is not applicable",
+          );
+        }
+      }
+    }
   }
 
   plan.decisions.forEach((decision, index) => {
@@ -548,6 +691,24 @@ if (!String(evidence.taskId || "").trim()) {
   validationErrors.push("taskId is required");
 }
 
+if (!candidateIssue.ok) {
+  validationErrors.push(
+    "live candidate issue lookup failed: " + String(candidateIssue.error || "unknown error"),
+  );
+} else {
+  const taskIdPattern = new RegExp(
+    "(^|[^A-Za-z0-9])" +
+      String(evidence.taskId || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+      "([^A-Za-z0-9]|$)",
+    "i",
+  );
+  if (!taskIdPattern.test(candidateIssue.title + "\n" + candidateIssue.body)) {
+    validationErrors.push(
+      "taskId does not match the live candidate issue title/body; evidence is bound to the wrong candidate",
+    );
+  }
+}
+
 if (evidence.evidenceContract !== expectedContract) {
   validationErrors.push(
     "evidenceContract must equal " +
@@ -593,6 +754,8 @@ for (const key of requiredConfirmations) {
       validationErrors.push(...validateEvidenceEntry(key, entry, index));
     });
   }
+
+  validationErrors.push(...validateCandidateSemantics(key, item));
 
   statuses.push({ key, status });
 }
@@ -682,6 +845,57 @@ console.log(
     " taskId=" +
     evidence.taskId,
 );
+
+const planLines = evidence.implementationPlan.decisions.map((decision) => {
+  const basis = textValue(decision.basis).toUpperCase();
+  const suffix =
+    basis === "PROPOSED"
+      ? " — PROPOSED — requires product/technical decision"
+      : " — SOURCED";
+  return "- " + decision.kind + ": " + decision.name + suffix;
+});
+const canonicalPresentation = [
+  "Next eligible task confirmed: " + evidence.taskId + " / #" + evidence.issue,
+  "Automated Definition of Ready: PASS",
+  "Read-only confirmations: CONFIRMED",
+  "Evidence contract: " + expectedContract,
+  "Implementation plan contract: " + expectedPlanContract,
+  "Mutation authorized: NO",
+  "",
+  "Validated implementation plan:",
+  ...planLines,
+  "",
+  "Awaiting explicit owner approval to implement " + evidence.taskId + ".",
+].join("\n");
+
+const resultArtifact = {
+  resultContract: RESULT_CONTRACT,
+  status: "CONFIRMED",
+  issue: Number(evidence.issue),
+  taskId: evidence.taskId,
+  evidenceContract: expectedContract,
+  planContract: expectedPlanContract,
+  confirmationSentinelSeen: true,
+  planSentinelSeen: true,
+  evidencePath: resolvedEvidencePath,
+  resultPath: resolvedResultPath,
+  evidenceSha256: sha256File(resolvedEvidencePath),
+  validatorSha256: sha256File(new URL(import.meta.url).pathname),
+  repositoryHead: gitHead(repoRoot),
+  validatedAt: new Date().toISOString(),
+  implementationPlan: evidence.implementationPlan,
+  canonicalPresentation,
+  presentationSha256: sha256(canonicalPresentation),
+};
+
+fs.mkdirSync(path.dirname(resolvedResultPath), { recursive: true });
+const temporaryResultPath =
+  resolvedResultPath + ".tmp-" + process.pid + "-" + Date.now();
+fs.writeFileSync(temporaryResultPath, JSON.stringify(resultArtifact, null, 2), {
+  mode: 0o600,
+});
+fs.renameSync(temporaryResultPath, resolvedResultPath);
+
 console.log(
   JSON.stringify(
     {
@@ -694,8 +908,12 @@ console.log(
       mutationAuthorized: false,
       evidenceContract: expectedContract,
       planContract: expectedPlanContract,
+      resultContract: RESULT_CONTRACT,
+      resultPath: resolvedResultPath,
+      evidenceSha256: resultArtifact.evidenceSha256,
+      presentationSha256: resultArtifact.presentationSha256,
       nextAction:
-        "Present only the validated sourced/proposed implementation plan and await explicit owner approval before mutation.",
+        "Present the canonical result artifact exactly and await explicit owner approval before mutation.",
     },
     null,
     2,

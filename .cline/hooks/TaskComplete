@@ -30,6 +30,22 @@ try {
   gate = JSON.parse(fs.readFileSync(marker, "utf8"));
 } catch {}
 
+if (
+  gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED" ||
+  gate?.state === "ELIGIBILITY_CONFIRMED_READY_TO_PRESENT"
+) {
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO planning completion is blocked until validator-attested eligibility has been presented through the canonical completion payload.",
+      contextModification:
+        "Do not present or imply confirmed eligibility from free-form prose. Complete the selector, validator, result-artifact, and canonical-presentation gates first.",
+    }),
+  );
+  process.exit(0);
+}
+
 if (gate?.state !== "IMPLEMENTATION_RUN_ACTIVE") {
   process.stdout.write(JSON.stringify({ cancel: false }));
   process.exit(0);
