@@ -44,7 +44,7 @@ if (fs.existsSync(statePath)) {
 const next = {
   ...state,
   planActSeparateModelsSetting: true,
-  planActMode: "plan",
+  planActMode: "act",
   planModeApiProvider: "openrouter",
   actModeApiProvider: "openrouter",
   planModeOpenRouterModelId: planModel,
