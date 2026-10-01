@@ -109,7 +109,7 @@ if (result.includes("\"status\": \"INVALID\"") || result.includes("structured pr
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO confirmation evidence is INVALID. Keep the read-only confirmation gate active. Inspect the authoritative source or named live-state check for each confirmation and replace vague/inferred evidence with structured provenance objects containing source, finding, and either locator or checkType. Re-run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Do not ask the owner for permission to continue.",
+        "TXKPRO confirmation evidence is INVALID. Keep the read-only confirmation gate active. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs before retrying; do not invent another schema. Replace vague, inferred, or unsupported evidence with semantic-provenance-v2 entries containing source, finding, locator/checkType, and a supported machine-verifiable verification object. Re-run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Do not ask the owner for permission to continue.",
     }),
   );
   process.exit(0);
@@ -145,7 +145,7 @@ if (
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources and actual non-secret environment/repository state. Do not infer confirmations and do not respond with 'Would you like me to proceed?'. Build structured provenance for every evidence item using source, finding, and either locator or checkType, then validate it with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
+        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources and actual non-secret environment/repository state. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs first. Do not infer confirmations and do not respond with 'Would you like me to proceed?'. Build semantic-provenance-v2 evidence using source, finding, locator/checkType, and supported machine-verifiable verification for every item, then validate it with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
     }),
   );
   process.exit(0);
