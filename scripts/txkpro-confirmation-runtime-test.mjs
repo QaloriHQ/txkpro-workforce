@@ -25,7 +25,7 @@ set -euo pipefail
 cat <<'JSON'
 {
   "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
-  "body": "## Product decision\\n\\nApproved 2026-09-25: public Courses/Lessons require human-readable URLs and SEO-first rendering.",
+  "body": "## Product decision\n\nApproved 2026-09-25: public Courses/Lessons require human-readable URLs and SEO-first rendering.",
   "comments": []
 }
 JSON
@@ -151,7 +151,7 @@ function validEvidence() {
           },
           verification: {
             type: "source_text_match",
-            needle: "DATA CLASS: EMPLOYER PROFILE\\nCanonical owner: Employer domain",
+            needle: "DATA CLASS: EMPLOYER PROFILE\nCanonical owner: Employer domain",
           },
         }],
       },
@@ -168,7 +168,7 @@ function validEvidence() {
           },
           verification: {
             type: "source_text_match",
-            needle: "4. PROGRAM_STATUS\\ndraft\\nactive\\npaused\\narchived",
+            needle: "4. PROGRAM_STATUS\ndraft\nactive\npaused\narchived",
           },
         }],
       },
@@ -185,7 +185,7 @@ function validEvidence() {
           },
           verification: {
             type: "source_text_match",
-            needle: "THIS DOCUMENT IS THE AUTHORITATIVE UI / UX DESIGN SYSTEM SOURCE OF TRUTH\\nFOR ALL TXKPRO APPLICATIONS.",
+            needle: "THIS DOCUMENT IS THE AUTHORITATIVE UI / UX DESIGN SYSTEM SOURCE OF TRUTH\nFOR ALL TXKPRO APPLICATIONS.",
           },
         }],
       },
