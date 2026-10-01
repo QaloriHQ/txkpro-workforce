@@ -1,3 +1,7 @@
+## TXKPRO orchestration boundary
+
+For roadmap implementation, ChatGPT Chat mode owns orchestration/reasoning and post-run verification. Cline Act mode owns code-writing and execution only under a validated pre-existing TXKPRO_CHAT_IMPLEMENTATION_CONTRACT. Do not replace this separation with agent-specific planning or self-certification. See docs/governance/TXKPRO_CHAT_CLINE_ORCHESTRATION.md.
+
 # Gemini CLI Instructions — TXKPRO Workforce
 
 Read `AGENTS.md` before planning or modifying this repository.
