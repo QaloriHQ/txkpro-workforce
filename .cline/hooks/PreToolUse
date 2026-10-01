@@ -4,6 +4,10 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const {
+  completionMatches,
+  parseValidatorInvocation,
+} = require("./txkpro-confirmation-runtime.cjs");
 
 let input = {};
 try {
@@ -96,6 +100,27 @@ if (!gate) {
 }
 
 if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+  const validatorInvocation = parseValidatorInvocation(toolName, parameters);
+  if (validatorInvocation) {
+    writeMarker({
+      ...gate,
+      validatorInvocation: {
+        ...validatorInvocation,
+        expectedIssue: gate.provisionalIssue || null,
+        expectedTaskId: gate.provisionalTaskId || null,
+        armedAt: new Date().toISOString(),
+      },
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO validator invocation armed for the current provisional candidate. Only a structurally valid TXKPRO_CONFIRMATION_VALIDATION_RESULT emitted by this exact validator command may update the runtime gate; sentinel text from any other command is ignored.",
+      }),
+    );
+    process.exit(0);
+  }
+
   const blockedTools = new Set([
     "attempt_completion",
     "ask_followup_question",
@@ -120,6 +145,37 @@ if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
 }
 
 if (gate.state === "CONFIRMED_AWAITING_APPROVAL") {
+  if (toolName === "ask_followup_question") {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO planning output is validator-owned after the confirmation gate clears.",
+        contextModification:
+          "Do not freehand an approval question or plan. Finish the planning turn with attempt_completion using the exact ownerFacingResponse persisted in the gate marker.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (toolName === "attempt_completion") {
+    if (!gate.ownerFacingResponse || !completionMatches(parameters, gate.ownerFacingResponse)) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO final planning response does not exactly match the validator-derived owner-facing response.",
+          contextModification:
+            "Prose cannot upgrade runtime state or add implementation decisions. Use this exact validator-derived response without additions or substitutions:\n\n" +
+            String(gate.ownerFacingResponse || ""),
+        }),
+      );
+      process.exit(0);
+    }
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
   if (!toolLooksMutating(toolName, parameters)) {
     process.stdout.write(JSON.stringify({ cancel: false }));
     process.exit(0);
