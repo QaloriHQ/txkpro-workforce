@@ -44,6 +44,18 @@ For `What's next?` and next-eligible planning:
 - `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
 - never ask the owner whether to continue read-only confirmation work.
 
+## AGENT USAGE TELEMETRY
+
+Every roadmap implementation run requires one GitHub issue usage summary using `<!-- txkpro-agent-usage:v1 -->`.
+
+- Before mutation, record the estimated run budget with `node scripts/txkpro-agent-usage.mjs start --issue <n> --task-id <id> --cline-task-id <id>`.
+- During an active Cline run, workspace hooks observe tool calls and token-budget thresholds.
+- Before normal completion, actual input/output tokens, cache counters, cost, tool counts, variance, outcome, and cumulative issue totals must be synchronized with `txkpro-agent-usage.mjs finish`.
+- Input + output is the canonical total token count; cache reads/writes are reported separately.
+- Never invent actual usage when Cline/provider telemetry is unavailable.
+- Budget warnings do not authorize skipping scope, tests, or protocol gates.
+- The Cline completion hook is allowed to block completion until POST-RUN actuals are written.
+
 ## ACT MODE
 
 - Do not mutate unless the current Cline runtime is actually mutation-capable and the user has explicitly approved the plan.
