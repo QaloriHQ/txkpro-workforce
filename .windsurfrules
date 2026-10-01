@@ -1,0 +1,8 @@
+# TXKPRO Workforce AI Governance
+
+Mandatory: read `AGENTS.md` first.
+
+Authoritative protocol:
+`docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
+
+Follow the shared repository preflight, manifest, evidence, status, staging, UAT, and production-authorization rules. Do not create agent-specific shortcuts around them.
