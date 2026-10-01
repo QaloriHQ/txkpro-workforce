@@ -1,0 +1,170 @@
+TXK PRO — ADMIN / INTERNAL MVP
+
+PRIMARY PURPOSE
+===============
+Operate, configure, audit, and support the marketplace.
+
+
+MVP MODULES
+===========
+
+1. ADMIN DASHBOARD
+------------------
+Show:
+- New homeowners
+- New contractors
+- Pending contractor approvals
+- Open service requests
+- Unassigned leads
+- Active jobs
+- Jobs needing attention
+- Open support cases
+- Revenue/payment summary
+- Recent activity
+
+
+2. USER MANAGEMENT
+------------------
+Admin actions:
+- Search users
+- View profiles
+- Change account status
+- Disable/reactivate user
+- View related jobs/requests
+- Add internal notes
+
+
+3. CONTRACTOR MANAGEMENT
+------------------------
+Admin actions:
+- Review applications
+- Approve/reject contractor
+- Verify documents
+- Set contractor status
+- Assign services
+- Configure territories
+- View lead acceptance
+- View jobs
+- View ratings
+- Add risk/support notes
+
+
+4. SERVICE CATALOG
+------------------
+Manage:
+- Categories
+- Subcategories
+- Service questions
+- Required homeowner inputs
+- Required photos/documents
+- Contractor eligibility by category
+- Active/inactive status
+
+
+5. TERRITORY MANAGEMENT
+-----------------------
+Manage:
+- ZIP codes
+- Cities
+- Counties
+- Service regions
+- Contractor coverage
+- Category availability by territory
+
+
+6. SERVICE REQUEST / LEAD MANAGEMENT
+------------------------------------
+Admin can:
+- Search requests
+- View request details
+- Edit/correct request
+- Route to contractor
+- Reassign
+- Close/cancel
+- Flag
+- Add notes
+
+
+7. JOB MANAGEMENT
+-----------------
+Admin can:
+- View job timeline
+- Change job status with audit trail
+- View homeowner/contractor
+- View estimate
+- View schedule
+- View messages
+- View documents
+- Escalate issue
+- Cancel job
+
+
+8. ESTIMATE / INVOICE OVERSIGHT
+-------------------------------
+Admin can:
+- View estimates
+- Compare revisions
+- Identify accepted estimate
+- View invoice/payment status
+- Flag payment issues
+
+
+9. SUPPORT / DISPUTES
+---------------------
+Create internal cases for:
+- No-show
+- Quality complaint
+- Pricing disagreement
+- Cancellation
+- Refund request
+- Contractor conduct
+- Homeowner conduct
+
+Track:
+- Owner
+- Priority
+- Status
+- Resolution
+- Internal notes
+
+
+10. PLATFORM SETTINGS
+---------------------
+Admin configuration:
+- Lead routing rules
+- Job statuses
+- Estimate expiration
+- Cancellation policies
+- Review rules
+- Notification templates
+- Feature flags
+
+
+11. AUDIT LOG
+-------------
+Record:
+- Timestamp
+- User/admin
+- Action
+- Entity type
+- Entity ID
+- Old value
+- New value
+- Source app
+
+
+ADMIN MVP SUCCESS CONDITION
+===========================
+Before building the full Contractor App, an internal TXK Pro user should be able to manually manage the lifecycle of:
+
+Contractor Application
+→ Approval
+→ Service Assignment
+→ Homeowner Request
+→ Contractor Assignment
+→ Estimate
+→ Job
+→ Completion
+→ Review/Issue
+
+Even if some steps are temporarily manual.

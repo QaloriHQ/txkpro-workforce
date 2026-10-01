@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 3,
+  "protocol": {
+    "path": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+    "version": "1.0",
+    "effectiveDate": "2026-09-30",
+    "authoritative": true
+  },
+  "repository": "QaloriHQ/txkpro-workforce",
+  "roadmap": {
+    "ownerType": "user",
+    "owner": "QaloriHQ",
+    "projectNumber": 1,
+    "statusField": "Status",
+    "nextRule": "first Planned candidate in canonical Project order whose automated dependency/Definition-of-Ready gate passes, followed by mandatory same-turn read-only confirmations from authoritative sources; only then may the task be called next eligible",
+    "plannedCandidateRule": "earliest-added open issue with authoritative Project Status = Planned",
+    "nextEligibleCommand": "node scripts/roadmap-next-eligible.mjs --json",
+    "plannedCandidateCommand": "node scripts/roadmap-next-planned.mjs --json",
+    "selectorOutputState": "provisional_until_readonly_confirmations_pass"
+  },
+  "branches": {
+    "staging": "staging",
+    "default": "main",
+    "developDirectlyOnStaging": false
+  },
+  "verification": {
+    "browserStaging": "user_owned_unless_explicitly_requested",
+    "nonBrowserStaging": "agent_authorized_when_protocol_allows",
+    "baselineCommands": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm run build"
+    ]
+  },
+  "production": {
+    "deploymentRequiresExplicitUserAuthorization": true,
+    "migrationsRequireExplicitUserAuthorization": true
+  },
+  "projectTransitions": {
+    "evidenceGated": [
+      "Verification",
+      "Done"
+    ],
+    "workflow": ".github/workflows/protocol-status.yml",
+    "manualIssueClosureDoesNotProveDone": true
+  },
+  "approvalBoundary": {
+    "readOnlyPlanningPreflight": "automatic_no_user_approval_required",
+    "mutation": "explicit_user_approval_required",
+    "production": "separate_explicit_user_authorization_required",
+    "readOnlyConfirmations": "mandatory_same_turn_no_user_approval_required",
+    "eligibilityConfirmation": "must_complete_before_requesting_mutation_approval",
+    "mutationAuthorizedBeforeExplicitApproval": false,
+    "forbiddenPrompt": "Would you like me to gather the confirmation details?"
+  },
+  "connectors": {
+    "primary": "slack",
+    "slack": {
+      "mode": "socket",
+      "ownerAllowlistRequired": true,
+      "workspaceBound": true,
+      "publicWebhookRequired": false
+    },
+    "discord": {
+      "role": "fallback",
+      "enabledByDefault": false
+    },
+    "transportInvariant": "message limits must not reduce or bypass protocol execution"
+  },
+  "outputStateModel": {
+    "automatedGatePassed": "may_be_true_before_approval",
+    "readOnlyConfirmations": "must_be_confirmed_before_next_eligible",
+    "nextEligible": "confirmed_only_after_readonly_confirmations",
+    "mutationAuthorized": "false_until_explicit_owner_approval"
+  },
+  "readOnlyConfirmationGate": {
+    "requiredFor": [
+      "whats_next",
+      "next_eligible"
+    ],
+    "validator": "node scripts/txkpro-confirmation-check.mjs --evidence <path>",
+    "blockedSentinel": "TXKPRO_CONFIRMATIONS_BLOCKED",
+    "clineHooks": [
+      ".cline/hooks/UserPromptSubmit",
+      ".cline/hooks/PreToolUse",
+      ".cline/hooks/PostToolUse"
+    ],
+    "blockedWhilePending": [
+      "attempt_completion",
+      "ask_followup_question",
+      "switch_mode"
+    ],
+    "continueAutomaticallyOnBlockedCandidate": true,
+    "evidenceContract": {
+      "version": "semantic-provenance-v3",
+      "template": ".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json",
+      "validator": "scripts/txkpro-confirmation-check.mjs",
+      "evidenceEntryType": "object",
+      "requiredFields": [
+        "source",
+        "finding",
+        "assertion",
+        "verification"
+      ],
+      "requiresOneOf": [
+        "locator",
+        "checkType"
+      ],
+      "assertion": {
+        "requiredFields": [
+          "subject",
+          "predicate",
+          "values"
+        ],
+        "predicateScopedByConfirmation": true,
+        "genericTextProofMustContainSubjectAndValues": true
+      },
+      "allowedVerificationTypes": [
+        "source_text_match",
+        "env_presence",
+        "git_ref_exists",
+        "github_issue_text_match"
+      ],
+      "rejectPlainStrings": true,
+      "rejectVagueSources": true,
+      "rejectInventedLocators": true,
+      "rejectSemanticExtrapolation": true,
+      "missingSupportAction": "BLOCKED_or_UNRESOLVED",
+      "invalidEvidenceAction": "continue_readonly_gathering_read_template_and_retry",
+      "secretValuesForbidden": true
+    },
+    "successSentinels": [
+      "TXKPRO_CONFIRMATIONS_CONFIRMED",
+      "TXKPRO_PLAN_CONTRACT_CONFIRMED"
+    ],
+    "implementationPlanContract": {
+      "version": "sourced-plan-v1",
+      "required": true,
+      "constrainedKinds": [
+        "api_route",
+        "database_field",
+        "status",
+        "event",
+        "url_pattern",
+        "credential",
+        "owner"
+      ],
+      "allowedBasis": [
+        "SOURCED",
+        "PROPOSED"
+      ],
+      "sourcedRequiresConfirmationEvidenceReference": true,
+      "proposedLabel": "PROPOSED — requires product/technical decision",
+      "finalResponseMustNotAddUnvalidatedImplementationDecisions": true
+    },
+    "runtimeResultContract": {
+      "type": "TXKPRO_CONFIRMATION_VALIDATION_RESULT",
+      "schemaVersion": "runtime-validation-v1",
+      "exactValidatorInvocationRequired": true,
+      "structuredParseRequired": true,
+      "sameIssueTaskIdentityRequired": true,
+      "evidenceDigestRequired": true,
+      "validationIdRequired": true,
+      "persistedFields": [
+        "issue",
+        "taskId",
+        "evidenceContract",
+        "planContract",
+        "confirmationResult",
+        "planResult",
+        "successSentinels",
+        "validatedConfirmations",
+        "validatedImplementationPlan",
+        "validationId",
+        "evidenceDigest",
+        "confirmationsCompletedAt",
+        "ownerFacingResponse"
+      ],
+      "finalPlanningResponse": "exact_validator_derived_ownerFacingResponse"
+    },
+    "machineStateAuthority": {
+      "invariant": "Prose cannot upgrade runtime state.",
+      "selectorPassOnly": "PROVISIONAL",
+      "confirmedStateRequiresStructuredValidatorArtifact": true,
+      "proposedDecisionsRemainProposed": true,
+      "blockedOrUnresolvedCannotBeNarrativelyOverridden": true,
+      "arbitrarySentinelTextIgnored": true
+    }
+  },
+  "agentUsageTelemetry": {
+    "requiredForEveryImplementationRun": true,
+    "issueCommentMarker": "<!-- txkpro-agent-usage:v1 -->",
+    "preRun": {
+      "requiredBeforeMutation": true,
+      "fields": [
+        "runId",
+        "clineTaskId",
+        "estimatedTokens",
+        "expectedRange",
+        "complexity",
+        "warningTokens",
+        "softBudgetTokens",
+        "escalationTokens",
+        "planModel",
+        "actModel"
+      ]
+    },
+    "postRun": {
+      "requiredBeforeCompletion": true,
+      "fields": [
+        "tokensIn",
+        "tokensOut",
+        "totalTokens",
+        "cacheReads",
+        "cacheWrites",
+        "totalCostUsd",
+        "toolCalls",
+        "failedToolCalls",
+        "toolExecutionMs",
+        "estimateVariancePercent",
+        "outcome"
+      ],
+      "tokenAccounting": "tokensIn_plus_tokensOut_cache_reported_separately"
+    },
+    "issueStorage": "single_updated_summary_comment",
+    "rawProviderTelemetryInGitHub": false,
+    "cumulativeIssueTotals": true,
+    "commands": {
+      "estimate": "node scripts/txkpro-agent-usage.mjs estimate",
+      "start": "node scripts/txkpro-agent-usage.mjs start",
+      "observe": "node scripts/txkpro-agent-usage.mjs observe",
+      "finish": "node scripts/txkpro-agent-usage.mjs finish"
+    },
+    "cLineRuntimeEnforcement": {
+      "startOnApprovedNextEligibleRun": true,
+      "observePostToolUse": true,
+      "completionBlockedUntilActualsSynced": true,
+      "cancelAndCompleteHooksFinalizeWhenSupported": true
+    },
+    "budgets": {
+      "warningMultiplier": 1.25,
+      "softMultiplier": 1.5,
+      "escalationMultiplier": 2.25,
+      "escalationDoesNotAutomaticallyAuthorizeScopeReduction": true
+    }
+  },
+  "orchestration": {
+    "version": "chat-orchestrator-cline-executor-v1",
+    "normalWorkflow": "ChatGPT Chat orchestrates_and_reasons -> owner approval -> Cline Act executes -> ChatGPT Chat verifies",
+    "orchestrator": "ChatGPT Chat mode",
+    "executor": "Cline Act mode",
+    "verifier": "ChatGPT Chat mode",
+    "clineMaySelectRoadmapTask": false,
+    "clineMayCreateProductOrTechnicalDecisions": false,
+    "clineMayDeclareRoadmapVerificationComplete": false,
+    "implementationContract": {
+      "type": "TXKPRO_CHAT_IMPLEMENTATION_CONTRACT",
+      "schemaVersion": "chat-orchestrator-v1",
+      "issueCommentMarker": "<!-- txkpro-chat-implementation-contract:v1 -->",
+      "template": ".github/TXKPRO_CHAT_IMPLEMENTATION_CONTRACT_TEMPLATE.json",
+      "resolver": "node scripts/txkpro-chat-contract.mjs resolve --issue <issue> --task-id <Task ID>",
+      "ownerAuthoredCommentRequired": true,
+      "contentHashRequired": true,
+      "preExistingBeforeClineActRequired": true,
+      "unresolvedProposedDecisionsExecutable": false,
+      "allowedDecisionBasis": [
+        "SOURCED",
+        "OWNER_APPROVED"
+      ],
+      "productionDeploymentAuthorizedByContract": false,
+      "productionMigrationAuthorizedByContract": false
+    },
+    "executionResult": {
+      "type": "TXKPRO_CLINE_EXECUTION_RESULT",
+      "schemaVersion": "cline-execution-v1",
+      "template": ".github/TXKPRO_CLINE_EXECUTION_RESULT_TEMPLATE.json",
+      "validator": "node scripts/txkpro-cline-execution-check.mjs --result <path> --contract <path>",
+      "requiredBeforeClineCompletion": true,
+      "changedPathsBoundToContract": true,
+      "requiredVerificationMustPassForImplemented": true,
+      "deviationsForbiddenForImplemented": true,
+      "finalState": "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION"
+    },
+    "legacyClineOrchestration": {
+      "enabledByDefault": false,
+      "optInEnvironmentVariable": "TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION",
+      "purpose": "compatibility_and_emergency_only"
+    }
+  }
+}

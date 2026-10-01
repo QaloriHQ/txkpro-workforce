@@ -1,0 +1,18 @@
+## TXKPRO orchestration boundary
+
+For roadmap implementation, ChatGPT Chat mode owns orchestration/reasoning and post-run verification. Cline Act mode owns code-writing and execution only under a validated pre-existing TXKPRO_CHAT_IMPLEMENTATION_CONTRACT. Do not replace this separation with agent-specific planning or self-certification. See docs/governance/TXKPRO_CHAT_CLINE_ORCHESTRATION.md.
+
+# TXKPRO Workforce AI Governance
+
+Mandatory: read `AGENTS.md` first.
+
+Authoritative protocol:
+`docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
+
+For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Its result is provisional until dependency/Definition-of-Ready and every required read-only confirmation pass. Resolve confirmations automatically in the same planning turn using `semantic-provenance-v3` with typed `assertion {subject,predicate,values}` plus machine-verifiable `verification`; generic proof text must contain the assertion subject and every asserted value. Include `implementationPlan.contract: sourced-plan-v1`; every API route, database field, status, event, URL pattern, credential, and owner must be SOURCED or labeled `PROPOSED — requires product/technical decision`. Read the canonical template/validator first and reject semantic extrapolation. Continue to the next provisional candidate if one fails. Do not ask whether to gather confirmation details. Mutation authorization remains NO until explicit owner approval.
+
+Every implementation run must write its PRE-RUN estimated token/cost budget and POST-RUN actual usage to the GitHub issue with `scripts/txkpro-agent-usage.mjs`; missing telemetry must not be fabricated.
+
+Follow the shared repository preflight, manifest, evidence, status, staging, UAT, and production-authorization rules. Do not create agent-specific shortcuts around them.
+
+Prose cannot upgrade runtime state. Only the exact armed validator invocation's structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` may clear the gate. Use the persisted validator-derived `ownerFacingResponse` exactly and never narratively upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.

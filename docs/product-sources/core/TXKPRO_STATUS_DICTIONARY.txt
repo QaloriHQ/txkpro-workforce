@@ -1,0 +1,177 @@
+TXKPRO™ WORKFORCE
+CANONICAL STATUS DICTIONARY
+Version 1.0 — September 2026
+
+PURPOSE
+Prevent Institution, Employer, Student, and Admin apps from inventing competing labels for the same lifecycle.
+
+1. ONBOARDING_STATUS
+not_started
+in_progress
+pending_review
+complete
+blocked
+cancelled
+
+2. MEMBERSHIP_STATUS
+invited
+pending
+active
+suspended
+revoked
+expired
+
+3. INSTITUTION_STATUS
+pending
+active
+suspended
+inactive
+rejected
+
+4. PROGRAM_STATUS
+draft
+active
+paused
+archived
+
+5. COHORT_STATUS
+planned
+active
+completed
+archived
+
+6. STUDENT_PROFILE_STATUS
+invited
+onboarding
+active
+inactive
+graduated
+archived
+
+7. DISCOVERABILITY_STATUS
+private
+institution_only
+employer_discoverable
+
+8. READINESS_PROVENANCE
+self_attested
+institution_verified
+third_party_verified
+not_verified
+
+9. SKILL_STATUS
+not_started
+self_attested
+in_progress
+ready_for_review
+verified
+needs_practice
+revoked
+
+10. EMPLOYER_APPROVAL_STATUS
+pending
+approved
+suspended
+rejected
+closed
+
+11. REFERRAL_STATUS
+draft
+referred
+delivered
+viewed
+interview_requested
+interview_accepted
+interview_declined
+hired
+closed
+expired
+
+12. INTERVIEW_STATUS
+draft
+sent
+accepted
+declined
+scheduling
+scheduled
+completed
+cancelled
+expired
+no_response
+
+13. PLACEMENT_STATUS
+pending_start
+active
+ended
+unknown
+
+Retention milestone state should remain separate rather than encoding Day 30/60/90 directly into placement status.
+
+14. RETENTION_MILESTONE_STATUS
+pending
+due
+sending
+sent
+responded
+skipped
+failed
+cancelled
+
+15. RETENTION_RESPONSE_SCORE
+1 = going_well
+2 = some_friction
+3 = needs_help
+
+16. RETENTION_CASE_STATUS
+open
+assigned
+contacted
+monitoring
+resolved
+closed_no_response
+cancelled
+
+17. IMPORT_JOB_STATUS
+uploaded
+mapping
+validating
+ready
+processing
+completed
+completed_with_warnings
+failed
+cancelled
+
+18. NOTIFICATION_STATUS
+queued
+sent
+delivered
+failed
+read
+dismissed
+
+19. SMS_CONSENT_STATUS
+unknown
+consented
+opted_out
+revoked
+
+20. AUDIT_RESULT
+success
+denied
+failed
+
+DISPLAY-LABEL RULES
+Internal enum values remain stable even when display language changes.
+Example:
+verified → UI label "Instructor Verified"
+needs_practice → UI label "Needs More Practice"
+
+RULES
+- Never use free-text statuses as canonical workflow state.
+- Add new states through reviewed schema/product changes.
+- UI labels may be friendlier than internal values.
+- Historical states must not be silently rewritten when a new state is introduced.
+- Every state transition with authorization significance must be auditable.
+
+END

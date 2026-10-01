@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://txkpro.com/schemas/protocol-evidence-v1.json",
+  "title": "TXKPRO Protocol Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "issue",
+    "task_id",
+    "target_status",
+    "risk",
+    "dependencies",
+    "implementation",
+    "ci",
+    "deployment",
+    "verification",
+    "blockers",
+    "known_followups",
+    "next_action",
+    "generated_at"
+  ],
+  "properties": {
+    "schema": {
+      "const": "txkpro.protocol.evidence.v1"
+    },
+    "issue": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_status": {
+      "enum": [
+        "Verification",
+        "Done"
+      ]
+    },
+    "risk": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "classification",
+          "evidence"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "classification": {
+            "enum": [
+              "PROCEED",
+              "PROCEED_WITH_EXPLICIT_EXCEPTION"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "complete",
+        "pull_request",
+        "merge_commit",
+        "merged_branch"
+      ],
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "pull_request": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "merge_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "merged_branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ci": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "passed",
+        "url"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "staging_required",
+        "staging_deployed",
+        "revision",
+        "url",
+        "migrations_required",
+        "migrations_applied",
+        "migration_ledger_verified"
+      ],
+      "properties": {
+        "staging_required": {
+          "type": "boolean"
+        },
+        "staging_deployed": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "migrations_required": {
+          "type": "boolean"
+        },
+        "migrations_applied": {
+          "type": "boolean"
+        },
+        "migration_ledger_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automated_required",
+        "automated_passed",
+        "sql_api",
+        "authorization_privacy",
+        "advisor_security",
+        "manual_uat",
+        "acceptance_criteria"
+      ],
+      "properties": {
+        "automated_required": {
+          "type": "boolean"
+        },
+        "automated_passed": {
+          "type": "boolean"
+        },
+        "sql_api": {
+          "enum": [
+            "passed",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "authorization_privacy": {
+          "enum": [
+            "passed",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "advisor_security": {
+          "enum": [
+            "passed",
+            "baseline_findings_only",
+            "not_applicable",
+            "pending"
+          ]
+        },
+        "manual_uat": {
+          "enum": [
+            "remaining",
+            "observation_required",
+            "passed",
+            "not_required"
+          ]
+        },
+        "acceptance_criteria": {
+          "enum": [
+            "met",
+            "pending"
+          ]
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "known_followups": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

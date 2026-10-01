@@ -13,7 +13,15 @@
     "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs",
     "wave8:smoke": "node --env-file-if-exists=.env.local scripts/wave8-smoke.mjs",
     "wave9:smoke": "node --env-file-if-exists=.env.local scripts/wave9-smoke.mjs",
-    "wave10:smoke": "node --env-file-if-exists=.env.local scripts/wave10-smoke.mjs"
+    "wave10:smoke": "node --env-file-if-exists=.env.local scripts/wave10-smoke.mjs",
+    "protocol:context": "node scripts/txkpro-task-context.mjs",
+    "protocol:preflight": "node scripts/txkpro-preflight.mjs",
+    "protocol:wave": "node scripts/txkpro-wave-manifest.mjs",
+    "protocol:check": "node scripts/txkpro-protocol-check.mjs",
+    "protocol:report": "node scripts/txkpro-completion-report.mjs",
+    "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs",
+    "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs",
+    "protocol:usage": "node scripts/txkpro-agent-usage.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
