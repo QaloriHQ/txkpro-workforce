@@ -19,8 +19,9 @@ Cline-specific instructions never override the authoritative protocol.
   - `node scripts/txkpro-preflight.mjs --issue <number>`
 - For wave work, run:
   - `node scripts/txkpro-wave-manifest.mjs --wave <WAVE>`
+- Read-only discovery, task-context lookup, dependency checks, authoritative-source review, Definition-of-Ready evaluation, preflight, and plan construction are automatically authorized. Continue through them without asking the owner for permission.
 - Return the implementation contract, dependencies, risk, verification plan, deployment/UAT requirements, and blockers.
-- Wait for explicit owner approval before mutation. Accepted approval phrases include `Go`, `Approve`, or `/act`.
+- Wait for explicit owner approval only before mutation. Accepted approval phrases include `Go`, `Approve`, or `/act`.
 
 ## ACT MODE
 
@@ -56,11 +57,19 @@ Canonical roadmap:
 
 The Project `Status` field is authoritative.
 
-For "what's next":
+For the earliest Planned candidate only:
 
 `node scripts/roadmap-next-planned.mjs --json`
 
-Never infer Project status solely from issue state or body metadata.
+For "what's next", "next eligible task", or equivalent requests:
+
+`node scripts/roadmap-next-eligible.mjs --json`
+
+The dependency-aware selector automatically runs task context and protocol preflight across Planned candidates. Treat its selected item as only **provisionally eligible** until Cline completes every read-only `agentConfirmationsRequired` item from the returned preflight using the live issue and authoritative repository sources.
+
+If those confirmations fail, continue to the next Planned candidate without asking the user for permission to run more read-only analysis.
+
+Never infer Project status solely from issue state or body metadata. Never call the earliest Planned candidate "next eligible" before dependency and Definition-of-Ready checks pass.
 
 ## VERIFICATION
 

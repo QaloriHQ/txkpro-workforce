@@ -12,7 +12,10 @@
     "owner": "QaloriHQ",
     "projectNumber": 1,
     "statusField": "Status",
-    "nextRule": "earliest-added open issue with authoritative Project Status = Planned"
+    "nextRule": "first Planned candidate in canonical Project order whose task context resolves and automated dependency/Definition-of-Ready preflight passes, followed by required read-only agent confirmations",
+    "plannedCandidateRule": "earliest-added open issue with authoritative Project Status = Planned",
+    "nextEligibleCommand": "node scripts/roadmap-next-eligible.mjs --json",
+    "plannedCandidateCommand": "node scripts/roadmap-next-planned.mjs --json"
   },
   "branches": {
     "staging": "staging",
@@ -39,5 +42,10 @@
     ],
     "workflow": ".github/workflows/protocol-status.yml",
     "manualIssueClosureDoesNotProveDone": true
+  },
+  "approvalBoundary": {
+    "readOnlyPlanningPreflight": "automatic_no_user_approval_required",
+    "mutation": "explicit_user_approval_required",
+    "production": "separate_explicit_user_authorization_required"
   }
 }

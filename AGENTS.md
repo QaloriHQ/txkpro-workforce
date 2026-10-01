@@ -43,13 +43,27 @@ node scripts/repo-latest.mjs read "<path>"
 
 The canonical roadmap is GitHub Projects v2 Project #1 owned by GitHub user `QaloriHQ` for repository `QaloriHQ/txkpro-workforce`.
 
-For the next eligible task:
+For the earliest Planned candidate only:
 
 ```bash
 node scripts/roadmap-next-planned.mjs --json
 ```
 
-Never infer roadmap status from issue state alone.
+That command does **not** prove eligibility.
+
+For "what's next", "next eligible task", or equivalent requests, automatically run the dependency-aware selector:
+
+```bash
+node scripts/roadmap-next-eligible.mjs --json
+```
+
+It evaluates Planned candidates in canonical Project order and automatically runs task context plus protocol preflight until the first candidate passes the automated dependency/Definition-of-Ready gate.
+
+After it returns a candidate, complete every read-only `agentConfirmationsRequired` item from the preflight by reading the issue and applicable authoritative sources. Only after those confirmations pass may the agent call the task **next eligible**.
+
+If the selected candidate fails an agent confirmation, continue to the next Planned candidate rather than asking the user whether to run another read-only check.
+
+Never infer roadmap status from issue state alone. Never call an earliest-Planned candidate "next eligible" before dependency/preflight confirmation.
 
 ## Mandatory preflight
 
@@ -83,6 +97,8 @@ The plan must identify:
 - positive and negative verification;
 - deployment/UAT requirements;
 - blockers or unresolved product decisions.
+
+Read-only discovery, task-context lookup, source review, dependency classification, Definition-of-Ready checks, preflight, and plan construction are automatically authorized and should continue without asking the user for permission.
 
 Explicit user approval is required before mutation when the active agent supports a plan/act boundary.
 

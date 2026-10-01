@@ -5,4 +5,6 @@ Mandatory: read `AGENTS.md` first.
 Authoritative protocol:
 `docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
 
+For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`; earliest Planned is only a candidate until dependency and Definition-of-Ready checks pass. Read-only planning/preflight continues without user approval; mutation still requires approval.
+
 Follow the shared repository preflight, manifest, evidence, status, staging, UAT, and production-authorization rules. Do not create agent-specific shortcuts around them.

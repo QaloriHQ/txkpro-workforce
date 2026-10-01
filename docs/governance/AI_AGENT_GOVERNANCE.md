@@ -24,6 +24,18 @@ Any other coding AI must be instructed to read `AGENTS.md` before acting in the 
 
 ## Shared execution commands
 
+### Select the next eligible roadmap task
+
+```bash
+node scripts/roadmap-next-eligible.mjs --json
+```
+
+This is the canonical "what's next" command. It evaluates Planned candidates in Project order, automatically runs task context and protocol preflight, and skips candidates blocked by declared dependencies or automated Definition-of-Ready failures.
+
+`roadmap-next-planned.mjs` returns only the earliest Planned **candidate**. It must not be described as eligible without the dependency/preflight gate.
+
+After the selector returns a candidate, the agent must complete the returned read-only confirmations from authoritative sources. Read-only discovery/preflight does not require user approval; mutation does.
+
 ### Inspect one issue
 
 ```bash
