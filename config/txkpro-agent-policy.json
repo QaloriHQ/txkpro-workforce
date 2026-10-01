@@ -93,20 +93,32 @@
     ],
     "continueAutomaticallyOnBlockedCandidate": true,
     "evidenceContract": {
-      "version": "structured-provenance-v1",
+      "version": "semantic-provenance-v2",
+      "template": ".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json",
+      "validator": "scripts/txkpro-confirmation-check.mjs",
       "evidenceEntryType": "object",
       "requiredFields": [
         "source",
-        "finding"
+        "finding",
+        "verification"
       ],
       "requiresOneOf": [
         "locator",
         "checkType"
       ],
+      "verificationRequired": true,
+      "allowedVerificationTypes": [
+        "source_text_match",
+        "source_text_absence",
+        "env_presence",
+        "git_ref_exists",
+        "github_issue_text_match"
+      ],
       "rejectPlainStrings": true,
       "rejectVagueSources": true,
+      "rejectInventedLocators": true,
       "requireObservedOrSourcedFinding": true,
-      "invalidEvidenceAction": "continue_readonly_gathering_and_retry",
+      "invalidEvidenceAction": "continue_readonly_gathering_read_template_and_retry",
       "missingSupportAction": "BLOCKED_or_UNRESOLVED",
       "secretValuesForbidden": true
     }

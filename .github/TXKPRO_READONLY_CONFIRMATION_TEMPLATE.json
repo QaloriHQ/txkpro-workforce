@@ -1,7 +1,7 @@
 {
   "issue": 0,
   "taskId": "",
-  "evidenceContract": "structured-provenance-v1",
+  "evidenceContract": "semantic-provenance-v2",
   "confirmations": {
     "rolesAndScopes": {
       "status": "PENDING",
@@ -10,7 +10,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -21,7 +29,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -32,7 +48,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -43,7 +67,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -54,7 +86,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -65,7 +105,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -76,7 +124,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     },
@@ -87,7 +143,15 @@
           "source": "",
           "locator": "",
           "checkType": "",
-          "finding": ""
+          "finding": "",
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
         }
       ]
     }
