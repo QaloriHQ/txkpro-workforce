@@ -389,6 +389,14 @@ jobs:
             exit 9
           fi
 
+          if [[ -n "${GH_COUNT_FILE:-}" ]]; then
+            count=0
+            if [[ -f "$GH_COUNT_FILE" ]]; then
+              count="$(cat "$GH_COUNT_FILE")"
+            fi
+            printf '%s\n' "$((count + 1))" > "$GH_COUNT_FILE"
+          fi
+
           cat <<'JSON'
           {
             "data": {
@@ -475,12 +483,18 @@ jobs:
           SH
           chmod +x "$TEST_BIN/gh"
 
+          GH_COUNT_FILE="$RUNNER_TEMP/eligible-gh-count"
+          printf '0\n' > "$GH_COUNT_FILE"
+
           PATH="$TEST_BIN:$PATH" \
+            GH_COUNT_FILE="$GH_COUNT_FILE" \
             PROJECTS_TOKEN="test-project-token" \
             TXKPRO_ROADMAP_OWNER="QaloriHQ" \
             TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
             TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
             node scripts/roadmap-next-eligible.mjs --json > "$RUNNER_TEMP/eligible-result.json"
+
+          test "$(cat "$GH_COUNT_FILE")" = "1"
 
           RESULT_PATH="$RUNNER_TEMP/eligible-result.json" node - <<'NODE'
           const fs = require("node:fs");
@@ -515,6 +529,24 @@ jobs:
 
           if (result.finalAgentConfirmationRequired !== true) {
             throw new Error("Selector must preserve the final read-only agent confirmation step");
+          }
+
+          if (result.diagnostics?.projectGraphqlCalls !== 1) {
+            throw new Error(
+              `Expected one Project GraphQL snapshot call, received ${result.diagnostics?.projectGraphqlCalls}`,
+            );
+          }
+
+          if (result.diagnostics?.evidenceCommentCalls !== 0) {
+            throw new Error("Fixture should not require Verification evidence comment reads");
+          }
+
+          if (
+            !String(result.diagnostics?.executionModel || "").includes(
+              "no per-candidate task-context/preflight subprocesses",
+            )
+          ) {
+            throw new Error("Selector diagnostics do not confirm the optimized execution model");
           }
           NODE
       - run: npm install

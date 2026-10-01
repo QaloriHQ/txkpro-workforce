@@ -74,7 +74,9 @@ Chat transport constraints must never change execution of the TXKPRO protocol.
 - Prefer Slack threads for long responses.
 - If a connector cannot fit the entire response in one message, split/continue the response when supported or provide a concise decision summary while preserving all required checks internally.
 - Never fall back from `roadmap-next-eligible.mjs` to a simpler candidate-only answer merely because a connector times out or has a message-length limit.
-- A transport timeout is an execution/transport problem, not permission to bypass dependencies or call a Planned candidate eligible.
+- `roadmap-next-eligible.mjs` is optimized to use one canonical Project snapshot (plus only the evidence-comment reads actually required for dependencies already in Verification). Do not emulate it by repeatedly calling task-context/preflight for every candidate.
+- If the selector itself fails or times out, report the exact execution failure and diagnose it. Do **not** substitute `roadmap-next-planned.mjs`, a manual Project guess, or a recommendation that the user check the board.
+- A transport/command timeout is an execution problem, not permission to bypass dependencies or call a Planned candidate eligible.
 
 ## Mandatory preflight
 

@@ -115,6 +115,37 @@ For normal TXKPRO workflow:
 
 The agent should complete read-only roadmap discovery, dependency checks, preflight, and authoritative-source review before presenting the next eligible task and asking for approval to mutate.
 
+## Roadmap selector timeout troubleshooting
+
+The canonical `What's next?` command is:
+
+```bash
+node scripts/roadmap-next-eligible.mjs --json
+```
+
+The selector loads the GitHub Project snapshot once and evaluates Planned candidates in memory. It does not launch task-context and preflight subprocesses for every candidate.
+
+The JSON result includes diagnostics:
+
+```json
+{
+  "projectGraphqlCalls": 1,
+  "evidenceCommentCalls": 0,
+  "evaluatedCandidates": 2,
+  "elapsedMs": 1234
+}
+```
+
+`projectGraphqlCalls` can exceed 1 only when the Project requires pagination. `evidenceCommentCalls` is nonzero only when a declared dependency is in Verification and its structured protocol evidence must be checked.
+
+If Cline reports a timeout:
+1. verify the local script matches the latest `origin/main`;
+2. run the selector directly in the Codespace;
+3. inspect the diagnostics/error;
+4. fix the execution problem.
+
+Do not fall back to the candidate-only selector or manual board inspection as a substitute for eligibility.
+
 ## Security
 
 The connector startup validates the bot token with Slack `auth.test`, derives the actual workspace/team ID, and exports that ID only to the local connector process.

@@ -29,7 +29,8 @@ Cline-specific instructions never override the authoritative protocol.
 - Discord remains an optional fallback only.
 - Never skip or simplify protocol execution because Discord/Slack output is long, truncated, or times out.
 - If a long response must be compressed, compress wording only after completing the required roadmap, dependency, source, Definition-of-Ready, and preflight checks.
-- Do not replace `roadmap-next-eligible.mjs` with `roadmap-next-planned.mjs` as a timeout workaround.
+- The optimized `roadmap-next-eligible.mjs` performs one Project snapshot scan and must be the canonical "what's next" path.
+- If that selector errors or times out, report/diagnose the failure. Do not retry by switching to `roadmap-next-planned.mjs`, manually guessing from the board, or asking the owner to check GitHub.
 
 ## ACT MODE
 
