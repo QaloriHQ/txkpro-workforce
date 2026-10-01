@@ -67,12 +67,20 @@ jobs:
             ".devcontainer/start-slack-agent.sh",
             "utf8",
           );
-          if (/--mode\s+plan\b|(?:^|\s)--plan\b/m.test(slackLauncher)) {
+          const slackConnectCommand = slackLauncher
+            .split(/\r?\n/)
+            .find((line) => line.trim().startsWith("cline connect slack "));
+          if (!slackConnectCommand) {
+            throw new Error("Primary Slack connector command was not found");
+          }
+          if (
+            /--mode\s+plan\b|(?:^|\s)--plan\b/.test(slackConnectCommand)
+          ) {
             throw new Error(
               "Primary Slack connector must not force Cline Plan mode",
             );
           }
-          if (!slackLauncher.includes("--enable-tools")) {
+          if (!slackConnectCommand.includes("--enable-tools")) {
             throw new Error(
               "Primary Slack connector must keep implementation tools enabled",
             );
