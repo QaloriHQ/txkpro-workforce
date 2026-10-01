@@ -27,7 +27,8 @@ try {
 }
 
 const repoRoot = process.cwd();
-const expectedContract = "semantic-provenance-v3";\nconst expectedPlanContract = "sourced-plan-v1";
+const expectedContract = "semantic-provenance-v3";
+const expectedPlanContract = "sourced-plan-v1";
 const requiredConfirmations = [
   "rolesAndScopes",
   "dataOwnership",
