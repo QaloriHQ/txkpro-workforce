@@ -8,6 +8,28 @@ The first release is intentionally not a generic job board. It is built around t
 2. **Job-Ready Filter** — employers filter on job-relevant readiness attestations and work preferences before spending time on an interview.
 3. **30/60/90-Day Retention Pulse** — both sides receive brief SMS check-ins after hire; an issue response creates a human intervention case.
 
+## Implementation governance
+
+All coding agents and contributors must start with `AGENTS.md`.
+
+The authoritative delivery process is:
+
+`docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
+
+The protocol governs roadmap intake, Definition of Ready, dependency/risk gates, implementation contracts, branch/worktree preparation, migrations, testing, staging deployment, manual UAT handoff, GitHub/Project reconciliation, production authorization, and post-release monitoring.
+
+GitHub Project transitions to **Verification** and **Done** are evidence-gated. A closed issue or merged PR alone does not prove Done.
+
+Useful commands:
+
+```bash
+npm run protocol:context -- --issue <number> --json
+npm run protocol:preflight -- --issue <number>
+npm run protocol:wave -- --wave <W12>
+npm run protocol:check -- --evidence <path>
+npm run protocol:report -- --evidence <path>
+```
+
 ## Stack
 
 - Next.js 16.3.3 / React 19 / TypeScript

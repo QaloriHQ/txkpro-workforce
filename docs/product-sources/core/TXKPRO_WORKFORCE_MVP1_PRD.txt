@@ -1,0 +1,659 @@
+TXKPRO™ WORKFORCE PLATFORM
+MVP1 PRODUCT REQUIREMENTS DOCUMENT (PRD)
+
+Version: 1.0
+Date: September 2026
+Primary region: Greater Texarkana
+Primary users: Students, Educators/Instructors, Employers/Contractors, Institution Admins, TXKPRO Admins
+
+1. PURPOSE
+
+TXKPRO Workforce MVP1 is a secure, local, three-sided workforce ecosystem connecting technical students, instructors/institutions, and vetted skilled-trade employers.
+
+The MVP replaces fragmented placement workflows, unverified résumés, and manual referral processes with:
+- a living Verified Skills Matrix;
+- job-readiness and operational-fit signals;
+- instructor referrals and employer discovery;
+- interview and hire status tracking;
+- 30/60/90-day retention monitoring;
+- institution/employer reporting.
+
+The supplied documents are the source of truth. Requirements labeled “MVP1 decision” are implementation decisions derived from those documents rather than direct source statements.
+
+2. SOURCE MAP
+
+[SRC-I] Institutional Pitch Deck Structure & Data-Driven Workforce Strategy
+Source-backed themes: institutional outcomes, secure three-sided matching, Verified Skills Matrix, syllabus alignment, 90-Day Retention Pulse, administrator dashboards, CSV roster import, 12-week cohort pilot, 5-10 employer pilot.
+
+[SRC-E] Employer Pitch Deck Structure & Data-Driven Recruitment Strategy
+Source-backed themes: verified local talent pipelines, employer vetting, verified skills, job-readiness filtering, automated SMS interview requests, placement/hire status, 90-Day Retention Pulse, employer tiers, zero-disruption pilot.
+
+[SRC-D] Daily Student Engagement Blueprint
+Source-backed themes: job posts alone are insufficient for daily engagement; sub-2-minute routine; safety trivia; readiness pulse; streaks; sponsored multipliers; variable notifications; cohort competitions.
+
+[SRC-P] PRO Points System
+Source-backed themes: Professional Readiness & Optimization points; Reliability, Skill Mastery, Community categories; instructor validation; daily caps; periodic resets; employer-visible breakdowns.
+
+[SRC-S] Branded Subdomain Strategy
+Source-backed themes: school/company subdomains on txkpro.com, SSO readiness, tenant branding, wildcard SSL/dynamic routing.
+
+Important: The supplied pitch documents contain external 2026 workforce statistics. MVP1 should display those only after TXKPRO independently validates and approves them. This PRD does not independently verify them.
+
+3. PRODUCT VISION
+
+TXKPRO Workforce becomes the trusted local “lab-to-field” network for skilled trades.
+
+Students prove what they can do without relying on a traditional résumé.
+Educators verify competence and refer talent without manual phone/email placement work.
+Employers identify local, job-ready, instructor-validated talent before students enter the open market.
+Institutions and TXKPRO measure whether placements survive the first 90 days.
+
+MVP1 is not a general ATS, social network, LMS, or national job board.
+
+4. PRODUCT PRINCIPLES
+
+P1. VERIFIED OVER SELF-REPORTED
+Instructor-verified skills must be visibly and logically distinct from student self-attestation.
+
+P2. LOCAL LIQUIDITY OVER NATIONAL SCALE
+Optimize first for dense regional participation.
+
+P3. LOW FRICTION
+Core workflows should take a few clicks/taps and be mobile friendly.
+
+P4. HUMAN HIRING DECISIONS
+The platform may filter and organize candidates using explicit criteria, but MVP1 will not automatically accept, reject, or rank candidates for employers.
+
+P5. DATA MINIMIZATION
+Collect only workforce data needed to support placement and retention.
+
+P6. AUDITABILITY
+Skill verification, referrals, interview requests, hires, approvals, and retention interventions must be traceable.
+
+P7. PILOTABILITY
+Support a controlled 12-week single-cohort pilot before broad rollout.
+
+5. USERS AND JOBS TO BE DONE
+
+5.1 Student
+Job: “Help me prove real capabilities, understand readiness gaps, and connect with local employers without forcing me to create a traditional résumé.”
+
+Needs:
+- mobile-first account/onboarding;
+- trade/program identity;
+- skill checklist;
+- verified-vs-self-attested skill status;
+- job-readiness profile;
+- shift/work preferences;
+- referrals/interview requests;
+- placement status;
+- post-hire check-ins;
+- a lightweight daily reason to return.
+
+5.2 Educator / Instructor
+Job: “Help me verify readiness and connect students to the right employer without manual calls, emails, spreadsheets, or duplicate placement tracking.”
+
+Needs:
+- scoped roster;
+- skill verification;
+- readiness visibility;
+- employer directory;
+- one-click referral;
+- placement and retention visibility;
+- cohort reporting.
+
+5.3 Employer / Contractor
+Job: “Help me quickly find local candidates whose verified skills and operational readiness fit my field requirements.”
+
+Needs:
+- vetted account;
+- hiring profile;
+- program and verified-skill filters;
+- readiness and shift filters;
+- candidate profiles;
+- interview request workflow;
+- hire status;
+- retention visibility.
+
+5.4 Institution Administrator
+Job: “Show whether students are moving from classroom competency to local employment and remaining employed.”
+
+Needs:
+- program/cohort setup;
+- roster import;
+- educator access management;
+- placement/referral dashboards;
+- placement velocity;
+- early retention;
+- exportable reporting.
+
+5.5 TXKPRO Administrator
+Job: “Operate and trust the network.”
+
+Needs:
+- institution/employer approval;
+- role provisioning;
+- tenant/program config;
+- audit visibility;
+- retention case management;
+- messaging health;
+- report controls.
+
+6. MVP1 SCOPE
+
+IN:
+- authentication and role-aware onboarding;
+- institution/program/cohort management;
+- CSV roster import;
+- student workforce/readiness profile;
+- Verified Skills Matrix;
+- educator verification and referral;
+- employer verification and hiring profile;
+- talent discovery/filtering;
+- interview requests;
+- hire/placement tracking;
+- 30/60/90-day Retention Pulse;
+- intervention cases;
+- institution/employer/TXKPRO dashboards;
+- basic placement/retention reporting;
+- audit history;
+- minimal daily engagement card + streak.
+
+OUT:
+- autonomous/AI hiring decisions;
+- opaque candidate ranking;
+- HRIS integrations;
+- enterprise SSO;
+- branded tenant subdomains as a launch dependency;
+- full white labeling;
+- 12-month attrition prediction;
+- in-platform payment processing;
+- PRO Points redemption economy;
+- sponsored sweepstakes/raffles;
+- community forum;
+- cohort competitions;
+- public candidate indexing;
+- LMS functions;
+- raw background/MVR/drug-screen reports;
+- FAFSA/Pell or financial-aid ingestion.
+
+MVP1 decision:
+Build schema hooks for future PRO Points and tenant subdomains, but do not make either necessary to the placement loop.
+
+7. PRIMARY END-TO-END WORKFLOW
+
+1. TXKPRO approves an institution.
+2. Institution creates/activates technical program and cohort.
+3. Educators are scoped to institution/program/cohort.
+4. Students are invited or roster-imported.
+5. Students complete account and readiness profile.
+6. Students self-attest applicable skills.
+7. Instructors verify mastered curriculum/lab skills.
+8. Employer is approved and completes hiring profile.
+9. Employer browses/filters candidates.
+10. Educator refers a student OR employer requests an interview.
+11. Student responds.
+12. Employer records a hire.
+13. Hire date triggers Day 30/60/90 schedule.
+14. Student receives pulse check-ins.
+15. At-risk response creates intervention case.
+16. Institution/TXKPRO dashboards update.
+
+8. FUNCTIONAL REQUIREMENTS
+
+8.1 AUTHENTICATION AND ONBOARDING
+
+FR-AUTH-001 Support email/password authentication for Student, Educator, Employer.
+FR-AUTH-002 Require email verification before workforce access.
+FR-AUTH-003 Support forgot-password and reset-password.
+FR-AUTH-004 Public signup never creates TXKPRO admin.
+FR-AUTH-005 One stable identity may hold multiple server-controlled memberships.
+FR-AUTH-006 Client role selection never grants authorization.
+FR-AUTH-007 Role-specific onboarding for Student, Educator, Employer.
+FR-AUTH-008 Educator access requires institution relationship approval.
+FR-AUTH-009 Employer onboarding creates pending/verification state.
+FR-AUTH-010 Track onboarding: not_started, in_progress, pending_review, complete.
+
+Acceptance:
+- Student can sign up, verify, sign in, onboard, sign out, recover password.
+- Educator cannot access rosters by self-selecting educator.
+- Unapproved employer cannot browse private talent.
+- Admin cannot self-provision.
+
+8.2 INSTITUTION / PROGRAM / COHORT / ROSTER
+
+FR-INS-001 TXKPRO admin can create/approve institutions.
+FR-INS-002 Institution admin can manage trade programs such as HVAC, Welding, Electrical, Mechatronics, or configured equivalents.
+FR-INS-003 Institution admin can create cohorts with dates.
+FR-INS-004 Institution admin can import student roster by CSV.
+FR-INS-005 Import provides preview, validation, duplicate handling, confirmation.
+FR-INS-006 Instructor access is scoped.
+FR-INS-007 Institution sees onboarding and verification progress.
+
+MVP1 decision:
+Do not ingest grades, FAFSA/Pell, financial aid, or unrelated education data.
+
+8.3 STUDENT WORKFORCE PROFILE
+
+FR-STU-001 Profile includes:
+- name;
+- institution/program/cohort;
+- graduation timing;
+- location/service area;
+- contact preferences;
+- work availability;
+- shift preferences;
+- work-type preferences;
+- employer discoverability.
+
+FR-STU-002 Readiness fields include:
+- valid driver’s license status;
+- driving-record self-attestation;
+- willingness to pass background screening;
+- willingness to pass drug screening;
+- preferred work environment/shift.
+
+FR-STU-003 Readiness fields record source, timestamp, and verification status when applicable.
+FR-STU-004 Student controls employer discoverability.
+FR-STU-005 Self-attested data is labeled as such.
+
+MVP1 decision:
+Do not store raw MVR, drug-screen, or background-check reports.
+
+8.4 VERIFIED SKILLS MATRIX
+
+FR-SKL-001 Each program has a configurable skills matrix aligned to curriculum.
+FR-SKL-002 Skill supports name, category/module, description, program, student state, educator verification state, verified_by, verified_at, optional evidence.
+FR-SKL-003 Students may self-attest.
+FR-SKL-004 Authorized instructors verify/revoke.
+FR-SKL-005 Student edits never overwrite verification.
+FR-SKL-006 Verification changes are audited.
+FR-SKL-007 Employer view prioritizes verified skills.
+FR-SKL-008 Institution can configure/import program matrix.
+
+MVP1 decision:
+No opaque aggregate employability score.
+
+8.5 EDUCATOR REFERRAL
+
+FR-REF-001 Authorized educator can refer a student to approved employer.
+FR-REF-002 Referral stores student, educator, institution/program, employer, date, optional note, status.
+FR-REF-003 Student is notified.
+FR-REF-004 Employer sees educator referral provenance.
+FR-REF-005 Lifecycle: referred -> viewed -> interview_requested -> interview_accepted/scheduled -> hired OR closed.
+FR-REF-006 Institution sees referral velocity and status.
+
+8.6 EMPLOYER VERIFICATION / HIRING PROFILE
+
+FR-EMP-001 Collect legal/display name, contact, service area, trades, hiring volume, role types, shift/work needs, driver requirements, screening expectations, target hire timing.
+FR-EMP-002 Employer remains pending until TXKPRO verification.
+FR-EMP-003 Employer users receive organization-scoped access.
+FR-EMP-004 Store plan/entitlement field for Core/Growth/Enterprise.
+FR-EMP-005 No in-platform subscription payment required in MVP1.
+
+8.7 TALENT DISCOVERY / JOB-READY FILTER
+
+FR-MAT-001 Approved employers can browse discoverable students in authorized programs/cohorts.
+FR-MAT-002 Filters:
+- program;
+- graduation timing;
+- verified skill(s);
+- minimum verified skills;
+- driver’s license status;
+- driving-record attestation;
+- screening willingness;
+- work type;
+- shift;
+- location;
+- educator referral status.
+FR-MAT-003 Show provenance of each filterable signal.
+FR-MAT-004 Results are not final hiring recommendations.
+FR-MAT-005 Employers can save candidate shortlist.
+
+MVP1 decision:
+Use deterministic filters only.
+
+8.8 INTERVIEW REQUESTS
+
+FR-INT-001 Employer can request interview from candidate profile.
+FR-INT-002 Store employer, student, role/trade, message, optional scheduling link, timestamp, status.
+FR-INT-003 Send SMS when student has phone + SMS consent.
+FR-INT-004 Email/in-app fallback.
+FR-INT-005 Student can accept, decline, or request follow-up.
+FR-INT-006 Authorized dashboards show outcome.
+
+8.9 PLACEMENT / HIRE
+
+FR-PLC-001 Employer can mark candidate hired.
+FR-PLC-002 Store student, employer, role/trade, hire date, employment type, source referral/match, status.
+FR-PLC-003 Hire triggers retention milestones.
+FR-PLC-004 Institution sees aggregate outcomes.
+FR-PLC-005 Employment-state changes are audited.
+
+8.10 30/60/90-DAY RETENTION PULSE
+
+FR-RET-001 Hire creates Day 30, 60, 90 milestones.
+FR-RET-002 Send student SMS if phone + consent exist.
+FR-RET-003 Simple scale: 1=Going well, 2=Okay/some friction, 3=Need help.
+FR-RET-004 “3” creates intervention case.
+FR-RET-005 Authorized institution/TXKPRO users see case.
+FR-RET-006 Case supports owner, notes, status, resolution.
+FR-RET-007 Dashboard shows milestone completion/risk.
+FR-RET-008 No automated employment action from response.
+
+MVP1 decision:
+Parallel employer pulse may be enabled later or during pilot; student pulse is minimum source-backed requirement.
+
+8.11 REPORTING / DASHBOARDS
+
+Institution dashboard:
+- active students;
+- profile completion;
+- verified-skill activity;
+- referrals;
+- interview requests;
+- hires;
+- placement rate by cohort;
+- referral-to-hire time;
+- Day 30/60/90 completion;
+- retention-risk flags.
+
+Employer dashboard:
+- candidate pipeline;
+- saved candidates;
+- referrals;
+- interview requests;
+- hires;
+- upcoming retention milestones;
+- open retention issues.
+
+TXKPRO dashboard:
+- active institutions/employers/students;
+- approval queues;
+- verification activity;
+- placements;
+- retention cases;
+- messaging failures.
+
+FR-RPT-004 Institution can export a Placement & Retention report.
+FR-RPT-005 Platform-observed metrics must be separated from external benchmark claims.
+
+MVP1 decision:
+“ROI” means measurable placement/retention activity unless institution supplies an approved monetary methodology.
+
+8.12 MINIMAL DAILY ENGAGEMENT
+
+FR-ENG-001 One daily engagement card.
+FR-ENG-002 Item is safety/trade question OR readiness pulse.
+FR-ENG-003 Completion under roughly two minutes.
+FR-ENG-004 Track daily streak.
+FR-ENG-005 Daily activity never changes verified skills or hiring eligibility.
+FR-ENG-006 Institution may disable by cohort.
+
+Deferred:
+- sponsor multipliers;
+- raffles;
+- variable-reward campaigns;
+- cohort leaderboard;
+- community forum;
+- PRO Points.
+
+9. PRO POINTS POSITION
+
+The source proposes Reliability, Skill Mastery, Community points with instructor validation, caps, resets, and employer-visible breakdowns.
+
+MVP1 will NOT launch a full PRO Points system.
+
+MVP1 should:
+- reserve future event categories;
+- keep streaks separate from verified competencies;
+- ensure verification events can later award points without changing verification as source of truth.
+
+Post-MVP:
+- points ledger;
+- category totals;
+- caps;
+- leaderboard;
+- periodic reset;
+- employer-visible breakdown;
+- optional rewards.
+
+10. BRANDED SUBDOMAIN POSITION
+
+Source recommends institution.txkpro.com / employer.txkpro.com style routing.
+
+MVP1:
+- workforce.txkpro.com is the primary app;
+- tenant branding may appear in dashboards;
+- every relevant record carries scope/tenant identifiers.
+
+Post-MVP:
+- {tenant}.txkpro.com;
+- wildcard DNS/SSL;
+- host-based tenant routing;
+- custom branding;
+- SSO routing.
+
+11. EMPLOYER COMMERCIAL ENTITLEMENTS
+
+Source proposes Core, Growth, Enterprise.
+
+MVP1 implements entitlement metadata, not billing.
+
+CORE:
+- approved employer;
+- one configured program/cohort;
+- candidate browse;
+- standard filters;
+- saved candidates;
+- manual interview request.
+
+GROWTH:
+- multi-program access;
+- full Verified Skills Matrix;
+- automated SMS interview notification;
+- 90-Day Retention Pulse;
+- multiple recruiter seats.
+
+ENTERPRISE schema-ready:
+- cross-campus scope;
+- more seats;
+- export controls.
+
+Deferred:
+- SSO;
+- HRIS;
+- API;
+- agentic AI matching;
+- capacity forecasting;
+- 12-month attrition model.
+
+12. NOTIFICATIONS
+
+Channels:
+- in-app;
+- email;
+- SMS with consent.
+
+Priority events:
+- verify email;
+- reset password;
+- referral;
+- interview request;
+- interview response;
+- hire;
+- retention check-in;
+- retention risk;
+- approval decision.
+
+Requirements:
+- delivery status logged;
+- failures visible to admins;
+- SMS opt-out honored;
+- no marketing SMS under transactional consent.
+
+13. DATA / PRIVACY
+
+DPR-001 Candidate profiles private to authorized participants and not publicly indexed.
+DPR-002 Institution access scoped.
+DPR-003 Employer access scoped.
+DPR-004 Self-attested and verified data retain provenance.
+DPR-005 Use minimum necessary readiness representation.
+DPR-006 Audit role changes, approvals, verification, referrals, interviews, hires, retention.
+DPR-007 No FAFSA/Pell/financial-aid ingestion.
+DPR-008 No raw background/drug/MVR reports.
+DPR-009 Exports honor scope.
+
+14. SUCCESS METRICS
+
+Activation:
+- invited-to-activated student rate;
+- profile completion;
+- students with >=1 verified skill;
+- instructor weekly active rate;
+- employer activation.
+
+Pipeline:
+- referrals;
+- referral-to-view;
+- interview requests;
+- interview acceptance;
+- referral-to-hire;
+- time-to-interview;
+- time-to-hire.
+
+Retention:
+- milestone send rate;
+- response rate;
+- at-risk rate;
+- intervention response time;
+- 90-day retained rate where known.
+
+Engagement:
+- daily card completion;
+- DAU/WAU/MAU;
+- median streak.
+
+The supplied documents do not provide validated conversion/adoption targets. Set numerical targets after baseline pilot measurement.
+
+15. 12-WEEK PILOT
+
+Weeks 1-2:
+- choose one cohort;
+- map skills to syllabus;
+- configure institution/program/cohort;
+- provision instructor sandbox;
+- confirm employers;
+- test auth/permissions.
+
+Weeks 3-4:
+- CSV roster import;
+- student activation/readiness;
+- onboard 5-10 employers;
+- employer hiring parameters.
+
+Weeks 5-8:
+- verify skills;
+- issue referrals;
+- employer browse/filter;
+- interview requests;
+- track outcomes.
+
+Weeks 9-12:
+- record hires;
+- first placement dashboard/report;
+- create retention schedules.
+
+Beyond Week 12:
+- Day 30/60/90 continues;
+- retention report updates;
+- pilot retrospective defines MVP1.1.
+
+16. LAUNCH GATES
+
+G1 Identity: public roles work and escalation blocked.
+G2 Tenant isolation: cross-institution/employer access tests pass.
+G3 Skill trust: student cannot overwrite verified state.
+G4 Placement loop: referral -> interview -> hire works.
+G5 Retention: test hire creates milestones and at-risk response creates case.
+G6 Reporting: cohort metrics and export work.
+G7 Messaging: consent and delivery/error logging work.
+G8 Mobile: core student flows work at mobile widths.
+G9 Auditability: trust-critical changes are attributable.
+
+17. RISKS
+
+R1 Low employer liquidity
+Mitigation: 5-10 committed employers in one concentrated pilot.
+
+R2 Instructor workload
+Mitigation: one-click verification aligned to syllabus.
+
+R3 Ambiguous “clean driving record”
+Mitigation: provenance labels; employer performs final eligibility verification.
+
+R4 Gamification distorts employability
+Mitigation: engagement never changes verified skill; defer full points economy.
+
+R5 Data overcollection
+Mitigation: minimum workforce data only.
+
+R6 SMS consent/deliverability
+Mitigation: consent timestamps, opt-out handling, logs, fallback.
+
+R7 Unverified external statistics
+Mitigation: validate before publication.
+
+18. OPEN PRODUCT QUESTIONS
+
+1. Who approves educators: institution admin, TXKPRO admin, or either?
+2. What employer verification is mandatory: EIN, manual review, business license, domain email, or combination?
+3. Which trade/program is first pilot?
+4. Is employer-side Retention Pulse included in MVP1?
+5. Is explicit student approval required before instructor referral?
+6. How long may inactive employers retain historical student access?
+7. Which institution roles may export reports?
+8. Who authors daily safety questions?
+9. What content is allowed in referral notes?
+10. What exact status qualifies as official “placement”?
+
+19. BACKLOG PRIORITY
+
+P0:
+- auth/onboarding;
+- RBAC/tenant scope;
+- institution/program/cohort;
+- CSV import;
+- student/readiness profile;
+- skills matrix;
+- verification;
+- referral;
+- employer verification/profile;
+- candidate filters;
+- interview;
+- hire;
+- retention;
+- cases;
+- dashboards;
+- audit.
+
+P1:
+- saved searches;
+- daily card;
+- streaks;
+- richer exports;
+- seat management;
+- scheduling link.
+
+P2:
+- PRO Points;
+- leaderboards;
+- rewards;
+- community;
+- branded tenant subdomains;
+- SSO;
+- HRIS/API;
+- AI matching;
+- long-term attrition modeling.
+
+END OF PRD

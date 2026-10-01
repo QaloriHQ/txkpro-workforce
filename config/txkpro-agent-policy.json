@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "path": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+    "version": "1.0",
+    "effectiveDate": "2026-09-30",
+    "authoritative": true
+  },
+  "repository": "QaloriHQ/txkpro-workforce",
+  "roadmap": {
+    "ownerType": "user",
+    "owner": "QaloriHQ",
+    "projectNumber": 1,
+    "statusField": "Status",
+    "nextRule": "earliest-added open issue with authoritative Project Status = Planned"
+  },
+  "branches": {
+    "staging": "staging",
+    "default": "main",
+    "developDirectlyOnStaging": false
+  },
+  "verification": {
+    "browserStaging": "user_owned_unless_explicitly_requested",
+    "nonBrowserStaging": "agent_authorized_when_protocol_allows",
+    "baselineCommands": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm run build"
+    ]
+  },
+  "production": {
+    "deploymentRequiresExplicitUserAuthorization": true,
+    "migrationsRequireExplicitUserAuthorization": true
+  },
+  "projectTransitions": {
+    "evidenceGated": [
+      "Verification",
+      "Done"
+    ],
+    "workflow": ".github/workflows/protocol-status.yml",
+    "manualIssueClosureDoesNotProveDone": true
+  }
+}

@@ -478,17 +478,25 @@ jobs:
               const currentStatus = getCurrentFieldValue(item, "Status");
 
               if (normalize(issue.state) === "closed") {
-                await setSingleSelect(item.id, "Status", "Done");
-                const completionDate = String(
-                  issue.closed_at || new Date().toISOString()
-                ).slice(0, 10);
-                await setDate(
-                  item.id,
-                  "Actual completion",
-                  completionDate
-                );
+                if (normalize(currentStatus) === "done") {
+                  const completionDate = String(
+                    issue.closed_at || new Date().toISOString()
+                  ).slice(0, 10);
+                  await setDate(
+                    item.id,
+                    "Actual completion",
+                    completionDate
+                  );
+                } else {
+                  core.warning(
+                    `Issue #${issue.number} is closed but Project Status is "${currentStatus || "(unset)"}". ` +
+                    "Closure alone does not prove Done under the TXKPRO Wave Implementation Protocol; leaving Project Status unchanged."
+                  );
+                }
               } else if (normalize(eventAction) === "reopened") {
-                await setSingleSelect(item.id, "Status", "Planned");
+                if (normalize(currentStatus) === "done") {
+                  await setSingleSelect(item.id, "Status", "Planned");
+                }
                 await clearField(item.id, "Actual completion");
               } else if (
                 !currentStatus ||
@@ -550,9 +558,9 @@ jobs:
               await syncIssue(issue, context.payload.action || "");
             }
 
-            // Full backfill also reconciles existing Project items whose
-            // issue bodies lack roadmap metadata, including pull requests.
-            // Never add unrelated repository items to the Project here.
+            // Do not infer Done from issue closure during a full backfill.
+            // Verification/Done transitions are evidence-gated by
+            // .github/workflows/protocol-status.yml.
             if (
               (context.eventName === "workflow_dispatch" ||
                 context.eventName === "push") &&
@@ -567,16 +575,13 @@ jobs:
                   issue_number: number
                 });
                 if (linked.state !== "closed") continue;
-                if (normalize(getCurrentFieldValue(item, "Status")) === "done") {
-                  continue;
+
+                const status = getCurrentFieldValue(item, "Status");
+                if (normalize(status) !== "done") {
+                  core.warning(
+                    `Closed Project item #${number} remains "${status || "(unset)"}" until valid protocol evidence advances it.`
+                  );
                 }
-                core.info(`Reconciling closed Project item #${number}`);
-                await setSingleSelect(item.id, "Status", "Done");
-                await setDate(
-                  item.id,
-                  "Actual completion",
-                  String(linked.closed_at).slice(0, 10)
-                );
               }
             }
 
