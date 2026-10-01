@@ -62,6 +62,11 @@ source "$HOME/.txkpro-agent-env.sh"
 
 cd "$WORKSPACE_ROOT"
 
+if [[ -d "$WORKSPACE_ROOT/.cline/hooks" ]]; then
+  chmod +x "$WORKSPACE_ROOT"/.cline/hooks/* 2>/dev/null || true
+  echo "[bootstrap] Cline workspace hooks prepared"
+fi
+
 echo "[bootstrap] installing repository dependencies"
 retry 3 npm install
 
