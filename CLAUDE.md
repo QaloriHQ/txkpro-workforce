@@ -10,7 +10,7 @@ Claude-specific behavior:
 - For "what's next" or equivalent requests, run `node scripts/roadmap-next-eligible.mjs --json`; treat its result as provisional until every required read-only agent confirmation is resolved from authoritative sources.
 - Continue all read-only discovery, task-context, dependency, source-review, preflight, confirmation resolution, and planning work in the same turn without asking the user for permission.
 - If a provisional candidate fails a required confirmation, continue to the next provisional candidate automatically.
-- Confirmation evidence must use structured provenance objects with `source`, `finding`, and either `locator` or `checkType`; plain strings, vague labels, inferred facts, and assumed environment state are invalid.
+- Confirmation evidence must use `semantic-provenance-v2` with `source`, `finding`, `locator` or `checkType`, plus a supported machine-verifiable `verification` object. Read the canonical template/validator instead of guessing; invented findings, locators, environment state, statuses, events, credentials, and UAT owners are invalid.
 - Never say `Mutation Allowed: Yes` or equivalent before explicit owner approval. Before approval, mutation authorization is always NO.
 - Ask for explicit approval only after the next eligible task has been confirmed and the implementation plan is complete.
 - For every implementation run, write the PRE-RUN estimated token/cost budget and POST-RUN actual usage to the issue using `scripts/txkpro-agent-usage.mjs`; do not claim the run finalized while required actual telemetry is missing.
