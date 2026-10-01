@@ -24,6 +24,30 @@ jobs:
       - run: node --check scripts/txkpro-protocol-check.mjs
       - run: node --check scripts/txkpro-completion-report.mjs
       - run: node --check scripts/txkpro-project-transition.mjs
+      - name: Syntax check Project sync GitHub Script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/project-sync.yml")
+          lines = path.read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if line.strip() == "script: |")
+          base = len(lines[start]) - len(lines[start].lstrip())
+          block = []
+
+          for line in lines[start + 1:]:
+            indent = len(line) - len(line.lstrip())
+            if line.strip() and indent <= base:
+              break
+            block.append(line)
+
+          nonblank = [line for line in block if line.strip()]
+          strip = min(len(line) - len(line.lstrip()) for line in nonblank)
+          script = "\n".join(line[strip:] if line.strip() else "" for line in block) + "\n"
+          Path("/tmp/project-sync-script.js").write_text(script)
+          PY
+
+          node --check /tmp/project-sync-script.js
       - name: Validate TXKPRO protocol evidence gates
         run: |
           node - <<'NODE'
