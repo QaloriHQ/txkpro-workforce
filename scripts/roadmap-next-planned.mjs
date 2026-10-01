@@ -7,7 +7,10 @@ if (args.has("--help") || args.has("-h")) {
   console.log(`Usage: node scripts/roadmap-next-planned.mjs [--json]
 
 Reads TXKPRO GitHub Project #1 with PROJECTS_TOKEN and returns the earliest-added
-open issue whose authoritative Project Status field is Planned.`);
+open issue whose authoritative Project Status field is Planned.
+
+This command returns a Planned candidate only. It does not prove dependency
+eligibility or Definition of Ready.`);
   process.exit(0);
 }
 
@@ -27,7 +30,9 @@ const projectNumber = Number(
 );
 
 if (!Number.isInteger(projectNumber) || projectNumber <= 0) {
-  console.error("[roadmap] TXKPRO_ROADMAP_PROJECT_NUMBER must be a positive integer.");
+  console.error(
+    "[roadmap] TXKPRO_ROADMAP_PROJECT_NUMBER must be a positive integer.",
+  );
   process.exit(2);
 }
 
@@ -148,7 +153,9 @@ while (true) {
 
   cursor = project.items.pageInfo.endCursor;
   if (!cursor) {
-    console.error("[roadmap] Project pagination reported another page without a cursor.");
+    console.error(
+      "[roadmap] Project pagination reported another page without a cursor.",
+    );
     process.exit(1);
   }
 }
@@ -182,12 +189,14 @@ const candidates = items
       status === "Planned",
   )
   .sort((a, b) => {
-    const itemCreated =
-      String(a.item.createdAt || "").localeCompare(String(b.item.createdAt || ""));
+    const itemCreated = String(a.item.createdAt || "").localeCompare(
+      String(b.item.createdAt || ""),
+    );
     if (itemCreated !== 0) return itemCreated;
 
-    const issueCreated =
-      String(a.issue.createdAt || "").localeCompare(String(b.issue.createdAt || ""));
+    const issueCreated = String(a.issue.createdAt || "").localeCompare(
+      String(b.issue.createdAt || ""),
+    );
     if (issueCreated !== 0) return issueCreated;
 
     return Number(a.issue.number || 0) - Number(b.issue.number || 0);
@@ -212,8 +221,9 @@ const result = {
   projectOwner: owner,
   projectNumber,
   repository,
-  whyNext:
-    "Earliest-added GitHub Project item among open repository issues whose authoritative Project Status field is Planned.",
+  selectionType: "planned_candidate",
+  whyCandidate:
+    "Earliest-added GitHub Project item among open repository issues whose authoritative Project Status field is Planned. Eligibility still requires task context, dependency classification, and protocol preflight.",
 };
 
 if (args.has("--json")) {
@@ -224,6 +234,7 @@ if (args.has("--json")) {
   console.log(`Project item added: ${result.projectItemAddedAt}`);
   console.log(`Issue created: ${result.issueCreatedAt}`);
   console.log(`Dependencies: ${result.dependencies}`);
-  console.log(`Selection type: ${result.selectionType}`);\n  console.log(`Why candidate: ${result.whyCandidate}`);
+  console.log(`Selection type: ${result.selectionType}`);
+  console.log(`Why candidate: ${result.whyCandidate}`);
   console.log(`URL: ${result.url}`);
 }
