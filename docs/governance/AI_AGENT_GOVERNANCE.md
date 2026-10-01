@@ -89,6 +89,21 @@ GitHub Actions uses its own repository secret named `PROJECTS_TOKEN` for Project
 
 Do not expose the Project write credential to coding-agent prompts, logs, issue comments, or client-side code.
 
+## Remote connector policy
+
+Slack is the primary remote Cline transport for TXKPRO Workforce and runs in Socket Mode. Discord is a fallback transport.
+
+Connector constraints never override the Wave Implementation Protocol. A response-size limit, truncation, timeout, or transport error is not permission to:
+- skip dependency evaluation;
+- skip Definition of Ready;
+- skip authoritative-source review;
+- downgrade `roadmap-next-eligible.mjs` to the candidate-only selector;
+- label a Planned candidate eligible without the required checks.
+
+The presentation may be shorter than the internal/read-only work, but protocol execution must remain complete.
+
+Slack access is restricted by workspace/team ID and owner Slack user ID through `.devcontainer/slack-access-hook.sh`.
+
 ## Browser UAT
 
 Browser/signed-in staging validation remains user-owned by default. Coding agents should continue non-browser staging validation and then hand off a precise UAT checklist unless the user explicitly requests browser testing.
