@@ -12,3 +12,5 @@ For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Treat it
 For every implementation run, use `scripts/txkpro-agent-usage.mjs` to record the PRE-RUN estimate in the issue before mutation and POST-RUN actual usage before completion; never invent missing telemetry.
 
 Use the repository's TXKPRO preflight, wave-manifest, protocol-check, and completion-report scripts. Never bypass evidence-gated Verification/Done transitions or the separate production-authorization gate.
+
+Prose cannot upgrade runtime state. Only the exact armed validator invocation's structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` may clear the gate. Use the persisted validator-derived `ownerFacingResponse` exactly and never narratively upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.
