@@ -16,7 +16,8 @@
     "protocol:check": "node scripts/txkpro-protocol-check.mjs",
     "protocol:report": "node scripts/txkpro-completion-report.mjs",
     "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs",
-    "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs"
+    "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs",
+    "protocol:usage": "node scripts/txkpro-agent-usage.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
