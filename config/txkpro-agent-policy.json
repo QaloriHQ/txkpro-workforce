@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "protocol": {
     "path": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
     "version": "1.0",
@@ -152,6 +152,39 @@
       "sourcedRequiresConfirmationEvidenceReference": true,
       "proposedLabel": "PROPOSED — requires product/technical decision",
       "finalResponseMustNotAddUnvalidatedImplementationDecisions": true
+    },
+    "runtimeResultContract": {
+      "type": "TXKPRO_CONFIRMATION_VALIDATION_RESULT",
+      "schemaVersion": "runtime-validation-v1",
+      "exactValidatorInvocationRequired": true,
+      "structuredParseRequired": true,
+      "sameIssueTaskIdentityRequired": true,
+      "evidenceDigestRequired": true,
+      "validationIdRequired": true,
+      "persistedFields": [
+        "issue",
+        "taskId",
+        "evidenceContract",
+        "planContract",
+        "confirmationResult",
+        "planResult",
+        "successSentinels",
+        "validatedConfirmations",
+        "validatedImplementationPlan",
+        "validationId",
+        "evidenceDigest",
+        "confirmationsCompletedAt",
+        "ownerFacingResponse"
+      ],
+      "finalPlanningResponse": "exact_validator_derived_ownerFacingResponse"
+    },
+    "machineStateAuthority": {
+      "invariant": "Prose cannot upgrade runtime state.",
+      "selectorPassOnly": "PROVISIONAL",
+      "confirmedStateRequiresStructuredValidatorArtifact": true,
+      "proposedDecisionsRemainProposed": true,
+      "blockedOrUnresolvedCannotBeNarrativelyOverridden": true,
+      "arbitrarySentinelTextIgnored": true
     }
   },
   "agentUsageTelemetry": {
