@@ -42,6 +42,9 @@ export CLINE_ACT_MAX_TOKENS="16384"
 export TXKPRO_ROADMAP_OWNER="QaloriHQ"
 export TXKPRO_ROADMAP_PROJECT_NUMBER="1"
 export TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce"
+export TXKPRO_CLINE_PRIMARY_CONNECTOR="slack"
+export TXKPRO_ENABLE_DISCORD_BACKUP="false"
+export SLACK_BOT_USERNAME="TXKPRO-Cline"
 export DISCORD_APPLICATION_ID="1554545511946526761"
 export CLINE_CONNECTOR_PORT="8788"
 EOF
@@ -81,6 +84,12 @@ echo "[bootstrap] configuring OpenRouter credentials in Cline"
 cline auth --provider "$CLINE_PROVIDER" --apikey "$OPENROUTER_API_KEY" --modelid "$CLINE_ACT_MODEL" >/dev/null
 
 node "$WORKSPACE_ROOT/.devcontainer/configure-cline.mjs"
+
+if [[ -n "${SLACK_BOT_TOKEN:-}" && -n "${SLACK_APP_TOKEN:-}" && -n "${SLACK_ALLOWED_USER_ID:-}" ]]; then
+  echo "[bootstrap] Slack connector credentials are available"
+else
+  echo "[bootstrap] Slack is the primary connector; add Codespaces secrets SLACK_BOT_TOKEN, SLACK_APP_TOKEN, and SLACK_ALLOWED_USER_ID before switching from Discord fallback" >&2
+fi
 
 if [[ -z "${PROJECTS_TOKEN:-}" ]]; then
   echo "[bootstrap] warning: PROJECTS_TOKEN is not available; GitHub Project #1 roadmap reads will be unavailable" >&2

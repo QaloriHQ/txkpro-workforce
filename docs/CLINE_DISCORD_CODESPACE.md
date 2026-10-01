@@ -1,6 +1,8 @@
 # Headless Cline + Discord in GitHub Codespaces
 
-This repository bootstraps a headless Cline CLI workspace for TXKPRO Workforce and exposes it through the official Cline Discord connector.
+Discord is retained as an optional TXKPRO Cline fallback transport. Slack is now the primary remote connector; see `docs/CLINE_SLACK_CODESPACE.md`.
+
+The Discord launcher remains available at `.devcontainer/start-discord-agent.sh`.
 
 ## Codespaces secrets
 
@@ -151,11 +153,13 @@ If the roadmap helper reports:
 
 add `PROJECTS_TOKEN` to the repository/user Codespaces secrets and restart the Codespace. If GitHub returns `Resource not accessible by integration`, verify that the token has `read:project` access to the user-owned Project #1.
 
-To restart the bridge manually:
+To start Discord explicitly:
 
 ```bash
-bash .devcontainer/start-agent.sh
+bash .devcontainer/start-discord-agent.sh
 ```
+
+`bash .devcontainer/start-agent.sh` now routes to Slack first and uses Discord only when configured as fallback.
 
 To stop it:
 

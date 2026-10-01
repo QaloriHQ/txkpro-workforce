@@ -13,8 +13,71 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/discord-access-hook.sh
+      - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/start-slack-agent.sh .devcontainer/start-discord-agent.sh .devcontainer/slack-access-hook.sh .devcontainer/discord-access-hook.sh
       - run: node --check .devcontainer/configure-cline.mjs
+      - name: Validate Slack connector configuration
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const manifest = JSON.parse(
+            fs.readFileSync("config/slack-cline-app-manifest.json", "utf8"),
+          );
+
+          if (manifest.settings?.socket_mode_enabled !== true) {
+            throw new Error("Slack manifest must enable Socket Mode");
+          }
+
+          const scopes = new Set(manifest.oauth_config?.scopes?.bot || []);
+          for (const scope of [
+            "app_mentions:read",
+            "chat:write",
+            "channels:history",
+            "groups:history",
+            "im:history",
+          ]) {
+            if (!scopes.has(scope)) {
+              throw new Error(`Slack manifest missing required bot scope: ${scope}`);
+            }
+          }
+
+          const events = new Set(
+            manifest.settings?.event_subscriptions?.bot_events || [],
+          );
+          for (const event of [
+            "app_mention",
+            "message.channels",
+            "message.groups",
+            "message.im",
+          ]) {
+            if (!events.has(event)) {
+              throw new Error(`Slack manifest missing required bot event: ${event}`);
+            }
+          }
+
+          const devcontainer = JSON.parse(
+            fs.readFileSync(".devcontainer/devcontainer.json", "utf8"),
+          );
+          if (
+            devcontainer.containerEnv?.TXKPRO_CLINE_PRIMARY_CONNECTOR !== "slack"
+          ) {
+            throw new Error("Slack must be the primary Cline connector");
+          }
+          NODE
+
+          allowed="$(
+            SLACK_ALLOWED_USER_ID="U_OWNER"             SLACK_TEAM_ID="T_OWNER"             bash .devcontainer/slack-access-hook.sh <<'JSON'
+          {"payload":{"actor":{"participantKey":"slack:team:T_OWNER:user:U_OWNER"}}}
+          JSON
+          )"
+          printf '%s' "$allowed" | grep -F '"action":"allow"'
+
+          denied="$(
+            SLACK_ALLOWED_USER_ID="U_OWNER"             SLACK_TEAM_ID="T_OWNER"             bash .devcontainer/slack-access-hook.sh <<'JSON'
+          {"payload":{"actor":{"participantKey":"slack:team:T_OWNER:user:U_OTHER"}}}
+          JSON
+          )"
+          printf '%s' "$denied" | grep -F '"action":"deny"'
+
       - run: node --check scripts/roadmap-next-planned.mjs
       - run: node --check scripts/roadmap-next-eligible.mjs
       - run: node --check scripts/repo-latest.mjs

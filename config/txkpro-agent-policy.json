@@ -47,5 +47,19 @@
     "readOnlyPlanningPreflight": "automatic_no_user_approval_required",
     "mutation": "explicit_user_approval_required",
     "production": "separate_explicit_user_authorization_required"
+  },
+  "connectors": {
+    "primary": "slack",
+    "slack": {
+      "mode": "socket",
+      "ownerAllowlistRequired": true,
+      "workspaceBound": true,
+      "publicWebhookRequired": false
+    },
+    "discord": {
+      "role": "fallback",
+      "enabledByDefault": false
+    },
+    "transportInvariant": "message limits must not reduce or bypass protocol execution"
   }
 }

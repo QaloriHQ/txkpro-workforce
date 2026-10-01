@@ -65,6 +65,17 @@ If the selected candidate fails an agent confirmation, continue to the next Plan
 
 Never infer roadmap status from issue state alone. Never call an earliest-Planned candidate "next eligible" before dependency/preflight confirmation.
 
+## Connector and message-length invariant
+
+Chat transport constraints must never change execution of the TXKPRO protocol.
+
+- Complete required read-only roadmap discovery, dependency checks, source review, Definition of Ready, preflight, and implementation planning even when the active chat surface has a short message limit.
+- Shorten presentation, not protocol execution.
+- Prefer Slack threads for long responses.
+- If a connector cannot fit the entire response in one message, split/continue the response when supported or provide a concise decision summary while preserving all required checks internally.
+- Never fall back from `roadmap-next-eligible.mjs` to a simpler candidate-only answer merely because a connector times out or has a message-length limit.
+- A transport timeout is an execution/transport problem, not permission to bypass dependencies or call a Planned candidate eligible.
+
 ## Mandatory preflight
 
 Before writing code for a roadmap issue:
