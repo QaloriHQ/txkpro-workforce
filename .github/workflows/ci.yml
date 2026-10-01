@@ -88,6 +88,10 @@ jobs:
       - run: node --check scripts/txkpro-protocol-check.mjs
       - run: node --check scripts/txkpro-completion-report.mjs
       - run: node --check scripts/txkpro-project-transition.mjs
+      - run: node --check scripts/txkpro-confirmation-check.mjs
+      - run: node --check .cline/hooks/UserPromptSubmit
+      - run: node --check .cline/hooks/PreToolUse
+      - run: node --check .cline/hooks/PostToolUse
       - name: Syntax check Project sync GitHub Script
         run: |
           python - <<'PY'
@@ -228,6 +232,18 @@ jobs:
           }
           if (overrides["deepseek/deepseek-chat"]?.maxTokens !== 16384) {
             throw new Error("Act model maxTokens override was not persisted");
+          }
+
+          const statePath = path.join(
+            process.env.RUNNER_TEMP,
+            "cline-config-test",
+            ".cline",
+            "data",
+            "globalState.json",
+          );
+          const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+          if (state.hooksEnabled !== true) {
+            throw new Error("Cline workspace hooks were not enabled");
           }
           NODE
       - name: Validate authoritative roadmap selection
@@ -720,6 +736,104 @@ jobs:
             throw new Error("Explicit approval must remain required before mutation");
           }
           NODE
+
+      - name: Validate Cline read-only confirmation gate
+        run: |
+          HOOK_TMP="$RUNNER_TEMP/txkpro-hook-test"
+          mkdir -p "$HOOK_TMP"
+
+          prompt_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/UserPromptSubmit <<'JSON'
+          {"taskId":"task-123","userPromptSubmit":{"prompt":"What's next?"}}
+          JSON
+          )"
+          printf '%s' "$prompt_result" | grep -F 'TXKPRO ROADMAP CONTINUATION GATE'
+
+          blocked_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse <<'JSON'
+          {"taskId":"task-123","preToolUse":{"toolName":"attempt_completion","parameters":{}}}
+          JSON
+          )"
+          printf '%s' "$blocked_result" | grep -F '"cancel":true'
+
+          cat > "$RUNNER_TEMP/confirmations.json" <<'JSON'
+          {
+            "issue": 53,
+            "taskId": "W11-04B",
+            "confirmations": {
+              "rolesAndScopes": {"status":"CONFIRMED","evidence":["role matrix"]},
+              "dataOwnership": {"status":"CONFIRMED","evidence":["data ownership rules"]},
+              "statusesAndEvents": {"status":"CONFIRMED","evidence":["status dictionary"]},
+              "iaAndDesign": {"status":"CONFIRMED","evidence":["UI standard"]},
+              "stagingTargets": {"status":"CONFIRMED","evidence":["staging config"]},
+              "credentials": {"status":"CONFIRMED","evidence":["presence checks only"]},
+              "manualUat": {"status":"CONFIRMED","evidence":["governance manual UAT rule"]},
+              "unresolvedDecisions": {"status":"CONFIRMED","evidence":["issue/source review found none"]}
+            }
+          }
+          JSON
+
+          confirmation_output="$(
+            node scripts/txkpro-confirmation-check.mjs               --evidence "$RUNNER_TEMP/confirmations.json"
+          )"
+          printf '%s' "$confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_CONFIRMED'
+
+          node - "$confirmation_output" > "$RUNNER_TEMP/post-tool-input.json" <<'NODE'
+          const fs = require("node:fs");
+          const output = process.argv[2];
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/post-tool-input.json",
+            JSON.stringify({
+              taskId: "task-123",
+              postToolUse: {
+                toolName: "run_commands",
+                result: output,
+                success: true,
+                executionTimeMs: 1
+              }
+            }),
+          );
+          NODE
+
+          post_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PostToolUse               < "$RUNNER_TEMP/post-tool-input.json"
+          )"
+          printf '%s' "$post_result" | grep -F 'confirmation gate cleared'
+
+          allowed_result="$(
+            TMPDIR="$HOOK_TMP" node .cline/hooks/PreToolUse <<'JSON'
+          {"taskId":"task-123","preToolUse":{"toolName":"attempt_completion","parameters":{}}}
+          JSON
+          )"
+          printf '%s' "$allowed_result" | grep -F '"cancel":false'
+
+          cat > "$RUNNER_TEMP/blocked-confirmations.json" <<'JSON'
+          {
+            "issue": 54,
+            "taskId": "W11-04C",
+            "confirmations": {
+              "rolesAndScopes": {"status":"CONFIRMED","evidence":["role matrix"]},
+              "dataOwnership": {"status":"CONFIRMED","evidence":["data ownership rules"]},
+              "statusesAndEvents": {"status":"CONFIRMED","evidence":["status dictionary"]},
+              "iaAndDesign": {"status":"BLOCKED","evidence":["required IA source unresolved"]},
+              "stagingTargets": {"status":"CONFIRMED","evidence":["staging config"]},
+              "credentials": {"status":"CONFIRMED","evidence":["presence checks only"]},
+              "manualUat": {"status":"CONFIRMED","evidence":["manual UAT rule"]},
+              "unresolvedDecisions": {"status":"CONFIRMED","evidence":["issue/source review"]}
+            }
+          }
+          JSON
+
+          set +e
+          blocked_confirmation_output="$(
+            node scripts/txkpro-confirmation-check.mjs               --evidence "$RUNNER_TEMP/blocked-confirmations.json" 2>&1
+          )"
+          blocked_status=$?
+          set -e
+          test "$blocked_status" -eq 3
+          printf '%s' "$blocked_confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_BLOCKED'
+
+          node -e 'JSON.parse(require("fs").readFileSync(".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json","utf8"))'
 
       - run: npm install
       - run: npm run typecheck
