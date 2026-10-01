@@ -1,0 +1,155 @@
+TXKPRO™ WORKFORCE
+DATA OWNERSHIP, SOURCE-OF-TRUTH & SCOPE RULES
+Version 1.0 — September 2026
+
+PURPOSE
+Define which domain owns each data class, who may change it, and which apps may see it.
+
+GENERAL RULES
+1. Supabase/Postgres is the shared canonical backend.
+2. Apps are role-specific interfaces, not separate systems of record.
+3. Authentication identity is distinct from application roles.
+4. Role + scope determine authorization.
+5. Self-attested data must retain its provenance.
+6. Institution verification must never be overwritten by student edits.
+7. Employer-private hiring notes never become Institution/Student data.
+8. Institution-private educator notes never become Employer data unless explicitly shared.
+9. Collect minimum necessary readiness information.
+10. Raw screening/MVR/drug-test records are out of MVP1 scope.
+
+DATA CLASS: AUTH IDENTITY
+Canonical owner: Supabase Auth
+Writers: Auth system/user auth flows
+Readers: server auth layer; apps receive safe identity context
+Key: auth_user_id UUID
+
+DATA CLASS: APPLICATION USER
+Canonical owner: TXKPRO shared user record
+Writers: trusted server workflows/admin
+Readers: role apps according to policy
+
+DATA CLASS: ROLE MEMBERSHIP
+Canonical owner: shared authorization model
+Writers: authorized Institution/TXKPRO/Employer administration workflows
+Readers: server authorization layer
+Client UI must not grant membership.
+
+DATA CLASS: INSTITUTION / PROGRAM / COHORT
+Canonical owner: Institution domain
+Writers: authorized institution administrators/program leadership
+Readers: Institution; Student own affiliation; Employer permitted cohort metadata; Admin
+
+DATA CLASS: STUDENT PROFILE
+Canonical owner: Student domain with institution-linked fields
+Student may edit: personal/work preferences and allowed contact/profile fields
+Institution may manage: institution/program/cohort linkage and approved workforce fields
+Employer may read: only discoverable/permitted fields
+Admin: policy-authorized operations
+
+DATA CLASS: STUDENT READINESS
+Canonical owner: Student workforce profile
+Self-attested fields: student writes
+Institution-verified fields: authorized institution writes verification/provenance
+Employer: reads permitted fields with source labels
+Never imply self-attestation equals insurance/background clearance.
+
+DATA CLASS: SKILL CATALOG
+Canonical owner: Institution/program domain
+Writers: authorized institution curriculum/workforce roles
+Readers: Student, Employer, Institution, Admin as allowed
+
+DATA CLASS: STUDENT SKILL SELF-ATTESTATION
+Canonical owner: Student skill record
+Writer: Student
+Institution reads for verification queue
+Employer may read only if product policy exposes it and it is labeled self-attested.
+
+DATA CLASS: SKILL VERIFICATION
+Canonical owner: Institution verification record
+Writers: authorized instructor/approver
+Student cannot alter verified_by, verified_at, verified state.
+Employer reads verified state where candidate is visible.
+
+DATA CLASS: EMPLOYER PROFILE
+Canonical owner: Employer domain
+Writers: employer admins/owners; TXKPRO approval fields by TXKPRO
+Institution sees approved partnership/hiring information, not private company operations.
+
+DATA CLASS: HIRING REQUIREMENTS
+Canonical owner: Employer
+Writers: authorized employer users
+Institution may read requirements intentionally shared for referrals.
+Student may see opportunity-level requirements where applicable.
+
+DATA CLASS: REFERRAL
+Canonical owner: Shared placement workflow
+Creator: authorized Institution role
+Employer controls employer-side action state where appropriate.
+Student sees own referral state.
+Institution sees institution referral lifecycle.
+Admin sees operational/audit metadata.
+
+DATA CLASS: INTERVIEW REQUEST
+Canonical owner: Shared hiring workflow
+Creator: authorized Employer
+Student controls own response
+Institution sees outcome for institution-linked student as permitted
+Employer owns employer-side scheduling details
+Private interview evaluation notes remain Employer-only.
+
+DATA CLASS: PLACEMENT
+Canonical owner: Shared outcome record
+Creation/update: authorized Employer or permitted workforce operator
+Institution sees its student's outcome
+Student sees own placement
+Admin sees platform outcome
+Placement creation triggers retention milestones.
+
+DATA CLASS: RETENTION RESPONSE
+Canonical owner: Retention workflow
+Writer: Student response / messaging system
+Institution/Career Services sees intervention-relevant information
+Employer visibility is policy-controlled and must not expose sensitive case notes by default
+Admin sees operational state.
+
+DATA CLASS: RETENTION CASE
+Canonical owner: Institution/TXKPRO intervention workflow
+Writers: authorized Career Services/Admin roles
+Student may receive follow-up but does not edit internal case notes
+Employer receives only explicitly approved information
+
+DATA CLASS: AUDIT EVENT
+Canonical owner: Platform audit subsystem
+Writers: server/system only
+Readers: authorized administrators/analysts
+Immutable in normal UI.
+
+DATA CLASS: REPORTING METRICS
+Canonical owner: derived from canonical domain events/records
+Do not manually store contradictory summary numbers where they can be computed.
+External benchmark statistics must be labeled separately from TXKPRO telemetry.
+
+TENANT ISOLATION RULES
+- Institution membership never grants access to another institution.
+- Employer membership never grants access to another employer.
+- A shared Supabase project is acceptable only with enforceable row/scope authorization.
+- Host/subdomain is not authorization proof.
+- Every object mutation revalidates actor scope server-side.
+
+DATA MINIMIZATION
+MVP1 excludes:
+- FAFSA/Pell/financial-aid data
+- raw academic transcripts unless separately approved
+- raw MVR/driving reports
+- raw background-check reports
+- drug-screen reports
+- medical data
+
+EXPORT RULES
+- Exports re-check role/scope server-side.
+- Export is audited.
+- Analyst access can be aggregate-only.
+- Employer export cannot include Institution-only data.
+- Institution export cannot include Employer-private hiring data.
+
+END
