@@ -19,8 +19,10 @@ Cline-specific instructions never override the authoritative protocol.
   - `node scripts/txkpro-preflight.mjs --issue <number>`
 - For wave work, run:
   - `node scripts/txkpro-wave-manifest.mjs --wave <WAVE>`
-- Read-only discovery, task-context lookup, dependency checks, authoritative-source review, Definition-of-Ready evaluation, preflight, and plan construction are automatically authorized. Continue through them without asking the owner for permission.
-- Return the implementation contract, dependencies, risk, verification plan, deployment/UAT requirements, and blockers.
+- Read-only discovery, task-context lookup, dependency checks, authoritative-source review, Definition-of-Ready evaluation, preflight, required agent confirmations, and plan construction are automatically authorized. Continue through them without asking the owner for permission.
+- Never end with "Would you like me to gather the confirmation details?" or equivalent. Resolve them automatically.
+- Return the confirmed eligibility state, implementation contract, dependencies, risk, verification plan, deployment/UAT requirements, and blockers.
+- Before approval, explicitly state `Mutation authorized: NO`.
 - Wait for explicit owner approval only before mutation. Accepted approval phrases include `Go`, `Approve`, or `/act`.
 
 ## CONNECTOR OUTPUT
@@ -74,11 +76,22 @@ For "what's next", "next eligible task", or equivalent requests:
 
 `node scripts/roadmap-next-eligible.mjs --json`
 
-The dependency-aware selector automatically runs task context and protocol preflight across Planned candidates. Treat its selected item as only **provisionally eligible** until Cline completes every read-only `agentConfirmationsRequired` item from the returned preflight using the live issue and authoritative repository sources.
+The dependency-aware selector returns **provisional candidates** whose automated dependency/Definition-of-Ready gate passed. It does not authorize mutation and does not by itself prove full eligibility.
 
-If those confirmations fail, continue to the next Planned candidate without asking the user for permission to run more read-only analysis.
+Cline MUST immediately resolve every returned `agentConfirmationsRequired` item in the same Plan-mode turn using the live issue, authoritative repository sources, repository configuration, and available non-secret environment state. Do not ask the owner whether Cline should gather those confirmation details.
 
-Never infer Project status solely from issue state or body metadata. Never call the earliest Planned candidate "next eligible" before dependency and Definition-of-Ready checks pass.
+If a provisional candidate fails or cannot resolve a required confirmation, mark that confirmation blocked/unresolved and continue automatically to the next provisional candidate returned by the selector.
+
+Only after all read-only confirmations pass may Cline say **next eligible task confirmed**.
+
+Until the owner explicitly approves mutation:
+- Automated Definition of Ready may be PASS.
+- Read-only confirmations may be CONFIRMED.
+- Mutation authorized must be NO.
+
+Never output "Mutation Allowed: Yes" or equivalent based only on automated preflight.
+
+Never infer Project status solely from issue state or body metadata. Never call the earliest Planned or automated-gate-only candidate "next eligible" before all read-only confirmations pass.
 
 ## VERIFICATION
 
