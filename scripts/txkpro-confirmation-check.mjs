@@ -364,15 +364,18 @@ function verifyEvidenceEntry(key, entry, index) {
     }
 
     const sourceText = fs.readFileSync(sourcePath, "utf8");
+    const normalizedSourceText = sourceText.replace(/\r\n/g, "\n");
+    const normalizedNeedle = needle.replace(/\r\n/g, "\n");
     const locator = textValue(entry.locator);
-    if (locator && !sourceText.includes(locator)) {
+    const normalizedLocator = locator.replace(/\r\n/g, "\n");
+    if (normalizedLocator && !normalizedSourceText.includes(normalizedLocator)) {
       return [
         prefix +
           ".locator was not found in the cited source; do not invent section names",
       ];
     }
 
-    if (!sourceText.includes(needle)) {
+    if (!normalizedSourceText.includes(normalizedNeedle)) {
       return [
         prefix +
           ".verification.needle was not found in the cited source; the finding is not machine-grounded",
