@@ -157,15 +157,20 @@ Before Cline may ask a follow-up question or attempt task completion for a next-
 TXKPRO_CONFIRMATIONS_CONFIRMED
 ```
 
-The temporary evidence JSON must include all eight required confirmations with:
+The temporary evidence JSON must use `evidenceContract: "semantic-provenance-v2"` and include all eight required confirmations with:
 - `status: "CONFIRMED"`;
 - the selected issue number and Task ID;
-- at least one **structured provenance object** for each confirmation;
-- `source`: the specific authoritative file, GitHub issue/project reference, URL, repository/config source, or named live-state check;
+- at least one machine-verifiable provenance object for each confirmation;
+- `source`: the specific authoritative repository file, live GitHub issue reference, or named live-state check;
 - `finding`: the concrete fact actually supported or observed;
-- either `locator` (section, heading, line/range, field, route, config key, etc.) or `checkType` for a live-state/environment check.
+- either `locator` (section, heading, field, route, config key, etc.) or `checkType`;
+- `verification`: a supported executable proof:
+  - `source_text_match` / `source_text_absence` with `needle`;
+  - `env_presence` with an environment-variable `name`;
+  - `git_ref_exists` with an explicit Git ref;
+  - `github_issue_text_match` with issue/repository/needle.
 
-Plain evidence strings and vague labels such as `"role matrix"`, `"staging config"`, `"presence checks only"`, or `"issue/source review"` are invalid. A plausible statement is not confirmation. The agent must actually inspect the cited source or execute the named non-secret check. If the source does not establish the claim, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
+Before writing evidence, read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; do not guess the schema. Plain strings, vague labels, invented locators, unsupported findings, assumed environment/credential state, and fabricated statuses/events/UAT owners are invalid. A plausible statement is not confirmation. If the cited source or executable check does not establish the fact, use `BLOCKED` or `UNRESOLVED`; never manufacture a positive confirmation.
 
 If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CONFIRMATIONS_BLOCKED`; the agent must continue automatically to the next provisional candidate and keep mutation authorization at NO.
 
