@@ -242,23 +242,34 @@ If the task fails this gate:
 
 7.1 Read-only confirmation provenance standard
 
-A read-only confirmation is valid only when its evidence is traceable to an authoritative source or an actual non-secret live-state check.
+A read-only confirmation is valid only when its evidence is both traceable and machine-verifiable against an authoritative repository source, live GitHub issue, or actual non-secret live-state check.
 
-Every evidence entry must be a structured object containing:
+The evidence document must use `evidenceContract: "semantic-provenance-v2"`. Before creating it, the agent must read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; schema guessing is not allowed.
 
-- `source`: a specific authoritative artifact or named check, not a generic label.
-- `finding`: the concrete fact observed or supported by that source.
-- Either `locator`: section, heading, line/range, issue field, route, config key, or equivalent location inside the source; or `checkType`: the exact live-state/environment check that was executed.
+Every evidence entry must contain:
+
+- `source`: a specific authoritative repository path, GitHub issue identifier, or named live-state check.
+- `finding`: the concrete fact observed or supported.
+- Either `locator`: section, heading, field, route, config key, or equivalent source location; or `checkType`: the exact live-state/environment check.
+- `verification`: executable proof using one supported type:
+  - `source_text_match`: verify an exact `needle` exists in the cited repository file.
+  - `source_text_absence`: verify an exact `needle` does not exist in the cited repository file.
+  - `env_presence`: verify a named environment variable exists without printing its value.
+  - `git_ref_exists`: verify an explicit `refs/heads`, `refs/remotes`, or `refs/tags` ref exists.
+  - `github_issue_text_match`: verify an exact `needle` exists in the live GitHub issue title/body/comments.
 
 Rules:
 
+- The validator must execute the verification rather than trusting the agent's prose.
+- A source path must exist and remain inside the repository.
+- A file locator supplied by the agent must actually exist in that file.
 - Do not convert a plausible interpretation into `CONFIRMED`.
-- Do not claim an environment, branch, staging target, or credential is available unless the relevant non-secret state/presence check was actually performed.
+- Do not invent statuses, events, roles, fields, routes, credentials, environment names, or UAT owners when the source does not define them.
+- Do not claim an environment, branch, staging target, or credential is available unless the relevant non-secret check succeeds.
 - Do not print secret values; credential evidence proves presence/configuration only.
-- Plain evidence strings and generic labels such as "role matrix", "status dictionary", "UI standard", "staging config", "presence checks only", or "issue/source review" are invalid.
-- If the source is missing, contradictory, or does not directly establish the needed fact, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
-- An `INVALID` evidence document is not a blocked product candidate by itself; the agent must continue read-only source gathering and retry validation.
-- Only a validator result of `TXKPRO_CONFIRMATIONS_CONFIRMED` permits the agent to call the task next eligible.
+- If the source is missing, contradictory, or does not establish the needed fact, classify the confirmation as `UNRESOLVED` or `BLOCKED`.
+- An `INVALID` evidence document is not itself a blocked product candidate; the agent must read the validator error, continue read-only source gathering, and retry without asking the owner.
+- Only `TXKPRO_CONFIRMATIONS_CONFIRMED` permits the agent to call the task next eligible.
 
 ======================================================================
 8. PHASE 2 — WAVE EXECUTION MANIFEST
