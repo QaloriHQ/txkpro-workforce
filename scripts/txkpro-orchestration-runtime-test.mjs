@@ -30,6 +30,34 @@ const slackBindingsPath = path.join(
 );
 fs.mkdirSync(path.dirname(slackBindingsPath), { recursive: true });
 
+const clineUsagePath = path.join(
+  clineDataDir,
+  "sessions",
+  "sessions.index.json",
+);
+fs.mkdirSync(path.dirname(clineUsagePath), { recursive: true });
+fs.writeFileSync(
+  clineUsagePath,
+  JSON.stringify(
+    {
+      sessions: {
+        "cline-act-1": {
+          id: "cline-act-1",
+          tokensIn: 1200,
+          tokensOut: 300,
+          cacheReads: 100,
+          cacheWrites: 0,
+          totalCost: 0.0015,
+          modelId: "deepseek/deepseek-chat",
+          ts: Date.now(),
+        },
+      },
+    },
+    null,
+    2,
+  ),
+);
+
 function buildContract() {
   const value = {
     type: runtime.CHAT_CONTRACT_TYPE,
