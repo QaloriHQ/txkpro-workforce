@@ -62,7 +62,7 @@ On Codespace start:
 
 1. `.devcontainer/start-agent.sh` checks whether Slack credentials are available.
 2. If available, it starts the Slack connector.
-3. `start-slack-agent.sh` calls Slack `auth.test`, resolves the workspace ID, refreshes Cline configuration, refreshes `origin/main`, and starts Cline in Act mode with tools enabled. ChatGPT contracts and workspace hooks remain the mutation boundary.
+3. `start-slack-agent.sh` calls Slack `auth.test`, resolves the workspace ID, refreshes Cline configuration, refreshes `origin/main`, and atomically restarts the hub-supervised Slack connector in Act mode with tools enabled. ChatGPT contracts and workspace hooks remain the mutation boundary.
 4. `slack-access-hook.sh` accepts only the configured Slack user in the resolved workspace.
 5. If Slack is not configured but the existing Discord credentials are available, the router temporarily falls back to Discord and prints a warning.
 6. Discord can also be enabled as a backup by setting `TXKPRO_ENABLE_DISCORD_BACKUP=true`.
@@ -81,11 +81,19 @@ Slack-only:
 bash .devcontainer/start-slack-agent.sh
 ```
 
+Restart Slack atomically:
+
+```bash
+cline connect --restart slack
+```
+
 Stop Slack:
 
 ```bash
-cline connect slack --stop
+cline connect --stop slack
 ```
+
+Cline connector control flags must precede the channel name.
 
 ## Verify
 
