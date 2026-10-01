@@ -178,6 +178,12 @@ If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CON
 
 The runtime hook gate blocks premature `attempt_completion`, `ask_followup_question`, and mode switching while confirmation evidence is pending.
 
+### Machine-state authority
+
+**Prose cannot upgrade runtime state.** The selector can only create a provisional candidate. `CONFIRMED_AWAITING_APPROVAL` may be written only from a parseable `TXKPRO_CONFIRMATION_VALIDATION_RESULT` emitted by the exact armed validator invocation, with matching issue/Task ID, `semantic-provenance-v3`, `sourced-plan-v1`, both success sentinels, a valid validation ID/evidence digest, all eight confirmation audits, and the validated plan. Arbitrary output that merely contains sentinel strings is ignored.
+
+After the gate clears, the owner-facing planning response is a deterministic runtime artifact. Cline must submit exactly the persisted `ownerFacingResponse`; it may not add, remove, rename, or upgrade API routes, database fields, statuses, events, URL structures, credentials, owners, or other implementation decisions. `PROPOSED — requires product/technical decision`, `BLOCKED`, and `UNRESOLVED` are machine states and cannot be converted by narrative prose.
+
 ## Required "what's next" response contract
 
 After all read-only confirmation work is complete, respond using this state model:
