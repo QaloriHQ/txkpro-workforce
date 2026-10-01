@@ -4,14 +4,17 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "forwardPorts": [3000, 8788],
+  "forwardPorts": [
+    3000,
+    8788
+  ],
   "portsAttributes": {
     "3000": {
       "label": "TXKPRO Workforce",
       "onAutoForward": "openPreview"
     },
     "8788": {
-      "label": "Cline Discord Bridge",
+      "label": "Cline Discord/Webhook Fallback",
       "onAutoForward": "silent"
     }
   },
@@ -26,7 +29,10 @@
     "TXKPRO_ROADMAP_PROJECT_NUMBER": "1",
     "TXKPRO_ROADMAP_REPO": "QaloriHQ/txkpro-workforce",
     "DISCORD_APPLICATION_ID": "1554545511946526761",
-    "CLINE_CONNECTOR_PORT": "8788"
+    "CLINE_CONNECTOR_PORT": "8788",
+    "TXKPRO_CLINE_PRIMARY_CONNECTOR": "slack",
+    "TXKPRO_ENABLE_DISCORD_BACKUP": "false",
+    "SLACK_BOT_USERNAME": "TXKPRO-Cline"
   },
   "postCreateCommand": "bash .devcontainer/bootstrap-agent.sh",
   "postStartCommand": "bash .devcontainer/start-agent.sh",
