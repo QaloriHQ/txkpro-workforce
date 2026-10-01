@@ -27,7 +27,7 @@ try {
 }
 
 const repoRoot = process.cwd();
-const expectedContract = "semantic-provenance-v2";
+const expectedContract = "semantic-provenance-v3";\nconst expectedPlanContract = "sourced-plan-v1";
 const requiredConfirmations = [
   "rolesAndScopes",
   "dataOwnership",
@@ -40,12 +40,41 @@ const requiredConfirmations = [
 ];
 
 const allowedStatuses = new Set(["CONFIRMED", "BLOCKED", "UNRESOLVED"]);
+
+const allowedPredicates = {
+  rolesAndScopes: new Set(["role_defined", "scope_defined", "capability_defined"]),
+  dataOwnership: new Set(["data_class_owner", "writer_defined", "reader_defined"]),
+  statusesAndEvents: new Set(["status_family_defined", "event_defined", "transition_defined"]),
+  iaAndDesign: new Set(["ui_authority_defined", "ia_requirement_defined", "route_pattern_defined"]),
+  stagingTargets: new Set(["git_ref_exists", "staging_target_defined"]),
+  credentials: new Set(["credential_present"]),
+  manualUat: new Set(["uat_owner_defined", "uat_requirement_defined"]),
+  unresolvedDecisions: new Set(["decision_resolved", "blocker_state_defined"]),
+};
+
 const allowedVerificationTypes = new Set([
   "source_text_match",
-  "source_text_absence",
   "env_presence",
   "git_ref_exists",
   "github_issue_text_match",
+]);
+
+const constrainedPlanKinds = new Set([
+  "api_route",
+  "database_field",
+  "status",
+  "event",
+  "url_pattern",
+  "credential",
+  "owner",
+]);
+
+const allowedPlanKinds = new Set([
+  ...constrainedPlanKinds,
+  "architecture",
+  "test_requirement",
+  "ui_surface",
+  "migration",
 ]);
 
 const vagueSourceValues = new Set(
@@ -70,6 +99,59 @@ const vagueSourceValues = new Set(
 
 function textValue(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalized(value) {
+  return textValue(value).toLowerCase();
+}
+
+function assertionValues(assertion) {
+  if (Array.isArray(assertion?.values)) {
+    return assertion.values.map(textValue).filter(Boolean);
+  }
+  const single = textValue(assertion?.value);
+  return single ? [single] : [];
+}
+
+function claimTerms(entry) {
+  return [
+    textValue(entry?.assertion?.subject),
+    ...assertionValues(entry?.assertion),
+  ].filter(Boolean);
+}
+
+function textContainsAllClaimTerms(text, entry) {
+  const haystack = String(text || "").toLowerCase();
+  return claimTerms(entry).every((term) => haystack.includes(term.toLowerCase()));
+}
+
+function validateAssertion(key, entry, prefix) {
+  const assertion = entry?.assertion;
+  if (!assertion || typeof assertion !== "object" || Array.isArray(assertion)) {
+    return [prefix + ".assertion object is required"];
+  }
+
+  const errors = [];
+  const subject = textValue(assertion.subject);
+  const predicate = textValue(assertion.predicate);
+  const values = assertionValues(assertion);
+
+  if (!subject) errors.push(prefix + ".assertion.subject is required");
+  if (!predicate) {
+    errors.push(prefix + ".assertion.predicate is required");
+  } else if (!allowedPredicates[key]?.has(predicate)) {
+    errors.push(
+      prefix +
+        ".assertion.predicate is not allowed for " +
+        key +
+        "; allowed: " +
+        [...(allowedPredicates[key] || [])].join(", "),
+    );
+  }
+  if (values.length === 0) {
+    errors.push(prefix + ".assertion.values must contain at least one value");
+  }
+  return errors;
 }
 
 function sourceLooksSpecific(source) {
@@ -170,7 +252,7 @@ function verifyEvidenceEntry(key, entry, index) {
     ];
   }
 
-  if (type === "source_text_match" || type === "source_text_absence") {
+  if (type === "source_text_match") {
     const source = textValue(entry.source);
     const sourcePath = resolveRepoSource(source);
     const needle = textValue(verification.needle);
@@ -194,17 +276,16 @@ function verifyEvidenceEntry(key, entry, index) {
       ];
     }
 
-    const contains = sourceText.includes(needle);
-    if (type === "source_text_match" && !contains) {
+    if (!sourceText.includes(needle)) {
       return [
         prefix +
           ".verification.needle was not found in the cited source; the finding is not machine-grounded",
       ];
     }
-    if (type === "source_text_absence" && contains) {
+    if (!textContainsAllClaimTerms(needle, entry)) {
       return [
         prefix +
-          ".verification.needle is present in the cited source; the claimed absence is false",
+          ".verification.needle must contain the assertion subject and every asserted value; unrelated source text cannot prove the claim",
       ];
     }
 
@@ -212,11 +293,24 @@ function verifyEvidenceEntry(key, entry, index) {
   }
 
   if (type === "env_presence") {
+    if (key !== "credentials" || textValue(entry?.assertion?.predicate) !== "credential_present") {
+      return [prefix + ".verification env_presence only proves credentials.credential_present"];
+    }
     const name = textValue(verification.name);
     if (!name || !/^[A-Z][A-Z0-9_]*$/.test(name)) {
       return [
         prefix +
           ".verification.name must be a valid uppercase environment-variable name",
+      ];
+    }
+    const asserted = [
+      textValue(entry?.assertion?.subject),
+      ...assertionValues(entry?.assertion),
+    ].map(normalized);
+    if (!asserted.includes(normalized(name))) {
+      return [
+        prefix +
+          ".verification.name must match the credential asserted in subject/values",
       ];
     }
     if (!String(process.env[name] || "").trim()) {
@@ -231,11 +325,24 @@ function verifyEvidenceEntry(key, entry, index) {
   }
 
   if (type === "git_ref_exists") {
+    if (key !== "stagingTargets" || textValue(entry?.assertion?.predicate) !== "git_ref_exists") {
+      return [prefix + ".verification git_ref_exists only proves stagingTargets.git_ref_exists"];
+    }
     const ref = textValue(verification.ref);
     if (!ref || !/^refs\/(heads|remotes|tags)\/[A-Za-z0-9._\/-]+$/.test(ref)) {
       return [
         prefix +
           ".verification.ref must be an explicit refs/heads, refs/remotes, or refs/tags ref",
+      ];
+    }
+    const asserted = [
+      textValue(entry?.assertion?.subject),
+      ...assertionValues(entry?.assertion),
+    ].map(normalized);
+    if (!asserted.includes(normalized(ref))) {
+      return [
+        prefix +
+          ".verification.ref must match the Git ref asserted in subject/values",
       ];
     }
     const result = runGit(["show-ref", "--verify", "--quiet", ref]);
@@ -246,6 +353,15 @@ function verifyEvidenceEntry(key, entry, index) {
   }
 
   if (type === "github_issue_text_match") {
+    if (
+      key !== "unresolvedDecisions" ||
+      textValue(entry?.assertion?.predicate) !== "decision_resolved"
+    ) {
+      return [
+        prefix +
+          ".verification github_issue_text_match only proves unresolvedDecisions.decision_resolved",
+      ];
+    }
     const issueNumber = Number(verification.issue || evidence.issue);
     const repository =
       textValue(verification.repository) || "QaloriHQ/txkpro-workforce";
@@ -274,6 +390,12 @@ function verifyEvidenceEntry(key, entry, index) {
           issueNumber,
       ];
     }
+    if (!textContainsAllClaimTerms(needle, entry)) {
+      return [
+        prefix +
+          ".verification.needle must contain the assertion subject and every asserted value; unrelated issue text cannot prove the decision",
+      ];
+    }
     return [];
   }
 
@@ -286,7 +408,7 @@ function validateEvidenceEntry(key, entry, index) {
   if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
     return [
       prefix +
-        " must be an object with source, finding, locator/checkType, and verification",
+        " must be an object with source, finding, assertion, locator/checkType, and verification",
     ];
   }
 
@@ -323,7 +445,95 @@ function validateEvidenceEntry(key, entry, index) {
     errors.push(prefix + ".finding must state the concrete result that was observed");
   }
 
+  errors.push(...validateAssertion(key, entry, prefix));
   errors.push(...verifyEvidenceEntry(key, entry, index));
+  return errors;
+}
+
+function evidenceMentionsDecision(entry, decisionName) {
+  const needle = normalized(decisionName);
+  if (!needle) return false;
+  const terms = [
+    textValue(entry?.assertion?.subject),
+    ...assertionValues(entry?.assertion),
+    textValue(entry?.finding),
+  ].filter(Boolean);
+  return terms.some((term) => {
+    const candidate = normalized(term);
+    return candidate.includes(needle) || needle.includes(candidate);
+  });
+}
+
+function validateImplementationPlan() {
+  const errors = [];
+  const plan = evidence.implementationPlan;
+
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
+    return ["implementationPlan object is required"];
+  }
+  if (plan.contract !== expectedPlanContract) {
+    errors.push("implementationPlan.contract must equal " + expectedPlanContract);
+  }
+  if (!Array.isArray(plan.decisions) || plan.decisions.length === 0) {
+    errors.push("implementationPlan.decisions must contain at least one typed decision");
+    return errors;
+  }
+
+  plan.decisions.forEach((decision, index) => {
+    const prefix = "implementationPlan.decisions[" + index + "]";
+    if (!decision || typeof decision !== "object" || Array.isArray(decision)) {
+      errors.push(prefix + " must be an object");
+      return;
+    }
+
+    const kind = textValue(decision.kind);
+    const name = textValue(decision.name);
+    const basis = textValue(decision.basis).toUpperCase();
+    const label = textValue(decision.label);
+
+    if (!allowedPlanKinds.has(kind)) {
+      errors.push(prefix + ".kind is invalid; allowed: " + [...allowedPlanKinds].join(", "));
+    }
+    if (!name) errors.push(prefix + ".name is required");
+    if (!["SOURCED", "PROPOSED"].includes(basis)) {
+      errors.push(prefix + ".basis must be SOURCED or PROPOSED");
+      return;
+    }
+
+    if (basis === "PROPOSED") {
+      if (label !== "PROPOSED — requires product/technical decision") {
+        errors.push(
+          prefix +
+            ".label must equal PROPOSED — requires product/technical decision when basis is PROPOSED",
+        );
+      }
+      return;
+    }
+
+    const confirmation = textValue(decision.confirmation);
+    const evidenceIndex = Number(decision.evidenceIndex);
+    if (!requiredConfirmations.includes(confirmation)) {
+      errors.push(prefix + ".confirmation must name one of the eight confirmation keys");
+      return;
+    }
+    if (!Number.isInteger(evidenceIndex) || evidenceIndex < 0) {
+      errors.push(prefix + ".evidenceIndex must be a non-negative integer");
+      return;
+    }
+
+    const referenced = evidence.confirmations?.[confirmation]?.evidence?.[evidenceIndex];
+    if (!referenced) {
+      errors.push(prefix + " references missing confirmation evidence");
+      return;
+    }
+    if (!evidenceMentionsDecision(referenced, name)) {
+      errors.push(
+        prefix +
+          " is marked SOURCED but referenced evidence does not mention the decision name; use PROPOSED instead of inventing implementation detail",
+      );
+    }
+  });
+
   return errors;
 }
 
@@ -386,6 +596,8 @@ for (const key of requiredConfirmations) {
   statuses.push({ key, status });
 }
 
+validationErrors.push(...validateImplementationPlan());
+
 if (validationErrors.length > 0) {
   console.error(
     JSON.stringify(
@@ -396,6 +608,7 @@ if (validationErrors.length > 0) {
           : null,
         taskId: String(evidence.taskId || "").trim() || null,
         evidenceContract: expectedContract,
+        planContract: expectedPlanContract,
         validationErrors,
         allowedVerificationTypes: [...allowedVerificationTypes],
         requiredEvidenceShape: {
@@ -407,8 +620,15 @@ if (validationErrors.length > 0) {
             "Named live-state check when locator does not apply",
           finding:
             "Concrete observation supported by the source/check",
+          assertion: {
+            subject: "Exact thing being claimed",
+            predicate: "Typed predicate allowed for the confirmation category",
+            values: ["Exact claimed value(s)"],
+          },
           verification:
-            "Machine-verifiable proof. Use source_text_match/source_text_absence with needle, env_presence with name, git_ref_exists with ref, or github_issue_text_match with issue/repository/needle.",
+            "Machine-verifiable proof bound to the typed assertion. source_text_match and github_issue_text_match needles must contain the assertion subject and every asserted value.",
+          implementationPlan:
+            "Every API route, database field, status, event, URL pattern, credential, and owner must be SOURCED from confirmation evidence or labeled PROPOSED — requires product/technical decision.",
         },
       },
       null,
@@ -438,6 +658,7 @@ if (blocked.length > 0) {
         blockedConfirmations: blocked,
         mutationAuthorized: false,
         evidenceContract: expectedContract,
+        planContract: expectedPlanContract,
         nextAction:
           "Continue read-only analysis with the next provisional candidate. Do not ask the user for permission to continue.",
       },
@@ -455,17 +676,25 @@ console.log(
     evidence.taskId,
 );
 console.log(
+  "TXKPRO_PLAN_CONTRACT_CONFIRMED issue=" +
+    evidence.issue +
+    " taskId=" +
+    evidence.taskId,
+);
+console.log(
   JSON.stringify(
     {
       status: "CONFIRMED",
       issue: Number(evidence.issue),
       taskId: evidence.taskId,
       readOnlyConfirmations: "CONFIRMED",
+      implementationPlanContract: "CONFIRMED",
       nextEligibleTaskConfirmed: true,
       mutationAuthorized: false,
       evidenceContract: expectedContract,
+      planContract: expectedPlanContract,
       nextAction:
-        "Present the implementation/verification plan and await explicit owner approval before mutation.",
+        "Present only the validated sourced/proposed implementation plan and await explicit owner approval before mutation.",
     },
     null,
     2,
