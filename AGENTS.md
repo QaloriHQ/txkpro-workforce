@@ -193,6 +193,51 @@ Awaiting explicit owner approval to implement <Task ID>.
 
 Do not ask permission for additional read-only analysis that the protocol already requires.
 
+## Agent run token/cost telemetry
+
+Every roadmap implementation run must maintain one auditable usage record in its GitHub issue using the marker `<!-- txkpro-agent-usage:v1 -->`.
+
+Before mutation begins:
+
+```bash
+node scripts/txkpro-agent-usage.mjs start \
+  --issue <number> \
+  --task-id <Task ID> \
+  --cline-task-id <agent/session id>
+```
+
+The PRE-RUN record must contain:
+- run ID and agent/session ID;
+- estimated cumulative model tokens;
+- expected token range and complexity class;
+- warning, soft-budget, and escalation thresholds;
+- configured Plan and Act models.
+
+After every run — successful, failed, cancelled, blocked, or interrupted when telemetry is available — synchronize actual usage before the agent claims the run complete:
+
+```bash
+node scripts/txkpro-agent-usage.mjs finish \
+  --cline-task-id <agent/session id> \
+  --outcome <outcome>
+```
+
+The POST-RUN record must contain:
+- input and output tokens;
+- total model tokens as input + output;
+- cache reads/writes separately so provider cache counters are not double-counted;
+- provider-reported/Cline-recorded cost when available;
+- tool calls, failed tool calls, and tool execution time;
+- estimate variance and outcome;
+- cumulative issue usage across runs.
+
+GitHub stores the per-run summary only. Raw per-request provider telemetry stays in the local/provider telemetry source.
+
+Cline runtime hooks automatically create the PRE-RUN record after explicit approval for a confirmed next-eligible task, observe active runs, and block normal completion until POST-RUN actuals are synchronized. Other agents must call the same script explicitly.
+
+Budget thresholds are observability controls, not permission to weaken scope or skip verification. Crossing a warning/soft threshold should reduce redundant reads and repeated repair loops. Crossing the escalation threshold requires checking for circular debugging, repeated identical failures, or lack of measurable progress; stop safely and report a blocker when the run is genuinely stuck.
+
+Never fabricate token counts or cost. If actual telemetry cannot be read, record/report that telemetry is unavailable and resolve the telemetry source before claiming the run fully finalized.
+
 ## Implementation rules
 
 - Preserve unrelated user changes.
