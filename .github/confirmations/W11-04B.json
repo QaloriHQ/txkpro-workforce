@@ -1,0 +1,545 @@
+{
+  "issue": 53,
+  "taskId": "W11-04B",
+  "evidenceContract": "semantic-provenance-v3",
+  "confirmations": {
+    "rolesAndScopes": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "supabase/staging/migrations/20260925194806_workforce_wave11_employer_learning_authorization.sql",
+          "locator": "comment on function security.can_publish_employer_learning_entity(text,text) is",
+          "finding": "Publishing Employer/Course/Lesson/Credential public pages requires Employer Owner/Admin or TXKPRO admin authority.",
+          "assertion": {
+            "subject": "Publishing Employer/Course/Lesson/Credential public pages",
+            "predicate": "capability_defined",
+            "values": [
+              "Employer Owner/Admin",
+              "TXKPRO admin"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "comment on function security.can_publish_employer_learning_entity(text,text) is\n  'Publishing Employer/Course/Lesson/Credential public pages is separate from editing private records and requires Employer Owner/Admin or TXKPRO admin authority.';"
+          }
+        }
+      ]
+    },
+    "dataOwnership": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "supabase/staging/migrations/20260925180622_workforce_wave11_employer_learning_schema.sql",
+          "locator": "create table if not exists public.wf_employer_micro_certs (",
+          "finding": "Employer learning course records are keyed by wf_employer_micro_certs.employer_id and retain an explicit Employer owner boundary.",
+          "assertion": {
+            "subject": "wf_employer_micro_certs",
+            "predicate": "data_class_owner",
+            "values": [
+              "employer_id"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "create table if not exists public.wf_employer_micro_certs (\n  id uuid primary key default gen_random_uuid(),\n  micro_cert_id text not null unique default security.new_legacy_id('EMC'),\n  employer_id text not null references public.contractors(contractor_id) on delete cascade,"
+          }
+        }
+      ]
+    },
+    "statusesAndEvents": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "supabase/staging/migrations/20260925180622_workforce_wave11_employer_learning_schema.sql",
+          "locator": "create table if not exists public.wf_employer_micro_cert_versions (",
+          "finding": "Canonical Employer course-version publication lifecycle is draft, in_production, review, ready, live, archived.",
+          "assertion": {
+            "subject": "wf_employer_micro_cert_versions",
+            "predicate": "status_family_defined",
+            "values": [
+              "draft",
+              "in_production",
+              "review",
+              "ready",
+              "live",
+              "archived"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "create table if not exists public.wf_employer_micro_cert_versions (\n  id uuid primary key default gen_random_uuid(),\n  micro_cert_version_id text not null unique default security.new_legacy_id('MCV'),\n  micro_cert_id text not null references public.wf_employer_micro_certs(micro_cert_id) on delete cascade,\n  version_number integer not null check (version_number > 0),\n  status text not null default 'draft'\n    check (status in ('draft','in_production','review','ready','live','archived')),"
+          }
+        },
+        {
+          "source": "supabase/staging/migrations/20260925183540_workforce_wave11_employer_learning_authoring_credentials.sql",
+          "locator": "create table if not exists public.wf_employer_micro_cert_lessons (",
+          "finding": "Canonical lesson lifecycle is draft, ready, published, archived.",
+          "assertion": {
+            "subject": "wf_employer_micro_cert_lessons",
+            "predicate": "status_family_defined",
+            "values": [
+              "draft",
+              "ready",
+              "published",
+              "archived"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "create table if not exists public.wf_employer_micro_cert_lessons (\n  id uuid primary key default gen_random_uuid(),\n  lesson_id text not null unique default security.new_legacy_id('MCL'),\n  micro_cert_version_id text not null\n    references public.wf_employer_micro_cert_versions(micro_cert_version_id) on delete cascade,\n  sequence_no integer not null check (sequence_no > 0),\n  title text not null check (btrim(title) <> ''),\n  description text,\n  learning_objective text,\n  estimated_minutes integer check (estimated_minutes is null or estimated_minutes >= 0),\n  required boolean not null default true,\n  status text not null default 'draft'\n    check (status in ('draft','ready','published','archived')),"
+          }
+        },
+        {
+          "source": "supabase/staging/migrations/20260925195942_workforce_wave11_employer_learning_event_contracts.sql",
+          "locator": "EMPLOYER_LEARNING_PUBLICATION_CHANGED",
+          "finding": "EMPLOYER_LEARNING_PUBLICATION_CHANGED is the canonical publication-state event for Employer, Course, Lesson, or Credential public pages and carries canonical_path.",
+          "assertion": {
+            "subject": "EMPLOYER_LEARNING_PUBLICATION_CHANGED",
+            "predicate": "event_defined",
+            "values": [
+              "course",
+              "lesson",
+              "canonical_path"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "EMPLOYER_LEARNING_PUBLICATION_CHANGED',1,'approved-product-expansion','public_page',\n  array['employer','txkpro','system'],\n  true,false,false,true,\n  array['public_page_id','entity_type','entity_id','from_status','to_status','canonical_path'],\n  '[\"Public Employer Learning page\",\"SEO sitemap/index controls\",\"Slug/canonical routing\",\"Audit\"]'::jsonb,\n  'Publication state changes for an Employer, Course, Lesson, or Credential public page.'"
+          }
+        }
+      ]
+    },
+    "iaAndDesign": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/product-sources/ui/INSTITUTION_PLATFORM_INFORMATION_ARCHITECTURE_USER_FLOWS_ROLE_VIEWS.txt",
+          "locator": "11. EMPLOYER MICRO-CERTIFICATIONS",
+          "finding": "Canonical Employer Micro-Certifications IA includes Library, Assigned, Production Requests, Module Detail, and Completion Analytics.",
+          "assertion": {
+            "subject": "Employer Micro-Certifications",
+            "predicate": "ia_requirement_defined",
+            "values": [
+              "Library",
+              "Assigned",
+              "Production Requests",
+              "Module Detail",
+              "Completion Analytics"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "Employer Micro-Certifications\n├─ Library\n├─ Assigned\n├─ Production Requests\n├─ Module Detail\n└─ Completion Analytics"
+          }
+        },
+        {
+          "source": "docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt",
+          "locator": "2. CORE DESIGN PRINCIPLES",
+          "finding": "The authoritative UI standard requires every core workflow to work at mobile widths.",
+          "assertion": {
+            "subject": "RESPONSIVE",
+            "predicate": "ui_authority_defined",
+            "values": [
+              "mobile widths"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "6. RESPONSIVE\n   Every core workflow must work at mobile widths."
+          }
+        },
+        {
+          "source": "supabase/staging/migrations/20260925190851_workforce_public_identity_seo_foundation.sql",
+          "locator": "create table if not exists public.wf_public_pages (",
+          "finding": "wf_public_pages already defines course and lesson entity types, parent_public_page_id, slugs, and canonical_path.",
+          "assertion": {
+            "subject": "wf_public_pages",
+            "predicate": "route_pattern_defined",
+            "values": [
+              "course",
+              "lesson",
+              "parent_public_page_id",
+              "canonical_path"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "create table if not exists public.wf_public_pages (\n  id uuid primary key default gen_random_uuid(),\n  public_page_id text not null unique default security.new_legacy_id('PUB'),\n  entity_type text not null\n    check (entity_type in (\n      'student','educator','employer','institution',\n      'course','lesson','credential','post'\n    )),\n  entity_id text not null,\n  owner_user_id text references public.users(user_id) on delete set null,\n  parent_public_page_id text references public.wf_public_pages(public_page_id) on delete set null,\n  slug text not null\n    check (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),\n  canonical_path text not null unique"
+          }
+        },
+        {
+          "source": "supabase/staging/migrations/20260925190851_workforce_public_identity_seo_foundation.sql",
+          "locator": "create table if not exists public.wf_public_page_redirects (",
+          "finding": "wf_public_page_redirects defines permanent canonical-path redirects using from_path, to_path, and status codes 301 or 308.",
+          "assertion": {
+            "subject": "wf_public_page_redirects",
+            "predicate": "route_pattern_defined",
+            "values": [
+              "from_path",
+              "to_path",
+              "301",
+              "308"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "create table if not exists public.wf_public_page_redirects (\n  id uuid primary key default gen_random_uuid(),\n  redirect_id text not null unique default security.new_legacy_id('RED'),\n  public_page_id text not null\n    references public.wf_public_pages(public_page_id) on delete cascade,\n  from_path text not null unique\n    check (from_path ~ '^/[a-z0-9][a-z0-9/_-]*$'),\n  to_path text not null\n    check (to_path ~ '^/[a-z0-9][a-z0-9/_-]*$'),\n  status_code integer not null default 301 check (status_code in (301,308)),"
+          }
+        }
+      ]
+    },
+    "stagingTargets": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "git-staging-ref-check",
+          "checkType": "git show-ref --verify",
+          "finding": "The checkout contains the fetched origin/staging ref required for the staging implementation target.",
+          "assertion": {
+            "subject": "refs/remotes/origin/staging",
+            "predicate": "git_ref_exists",
+            "values": [
+              "refs/remotes/origin/staging"
+            ]
+          },
+          "verification": {
+            "type": "git_ref_exists",
+            "ref": "refs/remotes/origin/staging"
+          }
+        },
+        {
+          "source": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+          "locator": "2. STANDING AUTHORITY AND OPERATING BOUNDARIES",
+          "finding": "The standing protocol names the staging Supabase project and test/staging Vercel environment as the non-production targets.",
+          "assertion": {
+            "subject": "staging Supabase project",
+            "predicate": "staging_target_defined",
+            "values": [
+              "test/staging Vercel environment"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "- Apply approved migrations to the staging Supabase project.\n- Deploy or allow deployment to the test/staging Vercel environment."
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "credential-projects-token-check",
+          "checkType": "environment presence",
+          "finding": "PROJECTS_TOKEN is required for the canonical GitHub Project v2 eligibility query and is checked without printing its value.",
+          "assertion": {
+            "subject": "PROJECTS_TOKEN",
+            "predicate": "credential_present",
+            "values": [
+              "PROJECTS_TOKEN"
+            ]
+          },
+          "verification": {
+            "type": "env_presence",
+            "name": "PROJECTS_TOKEN"
+          }
+        }
+      ]
+    },
+    "manualUat": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+          "locator": "Standing user instruction:",
+          "finding": "Browser, visual, or signed-in staging validation is a manual UAT handoff rather than implementation-agent work.",
+          "assertion": {
+            "subject": "manual UAT handoff",
+            "predicate": "uat_requirement_defined",
+            "values": [
+              "browser",
+              "visual",
+              "signed-in staging validation"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "Standing user instruction:\n\n- Do not spend time running browser-based tests against the staging environment.\n- Provide a clear manual UAT handoff when browser, visual, or signed-in staging validation remains."
+          }
+        },
+        {
+          "source": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+          "locator": "1. PURPOSE",
+          "finding": "The protocol assigns browser-based staging verification to the user unless separately requested.",
+          "assertion": {
+            "subject": "Browser-based staging verification",
+            "predicate": "uat_owner_defined",
+            "values": [
+              "user"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "- Browser-based staging verification is handed to the user unless separately requested."
+          }
+        }
+      ]
+    },
+    "unresolvedDecisions": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "github-issue:53",
+          "checkType": "owner-approved issue decision",
+          "finding": "The owner approved the exact nested public Course and Lesson URL convention for W11-04B.",
+          "assertion": {
+            "subject": "W11-04B public URL convention",
+            "predicate": "decision_resolved",
+            "values": [
+              "/employers/{employerSlug}/courses/{courseSlug}",
+              "/employers/{employerSlug}/courses/{courseSlug}/lessons/{lessonSlug}"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "repository": "QaloriHQ/txkpro-workforce",
+            "issue": 53,
+            "needle": "## Owner approval — W11-04B public URL convention\n\nDecision resolved: public Course/Lesson URL convention = Course `/employers/{employerSlug}/courses/{courseSlug}`; Lesson `/employers/{employerSlug}/courses/{courseSlug}/lessons/{lessonSlug}`."
+          }
+        },
+        {
+          "source": "github-issue:53",
+          "checkType": "owner-approved issue decision",
+          "finding": "The owner approved public Course rendering only for a published/public curated page whose canonical Course version is live.",
+          "assertion": {
+            "subject": "Public Course rendering",
+            "predicate": "decision_resolved",
+            "values": [
+              "published/public",
+              "canonical Course version",
+              "live"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "repository": "QaloriHQ/txkpro-workforce",
+            "issue": 53,
+            "needle": "- Public Course rendering requires a published/public curated page and the canonical Course version to be live."
+          }
+        },
+        {
+          "source": "github-issue:53",
+          "checkType": "owner-approved issue decision",
+          "finding": "The owner approved public Lesson rendering only for a publishable, non-archived Lesson state.",
+          "assertion": {
+            "subject": "Public Lesson rendering",
+            "predicate": "decision_resolved",
+            "values": [
+              "publishable/non-archived Lesson state"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "repository": "QaloriHQ/txkpro-workforce",
+            "issue": 53,
+            "needle": "- Public Lesson rendering also requires a publishable/non-archived Lesson state."
+          }
+        },
+        {
+          "source": "github-issue:53",
+          "checkType": "owner-approved issue decision",
+          "finding": "The owner approved publishable-facts-only SEO, Open Graph, and structured data.",
+          "assertion": {
+            "subject": "SEO, Open Graph, and structured data",
+            "predicate": "decision_resolved",
+            "values": [
+              "publishable facts only"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "repository": "QaloriHQ/txkpro-workforce",
+            "issue": 53,
+            "needle": "- SEO, Open Graph, and structured data use publishable facts only."
+          }
+        },
+        {
+          "source": "github-issue:53",
+          "checkType": "owner-approved issue decision",
+          "finding": "The owner prohibited assessment answer keys and private assignment/completion workflow data from the public read model.",
+          "assertion": {
+            "subject": "Assessment answer keys",
+            "predicate": "decision_resolved",
+            "values": [
+              "private assignment/completion workflow data",
+              "public read model"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "repository": "QaloriHQ/txkpro-workforce",
+            "issue": 53,
+            "needle": "- Assessment answer keys and private assignment/completion workflow data must never enter the public read model."
+          }
+        }
+      ]
+    }
+  },
+  "implementationPlan": {
+    "contract": "sourced-plan-v1",
+    "decisions": [
+      {
+        "kind": "owner",
+        "name": "Publishing Employer/Course/Lesson/Credential public pages",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "rolesAndScopes",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "architecture",
+        "name": "wf_employer_micro_certs",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "dataOwnership",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "status",
+        "name": "wf_employer_micro_cert_versions",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "statusesAndEvents",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "status",
+        "name": "wf_employer_micro_cert_lessons",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "statusesAndEvents",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "event",
+        "name": "EMPLOYER_LEARNING_PUBLICATION_CHANGED",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "statusesAndEvents",
+        "evidenceIndex": 2
+      },
+      {
+        "kind": "ui_surface",
+        "name": "Employer Micro-Certifications",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "iaAndDesign",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "test_requirement",
+        "name": "RESPONSIVE",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "iaAndDesign",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "architecture",
+        "name": "wf_public_pages",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "iaAndDesign",
+        "evidenceIndex": 2
+      },
+      {
+        "kind": "architecture",
+        "name": "wf_public_page_redirects",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "iaAndDesign",
+        "evidenceIndex": 3
+      },
+      {
+        "kind": "test_requirement",
+        "name": "refs/remotes/origin/staging",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "stagingTargets",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "architecture",
+        "name": "staging Supabase project",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "stagingTargets",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "credential",
+        "name": "PROJECTS_TOKEN",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "credentials",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "owner",
+        "name": "manual UAT handoff",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "manualUat",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "owner",
+        "name": "Browser-based staging verification",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "manualUat",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "url_pattern",
+        "name": "W11-04B public URL convention",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "unresolvedDecisions",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "architecture",
+        "name": "Public Course rendering",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "unresolvedDecisions",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "architecture",
+        "name": "Public Lesson rendering",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "unresolvedDecisions",
+        "evidenceIndex": 2
+      },
+      {
+        "kind": "architecture",
+        "name": "SEO, Open Graph, and structured data",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "unresolvedDecisions",
+        "evidenceIndex": 3
+      },
+      {
+        "kind": "architecture",
+        "name": "Assessment answer keys",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "unresolvedDecisions",
+        "evidenceIndex": 4
+      }
+    ]
+  }
+}
