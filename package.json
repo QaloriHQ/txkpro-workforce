@@ -15,7 +15,8 @@
     "protocol:wave": "node scripts/txkpro-wave-manifest.mjs",
     "protocol:check": "node scripts/txkpro-protocol-check.mjs",
     "protocol:report": "node scripts/txkpro-completion-report.mjs",
-    "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs"
+    "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs",
+    "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

@@ -141,6 +141,31 @@ Explicit user approval is required before mutation when the active agent support
 
 Production deployment and production database migrations always require separate explicit user authorization.
 
+## Deterministic confirmation gate
+
+For `What's next?` / next-eligible planning, prompt text alone is not the enforcement mechanism.
+
+Cline uses workspace lifecycle hooks under `.cline/hooks/` plus the validator:
+
+```bash
+node scripts/txkpro-confirmation-check.mjs --evidence <path>
+```
+
+Before Cline may ask a follow-up question or attempt task completion for a next-eligible request, the confirmation validator must return:
+
+```text
+TXKPRO_CONFIRMATIONS_CONFIRMED
+```
+
+The temporary evidence JSON must include all eight required confirmations with:
+- `status: "CONFIRMED"`;
+- at least one concrete evidence/source entry for each confirmation;
+- the selected issue number and Task ID.
+
+If any confirmation is `BLOCKED` or `UNRESOLVED`, validation returns `TXKPRO_CONFIRMATIONS_BLOCKED`; the agent must continue automatically to the next provisional candidate and keep mutation authorization at NO.
+
+The runtime hook gate blocks premature `attempt_completion`, `ask_followup_question`, and mode switching while confirmation evidence is pending.
+
 ## Required "what's next" response contract
 
 After all read-only confirmation work is complete, respond using this state model:

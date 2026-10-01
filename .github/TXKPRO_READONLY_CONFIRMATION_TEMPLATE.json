@@ -1,0 +1,38 @@
+{
+  "issue": 0,
+  "taskId": "",
+  "confirmations": {
+    "rolesAndScopes": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "dataOwnership": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "statusesAndEvents": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "iaAndDesign": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "stagingTargets": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "credentials": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "manualUat": {
+      "status": "PENDING",
+      "evidence": []
+    },
+    "unresolvedDecisions": {
+      "status": "PENDING",
+      "evidence": []
+    }
+  }
+}

@@ -72,5 +72,25 @@
     "readOnlyConfirmations": "must_be_confirmed_before_next_eligible",
     "nextEligible": "confirmed_only_after_readonly_confirmations",
     "mutationAuthorized": "false_until_explicit_owner_approval"
+  },
+  "readOnlyConfirmationGate": {
+    "requiredFor": [
+      "whats_next",
+      "next_eligible"
+    ],
+    "validator": "node scripts/txkpro-confirmation-check.mjs --evidence <path>",
+    "successSentinel": "TXKPRO_CONFIRMATIONS_CONFIRMED",
+    "blockedSentinel": "TXKPRO_CONFIRMATIONS_BLOCKED",
+    "clineHooks": [
+      ".cline/hooks/UserPromptSubmit",
+      ".cline/hooks/PreToolUse",
+      ".cline/hooks/PostToolUse"
+    ],
+    "blockedWhilePending": [
+      "attempt_completion",
+      "ask_followup_question",
+      "switch_mode"
+    ],
+    "continueAutomaticallyOnBlockedCandidate": true
   }
 }

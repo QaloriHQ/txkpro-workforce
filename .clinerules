@@ -34,6 +34,16 @@ Cline-specific instructions never override the authoritative protocol.
 - The optimized `roadmap-next-eligible.mjs` performs one Project snapshot scan and must be the canonical "what's next" path.
 - If that selector errors or times out, report/diagnose the failure. Do not retry by switching to `roadmap-next-planned.mjs`, manually guessing from the board, or asking the owner to check GitHub.
 
+## DETERMINISTIC CONFIRMATION GATE
+
+For `What's next?` and next-eligible planning:
+- the workspace hooks under `.cline/hooks/` are mandatory;
+- Cline must create temporary confirmation evidence and run `node scripts/txkpro-confirmation-check.mjs --evidence <path>`;
+- do not use `attempt_completion`, `ask_followup_question`, or switch mode while the gate is pending;
+- only `TXKPRO_CONFIRMATIONS_CONFIRMED` clears the read-only confirmation gate;
+- `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
+- never ask the owner whether to continue read-only confirmation work.
+
 ## ACT MODE
 
 - Do not mutate unless the current Cline runtime is actually mutation-capable and the user has explicitly approved the plan.

@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+
+let input = {};
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+} catch {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const taskId = String(input?.taskId || "unknown").replace(/[^A-Za-z0-9._-]/g, "_");
+const dir = path.join(os.tmpdir(), "txkpro-cline-confirmation-gates");
+const marker = path.join(dir, taskId + ".json");
+const resultValue = input?.postToolUse?.result;
+const result =
+  typeof resultValue === "string"
+    ? resultValue
+    : JSON.stringify(resultValue ?? "");
+
+if (result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED")) {
+  try {
+    fs.unlinkSync(marker);
+  } catch {}
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO confirmation gate cleared. Read-only confirmations are CONFIRMED. Present the implementation/verification plan now. State 'Mutation authorized: NO' and wait for explicit owner approval before any mutation.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (result.includes("TXKPRO_CONFIRMATIONS_BLOCKED")) {
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO confirmation evidence for this provisional candidate is BLOCKED/UNRESOLVED. Keep the confirmation gate active and continue automatically to the next provisional candidate. Do not ask the user whether to continue.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (
+  result.includes("AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING") ||
+  result.includes('"readOnlyConfirmationsRequired": true') ||
+  result.includes('"readOnlyConfirmationsRequired":true')
+) {
+  fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(marker)) {
+    fs.writeFileSync(
+      marker,
+      JSON.stringify(
+        {
+          taskId,
+          state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
+          createdAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources. Do not respond with 'Would you like me to proceed?'. Validate a temporary evidence JSON with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
+    }),
+  );
+  process.exit(0);
+}
+
+process.stdout.write(JSON.stringify({ cancel: false }));
