@@ -52,7 +52,14 @@ function writeMarker(value) {
 
 function runUsage(args) {
   const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
-  const result = spawnSync(process.execPath, [script, ...args], {
+  const usageArgs = [script, ...args];
+  if (
+    process.env.TXKPRO_AGENT_USAGE_NO_SYNC === "true" &&
+    !usageArgs.includes("--no-sync")
+  ) {
+    usageArgs.push("--no-sync");
+  }
+  const result = spawnSync(process.execPath, usageArgs, {
     cwd: workspaceRoot,
     encoding: "utf8",
     env: process.env,
