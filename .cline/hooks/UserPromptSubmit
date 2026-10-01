@@ -127,7 +127,7 @@ if (isRoadmapNext) {
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO ROADMAP CONTINUATION GATE: This is a What's next?/next-eligible request. Run the dependency-aware selector, then continue automatically through ALL required read-only confirmations in this same turn. Do not ask whether to gather confirmation details. Before finishing, create a temporary confirmation evidence JSON with all eight required confirmations and validate it with: node scripts/txkpro-confirmation-check.mjs --evidence <path>. Until that command returns TXKPRO_CONFIRMATIONS_CONFIRMED, do not ask a follow-up question, do not attempt completion, and do not claim the task is confirmed eligible. Mutation remains unauthorized until explicit owner approval.",
+        "TXKPRO ROADMAP CONTINUATION GATE: This is a What's next?/next-eligible request. Run the dependency-aware selector, then continue automatically through ALL required read-only confirmations in this same turn. Do not ask whether to gather confirmation details. Before finishing, inspect the authoritative sources and actual non-secret environment state, then create a temporary confirmation evidence JSON with all eight required confirmations. Every evidence item must be structured provenance with source, finding, and either locator or checkType; do not use vague labels or inferred/assumed confirmations. Validate it with: node scripts/txkpro-confirmation-check.mjs --evidence <path>. Until that command returns TXKPRO_CONFIRMATIONS_CONFIRMED, do not ask a follow-up question, do not attempt completion, and do not claim the task is confirmed eligible. Mutation remains unauthorized until explicit owner approval.",
     }),
   );
   process.exit(0);
