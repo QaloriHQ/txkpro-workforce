@@ -1,0 +1,158 @@
+TXKPRO™ WORKFORCE
+CROSS-APP EVENT & SYNCHRONIZATION MAP
+Version 1.0 — September 2026
+
+PURPOSE
+Define how one canonical backend event should surface across Institution, Employer, Student, and Admin experiences. Apps must not maintain competing copies of the same workflow state.
+
+CORE RULE
+WRITE ONCE → SHARED DOMAIN STATE → ROLE-SPECIFIC READ MODELS / NOTIFICATIONS
+
+EVENT: ACCOUNT_CREATED
+Source: Auth
+Student: account pending verification/onboarding
+Institution: no roster effect unless account is linked
+Employer: employer user pending onboarding if applicable
+Admin: identity visible in operational account view
+Audit: AUTH_ACCOUNT_CREATED
+
+EVENT: STUDENT_LINKED_TO_COHORT
+Source: Institution roster/import/link
+Student: institution/program/cohort displayed
+Institution: roster count and student directory update
+Employer: no visibility unless student later becomes discoverable
+Admin: institution membership visible
+Audit: STUDENT_LINKED_TO_COHORT
+
+EVENT: READINESS_UPDATED
+Source: Student or authorized Institution user
+Student: readiness profile updates
+Institution: readiness indicators/filter results update
+Employer: permitted discoverable readiness fields update with provenance
+Admin: audit/state available where authorized
+Audit: READINESS_UPDATED
+
+EVENT: SKILL_SELF_ATTESTED
+Source: Student
+Student: self-attested state
+Institution: verification queue may update
+Employer: may see self-attested status only if product policy permits, clearly labeled
+Admin: no manual action by default
+Audit: SKILL_SELF_ATTESTED
+
+EVENT: SKILL_VERIFIED
+Source: Authorized educator
+Student: verified badge + verified-by provenance
+Institution: matrix counts, queue, student profile, dashboard update
+Employer: candidate verified-skill profile/filter immediately reflects state
+Admin: verification visible in audit/operations
+Audit: SKILL_VERIFIED
+
+EVENT: SKILL_VERIFICATION_REVOKED
+Source: Authorized educator/admin
+Student: verified state removed/replaced
+Institution: matrix and queue update
+Employer: verified filter/profile update
+Admin: audit alert if policy requires
+Audit: SKILL_VERIFICATION_REVOKED
+
+EVENT: REFERRAL_CREATED
+Source: Institution educator/career services
+Student: referral notification/status
+Institution: referral pipeline + student profile + dashboard
+Employer: referral inbox/candidate card
+Admin: referral telemetry
+Audit: REFERRAL_CREATED
+
+EVENT: REFERRAL_VIEWED
+Source: Employer
+Student: optional status update according to policy
+Institution: referral status becomes Viewed
+Employer: own referral timeline
+Admin: telemetry
+Audit: REFERRAL_VIEWED
+
+EVENT: INTERVIEW_REQUESTED
+Source: Employer
+Student: in-app/email/SMS notification according to consent
+Institution: student/referral/interview status
+Employer: pipeline state
+Admin: messaging/operational telemetry
+Audit: INTERVIEW_REQUESTED
+
+EVENT: INTERVIEW_RESPONDED
+Source: Student
+Student: request status
+Institution: pipeline/referral status
+Employer: candidate/interview status
+Admin: telemetry
+Audit: INTERVIEW_RESPONDED
+
+EVENT: PLACEMENT_CREATED / HIRED
+Source: Employer or authorized workforce operator
+Student: current placement
+Institution: placement metrics, student profile, reports
+Employer: hire/pipeline state
+Admin: placement totals
+System: create Day 30/60/90 retention milestones
+Audit: PLACEMENT_CREATED
+
+EVENT: RETENTION_MILESTONE_DUE
+Source: Scheduler
+Student: SMS/in-app pulse if consented
+Institution: milestone scheduled/sent status
+Employer: permitted retention status
+Admin: messaging/cron health
+Audit/Event: RETENTION_MESSAGE_SENT when delivered
+
+EVENT: RETENTION_RESPONSE_RECEIVED
+Source: Student SMS/app response
+Student: acknowledgement
+Institution: milestone status and risk state
+Employer: only policy-approved retention visibility
+Admin: response telemetry
+If at risk: create RETENTION_CASE
+Audit: RETENTION_RESPONSE_RECEIVED
+
+EVENT: RETENTION_CASE_OPENED
+Source: System / authorized user
+Student: no automatic employer consequence
+Institution: risk queue/action center
+Employer: only information explicitly allowed by policy
+Admin: intervention queue
+Audit: RETENTION_CASE_OPENED
+
+EVENT: RETENTION_CASE_RESOLVED
+Source: Career Services/Admin
+Institution: case/metrics update
+Student: optional follow-up acknowledgement
+Employer: policy-dependent
+Admin: resolution metrics
+Audit: RETENTION_CASE_RESOLVED
+
+EVENT: EMPLOYER_APPROVED
+Source: TXKPRO Admin
+Employer: candidate-access capabilities activate
+Institution: employer directory may show Approved Partner
+Student: no direct change
+Admin: approval queue update
+Audit: EMPLOYER_APPROVED
+
+EVENT: EDUCATOR_APPROVED
+Source: Institution/TXKPRO authorized approver
+Institution: role/scope activates
+Student: educator may access assigned cohort
+Employer: no direct change
+Admin: approval status
+Audit: ROLE_MEMBERSHIP_APPROVED
+
+SYNCHRONIZATION REQUIREMENTS
+1. Stable domain IDs are used across all apps.
+2. No app copies canonical state into an app-specific database table simply for synchronization.
+3. Role views may denormalize/cache for performance, but canonical write ownership stays singular.
+4. Notifications are consequences of domain events, not the domain state itself.
+5. Every consumer must tolerate delayed notification delivery without corrupting state.
+6. Replayed jobs/webhooks must be idempotent.
+7. Prototype localStorage simulation should mimic these event effects without claiming backend synchronization.
+
+END
