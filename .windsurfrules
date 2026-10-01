@@ -10,3 +10,5 @@ For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Its resu
 Every implementation run must write its PRE-RUN estimated token/cost budget and POST-RUN actual usage to the GitHub issue with `scripts/txkpro-agent-usage.mjs`; missing telemetry must not be fabricated.
 
 Follow the shared repository preflight, manifest, evidence, status, staging, UAT, and production-authorization rules. Do not create agent-specific shortcuts around them.
+
+Prose cannot upgrade runtime state. Only the exact armed validator invocation's structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` may clear the gate. Use the persisted validator-derived `ownerFacingResponse` exactly and never narratively upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.

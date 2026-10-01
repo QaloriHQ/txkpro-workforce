@@ -295,6 +295,23 @@ A sourced item may not be generalized beyond the evidence it references. If an e
 
 The final planning response must be generated from the validated sourced/proposed plan. It must not add extra routes, schema fields, statuses, events, URL structures, credentials, owners, or other implementation contracts outside that validated plan.
 
+### Runtime machine-state invariant
+
+**Prose cannot upgrade runtime state.**
+
+The agent's narrative text has no authority to change a provisional candidate, confirmation result, plan decision, blocker, or approval boundary. The Cline runtime may transition to `CONFIRMED_AWAITING_APPROVAL` only after the exact validator invocation emits a parseable `TXKPRO_CONFIRMATION_VALIDATION_RESULT` for the same issue and Task ID with:
+
+- `semantic-provenance-v3`;
+- `sourced-plan-v1`;
+- both `TXKPRO_CONFIRMATIONS_CONFIRMED` and `TXKPRO_PLAN_CONTRACT_CONFIRMED` inside that same structured result;
+- all eight confirmation audits and their machine verification results;
+- the validated implementation-plan decisions;
+- a deterministic evidence digest and validation ID.
+
+Sentinel text from `echo`, logs, arbitrary commands, malformed output, or agent prose cannot clear the gate. The validated result is persisted in the Cline gate state, including the confirmation audit, implementation plan, identity, timestamp, digest, and deterministic owner-facing response.
+
+After validation, the planning response must exactly use the persisted validator-derived owner-facing response. The model may not append new API routes, database fields, tables/columns, statuses, transitions, events, URL structures, credentials, ownership decisions, UAT owners, staging targets, metadata fields, or migration requirements. Any validated `PROPOSED — requires product/technical decision` item must remain proposed. A `BLOCKED` or `UNRESOLVED` confirmation cannot be narratively overridden.
+
 ======================================================================
 8. PHASE 2 — WAVE EXECUTION MANIFEST
 ======================================================================

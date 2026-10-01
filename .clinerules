@@ -51,6 +51,8 @@ For `What's next?` and next-eligible planning:
 - only the combination of `TXKPRO_CONFIRMATIONS_CONFIRMED` and `TXKPRO_PLAN_CONTRACT_CONFIRMED` clears the read-only confirmation gate;
 - `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
 - never ask the owner whether to continue read-only confirmation work.
+- **Prose cannot upgrade runtime state.** Only the exact armed validator command may produce the structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` that clears the gate; arbitrary sentinel strings are ignored.
+- After validation, finish planning with the exact persisted validator-derived `ownerFacingResponse`. Do not freehand extra implementation decisions or convert `PROPOSED`, `BLOCKED`, or `UNRESOLVED` into a stronger state.
 
 ## AGENT USAGE TELEMETRY
 

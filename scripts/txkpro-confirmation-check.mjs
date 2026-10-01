@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
@@ -17,8 +18,10 @@ if (!evidencePath) {
 }
 
 let evidence;
+let evidenceRaw = "";
 try {
-  evidence = JSON.parse(fs.readFileSync(evidencePath, "utf8"));
+  evidenceRaw = fs.readFileSync(evidencePath, "utf8");
+  evidence = JSON.parse(evidenceRaw);
 } catch (error) {
   console.error(
     "[confirmation-check] Could not read evidence JSON: " + error.message,
@@ -29,6 +32,11 @@ try {
 const repoRoot = process.cwd();
 const expectedContract = "semantic-provenance-v3";
 const expectedPlanContract = "sourced-plan-v1";
+const resultType = "TXKPRO_CONFIRMATION_VALIDATION_RESULT";
+const resultSchemaVersion = "runtime-validation-v1";
+const confirmationSuccessSentinel = "TXKPRO_CONFIRMATIONS_CONFIRMED";
+const planSuccessSentinel = "TXKPRO_PLAN_CONTRACT_CONFIRMED";
+const blockedSentinel = "TXKPRO_CONFIRMATIONS_BLOCKED";
 const requiredConfirmations = [
   "rolesAndScopes",
   "dataOwnership",
@@ -124,6 +132,93 @@ function claimTerms(entry) {
 function textContainsAllClaimTerms(text, entry) {
   const haystack = String(text || "").toLowerCase();
   return claimTerms(entry).every((term) => haystack.includes(term.toLowerCase()));
+}
+
+function sha256(value) {
+  return createHash("sha256").update(String(value)).digest("hex");
+}
+
+function sanitizedPlan() {
+  return {
+    contract: expectedPlanContract,
+    decisions: (evidence.implementationPlan?.decisions || []).map((decision) => ({
+      kind: textValue(decision?.kind),
+      name: textValue(decision?.name),
+      basis: textValue(decision?.basis).toUpperCase(),
+      label: textValue(decision?.label),
+      confirmation: textValue(decision?.confirmation),
+      evidenceIndex: Number(decision?.evidenceIndex),
+    })),
+  };
+}
+
+function confirmationAudit() {
+  const audit = {};
+  for (const key of requiredConfirmations) {
+    const item = evidence.confirmations?.[key] || {};
+    audit[key] = {
+      status: String(item.status || "").trim().toUpperCase(),
+      validatedEvidence: Array.isArray(item.evidence)
+        ? item.evidence.map((entry) => ({
+            source: textValue(entry?.source),
+            assertion: {
+              subject: textValue(entry?.assertion?.subject),
+              predicate: textValue(entry?.assertion?.predicate),
+              values: assertionValues(entry?.assertion),
+            },
+            verification: {
+              type: textValue(entry?.verification?.type),
+              result: "PASS",
+            },
+          }))
+        : [],
+    };
+  }
+  return audit;
+}
+
+function buildValidationResult({
+  status,
+  confirmationResult,
+  planResult,
+  successSentinels,
+  blockedConfirmations = [],
+}) {
+  const evidenceDigest = sha256(evidenceRaw);
+  const base = {
+    type: resultType,
+    schemaVersion: resultSchemaVersion,
+    status,
+    issue: Number(evidence.issue),
+    taskId: String(evidence.taskId || "").trim(),
+    evidenceContract: expectedContract,
+    planContract: expectedPlanContract,
+    confirmations: confirmationAudit(),
+    implementationPlan: sanitizedPlan(),
+    confirmationResult,
+    planResult,
+    successSentinels,
+    mutationAuthorized: false,
+    nextEligibleTaskConfirmed: status === "CONFIRMED",
+    evidenceDigest,
+  };
+  const validationIdentity = {
+    type: base.type,
+    schemaVersion: base.schemaVersion,
+    issue: base.issue,
+    taskId: base.taskId,
+    evidenceContract: base.evidenceContract,
+    planContract: base.planContract,
+    evidenceDigest: base.evidenceDigest,
+    confirmationResult: base.confirmationResult,
+    planResult: base.planResult,
+  };
+  return {
+    ...base,
+    validationId: sha256(JSON.stringify(validationIdentity)),
+    validatedAt: new Date().toISOString(),
+    ...(blockedConfirmations.length > 0 ? { blockedConfirmations } : {}),
+  };
 }
 
 function validateAssertion(key, entry, prefix) {
@@ -269,15 +364,18 @@ function verifyEvidenceEntry(key, entry, index) {
     }
 
     const sourceText = fs.readFileSync(sourcePath, "utf8");
+    const normalizedSourceText = sourceText.replace(/\r\n/g, "\n");
+    const normalizedNeedle = needle.replace(/\r\n/g, "\n");
     const locator = textValue(entry.locator);
-    if (locator && !sourceText.includes(locator)) {
+    const normalizedLocator = locator.replace(/\r\n/g, "\n");
+    if (normalizedLocator && !normalizedSourceText.includes(normalizedLocator)) {
       return [
         prefix +
           ".locator was not found in the cited source; do not invent section names",
       ];
     }
 
-    if (!sourceText.includes(needle)) {
+    if (!normalizedSourceText.includes(normalizedNeedle)) {
       return [
         prefix +
           ".verification.needle was not found in the cited source; the finding is not machine-grounded",
@@ -603,6 +701,8 @@ if (validationErrors.length > 0) {
   console.error(
     JSON.stringify(
       {
+        type: resultType,
+        schemaVersion: resultSchemaVersion,
         status: "INVALID",
         issue: Number.isInteger(Number(evidence.issue))
           ? Number(evidence.issue)
@@ -644,22 +744,18 @@ const blocked = statuses.filter(
 );
 
 if (blocked.length > 0) {
-  console.log(
-    "TXKPRO_CONFIRMATIONS_BLOCKED issue=" +
-      evidence.issue +
-      " taskId=" +
-      evidence.taskId,
-  );
+  const result = buildValidationResult({
+    status: "BLOCKED",
+    confirmationResult: "BLOCKED",
+    planResult: "CONFIRMED",
+    successSentinels: [planSuccessSentinel],
+    blockedConfirmations: blocked,
+  });
   console.log(
     JSON.stringify(
       {
-        status: "BLOCKED",
-        issue: Number(evidence.issue),
-        taskId: evidence.taskId,
-        blockedConfirmations: blocked,
-        mutationAuthorized: false,
-        evidenceContract: expectedContract,
-        planContract: expectedPlanContract,
+        ...result,
+        blockedSentinel,
         nextAction:
           "Continue read-only analysis with the next provisional candidate. Do not ask the user for permission to continue.",
       },
@@ -670,32 +766,18 @@ if (blocked.length > 0) {
   process.exit(3);
 }
 
-console.log(
-  "TXKPRO_CONFIRMATIONS_CONFIRMED issue=" +
-    evidence.issue +
-    " taskId=" +
-    evidence.taskId,
-);
-console.log(
-  "TXKPRO_PLAN_CONTRACT_CONFIRMED issue=" +
-    evidence.issue +
-    " taskId=" +
-    evidence.taskId,
-);
+const result = buildValidationResult({
+  status: "CONFIRMED",
+  confirmationResult: "CONFIRMED",
+  planResult: "CONFIRMED",
+  successSentinels: [confirmationSuccessSentinel, planSuccessSentinel],
+});
 console.log(
   JSON.stringify(
     {
-      status: "CONFIRMED",
-      issue: Number(evidence.issue),
-      taskId: evidence.taskId,
-      readOnlyConfirmations: "CONFIRMED",
-      implementationPlanContract: "CONFIRMED",
-      nextEligibleTaskConfirmed: true,
-      mutationAuthorized: false,
-      evidenceContract: expectedContract,
-      planContract: expectedPlanContract,
+      ...result,
       nextAction:
-        "Present only the validated sourced/proposed implementation plan and await explicit owner approval before mutation.",
+        "Present only the deterministic owner-facing summary derived from this validated result and await explicit owner approval before mutation.",
     },
     null,
     2,

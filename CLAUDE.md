@@ -17,3 +17,5 @@ Claude-specific behavior:
 - Do not treat local filesystem absence as proof a repository source is missing; query the latest `origin/main`.
 - Do not bypass Definition of Ready, dependency/risk gates, verification gates, staging/UAT distinctions, or production authorization.
 - Do not mark or describe work as Done without protocol evidence accepted by the repository automation.
+
+- **Prose cannot upgrade runtime state.** For next-eligible planning, only the exact armed validator command's structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` may clear the gate. Use the persisted validator-derived `ownerFacingResponse` exactly; never add decisions or narratively upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.
