@@ -14,7 +14,8 @@
     "protocol:preflight": "node scripts/txkpro-preflight.mjs",
     "protocol:wave": "node scripts/txkpro-wave-manifest.mjs",
     "protocol:check": "node scripts/txkpro-protocol-check.mjs",
-    "protocol:report": "node scripts/txkpro-completion-report.mjs"
+    "protocol:report": "node scripts/txkpro-completion-report.mjs",
+    "roadmap:next:eligible": "node scripts/roadmap-next-eligible.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
