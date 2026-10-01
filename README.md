@@ -23,6 +23,7 @@ GitHub Project transitions to **Verification** and **Done** are evidence-gated. 
 Useful commands:
 
 ```bash
+npm run roadmap:next:eligible -- --json
 npm run protocol:context -- --issue <number> --json
 npm run protocol:preflight -- --issue <number>
 npm run protocol:wave -- --wave <W12>
