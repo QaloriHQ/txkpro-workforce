@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 
 let input = {};
 try {
@@ -12,7 +13,12 @@ try {
   process.exit(0);
 }
 
-const taskId = String(input?.taskId || "unknown").replace(/[^A-Za-z0-9._-]/g, "_");
+const rawTaskId = String(input?.taskId || "unknown");
+const taskId = rawTaskId.replace(/[^A-Za-z0-9._-]/g, "_");
+const workspaceRoot =
+  Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
+    ? input.workspaceRoots[0]
+    : process.cwd();
 const dir = path.join(os.tmpdir(), "txkpro-cline-confirmation-gates");
 const marker = path.join(dir, taskId + ".json");
 const resultValue = input?.postToolUse?.result;
@@ -20,16 +26,79 @@ const result =
   typeof resultValue === "string"
     ? resultValue
     : JSON.stringify(resultValue ?? "");
+const toolName = String(input?.postToolUse?.toolName || "");
+const toolSuccess = input?.postToolUse?.success !== false;
+const executionTimeMs = Number(input?.postToolUse?.executionTimeMs || 0);
+
+function readMarker() {
+  try {
+    return JSON.parse(fs.readFileSync(marker, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeMarker(value) {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(marker, JSON.stringify(value, null, 2));
+}
+
+function parseConfirmationSummary(text) {
+  const issueMatch = String(text).match(/"issue"\s*:\s*(\d+)/);
+  const taskMatch = String(text).match(/"taskId"\s*:\s*"([^"]+)"/);
+  return {
+    issue: issueMatch ? Number(issueMatch[1]) : null,
+    roadmapTaskId: taskMatch ? taskMatch[1] : null,
+  };
+}
+
+function runUsage(args) {
+  const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
+  const response = spawnSync(process.execPath, [script, ...args], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  });
+
+  return {
+    ok: !response.error && response.status === 0,
+    status: response.status,
+    stdout: String(response.stdout || "").trim(),
+    stderr: String(response.stderr || "").trim(),
+  };
+}
 
 if (result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED")) {
-  try {
-    fs.unlinkSync(marker);
-  } catch {}
+  const summary = parseConfirmationSummary(result);
+  if (!summary.issue || !summary.roadmapTaskId) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO confirmation validation passed, but the runtime gate could not resolve the issue number and Task ID from the validator output. Re-run the confirmation validator and preserve its structured JSON before requesting mutation approval.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  writeMarker({
+    taskId,
+    rawTaskId,
+    state: "CONFIRMED_AWAITING_APPROVAL",
+    issue: summary.issue,
+    roadmapTaskId: summary.roadmapTaskId,
+    confirmationsCompletedAt: new Date().toISOString(),
+  });
+
   process.stdout.write(
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO confirmation gate cleared. Read-only confirmations are CONFIRMED. Present the implementation/verification plan now. State 'Mutation authorized: NO' and wait for explicit owner approval before any mutation.",
+        "TXKPRO confirmation gate cleared. Read-only confirmations are CONFIRMED for " +
+        summary.roadmapTaskId +
+        " (#" +
+        summary.issue +
+        "). Present the implementation/verification plan now. State 'Mutation authorized: NO' and wait for explicit owner approval. When the owner approves implementation, the UserPromptSubmit hook will create the required PRE-RUN token-usage record before mutation.",
     }),
   );
   process.exit(0);
@@ -53,18 +122,12 @@ if (
 ) {
   fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(marker)) {
-    fs.writeFileSync(
-      marker,
-      JSON.stringify(
-        {
-          taskId,
-          state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
-          createdAt: new Date().toISOString(),
-        },
-        null,
-        2,
-      ),
-    );
+    writeMarker({
+      taskId,
+      rawTaskId,
+      state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
+      createdAt: new Date().toISOString(),
+    });
   }
 
   process.stdout.write(
@@ -75,6 +138,48 @@ if (
     }),
   );
   process.exit(0);
+}
+
+const gate = readMarker();
+if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
+  const observation = runUsage([
+    "observe",
+    "--cline-task-id",
+    rawTaskId,
+    "--success",
+    toolSuccess ? "true" : "false",
+    "--execution-ms",
+    Number.isFinite(executionTimeMs) ? String(executionTimeMs) : "0",
+  ]);
+
+  if (observation.ok) {
+    try {
+      const parsed = JSON.parse(observation.stdout);
+      if (
+        parsed?.budgetStateChanged &&
+        ["WARNING", "SOFT_BUDGET", "ESCALATION"].includes(parsed?.budgetState)
+      ) {
+        const messages = {
+          WARNING:
+            "TXKPRO token usage has crossed the run warning threshold. Continue only while making measurable progress; avoid unnecessary repository rereads and repeated repair loops.",
+          SOFT_BUDGET:
+            "TXKPRO token usage has crossed the soft budget. Record the reason for variance in the final run summary and continue only if the current repair/verification path is productive.",
+          ESCALATION:
+            "TXKPRO token usage has crossed the escalation threshold. Check for repeated failures, circular debugging, redundant context reads, or stalled progress. If the run is genuinely stuck, stop safely and report the blocker rather than consuming tokens indefinitely.",
+        };
+
+        process.stdout.write(
+          JSON.stringify({
+            cancel: false,
+            contextModification: messages[parsed.budgetState],
+          }),
+        );
+        process.exit(0);
+      }
+    } catch {
+      // Observation is advisory; do not block the active implementation.
+    }
+  }
 }
 
 process.stdout.write(JSON.stringify({ cancel: false }));
