@@ -652,6 +652,12 @@ function startCommand() {
   const clineTaskId = argValue("--cline-task-id")?.trim();
   if (!clineTaskId) fail("--cline-task-id is required for start.");
 
+  const fixture = argValue("--issue-file");
+  const fixtureIssue = fixture ? loadIssueFixture(fixture) : null;
+
+  if (!issueNumber && fixtureIssue) {
+    issueNumber = parseIssueNumber(fixtureIssue.number);
+  }
   if (!issueNumber && taskId) {
     issueNumber = resolveIssueByTaskId(taskId);
   }
@@ -659,8 +665,7 @@ function startCommand() {
     fail("Provide --issue <number> or a resolvable --task-id <Task ID>.");
   }
 
-  const fixture = argValue("--issue-file");
-  const issue = fixture ? loadIssueFixture(fixture) : fetchIssue(issueNumber);
+  const issue = fixtureIssue || fetchIssue(issueNumber);
   if (!taskId) taskId = inferTaskId(issue);
   if (!taskId) fail("Could not determine Task ID from issue metadata.");
 

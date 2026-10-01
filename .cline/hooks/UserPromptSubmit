@@ -49,16 +49,22 @@ function isExplicitImplementationApproval(value) {
 
 function startUsageRun(gate) {
   const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
-  const args = [
-    script,
-    "start",
-    "--issue",
-    String(gate.issue),
-    "--task-id",
-    String(gate.roadmapTaskId),
-    "--cline-task-id",
-    rawTaskId,
-  ];
+  const args = [script, "start"];
+
+  if (gate.issue) {
+    args.push("--issue", String(gate.issue));
+  }
+  if (gate.roadmapTaskId) {
+    args.push("--task-id", String(gate.roadmapTaskId));
+  }
+  args.push("--cline-task-id", rawTaskId);
+
+  if (process.env.TXKPRO_AGENT_USAGE_NO_SYNC === "true") {
+    args.push("--no-sync");
+  }
+  if (process.env.TXKPRO_AGENT_USAGE_ISSUE_FILE) {
+    args.push("--issue-file", process.env.TXKPRO_AGENT_USAGE_ISSUE_FILE);
+  }
 
   const result = spawnSync(process.execPath, args, {
     cwd: workspaceRoot,
@@ -78,9 +84,29 @@ function startUsageRun(gate) {
     };
   }
 
+  const output = String(result.stdout || "").trim();
+  let parsed = null;
+  try {
+    const jsonStart = output.indexOf("{");
+    if (jsonStart >= 0) parsed = JSON.parse(output.slice(jsonStart));
+  } catch {}
+
+  return { ok: true, output, parsed };
+}
+
+function directImplementationTarget(value) {
+  const text = String(value || "").trim();
+  if (!/^(implement|build|fix|refactor|complete)\b/i.test(text)) {
+    return null;
+  }
+
+  const issueMatch = text.match(/#(\d+)\b/);
+  const taskMatch = text.match(/\b(W\d+(?:-[A-Z0-9]+)+|B-\d+[A-Z]?)\b/i);
+  if (!issueMatch && !taskMatch) return null;
+
   return {
-    ok: true,
-    output: String(result.stdout || "").trim(),
+    issue: issueMatch ? Number(issueMatch[1]) : null,
+    roadmapTaskId: taskMatch ? taskMatch[1].toUpperCase() : null,
   };
 }
 
@@ -108,6 +134,52 @@ if (isRoadmapNext) {
 }
 
 const gate = readMarker();
+const directTarget = directImplementationTarget(prompt);
+
+if (!gate && directTarget) {
+  const usage = startUsageRun(directTarget);
+  if (!usage.ok) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO could not create the required pre-run token-usage record for this direct roadmap implementation: " +
+          usage.error,
+        contextModification:
+          "Do not mutate implementation files until the per-run estimate is recorded in the issue. Resolve the GitHub/Cline telemetry prerequisite, then retry.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  const resolvedIssue = usage.parsed?.issue || directTarget.issue;
+  const resolvedTaskId =
+    usage.parsed?.taskId || directTarget.roadmapTaskId || "unknown";
+
+  writeMarker({
+    taskId,
+    rawTaskId,
+    state: "IMPLEMENTATION_RUN_ACTIVE",
+    issue: resolvedIssue,
+    roadmapTaskId: resolvedTaskId,
+    implementationApprovedAt: new Date().toISOString(),
+    usageRunStarted: true,
+    directImplementationRequest: true,
+  });
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO PRE-RUN token estimate has been recorded for the directly requested roadmap implementation " +
+        resolvedTaskId +
+        (resolvedIssue ? " (#" + resolvedIssue + ")" : "") +
+        ". Continue required preflight and the approved implementation. POST-RUN actual usage must be synchronized before completion.",
+    }),
+  );
+  process.exit(0);
+}
+
 if (
   gate?.state === "CONFIRMED_AWAITING_APPROVAL" &&
   gate?.issue &&

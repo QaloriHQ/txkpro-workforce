@@ -922,6 +922,53 @@ jobs:
           }
           NODE
 
+      - name: Validate direct roadmap implementation auto-starts usage tracking
+        run: |
+          DIRECT_STATE="$RUNNER_TEMP/direct-usage-state"
+          DIRECT_TMP="$RUNNER_TEMP/direct-hook-tmp"
+          mkdir -p "$DIRECT_STATE" "$DIRECT_TMP"
+
+          cat > "$RUNNER_TEMP/direct-usage-issue.json" <<'JSON'
+          {
+            "number": 53,
+            "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
+            "body": "**Task ID:** W11-04B\n**Dependencies:** W11-01B, W11-04A\n## Acceptance Criteria\n- [ ] public SEO routes"
+          }
+          JSON
+
+          direct_result="$(
+            TMPDIR="$DIRECT_TMP" \
+            TXKPRO_AGENT_USAGE_STATE_DIR="$DIRECT_STATE" \
+            TXKPRO_AGENT_USAGE_NO_SYNC="true" \
+            TXKPRO_AGENT_USAGE_ISSUE_FILE="$RUNNER_TEMP/direct-usage-issue.json" \
+            CLINE_PLAN_MODEL="qwen/qwen3-coder" \
+            CLINE_ACT_MODEL="deepseek/deepseek-chat" \
+            node .cline/hooks/UserPromptSubmit <<'JSON'
+          {"taskId":"direct-task-456","userPromptSubmit":{"prompt":"Implement W11-04B"}}
+          JSON
+          )"
+
+          printf '%s' "$direct_result" | grep -F 'PRE-RUN token estimate has been recorded'
+
+          STATE_PATH="$DIRECT_STATE/direct-task-456.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, "utf8"));
+          if (state.state !== "ACTIVE") throw new Error("direct implementation usage run did not start");
+          if (state.issue !== 53) throw new Error("direct implementation did not resolve issue #53");
+          if (state.taskId !== "W11-04B") throw new Error("direct implementation did not retain Task ID");
+          NODE
+
+          GATE_PATH="$DIRECT_TMP/txkpro-cline-confirmation-gates/direct-task-456.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "IMPLEMENTATION_RUN_ACTIVE") {
+            throw new Error("direct implementation hook did not activate run gate");
+          }
+          if (gate.issue !== 53 || gate.roadmapTaskId !== "W11-04B") {
+            throw new Error("direct implementation gate did not persist issue/task identity");
+          }
+          NODE
+
       - run: npm install
       - run: npm run typecheck
       - run: npm run lint
