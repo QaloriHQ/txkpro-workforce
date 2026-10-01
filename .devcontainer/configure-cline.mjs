@@ -110,5 +110,5 @@ fs.writeFileSync(
 fs.renameSync(modelsTempPath, modelsPath);
 
 console.log(
-  `[cline-config] plan=${planModel} maxTokens=${planMaxTokens} act=${actModel} maxTokens=${actMaxTokens} provider=openrouter`,
+  `[cline-config] defaultMode=act plan=${planModel} maxTokens=${planMaxTokens} act=${actModel} maxTokens=${actMaxTokens} provider=openrouter`,
 );
