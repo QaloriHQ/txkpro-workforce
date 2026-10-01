@@ -96,6 +96,8 @@ Mutation authorized: NO
 
 The next step is then to present the implementation/verification plan and wait for explicit owner approval before mutation.
 
+Machine-state invariant: **Prose cannot upgrade runtime state.** For Cline, only a structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` from the exact armed validator command may create `CONFIRMED_AWAITING_APPROVAL`. Both confirmation/plan success sentinels must belong to that same result and match the current provisional issue/Task ID. The persisted validator audit and sourced/proposed plan are authoritative; the owner-facing planning response is rendered deterministically from that state, and narrative prose may not add decisions or upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.
+
 Forbidden planning behavior includes:
 - "Would you like me to gather the confirmation details?";
 - "Mutation Allowed: Yes" before explicit approval;
