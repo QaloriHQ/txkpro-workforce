@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 #!/usr/bin/env node
 
 const { createHash } = require("node:crypto");
