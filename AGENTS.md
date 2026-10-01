@@ -59,11 +59,33 @@ node scripts/roadmap-next-eligible.mjs --json
 
 It evaluates Planned candidates in canonical Project order and automatically runs task context plus protocol preflight until the first candidate passes the automated dependency/Definition-of-Ready gate.
 
-After it returns a candidate, complete every read-only `agentConfirmationsRequired` item from the preflight by reading the issue and applicable authoritative sources. Only after those confirmations pass may the agent call the task **next eligible**.
+The selector returns **provisional candidates**, not a fully eligible task. A provisional candidate has passed only the automated dependency/Definition-of-Ready gate.
 
-If the selected candidate fails an agent confirmation, continue to the next Planned candidate rather than asking the user whether to run another read-only check.
+Immediately after the selector returns, in the **same planning turn**, resolve every read-only `agentConfirmationsRequired` item by inspecting the live issue, authoritative repository sources, repository configuration, and available non-secret environment state. Do not ask the user whether to proceed with these checks.
 
-Never infer roadmap status from issue state alone. Never call an earliest-Planned candidate "next eligible" before dependency/preflight confirmation.
+Required confirmations are:
+- affected roles and scopes;
+- canonical data ownership and permitted fields;
+- canonical statuses/events and allowed transitions;
+- applicable IA/design sources for user-facing work;
+- target branch, staging Supabase project, and staging Vercel environment;
+- required credential availability without printing secret values;
+- manual verification owner and UAT requirements;
+- unresolved product/privacy/policy/legal blockers.
+
+Only after all required confirmations are resolved positively may the agent state **next eligible task confirmed**.
+
+If a provisional candidate fails or cannot resolve a required confirmation from authoritative sources, classify that confirmation as blocked/unresolved and continue automatically to the next provisional candidate returned by the selector. Do not ask the user for permission to continue read-only analysis.
+
+Before explicit owner approval:
+- `Automated Definition of Ready` may be PASS.
+- `Read-only confirmations` may become CONFIRMED.
+- `Next eligible task` may be CONFIRMED.
+- `Mutation authorized` must remain **NO**.
+
+Never report `Mutation Allowed: Yes`, `Mutation Authorized: Yes`, or equivalent before explicit owner approval.
+
+Never infer roadmap status from issue state alone. Never call an earliest-Planned or automated-gate-only candidate "next eligible" before all read-only confirmations pass.
 
 ## Connector and message-length invariant
 
@@ -111,11 +133,40 @@ The plan must identify:
 - deployment/UAT requirements;
 - blockers or unresolved product decisions.
 
-Read-only discovery, task-context lookup, source review, dependency classification, Definition-of-Ready checks, preflight, and plan construction are automatically authorized and should continue without asking the user for permission.
+Read-only discovery, task-context lookup, source review, dependency classification, Definition-of-Ready checks, preflight, required agent confirmations, and plan construction are automatically authorized and must continue without asking the user for permission.
+
+The agent must not end a planning turn with "Would you like me to gather the confirmation details?" or equivalent. Gathering those details is part of mandatory read-only planning.
 
 Explicit user approval is required before mutation when the active agent supports a plan/act boundary.
 
 Production deployment and production database migrations always require separate explicit user authorization.
+
+## Required "what's next" response contract
+
+After all read-only confirmation work is complete, respond using this state model:
+
+```text
+Next eligible task confirmed: <Task ID> / #<issue>
+Automated Definition of Ready: PASS
+Read-only confirmations: CONFIRMED
+Mutation authorized: NO
+```
+
+Then provide:
+- dependency summary;
+- risk;
+- confirmation evidence/results;
+- implementation contract/plan;
+- verification and UAT plan;
+- blockers/follow-ups, if any.
+
+End with a mutation boundary such as:
+
+```text
+Awaiting explicit owner approval to implement <Task ID>.
+```
+
+Do not ask permission for additional read-only analysis that the protocol already requires.
 
 ## Implementation rules
 
