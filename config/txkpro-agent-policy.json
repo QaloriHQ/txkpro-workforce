@@ -92,5 +92,62 @@
       "switch_mode"
     ],
     "continueAutomaticallyOnBlockedCandidate": true
+  },
+  "agentUsageTelemetry": {
+    "requiredForEveryImplementationRun": true,
+    "issueCommentMarker": "<!-- txkpro-agent-usage:v1 -->",
+    "preRun": {
+      "requiredBeforeMutation": true,
+      "fields": [
+        "runId",
+        "clineTaskId",
+        "estimatedTokens",
+        "expectedRange",
+        "complexity",
+        "warningTokens",
+        "softBudgetTokens",
+        "escalationTokens",
+        "planModel",
+        "actModel"
+      ]
+    },
+    "postRun": {
+      "requiredBeforeCompletion": true,
+      "fields": [
+        "tokensIn",
+        "tokensOut",
+        "totalTokens",
+        "cacheReads",
+        "cacheWrites",
+        "totalCostUsd",
+        "toolCalls",
+        "failedToolCalls",
+        "toolExecutionMs",
+        "estimateVariancePercent",
+        "outcome"
+      ],
+      "tokenAccounting": "tokensIn_plus_tokensOut_cache_reported_separately"
+    },
+    "issueStorage": "single_updated_summary_comment",
+    "rawProviderTelemetryInGitHub": false,
+    "cumulativeIssueTotals": true,
+    "commands": {
+      "estimate": "node scripts/txkpro-agent-usage.mjs estimate",
+      "start": "node scripts/txkpro-agent-usage.mjs start",
+      "observe": "node scripts/txkpro-agent-usage.mjs observe",
+      "finish": "node scripts/txkpro-agent-usage.mjs finish"
+    },
+    "cLineRuntimeEnforcement": {
+      "startOnApprovedNextEligibleRun": true,
+      "observePostToolUse": true,
+      "completionBlockedUntilActualsSynced": true,
+      "cancelAndCompleteHooksFinalizeWhenSupported": true
+    },
+    "budgets": {
+      "warningMultiplier": 1.25,
+      "softMultiplier": 1.5,
+      "escalationMultiplier": 2.25,
+      "escalationDoesNotAutomaticallyAuthorizeScopeReduction": true
+    }
   }
 }
