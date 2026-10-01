@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { notifySlackLifecycle } = require("./txkpro-slack-lifecycle.cjs");
 
 let input = {};
 try {
@@ -29,6 +30,28 @@ let gate = null;
 try {
   gate = JSON.parse(fs.readFileSync(marker, "utf8"));
 } catch {}
+
+if (gate?.state === "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION") {
+  const slackLifecycleStop = notifySlackLifecycle({
+    workspaceRoot,
+    rawTaskId,
+    state:
+      gate.executionStatus === "BLOCKED"
+        ? "STOPPED_BLOCKED"
+        : "STOPPED_AWAITING_CHAT_VERIFICATION",
+    issue: gate.issue,
+    roadmapTaskId: gate.roadmapTaskId,
+    contractId: gate.chatContractId,
+  });
+  try {
+    fs.writeFileSync(
+      marker,
+      JSON.stringify({ ...gate, slackLifecycleStop }, null, 2),
+    );
+  } catch {}
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
 
 if (gate?.state !== "IMPLEMENTATION_RUN_ACTIVE") {
   process.stdout.write(JSON.stringify({ cancel: false }));
