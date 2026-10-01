@@ -44,7 +44,8 @@ jobs:
           nonblank = [line for line in block if line.strip()]
           strip = min(len(line) - len(line.lstrip()) for line in nonblank)
           script = "\n".join(line[strip:] if line.strip() else "" for line in block) + "\n"
-          Path("/tmp/project-sync-script.js").write_text(script)
+          wrapped = "async function __txkproProjectSyncSyntaxCheck() {\n" + script + "\n}\n"
+          Path("/tmp/project-sync-script.js").write_text(wrapped)
           PY
 
           node --check /tmp/project-sync-script.js
