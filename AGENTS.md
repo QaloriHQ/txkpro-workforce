@@ -155,15 +155,15 @@ Production deployment and production database migrations always require separate
 
 ## Deterministic confirmation gate
 
-For `What's next?` / next-eligible planning, prompt text alone is not the enforcement mechanism.
+For `What's next?` / next-eligible planning, prompt text alone is not the enforcement mechanism. ChatGPT Chat mode is the normal orchestrator. The Cline confirmation runtime below is retained as a hardened compatibility/recovery path and is disabled by default unless `TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true`.
 
-Cline uses workspace lifecycle hooks under `.cline/hooks/` plus the validator:
+The legacy Cline path uses workspace lifecycle hooks under `.cline/hooks/` plus the validator:
 
 ```bash
 node scripts/txkpro-confirmation-check.mjs --evidence <path>
 ```
 
-Before Cline may ask a follow-up question or attempt task completion for a next-eligible request, the validator must return both:
+When the legacy Cline orchestration path is explicitly enabled, before Cline may ask a follow-up question or attempt task completion for a next-eligible request, the validator must return both:
 
 ```text
 TXKPRO_CONFIRMATIONS_CONFIRMED

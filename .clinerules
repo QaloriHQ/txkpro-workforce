@@ -19,20 +19,15 @@ Cline-specific instructions never override the authoritative protocol.
 - What's next? in Cline must return the ChatGPT orchestration handoff by default; do not run roadmap selection unless TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true is explicitly set.
 - Before completion, Cline must validate TXKPRO_CLINE_EXECUTION_RESULT against the bound contract. Cline completion remains pending ChatGPT verification.
 
-## PLAN MODE DEFAULT
+## LEGACY CLINE ORCHESTRATION — COMPATIBILITY ONLY
 
-- Treat architecture analysis, roadmap review, issue review, structural-file inspection, implementation planning, and "what's next" requests as PLAN work.
-- Inspect repository/live GitHub context without mutation.
-- Before implementing a roadmap issue, run:
-  - `node scripts/txkpro-task-context.mjs --issue <number> --json`
-  - `node scripts/txkpro-preflight.mjs --issue <number>`
-- For wave work, run:
-  - `node scripts/txkpro-wave-manifest.mjs --wave <WAVE>`
-- Read-only discovery, task-context lookup, dependency checks, authoritative-source review, Definition-of-Ready evaluation, preflight, required agent confirmations, and plan construction are automatically authorized. Continue through them without asking the owner for permission.
-- Never end with "Would you like me to gather the confirmation details?" or equivalent. Resolve them automatically.
-- Return the confirmed eligibility state, implementation contract, dependencies, risk, verification plan, deployment/UAT requirements, and blockers.
-- Before approval, explicitly state `Mutation authorized: NO`.
-- Wait for explicit owner approval only before mutation. Accepted approval phrases include `Go`, `Approve`, or `/act`.
+This section applies only when `TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true` is explicitly enabled for recovery/testing. It is not the normal roadmap workflow.
+
+- Treat architecture analysis, roadmap review, issue review, implementation planning, and "what's next" as read-only Plan work only in this legacy path.
+- Run task context/preflight and all eight confirmation checks without mutation.
+- Preserve the existing `semantic-provenance-v3` and `sourced-plan-v1` gate.
+- Even when the legacy confirmation gate reaches `CONFIRMED_AWAITING_APPROVAL`, Cline may not mutate until a matching pre-existing ChatGPT implementation contract is resolved.
+- In the normal workflow, return the ChatGPT orchestration handoff instead of selecting or reasoning about roadmap work in Cline.
 
 ## CONNECTOR OUTPUT
 
@@ -43,9 +38,9 @@ Cline-specific instructions never override the authoritative protocol.
 - The optimized `roadmap-next-eligible.mjs` performs one Project snapshot scan and must be the canonical "what's next" path.
 - If that selector errors or times out, report/diagnose the failure. Do not retry by switching to `roadmap-next-planned.mjs`, manually guessing from the board, or asking the owner to check GitHub.
 
-## DETERMINISTIC CONFIRMATION GATE
+## LEGACY DETERMINISTIC CONFIRMATION GATE
 
-For `What's next?` and next-eligible planning:
+Only when `TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true`, for `What's next?` and next-eligible planning:
 - the workspace hooks under `.cline/hooks/` are mandatory;
 - first read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; never guess the schema;
 - inspect the authoritative source or execute the relevant non-secret live-state check for every required confirmation;
@@ -100,7 +95,9 @@ For UI/design work, read:
 - `docs/product-sources/ui/README.md`
 - `docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt`
 
-## ROADMAP
+## ROADMAP REFERENCE
+
+ChatGPT Chat mode owns normal roadmap selection. The commands below are reference material for ChatGPT orchestration and the explicitly enabled legacy Cline compatibility path.
 
 Canonical roadmap:
 - GitHub user owner: `QaloriHQ`
@@ -119,11 +116,11 @@ For "what's next", "next eligible task", or equivalent requests:
 
 The dependency-aware selector returns **provisional candidates** whose automated dependency/Definition-of-Ready gate passed. It does not authorize mutation and does not by itself prove full eligibility.
 
-Cline MUST immediately resolve every returned `agentConfirmationsRequired` item in the same Plan-mode turn using the live issue, authoritative repository sources, repository configuration, and available non-secret environment state. Do not ask the owner whether Cline should gather those confirmation details.
+In the normal workflow, ChatGPT Chat mode resolves every returned `agentConfirmationsRequired` item. If legacy Cline orchestration is explicitly enabled, Cline MUST resolve them in the same Plan-mode turn. Do not ask the owner whether to gather those confirmation details.
 
 If a provisional candidate fails or cannot resolve a required confirmation, mark that confirmation blocked/unresolved and continue automatically to the next provisional candidate returned by the selector.
 
-Only after all read-only confirmations pass may Cline say **next eligible task confirmed**.
+Only the active orchestrator (ChatGPT Chat mode normally; legacy Cline only when explicitly enabled) may say **next eligible task confirmed** after all read-only confirmations pass.
 
 Until the owner explicitly approves mutation:
 - Automated Definition of Ready may be PASS.
