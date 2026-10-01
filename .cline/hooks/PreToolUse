@@ -113,7 +113,7 @@ if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
       errorMessage:
         "TXKPRO read-only confirmation gate is still pending. Continue the mandatory read-only analysis; do not ask the user for permission and do not complete the task yet.",
       contextModification:
-        "Resolve all eight required confirmations from authoritative sources now. Write the confirmation evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Only a TXKPRO_CONFIRMATIONS_CONFIRMED result clears this gate. If a candidate is blocked/unresolved, continue automatically to the next provisional candidate.",
+        "Resolve all eight required confirmations from authoritative sources and actual non-secret state now. Do not infer or assume a confirmation. Each evidence entry must be an object containing source, finding, and either locator or checkType. Write the structured evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. INVALID evidence means continue gathering concrete provenance; only TXKPRO_CONFIRMATIONS_CONFIRMED clears this gate. If a candidate is blocked/unresolved, continue automatically to the next provisional candidate.",
     }),
   );
   process.exit(0);

@@ -1,38 +1,95 @@
 {
   "issue": 0,
   "taskId": "",
+  "evidenceContract": "structured-provenance-v1",
   "confirmations": {
     "rolesAndScopes": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "dataOwnership": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "statusesAndEvents": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "iaAndDesign": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "stagingTargets": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "credentials": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "manualUat": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     },
     "unresolvedDecisions": {
       "status": "PENDING",
-      "evidence": []
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": ""
+        }
+      ]
     }
   }
 }

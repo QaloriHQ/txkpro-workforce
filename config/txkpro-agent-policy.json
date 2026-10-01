@@ -91,7 +91,25 @@
       "ask_followup_question",
       "switch_mode"
     ],
-    "continueAutomaticallyOnBlockedCandidate": true
+    "continueAutomaticallyOnBlockedCandidate": true,
+    "evidenceContract": {
+      "version": "structured-provenance-v1",
+      "evidenceEntryType": "object",
+      "requiredFields": [
+        "source",
+        "finding"
+      ],
+      "requiresOneOf": [
+        "locator",
+        "checkType"
+      ],
+      "rejectPlainStrings": true,
+      "rejectVagueSources": true,
+      "requireObservedOrSourcedFinding": true,
+      "invalidEvidenceAction": "continue_readonly_gathering_and_retry",
+      "missingSupportAction": "BLOCKED_or_UNRESOLVED",
+      "secretValuesForbidden": true
+    }
   },
   "agentUsageTelemetry": {
     "requiredForEveryImplementationRun": true,
