@@ -366,9 +366,21 @@ function buildPreflight(item, taskMap) {
     dependencies,
     automatedDefinitionOfReady:
       hardBlocks.length === 0 ? "PASS" : "BLOCKED",
+    automatedGatePassed: hardBlocks.length === 0,
+    eligibilityState:
+      hardBlocks.length === 0
+        ? "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+        : "BLOCKED",
     hardBlocks,
     agentConfirmationsRequired: confirmations,
-    mutationAllowedByAutomatedGate: hardBlocks.length === 0,
+    readOnlyConfirmationsComplete: false,
+    mutationAllowedByAutomatedGate: false,
+    mutationAuthorized: false,
+    approvalRequiredBeforeMutation: true,
+    nextAction:
+      hardBlocks.length === 0
+        ? "Resolve all agentConfirmationsRequired from authoritative sources in the same planning turn. Do not ask the user for permission to perform these read-only checks."
+        : "Do not proceed with this candidate until the hard blockers are resolved.",
     protocol: "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
   };
 }
