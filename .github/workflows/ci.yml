@@ -763,15 +763,72 @@ jobs:
           {
             "issue": 53,
             "taskId": "W11-04B",
+            "evidenceContract": "structured-provenance-v1",
             "confirmations": {
-              "rolesAndScopes": {"status":"CONFIRMED","evidence":["role matrix"]},
-              "dataOwnership": {"status":"CONFIRMED","evidence":["data ownership rules"]},
-              "statusesAndEvents": {"status":"CONFIRMED","evidence":["status dictionary"]},
-              "iaAndDesign": {"status":"CONFIRMED","evidence":["UI standard"]},
-              "stagingTargets": {"status":"CONFIRMED","evidence":["staging config"]},
-              "credentials": {"status":"CONFIRMED","evidence":["presence checks only"]},
-              "manualUat": {"status":"CONFIRMED","evidence":["governance manual UAT rule"]},
-              "unresolvedDecisions": {"status":"CONFIRMED","evidence":["issue/source review found none"]}
+              "rolesAndScopes": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "docs/product-sources/core/TXKPRO_ROLE_PERMISSIONS_MATRIX.txt",
+                  "locator": "Employer role permissions",
+                  "finding": "Fixture confirms the affected Employer role and scope from the authoritative role-permissions source."
+                }]
+              },
+              "dataOwnership": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt",
+                  "locator": "Employer Training ownership",
+                  "finding": "Fixture confirms canonical ownership and permitted access boundaries from the data-ownership source."
+                }]
+              },
+              "statusesAndEvents": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt",
+                  "locator": "Employer Training statuses",
+                  "finding": "Fixture confirms applicable lifecycle status definitions from the canonical status source."
+                }]
+              },
+              "iaAndDesign": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt",
+                  "locator": "Public and role-aware interface requirements",
+                  "finding": "Fixture confirms the applicable UI and interaction standard for the user-facing work."
+                }]
+              },
+              "stagingTargets": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "repository-state-check",
+                  "checkType": "staging-target-presence",
+                  "finding": "Fixture confirms the named staging branch and deployment targets are present in non-secret repository state."
+                }]
+              },
+              "credentials": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "credential-presence-check",
+                  "checkType": "required-env-var-presence",
+                  "finding": "Fixture confirms required environment variable names are present without printing secret values."
+                }]
+              },
+              "manualUat": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+                  "locator": "Staging and UAT",
+                  "finding": "Fixture confirms browser UAT ownership and the required manual verification handoff."
+                }]
+              },
+              "unresolvedDecisions": {
+                "status": "CONFIRMED",
+                "evidence": [{
+                  "source": "github-issue:#53",
+                  "locator": "issue body and discussion",
+                  "finding": "Fixture source review reports no unresolved product, privacy, policy, or legal blocker."
+                }]
+              }
             }
           }
           JSON
@@ -780,6 +837,58 @@ jobs:
             node scripts/txkpro-confirmation-check.mjs               --evidence "$RUNNER_TEMP/confirmations.json"
           )"
           printf '%s' "$confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_CONFIRMED'
+
+          cat > "$RUNNER_TEMP/unstructured-confirmations.json" <<'JSON'
+          {
+            "issue": 53,
+            "taskId": "W11-04B",
+            "confirmations": {
+              "rolesAndScopes": {"status":"CONFIRMED","evidence":["role matrix"]},
+              "dataOwnership": {"status":"CONFIRMED","evidence":["data ownership rules"]},
+              "statusesAndEvents": {"status":"CONFIRMED","evidence":["status dictionary"]},
+              "iaAndDesign": {"status":"CONFIRMED","evidence":["UI standard"]},
+              "stagingTargets": {"status":"CONFIRMED","evidence":["staging config"]},
+              "credentials": {"status":"CONFIRMED","evidence":["presence checks only"]},
+              "manualUat": {"status":"CONFIRMED","evidence":["manual UAT rule"]},
+              "unresolvedDecisions": {"status":"CONFIRMED","evidence":["issue/source review"]}
+            }
+          }
+          JSON
+
+          set +e
+          unstructured_output="$(
+            node scripts/txkpro-confirmation-check.mjs --evidence "$RUNNER_TEMP/unstructured-confirmations.json" 2>&1
+          )"
+          unstructured_status=$?
+          set -e
+          test "$unstructured_status" -eq 2
+          printf '%s' "$unstructured_output" | grep -F 'must be an object with source, finding, and locator or checkType'
+
+          cat > "$RUNNER_TEMP/vague-source-confirmations.json" <<'JSON'
+          {
+            "issue": 53,
+            "taskId": "W11-04B",
+            "confirmations": {
+              "rolesAndScopes": {"status":"CONFIRMED","evidence":[{"source":"role matrix","locator":"Employer","finding":"A plausible but insufficiently sourced role statement is present here."}]},
+              "dataOwnership": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt","locator":"Employer Training ownership","finding":"Fixture confirms canonical ownership from the authoritative data source."}]},
+              "statusesAndEvents": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt","locator":"Employer Training statuses","finding":"Fixture confirms canonical statuses from the authoritative status source."}]},
+              "iaAndDesign": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt","locator":"User-facing requirements","finding":"Fixture confirms UI requirements from the authoritative design source."}]},
+              "stagingTargets": {"status":"CONFIRMED","evidence":[{"source":"repository-state-check","checkType":"staging-target-presence","finding":"Fixture confirms staging target identifiers are present in non-secret state."}]},
+              "credentials": {"status":"CONFIRMED","evidence":[{"source":"credential-presence-check","checkType":"required-env-var-presence","finding":"Fixture confirms required environment variable names are present without exposing values."}]},
+              "manualUat": {"status":"CONFIRMED","evidence":[{"source":"docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md","locator":"Staging and UAT","finding":"Fixture confirms browser UAT ownership from the governance source."}]},
+              "unresolvedDecisions": {"status":"CONFIRMED","evidence":[{"source":"github-issue:#53","locator":"issue body and discussion","finding":"Fixture review reports no unresolved product or policy blocker."}]}
+            }
+          }
+          JSON
+
+          set +e
+          vague_output="$(
+            node scripts/txkpro-confirmation-check.mjs --evidence "$RUNNER_TEMP/vague-source-confirmations.json" 2>&1
+          )"
+          vague_status=$?
+          set -e
+          test "$vague_status" -eq 2
+          printf '%s' "$vague_output" | grep -F 'source must identify a specific authoritative artifact or named live-state check'
 
           node - "$confirmation_output" > "$RUNNER_TEMP/post-tool-input.json" <<'NODE'
           const fs = require("node:fs");
@@ -815,14 +924,14 @@ jobs:
             "issue": 54,
             "taskId": "W11-04C",
             "confirmations": {
-              "rolesAndScopes": {"status":"CONFIRMED","evidence":["role matrix"]},
-              "dataOwnership": {"status":"CONFIRMED","evidence":["data ownership rules"]},
-              "statusesAndEvents": {"status":"CONFIRMED","evidence":["status dictionary"]},
-              "iaAndDesign": {"status":"BLOCKED","evidence":["required IA source unresolved"]},
-              "stagingTargets": {"status":"CONFIRMED","evidence":["staging config"]},
-              "credentials": {"status":"CONFIRMED","evidence":["presence checks only"]},
-              "manualUat": {"status":"CONFIRMED","evidence":["manual UAT rule"]},
-              "unresolvedDecisions": {"status":"CONFIRMED","evidence":["issue/source review"]}
+              "rolesAndScopes": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/core/TXKPRO_ROLE_PERMISSIONS_MATRIX.txt","locator":"Employer role permissions","finding":"Fixture confirms affected role and scope from the canonical role source."}]},
+              "dataOwnership": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt","locator":"Employer Training ownership","finding":"Fixture confirms canonical record ownership from the authoritative data source."}]},
+              "statusesAndEvents": {"status":"CONFIRMED","evidence":[{"source":"docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt","locator":"Employer Training statuses","finding":"Fixture confirms applicable canonical status definitions from the status source."}]},
+              "iaAndDesign": {"status":"BLOCKED","evidence":[{"source":"docs/product-sources/ui/README.md","locator":"Applicable IA sources","finding":"Fixture review shows the required task-specific IA source is unresolved, so this confirmation is blocked."}]},
+              "stagingTargets": {"status":"CONFIRMED","evidence":[{"source":"repository-state-check","checkType":"staging-target-presence","finding":"Fixture confirms staging target identifiers are present in non-secret repository state."}]},
+              "credentials": {"status":"CONFIRMED","evidence":[{"source":"credential-presence-check","checkType":"required-env-var-presence","finding":"Fixture confirms required variable names are present without exposing secret values."}]},
+              "manualUat": {"status":"CONFIRMED","evidence":[{"source":"docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md","locator":"Staging and UAT","finding":"Fixture confirms manual browser UAT remains assigned to the user."}]},
+              "unresolvedDecisions": {"status":"CONFIRMED","evidence":[{"source":"github-issue:#54","locator":"issue body and discussion","finding":"Fixture review reports no separate unresolved product, privacy, policy, or legal blocker."}]}
             }
           }
           JSON
@@ -836,7 +945,23 @@ jobs:
           test "$blocked_status" -eq 3
           printf '%s' "$blocked_confirmation_output" | grep -F 'TXKPRO_CONFIRMATIONS_BLOCKED'
 
-          node -e 'JSON.parse(require("fs").readFileSync(".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json","utf8"))'
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const template = JSON.parse(
+            fs.readFileSync(".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json", "utf8"),
+          );
+          for (const [key, confirmation] of Object.entries(template.confirmations || {})) {
+            const entry = confirmation.evidence?.[0];
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+              throw new Error(key + " template evidence must be a structured object");
+            }
+            for (const field of ["source", "locator", "checkType", "finding"]) {
+              if (!(field in entry)) {
+                throw new Error(key + " template is missing provenance field: " + field);
+              }
+            }
+          }
+          NODE
 
       - name: Validate per-run agent token usage lifecycle
         run: |
