@@ -71,17 +71,24 @@ jobs:
             .split(/\r?\n/)
             .find(
               (line) =>
-                line.trim().startsWith("cline connect slack ") &&
+                line.trim().startsWith("cline connect --restart slack ") &&
                 line.includes("--bot-token"),
             );
           if (!slackConnectCommand) {
-            throw new Error("Primary Slack connector command was not found");
+            throw new Error(
+              "Primary Slack connector must use atomic `cline connect --restart slack` startup",
+            );
           }
           if (
             /--mode\s+plan\b|(?:^|\s)--plan\b/.test(slackConnectCommand)
           ) {
             throw new Error(
               "Primary Slack connector must not force Cline Plan mode",
+            );
+          }
+          if (slackLauncher.includes("cline connect slack --stop")) {
+            throw new Error(
+              "Slack stop/restart control flags must precede the channel name",
             );
           }
           if (!slackConnectCommand.includes("--enable-tools")) {

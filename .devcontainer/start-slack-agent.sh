@@ -119,17 +119,17 @@ else
   echo "[cline-slack] warning: could not refresh origin/main; live repository discovery may be stale" >&2
 fi
 
-cline connect slack --stop >/dev/null 2>&1 || true
-
 HOOK_SCRIPT="$WORKSPACE_ROOT/.devcontainer/slack-access-hook.sh"
 printf -v HOOK_COMMAND 'bash %q' "$HOOK_SCRIPT"
 
 BOT_NAME="${SLACK_BOT_USERNAME:-TXKPRO-Cline}"
 
-echo "[cline-slack] starting secured Slack socket-mode connector"
+echo "[cline-slack] atomically restarting secured Slack socket-mode connector"
+# Cline control flags must precede the channel name. Use --restart so the hub
+# retires any existing supervised Slack connector before starting this exact config.
 # Cline CLI starts in Act mode by default. Do not add --plan/--mode plan here:
 # the TXKPRO Chat contract hooks, not Cline Plan mode, are the mutation boundary.
-cline connect slack   --bot-token "$SLACK_BOT_TOKEN"   --app-token "$SLACK_APP_TOKEN"   --user-name "$BOT_NAME"   --cwd "$WORKSPACE_ROOT"   --enable-tools   --hook-command "$HOOK_COMMAND"
+cline connect --restart slack   --bot-token "$SLACK_BOT_TOKEN"   --app-token "$SLACK_APP_TOKEN"   --user-name "$BOT_NAME"   --cwd "$WORKSPACE_ROOT"   --enable-tools   --hook-command "$HOOK_COMMAND"
 
 printf '[cline-slack] workspace: %s (%s)\n' "${resolved_team_name:-unknown}" "$resolved_team_id"
 printf '[cline-slack] bot user id: %s\n' "${resolved_bot_user_id:-unknown}"
