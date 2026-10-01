@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 
 let input = {};
 try {
@@ -12,36 +13,170 @@ try {
   process.exit(0);
 }
 
-const taskId = String(input?.taskId || "unknown").replace(/[^A-Za-z0-9._-]/g, "_");
+const rawTaskId = String(input?.taskId || "unknown");
+const taskId = rawTaskId.replace(/[^A-Za-z0-9._-]/g, "_");
+const workspaceRoot =
+  Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
+    ? input.workspaceRoots[0]
+    : process.cwd();
 const marker = path.join(
   os.tmpdir(),
   "txkpro-cline-confirmation-gates",
   taskId + ".json",
 );
 const toolName = String(input?.preToolUse?.toolName || "");
+const parameters = input?.preToolUse?.parameters || {};
 
-if (!fs.existsSync(marker)) {
+function readMarker() {
+  try {
+    return JSON.parse(fs.readFileSync(marker, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeMarker(value) {
+  fs.mkdirSync(path.dirname(marker), { recursive: true });
+  fs.writeFileSync(marker, JSON.stringify(value, null, 2));
+}
+
+function runUsage(args) {
+  const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
+  const result = spawnSync(process.execPath, [script, ...args], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  });
+
+  return {
+    ok: !result.error && result.status === 0,
+    status: result.status,
+    stdout: String(result.stdout || "").trim(),
+    stderr: String(result.stderr || "").trim(),
+  };
+}
+
+function commandLooksMutating(value) {
+  const command = Array.isArray(value)
+    ? value.join("\n")
+    : typeof value === "object" && value !== null
+      ? JSON.stringify(value)
+      : String(value || "");
+
+  return /(^|\s)(git\s+(commit|push|merge|checkout|switch|reset|clean)|npm\s+(install|uninstall)|pnpm\s+(add|remove|install)|yarn\s+(add|remove|install)|supabase\s+(db\s+push|migration|functions\s+deploy)|vercel\s+(deploy|--prod)|rm\s|mv\s|cp\s|mkdir\s|touch\s|sed\s+-i|tee\s|apply_patch|cat\s+>)/i.test(
+    command,
+  );
+}
+
+function toolLooksMutating(name, params) {
+  const mutatingTools = new Set([
+    "write_to_file",
+    "replace_in_file",
+    "apply_diff",
+    "search_and_replace",
+    "insert_content",
+    "edit_file",
+    "create_file",
+    "delete_file",
+  ]);
+
+  if (mutatingTools.has(name)) return true;
+  if (name === "execute_command" || name === "run_commands") {
+    return commandLooksMutating(
+      params?.command ?? params?.commands ?? params?.cmd ?? params,
+    );
+  }
+  return false;
+}
+
+const gate = readMarker();
+if (!gate) {
   process.stdout.write(JSON.stringify({ cancel: false }));
   process.exit(0);
 }
 
-const blockedTools = new Set([
-  "attempt_completion",
-  "ask_followup_question",
-  "switch_mode",
-]);
+if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+  const blockedTools = new Set([
+    "attempt_completion",
+    "ask_followup_question",
+    "switch_mode",
+  ]);
 
-if (!blockedTools.has(toolName)) {
-  process.stdout.write(JSON.stringify({ cancel: false }));
+  if (!blockedTools.has(toolName)) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO read-only confirmation gate is still pending. Continue the mandatory read-only analysis; do not ask the user for permission and do not complete the task yet.",
+      contextModification:
+        "Resolve all eight required confirmations from authoritative sources now. Write the confirmation evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Only a TXKPRO_CONFIRMATIONS_CONFIRMED result clears this gate. If a candidate is blocked/unresolved, continue automatically to the next provisional candidate.",
+    }),
+  );
   process.exit(0);
 }
 
-process.stdout.write(
-  JSON.stringify({
-    cancel: true,
-    errorMessage:
-      "TXKPRO read-only confirmation gate is still pending. Continue the mandatory read-only analysis; do not ask the user for permission and do not complete the task yet.",
-    contextModification:
-      "Resolve all eight required confirmations from authoritative sources now. Write the confirmation evidence JSON to /tmp and run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Only a TXKPRO_CONFIRMATIONS_CONFIRMED result clears this gate. If a candidate is blocked/unresolved, continue automatically to the next provisional candidate.",
-  }),
-);
+if (gate.state === "CONFIRMED_AWAITING_APPROVAL") {
+  if (!toolLooksMutating(toolName, parameters)) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO mutation is not authorized yet. The next eligible task is confirmed, but explicit owner approval and the PRE-RUN issue usage record are still required.",
+      contextModification:
+        "Present or preserve the implementation plan and wait for explicit owner approval. After approval, the UserPromptSubmit hook will create the required estimated token-usage record in the GitHub issue before mutation begins.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (
+  gate.state === "IMPLEMENTATION_RUN_ACTIVE" &&
+  toolName === "attempt_completion"
+) {
+  const finish = runUsage([
+    "finish",
+    "--cline-task-id",
+    rawTaskId,
+    "--outcome",
+    "agent_run_finished",
+  ]);
+
+  if (!finish.ok) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO cannot complete this agent run until actual token/cost telemetry has been synchronized to the GitHub issue. " +
+          (finish.stderr || finish.stdout || "Usage finalization failed."),
+        contextModification:
+          "Do not invent token counts. Resolve the Cline telemetry source or run the usage finalizer with a valid telemetry source, then retry completion.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  writeMarker({
+    ...gate,
+    state: "RUN_COMPLETE",
+    usageRunFinishedAt: new Date().toISOString(),
+  });
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO POST-RUN token/cost actuals have been synchronized to the issue. The implementation run may complete. GitHub now contains the pre-run estimate, post-run actuals, estimate variance, and cumulative issue usage.",
+    }),
+  );
+  process.exit(0);
+}
+
+process.stdout.write(JSON.stringify({ cancel: false }));
