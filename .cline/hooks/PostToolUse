@@ -12,6 +12,11 @@ const {
   validateBlockedArtifact,
   validateConfirmedArtifact,
 } = require("./txkpro-confirmation-runtime.cjs");
+const {
+  parseExecutionValidationResult,
+  renderExecutorFacingSummary,
+  validateExecutionValidationArtifact,
+} = require("./txkpro-orchestration-runtime.cjs");
 
 let input = {};
 try {
@@ -54,7 +59,6 @@ function runUsage(args) {
     encoding: "utf8",
     env: process.env,
   });
-
   return {
     ok: !response.error && response.status === 0,
     status: response.status,
@@ -93,11 +97,11 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
       JSON.stringify({
         cancel: false,
         contextModification:
-          "TXKPRO automated dependency/Definition-of-Ready gate passed for provisional candidate " +
+          "TXKPRO legacy automated gate passed for provisional candidate " +
           selectedTaskId +
           " (#" +
           selectedIssue +
-          "). Eligibility is still provisional. Continue all read-only confirmations and validate semantic-provenance-v3 plus sourced-plan-v1. Prose cannot upgrade runtime state.",
+          "). Continue semantic confirmation. This compatibility path still cannot authorize Cline mutation without a ChatGPT implementation contract.",
       }),
     );
     process.exit(0);
@@ -123,7 +127,7 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
         JSON.stringify({
           cancel: false,
           contextModification:
-            "TXKPRO ignored validator-looking output because it was not a parseable structured TXKPRO_CONFIRMATION_VALIDATION_RESULT from the armed invocation. The read-only gate remains active; sentinel strings alone have no authority.",
+            "TXKPRO ignored malformed legacy confirmation output. Sentinel strings alone have no authority.",
         }),
       );
       process.exit(0);
@@ -142,9 +146,7 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
           JSON.stringify({
             cancel: false,
             contextModification:
-              "TXKPRO rejected the structured blocked validator result: " +
-              errors.join("; ") +
-              ". Keep the read-only gate active and validate the current provisional candidate identity.",
+              "TXKPRO rejected the structured blocked result: " + errors.join("; "),
           }),
         );
         process.exit(0);
@@ -173,12 +175,12 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
         JSON.stringify({
           cancel: false,
           contextModification: nextCandidate
-            ? "TXKPRO validator confirmed the current provisional candidate is BLOCKED/UNRESOLVED. Continue automatically with provisional candidate " +
+            ? "TXKPRO legacy confirmation is BLOCKED/UNRESOLVED. Continue automatically with " +
               nextCandidate.taskId +
               " (#" +
               nextCandidate.issue +
-              "). Do not ask the owner for permission."
-            : "TXKPRO validator confirmed the current provisional candidate is BLOCKED/UNRESOLVED. The gate remains READ_ONLY_CONFIRMATIONS_REQUIRED. Continue the roadmap protocol without manufacturing eligibility.",
+              ")."
+            : "TXKPRO legacy confirmation is BLOCKED/UNRESOLVED. Do not manufacture eligibility.",
         }),
       );
       process.exit(0);
@@ -195,7 +197,7 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
         JSON.stringify({
           cancel: false,
           contextModification:
-            "TXKPRO validator command did not succeed. The read-only gate remains active; inspect the validator errors and repair evidence without asking the owner for permission.",
+            "TXKPRO legacy validator command failed. Keep the gate active.",
         }),
       );
       process.exit(0);
@@ -216,9 +218,7 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
         JSON.stringify({
           cancel: false,
           contextModification:
-            "TXKPRO rejected the validator result and kept READ_ONLY_CONFIRMATIONS_REQUIRED: " +
-            errors.join("; ") +
-            ". Prose cannot override this machine state.",
+            "TXKPRO rejected the legacy validator result: " + errors.join("; "),
         }),
       );
       process.exit(0);
@@ -250,12 +250,9 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
       JSON.stringify({
         cancel: false,
         contextModification:
-          "TXKPRO machine validation cleared the confirmation and sourced-plan gates for " +
-          result.taskId +
-          " (#" +
-          result.issue +
-          "). Prose cannot upgrade or rewrite this state. Finish this planning turn with attempt_completion using exactly the persisted ownerFacingResponse; do not add routes, fields, statuses, events, URL structures, credentials, owners, or other decisions. Exact response:\n\n" +
-          ownerFacingResponse,
+          "TXKPRO legacy confirmation gate cleared. Finish with the exact validator response. Mutation still requires a ChatGPT Chat implementation contract bound to validationId " +
+          result.validationId +
+          ".",
       }),
     );
     process.exit(0);
@@ -264,6 +261,76 @@ if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
 
 gate = readMarker();
 if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
+  const invocation = gate.executionValidatorInvocation;
+  if (invocation && invocation.toolName === toolName) {
+    const result = parseExecutionValidationResult(resultValue);
+    if (!toolSuccess || !result) {
+      writeMarker({
+        ...gate,
+        executionValidatorInvocation: null,
+        lastExecutionValidationFailure: !toolSuccess
+          ? "execution_validator_command_failed"
+          : "structured_execution_validator_result_missing_or_malformed",
+        lastExecutionValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO execution result did not validate. The Cline run remains active and cannot complete. Arbitrary sentinel text has no authority.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    const errors = validateExecutionValidationArtifact(result, {
+      issue: invocation.expectedIssue,
+      taskId: invocation.expectedTaskId,
+      contractId: invocation.expectedContractId,
+    });
+    if (errors.length > 0) {
+      writeMarker({
+        ...gate,
+        executionValidatorInvocation: null,
+        lastExecutionValidationFailure: errors,
+        lastExecutionValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO rejected the structured Cline execution result: " +
+            errors.join("; "),
+        }),
+      );
+      process.exit(0);
+    }
+
+    const executorFacingResponse = renderExecutorFacingSummary(result);
+    writeMarker({
+      ...gate,
+      state: "EXECUTION_VALIDATED_AWAITING_CHAT_REVIEW",
+      executionStatus: result.executionStatus,
+      executionValidationId: result.validationId,
+      executionResultDigest: result.resultDigest,
+      validatedExecution: result.validatedExecution,
+      executorFacingResponse,
+      executionValidatorInvocation: null,
+      executionValidatedAt: new Date().toISOString(),
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO Cline execution evidence is validated against ChatGPT contract " +
+          result.contractId +
+          ". No further mutation is allowed in this run. Finish with attempt_completion using exactly the persisted execution summary; ChatGPT Chat verification is still required.\n\n" +
+          executorFacingResponse,
+      }),
+    );
+    process.exit(0);
+  }
+
   const observation = runUsage([
     "observe",
     "--cline-task-id",
@@ -283,13 +350,12 @@ if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
       ) {
         const messages = {
           WARNING:
-            "TXKPRO token usage has crossed the run warning threshold. Continue only while making measurable progress; avoid unnecessary repository rereads and repeated repair loops.",
+            "TXKPRO token usage crossed the warning threshold. Avoid redundant reads and repeated repair loops.",
           SOFT_BUDGET:
-            "TXKPRO token usage has crossed the soft budget. Record the reason for variance in the final run summary and continue only if the current repair/verification path is productive.",
+            "TXKPRO token usage crossed the soft budget. Continue only while the contracted implementation path remains productive.",
           ESCALATION:
-            "TXKPRO token usage has crossed the escalation threshold. Check for repeated failures, circular debugging, redundant context reads, or stalled progress. If the run is genuinely stuck, stop safely and report the blocker rather than consuming tokens indefinitely.",
+            "TXKPRO token usage crossed the escalation threshold. If execution is stuck, return a structured BLOCKED result instead of consuming tokens indefinitely.",
         };
-
         process.stdout.write(
           JSON.stringify({
             cancel: false,
@@ -298,9 +364,7 @@ if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
         );
         process.exit(0);
       }
-    } catch {
-      // Observation is advisory; do not block the active implementation.
-    }
+    } catch {}
   }
 }
 

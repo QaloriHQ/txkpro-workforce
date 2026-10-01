@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "protocol": {
     "path": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
     "version": "1.0",
@@ -242,6 +242,49 @@
       "softMultiplier": 1.5,
       "escalationMultiplier": 2.25,
       "escalationDoesNotAutomaticallyAuthorizeScopeReduction": true
+    }
+  },
+  "orchestration": {
+    "version": "chat-orchestrator-cline-executor-v1",
+    "normalWorkflow": "ChatGPT Chat orchestrates_and_reasons -> owner approval -> Cline Act executes -> ChatGPT Chat verifies",
+    "orchestrator": "ChatGPT Chat mode",
+    "executor": "Cline Act mode",
+    "verifier": "ChatGPT Chat mode",
+    "clineMaySelectRoadmapTask": false,
+    "clineMayCreateProductOrTechnicalDecisions": false,
+    "clineMayDeclareRoadmapVerificationComplete": false,
+    "implementationContract": {
+      "type": "TXKPRO_CHAT_IMPLEMENTATION_CONTRACT",
+      "schemaVersion": "chat-orchestrator-v1",
+      "issueCommentMarker": "<!-- txkpro-chat-implementation-contract:v1 -->",
+      "template": ".github/TXKPRO_CHAT_IMPLEMENTATION_CONTRACT_TEMPLATE.json",
+      "resolver": "node scripts/txkpro-chat-contract.mjs resolve --issue <issue> --task-id <Task ID>",
+      "ownerAuthoredCommentRequired": true,
+      "contentHashRequired": true,
+      "preExistingBeforeClineActRequired": true,
+      "unresolvedProposedDecisionsExecutable": false,
+      "allowedDecisionBasis": [
+        "SOURCED",
+        "OWNER_APPROVED"
+      ],
+      "productionDeploymentAuthorizedByContract": false,
+      "productionMigrationAuthorizedByContract": false
+    },
+    "executionResult": {
+      "type": "TXKPRO_CLINE_EXECUTION_RESULT",
+      "schemaVersion": "cline-execution-v1",
+      "template": ".github/TXKPRO_CLINE_EXECUTION_RESULT_TEMPLATE.json",
+      "validator": "node scripts/txkpro-cline-execution-check.mjs --result <path> --contract <path>",
+      "requiredBeforeClineCompletion": true,
+      "changedPathsBoundToContract": true,
+      "requiredVerificationMustPassForImplemented": true,
+      "deviationsForbiddenForImplemented": true,
+      "finalState": "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION"
+    },
+    "legacyClineOrchestration": {
+      "enabledByDefault": false,
+      "optInEnvironmentVariable": "TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION",
+      "purpose": "compatibility_and_emergency_only"
     }
   }
 }

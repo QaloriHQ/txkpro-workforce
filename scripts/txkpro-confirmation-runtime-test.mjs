@@ -38,6 +38,7 @@ const env = {
   TMPDIR: hookTmp,
   PATH: bin + path.delimiter + process.env.PATH,
   TXKPRO_CI_PRESENT: "yes",
+  TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION: "true",
 };
 
 function runNode(args, { input = "", extraEnv = {} } = {}) {

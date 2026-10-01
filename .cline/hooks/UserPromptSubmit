@@ -22,6 +22,7 @@ const workspaceRoot =
     : process.cwd();
 const dir = path.join(os.tmpdir(), "txkpro-cline-confirmation-gates");
 const marker = path.join(dir, taskId + ".json");
+const chatContractPath = path.join(dir, taskId + ".chat-contract.json");
 
 function readMarker() {
   try {
@@ -50,18 +51,11 @@ function isExplicitImplementationApproval(value) {
 function startUsageRun(gate) {
   const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
   const args = [script, "start"];
-
-  if (gate.issue) {
-    args.push("--issue", String(gate.issue));
-  }
-  if (gate.roadmapTaskId) {
-    args.push("--task-id", String(gate.roadmapTaskId));
-  }
+  if (gate.issue) args.push("--issue", String(gate.issue));
+  if (gate.roadmapTaskId) args.push("--task-id", String(gate.roadmapTaskId));
   args.push("--cline-task-id", rawTaskId);
 
-  if (process.env.TXKPRO_AGENT_USAGE_NO_SYNC === "true") {
-    args.push("--no-sync");
-  }
+  if (process.env.TXKPRO_AGENT_USAGE_NO_SYNC === "true") args.push("--no-sync");
   if (process.env.TXKPRO_AGENT_USAGE_ISSUE_FILE) {
     args.push("--issue-file", process.env.TXKPRO_AGENT_USAGE_ISSUE_FILE);
   }
@@ -96,9 +90,7 @@ function startUsageRun(gate) {
 
 function directImplementationTarget(value) {
   const text = String(value || "").trim();
-  if (!/^(implement|build|fix|refactor|complete)\b/i.test(text)) {
-    return null;
-  }
+  if (!/^(implement|build|fix|refactor|complete)\b/i.test(text)) return null;
 
   const issueMatch = text.match(/#(\d+)\b/);
   const taskMatch = text.match(/\b(W\d+(?:-[A-Z0-9]+)+|B-\d+[A-Z]?)\b/i);
@@ -110,16 +102,101 @@ function directImplementationTarget(value) {
   };
 }
 
+function resolveChatContract(target, existingGate) {
+  const script = path.join(workspaceRoot, "scripts", "txkpro-chat-contract.mjs");
+  const args = [script, "resolve"];
+
+  const issue = target?.issue || existingGate?.issue || null;
+  const roadmapTaskId =
+    target?.roadmapTaskId || existingGate?.roadmapTaskId || null;
+
+  if (issue) args.push("--issue", String(issue));
+  if (roadmapTaskId) args.push("--task-id", String(roadmapTaskId));
+  if (process.env.TXKPRO_CHAT_CONTRACT_ISSUE_FILE) {
+    args.push("--issue-file", process.env.TXKPRO_CHAT_CONTRACT_ISSUE_FILE);
+  }
+
+  const result = spawnSync(process.execPath, args, {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  });
+
+  if (result.error || result.status !== 0) {
+    return {
+      ok: false,
+      error: String(
+        result.stderr ||
+          result.stdout ||
+          result.error?.message ||
+          "ChatGPT contract resolution failed",
+      ).trim(),
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(String(result.stdout || "").trim());
+  } catch {
+    return { ok: false, error: "ChatGPT contract resolver returned malformed JSON." };
+  }
+
+  if (parsed?.status !== "READY" || !parsed?.contract?.contractId) {
+    return { ok: false, error: "ChatGPT contract is not READY." };
+  }
+
+  if (
+    existingGate?.validationId &&
+    parsed.contract.confirmationValidationId !== existingGate.validationId
+  ) {
+    return {
+      ok: false,
+      error:
+        "ChatGPT contract confirmationValidationId does not match the confirmed planning artifact.",
+    };
+  }
+  if (
+    existingGate?.evidenceDigest &&
+    parsed.contract.evidenceDigest !== existingGate.evidenceDigest
+  ) {
+    return {
+      ok: false,
+      error: "ChatGPT contract evidenceDigest does not match the confirmed planning artifact.",
+    };
+  }
+
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(chatContractPath, JSON.stringify(parsed.contract, null, 2));
+
+  return {
+    ok: true,
+    resolution: parsed,
+    contractPath: chatContractPath,
+  };
+}
+
 const isRoadmapNext =
   /\bwhat(?:'|’)s\s+next\b/i.test(prompt) ||
   /\bnext\s+eligible(?:\s+task)?\b/i.test(prompt) ||
   /\bnext\s+roadmap(?:\s+task)?\b/i.test(prompt);
 
-if (isRoadmapNext) {
+if (
+  isRoadmapNext &&
+  process.env.TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION !== "true"
+) {
+  const ownerFacingResponse = [
+    "TXKPRO roadmap orchestration is owned by ChatGPT Chat mode.",
+    "Cline mode: EXECUTOR ONLY",
+    "Mutation authorized: NO",
+    "No ChatGPT implementation contract is bound to this run.",
+    "Return to ChatGPT Chat mode to select/confirm the roadmap task and publish the implementation contract before invoking Cline Act mode.",
+  ].join("\n");
+
   writeMarker({
     taskId,
     rawTaskId,
-    state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
+    state: "CHAT_ORCHESTRATION_REQUIRED",
+    ownerFacingResponse,
     createdAt: new Date().toISOString(),
   });
 
@@ -127,7 +204,27 @@ if (isRoadmapNext) {
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO ROADMAP CONTINUATION GATE: This is a What's next?/next-eligible request. Run the dependency-aware selector, then continue automatically through ALL required read-only confirmations in this same turn. Do not ask whether to gather confirmation details. Before finishing, read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs; do not guess the evidence schema. Inspect authoritative sources and actual non-secret environment state, then create evidenceContract semantic-provenance-v3 with all eight confirmations. Every evidence item must include source, finding, locator or checkType, a typed assertion {subject,predicate,values}, and machine-verifiable verification bound to that assertion. Build implementationPlan.contract sourced-plan-v1 in the same JSON. Every API route, database field, status, event, URL pattern, credential, and owner in the implementation plan must either be SOURCED from a specific confirmation evidence entry or labeled exactly PROPOSED — requires product/technical decision. Do not invent capabilities, ownership, status families, events, routes, fields, environment names, credentials, or UAT owners by extrapolating unrelated source text. Validate with: node scripts/txkpro-confirmation-check.mjs --evidence <path>. If validation returns INVALID, read the template/validator errors and continue read-only source gathering automatically instead of guessing a new schema. Only the structured TXKPRO_CONFIRMATION_VALIDATION_RESULT from the exact armed validator command may clear the gate; sentinel strings from arbitrary output have no authority. After validation, the final planning response must exactly match the validator-derived ownerFacingResponse stored by the runtime. Prose cannot upgrade runtime state or add decisions. Until the structured result contains both TXKPRO_CONFIRMATIONS_CONFIRMED and TXKPRO_PLAN_CONTRACT_CONFIRMED for the same issue/Task ID, do not ask a follow-up question, do not attempt completion, and do not claim the task is confirmed eligible. Mutation remains unauthorized until explicit owner approval.",
+        "TXKPRO ORCHESTRATION BOUNDARY: Cline is executor-only. Do not run the roadmap selector, source-confirmation reasoning, or implementation planning in Cline. Finish with attempt_completion using exactly this response:\n\n" +
+        ownerFacingResponse,
+    }),
+  );
+  process.exit(0);
+}
+
+if (isRoadmapNext) {
+  writeMarker({
+    taskId,
+    rawTaskId,
+    state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
+    createdAt: new Date().toISOString(),
+    legacyClineOrchestration: true,
+  });
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: false,
+      contextModification:
+        "TXKPRO LEGACY ORCHESTRATION COMPATIBILITY PATH IS EXPLICITLY ENABLED. Run the dependency-aware selector and the semantic-provenance-v3 plus sourced-plan-v1 confirmation flow. This path is not the normal product workflow; a ChatGPT implementation contract is still required before mutation.",
     }),
   );
   process.exit(0);
@@ -137,31 +234,49 @@ const gate = readMarker();
 const directTarget = directImplementationTarget(prompt);
 
 if (!gate && directTarget) {
-  const usage = startUsageRun(directTarget);
-  if (!usage.ok) {
+  const chatContract = resolveChatContract(directTarget, null);
+  if (!chatContract.ok) {
     process.stdout.write(
       JSON.stringify({
         cancel: true,
         errorMessage:
-          "TXKPRO could not create the required pre-run token-usage record for this direct roadmap implementation: " +
-          usage.error,
+          "TXKPRO Cline Act cannot start without a pre-existing ChatGPT Chat implementation contract: " +
+          chatContract.error,
         contextModification:
-          "Do not mutate implementation files until the per-run estimate is recorded in the issue. Resolve the GitHub/Cline telemetry prerequisite, then retry.",
+          "Return to ChatGPT Chat mode. ChatGPT must select/confirm the roadmap task, resolve product/technical decisions, and publish the owner-authored hashed implementation contract before Cline Act is invoked.",
       }),
     );
     process.exit(0);
   }
 
-  const resolvedIssue = usage.parsed?.issue || directTarget.issue;
-  const resolvedTaskId =
-    usage.parsed?.taskId || directTarget.roadmapTaskId || "unknown";
+  const contract = chatContract.resolution.contract;
+  const usage = startUsageRun({
+    issue: contract.issue,
+    roadmapTaskId: contract.taskId,
+  });
+  if (!usage.ok) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO could not create the required pre-run token-usage record: " +
+          usage.error,
+        contextModification:
+          "Do not mutate implementation files until telemetry is recorded.",
+      }),
+    );
+    process.exit(0);
+  }
 
   writeMarker({
     taskId,
     rawTaskId,
     state: "IMPLEMENTATION_RUN_ACTIVE",
-    issue: resolvedIssue,
-    roadmapTaskId: resolvedTaskId,
+    issue: Number(contract.issue),
+    roadmapTaskId: String(contract.taskId),
+    chatContractId: contract.contractId,
+    chatContractPath: chatContract.contractPath,
+    chatContract: contract,
     implementationApprovedAt: new Date().toISOString(),
     usageRunStarted: true,
     directImplementationRequest: true,
@@ -171,10 +286,15 @@ if (!gate && directTarget) {
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO PRE-RUN token estimate has been recorded for the directly requested roadmap implementation " +
-        resolvedTaskId +
-        (resolvedIssue ? " (#" + resolvedIssue + ")" : "") +
-        ". Continue required preflight and the approved implementation. POST-RUN actual usage must be synchronized before completion.",
+        "TXKPRO CLINE ACT EXECUTOR: A pre-existing ChatGPT Chat implementation contract is validated and bound to this run. Execute only contractId " +
+        contract.contractId +
+        ". Do not select roadmap work, reinterpret requirements, invent product/technical decisions, broaden allowed paths, or claim final verification. Allowed paths: " +
+        JSON.stringify(contract.scope.allowedPaths) +
+        ". Required steps: " +
+        JSON.stringify(contract.scope.steps) +
+        ". Before normal completion, write a TXKPRO_CLINE_EXECUTION_RESULT and run exactly: node scripts/txkpro-cline-execution-check.mjs --result <path> --contract " +
+        chatContract.contractPath +
+        ". ChatGPT Chat verification remains required after Cline execution.",
     }),
   );
   process.exit(0);
@@ -186,6 +306,24 @@ if (
   gate?.roadmapTaskId &&
   isExplicitImplementationApproval(prompt)
 ) {
+  const chatContract = resolveChatContract(
+    { issue: gate.issue, roadmapTaskId: gate.roadmapTaskId },
+    gate,
+  );
+  if (!chatContract.ok) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO approval cannot transition Cline into Act without a matching ChatGPT implementation contract: " +
+          chatContract.error,
+        contextModification:
+          "ChatGPT Chat mode must publish the execution contract bound to this confirmation validation ID and evidence digest before Cline can mutate the repository.",
+      }),
+    );
+    process.exit(0);
+  }
+
   const usage = startUsageRun(gate);
   if (!usage.ok) {
     process.stdout.write(
@@ -195,15 +333,19 @@ if (
           "TXKPRO could not create the required pre-run token-usage record in the GitHub issue: " +
           usage.error,
         contextModification:
-          "Do not mutate implementation files until the per-run usage estimate has been recorded. Fix the GitHub/Cline telemetry prerequisite, then retry the approved implementation.",
+          "Do not mutate implementation files until the pre-run record succeeds.",
       }),
     );
     process.exit(0);
   }
 
+  const contract = chatContract.resolution.contract;
   writeMarker({
     ...gate,
     state: "IMPLEMENTATION_RUN_ACTIVE",
+    chatContractId: contract.contractId,
+    chatContractPath: chatContract.contractPath,
+    chatContract: contract,
     implementationApprovedAt: new Date().toISOString(),
     usageRunStarted: true,
   });
@@ -212,11 +354,9 @@ if (
     JSON.stringify({
       cancel: false,
       contextModification:
-        "TXKPRO agent-usage PRE-RUN record has been written to the issue for " +
-        gate.roadmapTaskId +
-        " (#" +
-        gate.issue +
-        "). Continue the approved implementation. Token/cost actuals must be synchronized to the same issue before this run may complete. Production deployment remains separately authorized.",
+        "TXKPRO CLINE ACT EXECUTOR: Owner approval is accepted only against ChatGPT contract " +
+        contract.contractId +
+        ". Execute the contract exactly; do not invent or upgrade decisions. Before completion, validate a structured execution result with scripts/txkpro-cline-execution-check.mjs. ChatGPT verification remains a separate required state.",
     }),
   );
   process.exit(0);

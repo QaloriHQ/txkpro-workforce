@@ -1,3 +1,11 @@
+## ChatGPT orchestration and Cline execution boundary
+
+The normal implementation runtime is: Owner -> ChatGPT Chat mode (roadmap/source reasoning, confirmation, implementation contract) -> explicit owner approval -> Cline Act mode (code, commands, tests under the bound contract) -> structured Cline execution result -> ChatGPT Chat mode (independent contract/diff/CI verification) -> normal protocol evidence and roadmap status automation.
+
+The detailed contract is docs/governance/TXKPRO_CHAT_CLINE_ORCHESTRATION.md. ChatGPT owns product/technical reasoning and the executable implementation contract. Cline Act may execute that contract but may not invent or upgrade decisions, re-select roadmap work, broaden allowed repository paths, or certify its own roadmap completion. A Cline run may end at RUN_COMPLETE_AWAITING_CHAT_VERIFICATION; it may not convert that state to Verification/Done without separate ChatGPT review and existing protocol evidence gates.
+
+The pre-existing contract is transferred through an owner-authored GitHub issue comment marked <!-- txkpro-chat-implementation-contract:v1 -->. The runtime validates its content hash before Act starts. Production deployment and production migrations remain separately authorized and are false in the normal Chat implementation contract.
+
 TXKPRO WAVE IMPLEMENTATION PROTOCOL
 Version: 1.0
 Effective date: September 30, 2026

@@ -90,6 +90,9 @@ jobs:
       - run: node --check scripts/txkpro-project-transition.mjs
       - run: node --check scripts/txkpro-confirmation-check.mjs
       - run: node --check scripts/txkpro-agent-usage.mjs
+      - run: node --check scripts/txkpro-chat-contract.mjs
+      - run: node --check scripts/txkpro-cline-execution-check.mjs
+      - run: node --check .cline/hooks/txkpro-orchestration-runtime.cjs
       - run: node --check .cline/hooks/UserPromptSubmit
       - run: node --check .cline/hooks/PreToolUse
       - run: node --check .cline/hooks/PostToolUse
@@ -743,6 +746,9 @@ jobs:
       - name: Validate Cline structured confirmation runtime gate
         run: node scripts/txkpro-confirmation-runtime-test.mjs
 
+      - name: Validate ChatGPT orchestrator to Cline executor runtime
+        run: node scripts/txkpro-orchestration-runtime-test.mjs
+
       - name: Validate per-run agent token usage lifecycle
         run: |
           USAGE_STATE="$RUNNER_TEMP/agent-usage-state"
@@ -841,11 +847,78 @@ jobs:
           }
           JSON
 
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const runtime = require("./.cline/hooks/txkpro-orchestration-runtime.cjs");
+          const contract = {
+            type: runtime.CHAT_CONTRACT_TYPE,
+            schemaVersion: runtime.CHAT_CONTRACT_SCHEMA,
+            orchestrator: runtime.CHAT_ORCHESTRATOR,
+            executor: runtime.CLINE_EXECUTOR,
+            state: runtime.CHAT_CONTRACT_READY,
+            issue: 53,
+            taskId: "W11-04B",
+            confirmationValidationId: "a".repeat(64),
+            evidenceDigest: "b".repeat(64),
+            sourcePlanContract: "sourced-plan-v1",
+            createdAt: "2026-10-01T20:00:00.000Z",
+            scope: {
+              summary: "CI direct implementation contract fixture.",
+              allowedPaths: ["app/**", "tests/**"],
+              steps: [
+                "Implement approved scope.",
+                "Run verification.",
+                "Return execution result."
+              ],
+              decisions: [
+                {
+                  kind: "test",
+                  name: "CI fixture",
+                  basis: "SOURCED",
+                  sourceRef: "confirmation:unresolvedDecisions[0]"
+                }
+              ]
+            },
+            verification: {
+              commands: ["npm run typecheck", "npm run lint", "npm run build"],
+              manualUat: []
+            },
+            boundaries: {
+              mutationAuthorized: false,
+              productionDeploymentAuthorized: false,
+              productionMigrationAuthorized: false
+            },
+            contractId: ""
+          };
+          contract.contractId = runtime.expectedContractId(contract);
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/direct-chat-contract-issue.json",
+            JSON.stringify({
+              number: 53,
+              title: "[W11-04B] Build public Employer course and lesson URLs with SEO",
+              body: "**Task ID:** W11-04B",
+              comments: [
+                {
+                  author: {login: "QaloriHQ"},
+                  createdAt: "2026-10-01T20:01:00.000Z",
+                  url: "https://github.com/QaloriHQ/txkpro-workforce/issues/53#issuecomment-ci",
+                  body:
+                    runtime.CHAT_CONTRACT_MARKER +
+                    "\n~~~json\n" +
+                    JSON.stringify(contract, null, 2) +
+                    "\n~~~"
+                }
+              ]
+            }, null, 2)
+          );
+          NODE
+
           direct_result="$(
             TMPDIR="$DIRECT_TMP" \
             TXKPRO_AGENT_USAGE_STATE_DIR="$DIRECT_STATE" \
             TXKPRO_AGENT_USAGE_NO_SYNC="true" \
             TXKPRO_AGENT_USAGE_ISSUE_FILE="$RUNNER_TEMP/direct-usage-issue.json" \
+            TXKPRO_CHAT_CONTRACT_ISSUE_FILE="$RUNNER_TEMP/direct-chat-contract-issue.json" \
             CLINE_PLAN_MODEL="qwen/qwen3-coder" \
             CLINE_ACT_MODEL="deepseek/deepseek-chat" \
             node .cline/hooks/UserPromptSubmit <<'JSON'
@@ -853,7 +926,7 @@ jobs:
           JSON
           )"
 
-          printf '%s' "$direct_result" | grep -F 'PRE-RUN token estimate has been recorded'
+          printf '%s' "$direct_result" | grep -F 'TXKPRO CLINE ACT EXECUTOR'
 
           STATE_PATH="$DIRECT_STATE/direct-task-456.json" node - <<'NODE'
           const fs = require("node:fs");
