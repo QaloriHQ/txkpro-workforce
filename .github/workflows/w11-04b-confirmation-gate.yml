@@ -1,0 +1,163 @@
+name: TXKPRO W11-04B Confirmation Gate
+
+on:
+  pull_request:
+    branches: [staging]
+    paths:
+      - ".github/confirmations/W11-04B.json"
+      - ".github/workflows/w11-04b-confirmation-gate.yml"
+      - "scripts/roadmap-next-eligible.mjs"
+      - "scripts/txkpro-preflight.mjs"
+      - "scripts/txkpro-confirmation-check.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  confirm:
+    runs-on: ubuntu-latest
+    env:
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      TXKPRO_ROADMAP_OWNER: QaloriHQ
+      TXKPRO_ROADMAP_PROJECT_NUMBER: "1"
+      TXKPRO_ROADMAP_REPO: QaloriHQ/txkpro-workforce
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify Project credential presence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${PROJECTS_TOKEN:-}"
+          echo "PROJECTS_TOKEN: PRESENT"
+
+      - name: Confirm canonical next provisional candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/roadmap-next-eligible.mjs --json | tee "$RUNNER_TEMP/next-eligible.json"
+          RESULT_PATH="$RUNNER_TEMP/next-eligible.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.selected?.issue !== 53) {
+            throw new Error(
+              "Canonical selector did not choose Issue #53; selected=" +
+              JSON.stringify(result.selected?.issue ?? null),
+            );
+          }
+          if (result.selected?.projectStatus !== "Planned") {
+            throw new Error(
+              "Issue #53 must have authoritative Project Status = Planned; received " +
+              JSON.stringify(result.selected?.projectStatus ?? null),
+            );
+          }
+          if (result.selected?.preflight?.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Issue #53 automated Definition of Ready did not pass");
+          }
+          if (
+            result.selected?.eligibilityState !==
+            "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          ) {
+            throw new Error("Issue #53 selector state is not confirmations-pending");
+          }
+          NODE
+
+      - name: Run canonical preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/txkpro-preflight.mjs --issue 53 --json | tee "$RUNNER_TEMP/preflight.json"
+          RESULT_PATH="$RUNNER_TEMP/preflight.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.issue !== 53 || result.taskId !== "W11-04B") {
+            throw new Error("Preflight identity mismatch");
+          }
+          if (result.projectStatus !== "Planned") {
+            throw new Error("Preflight Project Status must be Planned");
+          }
+          if (result.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Preflight automated Definition of Ready did not pass");
+          }
+          if (result.automatedGatePassed !== true) {
+            throw new Error("Preflight automated gate did not pass");
+          }
+          NODE
+
+      - name: Run semantic provenance confirmation validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/txkpro-confirmation-check.mjs \
+            --evidence .github/confirmations/W11-04B.json \
+            | tee "$RUNNER_TEMP/confirmation-validation.json"
+
+          RESULT_PATH="$RUNNER_TEMP/confirmation-validation.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.type !== "TXKPRO_CONFIRMATION_VALIDATION_RESULT") {
+            throw new Error("Unexpected confirmation result type");
+          }
+          if (result.status !== "CONFIRMED") {
+            throw new Error("Confirmation validator did not return CONFIRMED");
+          }
+          if (result.issue !== 53 || result.taskId !== "W11-04B") {
+            throw new Error("Confirmation validation identity mismatch");
+          }
+          if (
+            result.confirmationResult !== "CONFIRMED" ||
+            result.planResult !== "CONFIRMED"
+          ) {
+            throw new Error("Confirmation and plan contract did not both confirm");
+          }
+          if (
+            !result.successSentinels?.includes("TXKPRO_CONFIRMATIONS_CONFIRMED")
+          ) {
+            throw new Error("Confirmation success sentinel missing");
+          }
+          if (
+            !result.successSentinels?.includes("TXKPRO_PLAN_CONTRACT_CONFIRMED")
+          ) {
+            throw new Error("Plan success sentinel missing");
+          }
+          if (!/^[a-f0-9]{64}$/.test(result.validationId || "")) {
+            throw new Error("validationId is missing or invalid");
+          }
+          if (!/^[a-f0-9]{64}$/.test(result.evidenceDigest || "")) {
+            throw new Error("evidenceDigest is missing or invalid");
+          }
+          NODE
+
+      - name: Publish machine validation summary
+        shell: bash
+        run: |
+          {
+            echo "## W11-04B confirmation gate"
+            echo
+            echo '~~~json'
+            cat "$RUNNER_TEMP/confirmation-validation.json"
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w11-04b-confirmation-gate
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/next-eligible.json
+            ${{ runner.temp }}/preflight.json
+            ${{ runner.temp }}/confirmation-validation.json
+            .github/confirmations/W11-04B.json
