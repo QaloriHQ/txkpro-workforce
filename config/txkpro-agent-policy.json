@@ -93,23 +93,31 @@
     ],
     "continueAutomaticallyOnBlockedCandidate": true,
     "evidenceContract": {
-      "version": "semantic-provenance-v2",
+      "version": "semantic-provenance-v3",
       "template": ".github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json",
       "validator": "scripts/txkpro-confirmation-check.mjs",
       "evidenceEntryType": "object",
       "requiredFields": [
         "source",
         "finding",
+        "assertion",
         "verification"
       ],
       "requiresOneOf": [
         "locator",
         "checkType"
       ],
-      "verificationRequired": true,
+      "assertion": {
+        "requiredFields": [
+          "subject",
+          "predicate",
+          "values"
+        ],
+        "predicateScopedByConfirmation": true,
+        "genericTextProofMustContainSubjectAndValues": true
+      },
       "allowedVerificationTypes": [
         "source_text_match",
-        "source_text_absence",
         "env_presence",
         "git_ref_exists",
         "github_issue_text_match"
@@ -117,10 +125,34 @@
       "rejectPlainStrings": true,
       "rejectVagueSources": true,
       "rejectInventedLocators": true,
-      "requireObservedOrSourcedFinding": true,
-      "invalidEvidenceAction": "continue_readonly_gathering_read_template_and_retry",
+      "rejectSemanticExtrapolation": true,
       "missingSupportAction": "BLOCKED_or_UNRESOLVED",
+      "invalidEvidenceAction": "continue_readonly_gathering_read_template_and_retry",
       "secretValuesForbidden": true
+    },
+    "successSentinels": [
+      "TXKPRO_CONFIRMATIONS_CONFIRMED",
+      "TXKPRO_PLAN_CONTRACT_CONFIRMED"
+    ],
+    "implementationPlanContract": {
+      "version": "sourced-plan-v1",
+      "required": true,
+      "constrainedKinds": [
+        "api_route",
+        "database_field",
+        "status",
+        "event",
+        "url_pattern",
+        "credential",
+        "owner"
+      ],
+      "allowedBasis": [
+        "SOURCED",
+        "PROPOSED"
+      ],
+      "sourcedRequiresConfirmationEvidenceReference": true,
+      "proposedLabel": "PROPOSED — requires product/technical decision",
+      "finalResponseMustNotAddUnvalidatedImplementationDecisions": true
     }
   },
   "agentUsageTelemetry": {
