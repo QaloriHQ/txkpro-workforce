@@ -24,6 +24,10 @@ require_env() {
   fi
 }
 
+if [[ -d "$WORKSPACE_ROOT/.cline/hooks" ]]; then
+  chmod +x "$WORKSPACE_ROOT"/.cline/hooks/* 2>/dev/null || true
+fi
+
 require_env OPENROUTER_API_KEY
 require_env SLACK_BOT_TOKEN
 require_env SLACK_APP_TOKEN
