@@ -9,7 +9,12 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs",
-    "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs"
+    "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs",
+    "protocol:context": "node scripts/txkpro-task-context.mjs",
+    "protocol:preflight": "node scripts/txkpro-preflight.mjs",
+    "protocol:wave": "node scripts/txkpro-wave-manifest.mjs",
+    "protocol:check": "node scripts/txkpro-protocol-check.mjs",
+    "protocol:report": "node scripts/txkpro-completion-report.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
