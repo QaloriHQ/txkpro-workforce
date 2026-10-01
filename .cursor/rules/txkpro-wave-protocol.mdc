@@ -7,7 +7,7 @@ Read and obey `AGENTS.md` before any planning, code generation, edit, test, migr
 
 The authoritative process is `docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`.
 
-For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Treat its result as provisional until all required read-only agent confirmations are resolved from authoritative sources. Continue context, dependency, source-review, preflight, confirmation resolution, and planning automatically in the same turn. If a candidate fails confirmation, continue to the next provisional candidate. Never report mutation authorized before explicit owner approval.
+For "what's next", use `node scripts/roadmap-next-eligible.mjs --json`. Treat its result as provisional until all required read-only agent confirmations are resolved from authoritative sources. Continue context, dependency, source-review, preflight, confirmation resolution, and planning automatically in the same turn. Confirmation evidence must use structured provenance with `source`, `finding`, and either `locator` or `checkType`; do not accept vague labels or assumed state. If a candidate fails confirmation, continue to the next provisional candidate. Never report mutation authorized before explicit owner approval.
 
 For every implementation run, use `scripts/txkpro-agent-usage.mjs` to record the PRE-RUN estimate in the issue before mutation and POST-RUN actual usage before completion; never invent missing telemetry.
 
