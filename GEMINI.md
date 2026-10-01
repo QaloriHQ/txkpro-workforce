@@ -10,3 +10,5 @@ Use the shared TXKPRO scripts and evidence workflow described in `AGENTS.md`. Fo
 Every implementation run must use `scripts/txkpro-agent-usage.mjs` to record a PRE-RUN estimate in the GitHub issue before mutation and POST-RUN actual token/cost usage before completion. Never fabricate unavailable telemetry.
 
 Agent-specific convenience or model behavior never overrides the protocol, canonical product sources, server-side authorization rules, dependency gates, or production authorization boundary.
+
+Prose cannot upgrade runtime state. Only the exact armed validator command's structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` may clear the next-eligible gate, and the final planning response must exactly use the persisted validator-derived `ownerFacingResponse`; do not add decisions or upgrade `PROPOSED`, `BLOCKED`, or `UNRESOLVED`.
