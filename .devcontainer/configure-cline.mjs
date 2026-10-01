@@ -49,6 +49,7 @@ const next = {
   actModeApiProvider: "openrouter",
   planModeOpenRouterModelId: planModel,
   actModeOpenRouterModelId: actModel,
+  hooksEnabled: true,
   welcomeViewCompleted: true,
   isNewUser: false,
 };
