@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { notifySlackLifecycle } = require("./txkpro-slack-lifecycle.cjs");
 
 let input = {};
 try {
@@ -268,7 +269,7 @@ if (!gate && directTarget) {
     process.exit(0);
   }
 
-  writeMarker({
+  const activeGate = {
     taskId,
     rawTaskId,
     state: "IMPLEMENTATION_RUN_ACTIVE",
@@ -280,7 +281,18 @@ if (!gate && directTarget) {
     implementationApprovedAt: new Date().toISOString(),
     usageRunStarted: true,
     directImplementationRequest: true,
+  };
+  writeMarker(activeGate);
+
+  const slackLifecycleReady = notifySlackLifecycle({
+    workspaceRoot,
+    rawTaskId,
+    state: "READY_TO_BEGIN",
+    issue: activeGate.issue,
+    roadmapTaskId: activeGate.roadmapTaskId,
+    contractId: activeGate.chatContractId,
   });
+  writeMarker({ ...activeGate, slackLifecycleReady });
 
   process.stdout.write(
     JSON.stringify({
@@ -340,7 +352,7 @@ if (
   }
 
   const contract = chatContract.resolution.contract;
-  writeMarker({
+  const activeGate = {
     ...gate,
     state: "IMPLEMENTATION_RUN_ACTIVE",
     chatContractId: contract.contractId,
@@ -348,7 +360,18 @@ if (
     chatContract: contract,
     implementationApprovedAt: new Date().toISOString(),
     usageRunStarted: true,
+  };
+  writeMarker(activeGate);
+
+  const slackLifecycleReady = notifySlackLifecycle({
+    workspaceRoot,
+    rawTaskId,
+    state: "READY_TO_BEGIN",
+    issue: activeGate.issue,
+    roadmapTaskId: activeGate.roadmapTaskId,
+    contractId: activeGate.chatContractId,
   });
+  writeMarker({ ...activeGate, slackLifecycleReady });
 
   process.stdout.write(
     JSON.stringify({

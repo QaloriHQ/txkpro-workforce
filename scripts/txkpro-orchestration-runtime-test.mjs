@@ -15,8 +15,48 @@ const root = process.cwd();
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "txkpro-orchestration-"));
 const hookTmp = path.join(tmp, "hook-tmp");
 const usageState = path.join(tmp, "usage-state");
+const clineDataDir = path.join(tmp, "cline-data");
+const slackLifecycleOut = path.join(tmp, "slack-lifecycle.jsonl");
+const slackLifecycleState = path.join(tmp, "slack-lifecycle-state");
 fs.mkdirSync(hookTmp, { recursive: true });
 fs.mkdirSync(usageState, { recursive: true });
+fs.mkdirSync(slackLifecycleState, { recursive: true });
+
+const slackBindingsPath = path.join(
+  clineDataDir,
+  "connectors",
+  "slack",
+  "TXKPRO-Cline.threads.json",
+);
+fs.mkdirSync(path.dirname(slackBindingsPath), { recursive: true });
+
+const clineUsagePath = path.join(
+  clineDataDir,
+  "sessions",
+  "sessions.index.json",
+);
+fs.mkdirSync(path.dirname(clineUsagePath), { recursive: true });
+fs.writeFileSync(
+  clineUsagePath,
+  JSON.stringify(
+    {
+      sessions: {
+        "cline-act-1": {
+          id: "cline-act-1",
+          tokensIn: 1200,
+          tokensOut: 300,
+          cacheReads: 100,
+          cacheWrites: 0,
+          totalCost: 0.0015,
+          modelId: "deepseek/deepseek-chat",
+          ts: Date.now(),
+        },
+      },
+    },
+    null,
+    2,
+  ),
+);
 
 function buildContract() {
   const value = {
@@ -107,6 +147,9 @@ const env = {
   TXKPRO_AGENT_USAGE_NO_SYNC: "true",
   TXKPRO_AGENT_USAGE_ISSUE_FILE: usageIssue,
   TXKPRO_CHAT_CONTRACT_ISSUE_FILE: issueFixture,
+  CLINE_DATA_DIR: clineDataDir,
+  TXKPRO_SLACK_LIFECYCLE_TEST_OUT: slackLifecycleOut,
+  TXKPRO_SLACK_LIFECYCLE_STATE_DIR: slackLifecycleState,
 };
 
 function runNode(args, input = "", extraEnv = {}) {
@@ -159,6 +202,44 @@ function marker(taskId) {
   return JSON.parse(fs.readFileSync(markerPath(taskId), "utf8"));
 }
 
+function writeSlackBinding(taskId) {
+  const channel = "C123";
+  const threadTs = "1700000000.000001";
+  const threadId = "slack:" + channel + ":" + threadTs;
+  fs.writeFileSync(
+    slackBindingsPath,
+    JSON.stringify(
+      {
+        [threadId]: {
+          kind: "conversation",
+          channelId: "slack:" + channel,
+          isDM: false,
+          serializedThread: JSON.stringify({
+            id: threadId,
+            channelId: "slack:" + channel,
+            isDM: false,
+            state: { sessionId: taskId },
+          }),
+          sessionId: taskId,
+          state: { sessionId: taskId },
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+function slackEvents() {
+  if (!fs.existsSync(slackLifecycleOut)) return [];
+  return fs
+    .readFileSync(slackLifecycleOut, "utf8")
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
 try {
   assert.equal(runtime.validateContract(contract).length, 0);
   assert.equal(contract.contractId, runtime.expectedContractId(contract));
@@ -191,6 +272,7 @@ try {
   );
   assert.equal(noReasoningTool.cancel, true);
 
+  writeSlackBinding("cline-act-1");
   const act = submit("cline-act-1", "Implement W11-04B");
   assert.equal(act.cancel, false);
   assert.match(act.contextModification, /CLINE ACT EXECUTOR/);
@@ -199,6 +281,13 @@ try {
   assert.equal(active.chatContractId, contract.contractId);
   assert.equal(active.issue, 53);
   assert.equal(active.roadmapTaskId, "W11-04B");
+  const readyEvents = slackEvents();
+  assert.equal(readyEvents.length, 1);
+  assert.equal(readyEvents[0].lifecycleState, "READY_TO_BEGIN");
+  assert.equal(readyEvents[0].payload.channel, "C123");
+  assert.equal(readyEvents[0].payload.thread_ts, "1700000000.000001");
+  assert.match(readyEvents[0].payload.text, /READY TO BEGIN/);
+  assert.match(readyEvents[0].payload.text, /W11-04B/);
 
   const outside = hook("PreToolUse", "cline-act-1", "write_to_file", {
     path: "app/admin/not-allowed.ts",
@@ -282,6 +371,35 @@ try {
   const reviewed = marker("cline-act-1");
   assert.equal(reviewed.state, "EXECUTION_VALIDATED_AWAITING_CHAT_REVIEW");
   assert.match(reviewed.executorFacingResponse, /ChatGPT Chat verification required/);
+
+  const finalized = hook(
+    "PreToolUse",
+    "cline-act-1",
+    "attempt_completion",
+    { result: reviewed.executorFacingResponse },
+  );
+  assert.equal(finalized.cancel, false);
+  const finished = marker("cline-act-1");
+  assert.equal(finished.state, "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION");
+
+  const lifecycleEvents = slackEvents();
+  assert.equal(lifecycleEvents.length, 2);
+  assert.equal(
+    lifecycleEvents[1].lifecycleState,
+    "STOPPED_AWAITING_CHAT_VERIFICATION",
+  );
+  assert.equal(lifecycleEvents[1].payload.channel, "C123");
+  assert.equal(lifecycleEvents[1].payload.thread_ts, "1700000000.000001");
+  assert.match(lifecycleEvents[1].payload.text, /STOPPED/);
+  assert.match(lifecycleEvents[1].payload.text, /Awaiting ChatGPT verification/);
+  assert.match(lifecycleEvents[1].payload.text, /not Done/);
+
+  const complete = runNode(
+    [path.join(".cline", "hooks", "TaskComplete")],
+    JSON.stringify({ taskId: "cline-act-1" }),
+  );
+  assert.equal(complete.status, 0, complete.stderr);
+  assert.equal(slackEvents().length, 2, "STOPPED notification must be idempotent");
 
   const scopeViolation = JSON.parse(fs.readFileSync(executionPath, "utf8"));
   scopeViolation.changedPaths = ["app/admin/outside.ts"];

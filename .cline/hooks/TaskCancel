@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { notifySlackLifecycle } = require("./txkpro-slack-lifecycle.cjs");
 
 let input = {};
 try {
@@ -53,6 +54,15 @@ const result = spawnSync(
   },
 );
 
+const slackLifecycleStop = notifySlackLifecycle({
+  workspaceRoot,
+  rawTaskId,
+  state: "STOPPED_CANCELLED",
+  issue: gate.issue,
+  roadmapTaskId: gate.roadmapTaskId,
+  contractId: gate.chatContractId,
+});
+
 if (!result.error && result.status === 0) {
   try {
     fs.writeFileSync(
@@ -63,6 +73,24 @@ if (!result.error && result.status === 0) {
           state: "RUN_COMPLETE",
           usageRunFinishedAt: new Date().toISOString(),
           outcome: "cancelled",
+          slackLifecycleStop,
+        },
+        null,
+        2,
+      ),
+    );
+  } catch {}
+}
+
+if (result.error || result.status !== 0) {
+  try {
+    fs.writeFileSync(
+      marker,
+      JSON.stringify(
+        {
+          ...gate,
+          cancellationObservedAt: new Date().toISOString(),
+          slackLifecycleStop,
         },
         null,
         2,
