@@ -12,10 +12,11 @@
     "owner": "QaloriHQ",
     "projectNumber": 1,
     "statusField": "Status",
-    "nextRule": "first Planned candidate in canonical Project order whose task context resolves and automated dependency/Definition-of-Ready preflight passes, followed by required read-only agent confirmations",
+    "nextRule": "first Planned candidate in canonical Project order whose automated dependency/Definition-of-Ready gate passes, followed by mandatory same-turn read-only confirmations from authoritative sources; only then may the task be called next eligible",
     "plannedCandidateRule": "earliest-added open issue with authoritative Project Status = Planned",
     "nextEligibleCommand": "node scripts/roadmap-next-eligible.mjs --json",
-    "plannedCandidateCommand": "node scripts/roadmap-next-planned.mjs --json"
+    "plannedCandidateCommand": "node scripts/roadmap-next-planned.mjs --json",
+    "selectorOutputState": "provisional_until_readonly_confirmations_pass"
   },
   "branches": {
     "staging": "staging",
@@ -46,7 +47,11 @@
   "approvalBoundary": {
     "readOnlyPlanningPreflight": "automatic_no_user_approval_required",
     "mutation": "explicit_user_approval_required",
-    "production": "separate_explicit_user_authorization_required"
+    "production": "separate_explicit_user_authorization_required",
+    "readOnlyConfirmations": "mandatory_same_turn_no_user_approval_required",
+    "eligibilityConfirmation": "must_complete_before_requesting_mutation_approval",
+    "mutationAuthorizedBeforeExplicitApproval": false,
+    "forbiddenPrompt": "Would you like me to gather the confirmation details?"
   },
   "connectors": {
     "primary": "slack",
@@ -61,5 +66,11 @@
       "enabledByDefault": false
     },
     "transportInvariant": "message limits must not reduce or bypass protocol execution"
+  },
+  "outputStateModel": {
+    "automatedGatePassed": "may_be_true_before_approval",
+    "readOnlyConfirmations": "must_be_confirmed_before_next_eligible",
+    "nextEligible": "confirmed_only_after_readonly_confirmations",
+    "mutationAuthorized": "false_until_explicit_owner_approval"
   }
 }

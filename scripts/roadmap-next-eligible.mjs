@@ -366,9 +366,21 @@ function buildPreflight(item, taskMap) {
     dependencies,
     automatedDefinitionOfReady:
       hardBlocks.length === 0 ? "PASS" : "BLOCKED",
+    automatedGatePassed: hardBlocks.length === 0,
+    eligibilityState:
+      hardBlocks.length === 0
+        ? "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+        : "BLOCKED",
     hardBlocks,
     agentConfirmationsRequired: confirmations,
-    mutationAllowedByAutomatedGate: hardBlocks.length === 0,
+    readOnlyConfirmationsComplete: false,
+    mutationAllowedByAutomatedGate: false,
+    mutationAuthorized: false,
+    approvalRequiredBeforeMutation: true,
+    nextAction:
+      hardBlocks.length === 0
+        ? "Resolve all agentConfirmationsRequired from authoritative sources in the same planning turn. Do not ask the user for permission to perform these read-only checks."
+        : "Do not proceed with this candidate until the hard blockers are resolved.",
     protocol: "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
   };
 }
@@ -458,14 +470,19 @@ try {
       preflight,
       eligibleByAutomatedGate:
         preflight.automatedDefinitionOfReady === "PASS" &&
-        preflight.mutationAllowedByAutomatedGate === true,
+        preflight.automatedGatePassed === true,
+      eligibilityState:
+        preflight.automatedDefinitionOfReady === "PASS"
+          ? "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          : "BLOCKED",
+      confirmedEligible: false,
+      mutationAuthorized: false,
     };
 
     evaluated.push(evaluation);
 
-    if (evaluation.eligibleByAutomatedGate) {
+    if (!selected && evaluation.eligibleByAutomatedGate) {
       selected = evaluation;
-      break;
     }
   }
 
@@ -487,7 +504,10 @@ try {
       projectNumber: PROJECT_NUMBER,
       repository: REPOSITORY,
       evaluatedCandidates: evaluated,
-      finalAgentConfirmationRequired: true,
+      readOnlyConfirmationsRequired: true,
+      confirmedEligible: false,
+      mutationAuthorized: false,
+      approvalRequiredBeforeMutation: true,
       message:
         "No Planned candidate passed the automated Definition of Ready/dependency gate.",
       diagnostics,
@@ -520,6 +540,22 @@ try {
     process.exit(4);
   }
 
+  const provisionalCandidates = evaluated
+    .filter((item) => item.eligibleByAutomatedGate)
+    .map((item) => ({
+      issue: item.issue,
+      title: item.title,
+      projectStatus: item.projectStatus,
+      projectItemAddedAt: item.projectItemAddedAt,
+      issueCreatedAt: item.issueCreatedAt,
+      url: item.url,
+      taskContext: item.taskContext,
+      preflight: item.preflight,
+      eligibilityState: "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING",
+      confirmedEligible: false,
+      mutationAuthorized: false,
+    }));
+
   const result = {
     selected: {
       issue: selected.issue,
@@ -530,37 +566,55 @@ try {
       url: selected.url,
       taskContext: selected.taskContext,
       preflight: selected.preflight,
+      eligibilityState: "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING",
+      confirmedEligible: false,
+      mutationAuthorized: false,
     },
+    provisionalCandidates,
     project: projectTitle,
     projectOwner: OWNER,
     projectNumber: PROJECT_NUMBER,
     repository: REPOSITORY,
     skippedCandidates: evaluated
-      .filter((item) => item.issue !== selected.issue)
+      .filter((item) => !item.eligibleByAutomatedGate)
       .map((item) => ({
         issue: item.issue,
         title: item.title,
         preflight: item.preflight,
       })),
-    finalAgentConfirmationRequired: true,
+    readOnlyConfirmationsRequired: true,
+    confirmedEligible: false,
+    mutationAuthorized: false,
+    approvalRequiredBeforeMutation: true,
     selectionMeaning:
-      "First open Planned Project item in canonical order whose automated dependency/Definition-of-Ready gate passes. The agent must still complete the read-only confirmations listed by preflight before calling the task fully eligible for mutation.",
+      "The selected item is the first Planned candidate whose automated dependency/Definition-of-Ready gate passes. It is not yet confirmed eligible. The agent must immediately resolve every read-only confirmation from authoritative sources in the same planning turn.",
+    confirmationFailureRule:
+      "If a provisional candidate fails or cannot resolve a required read-only confirmation, continue to the next item in provisionalCandidates without asking the user for permission.",
     approvalBoundary:
-      "Read-only discovery, task context, dependency checks, source review, and preflight require no user approval. Explicit approval is required only before mutation.",
+      "Read-only discovery, task context, dependency checks, source review, confirmations, and plan construction require no user approval. Explicit approval is required only before mutation.",
+    nextAction:
+      "Resolve all selected.preflight.agentConfirmationsRequired now. Do not ask whether to proceed with read-only confirmation work.",
     diagnostics,
   };
 
   if (cliArgs.has("--json")) {
     console.log(JSON.stringify(result, null, 2));
   } else {
-    console.log("#" + result.selected.issue + " " + result.selected.title);
+    console.log(
+      "Provisional candidate: #" +
+        result.selected.issue +
+        " " +
+        result.selected.title,
+    );
     console.log("Project Status: " + result.selected.projectStatus);
     console.log(
       "Automated Definition of Ready: " +
         result.selected.preflight.automatedDefinitionOfReady,
     );
+    console.log("Eligibility state: " + result.selected.eligibilityState);
+    console.log("Read-only confirmations: pending");
+    console.log("Mutation authorized: no");
     console.log("Risk: " + result.selected.preflight.risk);
-    console.log("Final agent confirmation required: yes");
     console.log(
       "Project queries: " +
         diagnostics.projectGraphqlCalls +
