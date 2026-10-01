@@ -4,6 +4,14 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const {
+  candidateListFromSelector,
+  parseSelectorResult,
+  parseValidationResult,
+  renderOwnerFacingSummary,
+  validateBlockedArtifact,
+  validateConfirmedArtifact,
+} = require("./txkpro-confirmation-runtime.cjs");
 
 let input = {};
 try {
@@ -22,10 +30,6 @@ const workspaceRoot =
 const dir = path.join(os.tmpdir(), "txkpro-cline-confirmation-gates");
 const marker = path.join(dir, taskId + ".json");
 const resultValue = input?.postToolUse?.result;
-const result =
-  typeof resultValue === "string"
-    ? resultValue
-    : JSON.stringify(resultValue ?? "");
 const toolName = String(input?.postToolUse?.toolName || "");
 const toolSuccess = input?.postToolUse?.success !== false;
 const executionTimeMs = Number(input?.postToolUse?.executionTimeMs || 0);
@@ -41,15 +45,6 @@ function readMarker() {
 function writeMarker(value) {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(marker, JSON.stringify(value, null, 2));
-}
-
-function parseConfirmationSummary(text) {
-  const issueMatch = String(text).match(/"issue"\s*:\s*(\d+)/);
-  const taskMatch = String(text).match(/"taskId"\s*:\s*"([^"]+)"/);
-  return {
-    issue: issueMatch ? Number(issueMatch[1]) : null,
-    roadmapTaskId: taskMatch ? taskMatch[1] : null,
-  };
 }
 
 function runUsage(args) {
@@ -68,107 +63,206 @@ function runUsage(args) {
   };
 }
 
-if (
-  result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED") &&
-  result.includes("TXKPRO_PLAN_CONTRACT_CONFIRMED")
-) {
-  const summary = parseConfirmationSummary(result);
-  if (!summary.issue || !summary.roadmapTaskId) {
+let gate = readMarker();
+
+if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+  const selector = parseSelectorResult(resultValue);
+  if (selector) {
+    const candidates = candidateListFromSelector(selector);
+    const selectedIssue = Number(selector.selected.issue);
+    const selectedTaskId = String(selector.selected.taskContext.taskId).trim();
+    writeMarker({
+      ...gate,
+      automatedGatePassed: true,
+      automatedDefinitionOfReady:
+        selector.selected?.preflight?.automatedDefinitionOfReady || "PASS",
+      provisionalIssue: selectedIssue,
+      provisionalTaskId: selectedTaskId,
+      provisionalCandidates: candidates,
+      provisionalCandidateIndex: Math.max(
+        0,
+        candidates.findIndex(
+          (candidate) =>
+            candidate.issue === selectedIssue &&
+            candidate.taskId === selectedTaskId,
+        ),
+      ),
+      selectorObservedAt: new Date().toISOString(),
+    });
     process.stdout.write(
       JSON.stringify({
         cancel: false,
         contextModification:
-          "TXKPRO confirmation and plan validation passed, but the runtime gate could not resolve the issue number and Task ID from the validator output. Re-run the validator and preserve its structured JSON before requesting mutation approval.",
+          "TXKPRO automated dependency/Definition-of-Ready gate passed for provisional candidate " +
+          selectedTaskId +
+          " (#" +
+          selectedIssue +
+          "). Eligibility is still provisional. Continue all read-only confirmations and validate semantic-provenance-v3 plus sourced-plan-v1. Prose cannot upgrade runtime state.",
       }),
     );
     process.exit(0);
   }
 
-  writeMarker({
-    taskId,
-    rawTaskId,
-    state: "CONFIRMED_AWAITING_APPROVAL",
-    issue: summary.issue,
-    roadmapTaskId: summary.roadmapTaskId,
-    confirmationsCompletedAt: new Date().toISOString(),
-  });
+  gate = readMarker();
+  const invocation = gate?.validatorInvocation;
+  if (invocation && invocation.toolName === toolName) {
+    const result = parseValidationResult(resultValue);
+    const expected = {
+      issue: invocation.expectedIssue || gate.provisionalIssue || null,
+      taskId: invocation.expectedTaskId || gate.provisionalTaskId || null,
+    };
 
-  process.stdout.write(
-    JSON.stringify({
-      cancel: false,
-      contextModification:
-        "TXKPRO confirmation and sourced-plan gates cleared. Read-only confirmations and the implementation-plan contract are CONFIRMED for " +
-        summary.roadmapTaskId +
-        " (#" +
-        summary.issue +
-        "). Present only the validated sourced/proposed implementation plan now. Any PROPOSED item must remain labeled 'PROPOSED — requires product/technical decision'. State 'Mutation authorized: NO' and wait for explicit owner approval. When the owner approves implementation, the UserPromptSubmit hook will create the required PRE-RUN token-usage record before mutation.",
-    }),
-  );
-  process.exit(0);
-}
+    if (!result) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: "structured_validator_result_missing_or_malformed",
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO ignored validator-looking output because it was not a parseable structured TXKPRO_CONFIRMATION_VALIDATION_RESULT from the armed invocation. The read-only gate remains active; sentinel strings alone have no authority.",
+        }),
+      );
+      process.exit(0);
+    }
 
-if (
-  result.includes("TXKPRO_CONFIRMATIONS_CONFIRMED") &&
-  !result.includes("TXKPRO_PLAN_CONTRACT_CONFIRMED")
-) {
-  process.stdout.write(
-    JSON.stringify({
-      cancel: false,
-      contextModification:
-        "TXKPRO confirmations appeared to pass without the required sourced-plan sentinel. Keep the read-only gate active, rebuild semantic-provenance-v3 evidence with implementationPlan.contract sourced-plan-v1, and re-run the validator. Do not request implementation approval yet.",
-    }),
-  );
-  process.exit(0);
-}
+    if (result.status === "BLOCKED") {
+      const errors = validateBlockedArtifact(result, expected);
+      if (errors.length > 0) {
+        writeMarker({
+          ...gate,
+          validatorInvocation: null,
+          lastValidationFailure: errors,
+          lastValidationFailureAt: new Date().toISOString(),
+        });
+        process.stdout.write(
+          JSON.stringify({
+            cancel: false,
+            contextModification:
+              "TXKPRO rejected the structured blocked validator result: " +
+              errors.join("; ") +
+              ". Keep the read-only gate active and validate the current provisional candidate identity.",
+          }),
+        );
+        process.exit(0);
+      }
 
-if (result.includes("\"status\": \"INVALID\"") || result.includes("structured provenance entry")) {
-  process.stdout.write(
-    JSON.stringify({
-      cancel: false,
-      contextModification:
-        "TXKPRO confirmation/plan evidence is INVALID. Keep the read-only confirmation gate active. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs before retrying; do not invent another schema. Replace vague, inferred, or unsupported evidence with semantic-provenance-v3 entries containing source, finding, locator/checkType, typed assertion {subject,predicate,values}, and supported machine-verifiable verification. Build sourced-plan-v1 and source each API route, database field, status, event, URL pattern, credential, and owner or label it exactly PROPOSED — requires product/technical decision. Re-run node scripts/txkpro-confirmation-check.mjs --evidence <path>. Do not ask the owner for permission to continue.",
-    }),
-  );
-  process.exit(0);
-}
+      const candidates = Array.isArray(gate.provisionalCandidates)
+        ? gate.provisionalCandidates
+        : [];
+      const currentIndex = Number.isInteger(Number(gate.provisionalCandidateIndex))
+        ? Number(gate.provisionalCandidateIndex)
+        : 0;
+      const nextIndex = currentIndex + 1;
+      const nextCandidate = candidates[nextIndex] || null;
 
-if (result.includes("TXKPRO_CONFIRMATIONS_BLOCKED")) {
-  process.stdout.write(
-    JSON.stringify({
-      cancel: false,
-      contextModification:
-        "TXKPRO confirmation evidence for this provisional candidate is BLOCKED/UNRESOLVED. Keep the confirmation gate active and continue automatically to the next provisional candidate. Do not ask the user whether to continue.",
-    }),
-  );
-  process.exit(0);
-}
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastBlockedValidation: result,
+        lastBlockedValidationId: result.validationId,
+        provisionalCandidateIndex: nextCandidate ? nextIndex : currentIndex,
+        provisionalIssue: nextCandidate ? nextCandidate.issue : gate.provisionalIssue,
+        provisionalTaskId: nextCandidate ? nextCandidate.taskId : gate.provisionalTaskId,
+        lastBlockedAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification: nextCandidate
+            ? "TXKPRO validator confirmed the current provisional candidate is BLOCKED/UNRESOLVED. Continue automatically with provisional candidate " +
+              nextCandidate.taskId +
+              " (#" +
+              nextCandidate.issue +
+              "). Do not ask the owner for permission."
+            : "TXKPRO validator confirmed the current provisional candidate is BLOCKED/UNRESOLVED. The gate remains READ_ONLY_CONFIRMATIONS_REQUIRED. Continue the roadmap protocol without manufacturing eligibility.",
+        }),
+      );
+      process.exit(0);
+    }
 
-if (
-  result.includes("AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING") ||
-  result.includes('"readOnlyConfirmationsRequired": true') ||
-  result.includes('"readOnlyConfirmationsRequired":true')
-) {
-  fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(marker)) {
+    if (!toolSuccess) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: "validator_command_failed",
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO validator command did not succeed. The read-only gate remains active; inspect the validator errors and repair evidence without asking the owner for permission.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    const errors = validateConfirmedArtifact(result, expected);
+    if (!gate.automatedGatePassed) {
+      errors.push("automated dependency/Definition-of-Ready selector PASS was not retained");
+    }
+    if (errors.length > 0) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: errors,
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO rejected the validator result and kept READ_ONLY_CONFIRMATIONS_REQUIRED: " +
+            errors.join("; ") +
+            ". Prose cannot override this machine state.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    const ownerFacingResponse = renderOwnerFacingSummary(result);
     writeMarker({
-      taskId,
-      rawTaskId,
-      state: "READ_ONLY_CONFIRMATIONS_REQUIRED",
-      createdAt: new Date().toISOString(),
+      ...gate,
+      state: "CONFIRMED_AWAITING_APPROVAL",
+      issue: Number(result.issue),
+      roadmapTaskId: String(result.taskId),
+      evidenceContract: result.evidenceContract,
+      planContract: result.planContract,
+      confirmationResult: result.confirmationResult,
+      planResult: result.planResult,
+      validatorSuccess: true,
+      successSentinels: result.successSentinels,
+      validationId: result.validationId,
+      evidenceDigest: result.evidenceDigest,
+      validatedConfirmations: result.confirmations,
+      validatedImplementationPlan: result.implementationPlan,
+      validatedResult: result,
+      ownerFacingResponse,
+      validatorInvocation: null,
+      confirmationsCompletedAt: new Date().toISOString(),
     });
-  }
 
-  process.stdout.write(
-    JSON.stringify({
-      cancel: false,
-      contextModification:
-        "TXKPRO automated gate passed, but eligibility is still provisional. Continue immediately with all read-only confirmations from authoritative sources and actual non-secret environment/repository state. Read .github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json and scripts/txkpro-confirmation-check.mjs first. Do not infer confirmations and do not respond with 'Would you like me to proceed?'. Build semantic-provenance-v3 evidence with typed assertions plus sourced-plan-v1. Every API route, database field, status, event, URL pattern, credential, and owner must be sourced from a specific confirmation evidence entry or explicitly labeled PROPOSED — requires product/technical decision. Validate it with node scripts/txkpro-confirmation-check.mjs --evidence <path> before attempting completion.",
-    }),
-  );
-  process.exit(0);
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO machine validation cleared the confirmation and sourced-plan gates for " +
+          result.taskId +
+          " (#" +
+          result.issue +
+          "). Prose cannot upgrade or rewrite this state. Finish this planning turn with attempt_completion using exactly the persisted ownerFacingResponse; do not add routes, fields, statuses, events, URL structures, credentials, owners, or other decisions. Exact response:\n\n" +
+          ownerFacingResponse,
+      }),
+    );
+    process.exit(0);
+  }
 }
 
-const gate = readMarker();
+gate = readMarker();
 if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
   const observation = runUsage([
     "observe",
