@@ -62,7 +62,7 @@ On Codespace start:
 
 1. `.devcontainer/start-agent.sh` checks whether Slack credentials are available.
 2. If available, it starts the Slack connector.
-3. `start-slack-agent.sh` calls Slack `auth.test`, resolves the workspace ID, refreshes Cline configuration, refreshes `origin/main`, and starts Cline in Plan mode with tools enabled.
+3. `start-slack-agent.sh` calls Slack `auth.test`, resolves the workspace ID, refreshes Cline configuration, refreshes `origin/main`, and starts Cline in Act mode with tools enabled. ChatGPT contracts and workspace hooks remain the mutation boundary.
 4. `slack-access-hook.sh` accepts only the configured Slack user in the resolved workspace.
 5. If Slack is not configured but the existing Discord credentials are available, the router temporarily falls back to Discord and prints a warning.
 6. Discord can also be enabled as a backup by setting `TXKPRO_ENABLE_DISCORD_BACKUP=true`.
@@ -93,7 +93,7 @@ After the connector starts, the terminal should print the Slack workspace ID, bo
 
 ```text
 transport: socket mode
-mode: plan
+mode: act
 ```
 
 In Slack, either:
@@ -107,43 +107,50 @@ For Cline slash-style chat commands in a channel, mention the bot first so Slack
 @TXKPRO Cline /whereami
 ```
 
-For normal TXKPRO workflow:
+For the governed TXKPRO workflow, roadmap selection and implementation-contract preparation happen in **ChatGPT Chat mode**, not in Cline. If `What's next?` is sent to Slack, Cline must hand the user back to ChatGPT rather than select roadmap work.
+
+After ChatGPT has confirmed the task, resolved owner decisions, run the confirmation validator, and published the hashed implementation contract, start Cline with an explicit implementation command:
 
 ```text
-@TXKPRO Cline What's next?
+@TXKPRO Cline Implement W11-04B #53
 ```
 
-The agent should complete read-only roadmap discovery, dependency checks, preflight, and authoritative-source review before presenting the next eligible task and asking for approval to mutate.
+Cline then validates the pre-existing ChatGPT contract and may enter Act execution only for the contract's allowed scope.
 
-## Expected `What's next?` behavior
-
-A successful Slack planning turn must not stop after automated preflight or ask whether to gather confirmation details.
+## ChatGPT → Cline execution behavior
 
 Expected state progression:
 
 ```text
-Provisional candidate selected
-→ Automated Definition of Ready: PASS
-→ resolve all read-only agent confirmations automatically
-→ Next eligible task confirmed
-→ implementation/verification plan
-→ Mutation authorized: NO
-→ await explicit owner approval
+ChatGPT selects and confirms task
+→ owner approves product/technical decisions
+→ confirmation validator succeeds
+→ ChatGPT publishes hashed implementation contract
+→ owner sends Implement <Task ID> #<issue> in Slack
+→ Cline validates the contract
+→ IMPLEMENTATION_RUN_ACTIVE
+→ structured execution result is validated
+→ RUN_COMPLETE_AWAITING_CHAT_VERIFICATION
+→ ChatGPT independently verifies implementation/PR/CI evidence
 ```
 
-The Slack response should explicitly distinguish:
+Cline never upgrades its own execution result to roadmap **Done**. Final verification remains owned by ChatGPT/the TXKPRO governance process.
 
-```text
-Automated Definition of Ready: PASS
-Read-only confirmations: CONFIRMED
-Mutation authorized: NO
-```
+## Slack lifecycle notifications
 
-Only after the owner replies with an accepted approval phrase may a mutation-capable execution begin.
+The runtime sends best-effort operational notifications to the same Slack channel/thread bound to the Cline session:
 
-If a provisional candidate cannot satisfy a required read-only confirmation, Cline should continue to the next provisional candidate automatically rather than asking whether to continue analysis.
+- **READY TO BEGIN** — emitted only after a valid ChatGPT implementation contract is resolved, usage telemetry starts, and the run enters `IMPLEMENTATION_RUN_ACTIVE`.
+- **STOPPED** — emitted after the structured execution result is validated and the Cline run finalizes, or when an active run is cancelled.
+- A blocked execution uses **STOPPED** with an explicit BLOCKED status.
+- Successful STOPPED messages always say **Awaiting ChatGPT verification** and explicitly state that roadmap status is **not Done**.
 
-## Read-only confirmation runtime gate
+Notifications are presentation/audit signals only. They cannot authorize mutation, clear a contract gate, change roadmap status, or substitute for structured execution evidence. Slack API delivery is best-effort; a notification failure is recorded locally but does not manufacture or change governance state.
+
+The lifecycle sender resolves the current Slack destination from Cline's own persisted thread binding for the current task/session ID. Bot tokens are never written to notification output or repository logs.
+
+## Legacy read-only confirmation runtime gate
+
 
 TXKPRO now enforces the `What's next?` continuation rule with Cline workspace hooks in addition to prompt instructions.
 
