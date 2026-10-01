@@ -106,6 +106,8 @@ function resolveIssueByTaskId(taskId) {
   const raw = runGh([
     "api",
     "search/issues",
+    "-X",
+    "GET",
     "-f",
     "q=" + query,
     "-F",
