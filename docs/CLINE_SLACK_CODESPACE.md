@@ -115,6 +115,34 @@ For normal TXKPRO workflow:
 
 The agent should complete read-only roadmap discovery, dependency checks, preflight, and authoritative-source review before presenting the next eligible task and asking for approval to mutate.
 
+## Expected `What's next?` behavior
+
+A successful Slack planning turn must not stop after automated preflight or ask whether to gather confirmation details.
+
+Expected state progression:
+
+```text
+Provisional candidate selected
+→ Automated Definition of Ready: PASS
+→ resolve all read-only agent confirmations automatically
+→ Next eligible task confirmed
+→ implementation/verification plan
+→ Mutation authorized: NO
+→ await explicit owner approval
+```
+
+The Slack response should explicitly distinguish:
+
+```text
+Automated Definition of Ready: PASS
+Read-only confirmations: CONFIRMED
+Mutation authorized: NO
+```
+
+Only after the owner replies with an accepted approval phrase may a mutation-capable execution begin.
+
+If a provisional candidate cannot satisfy a required read-only confirmation, Cline should continue to the next provisional candidate automatically rather than asking whether to continue analysis.
+
 ## Roadmap selector timeout troubleshooting
 
 The canonical `What's next?` command is:
