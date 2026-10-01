@@ -224,6 +224,6 @@ if (args.has("--json")) {
   console.log(`Project item added: ${result.projectItemAddedAt}`);
   console.log(`Issue created: ${result.issueCreatedAt}`);
   console.log(`Dependencies: ${result.dependencies}`);
-  console.log(`Why next: ${result.whyNext}`);
+  console.log(`Selection type: ${result.selectionType}`);\n  console.log(`Why candidate: ${result.whyCandidate}`);
   console.log(`URL: ${result.url}`);
 }
