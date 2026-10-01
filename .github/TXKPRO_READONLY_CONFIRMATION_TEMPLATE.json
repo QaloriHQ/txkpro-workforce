@@ -1,0 +1,212 @@
+{
+  "issue": 0,
+  "taskId": "",
+  "evidenceContract": "semantic-provenance-v3",
+  "confirmations": {
+    "rolesAndScopes": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "dataOwnership": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "statusesAndEvents": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "iaAndDesign": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "stagingTargets": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "manualUat": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    },
+    "unresolvedDecisions": {
+      "status": "PENDING",
+      "evidence": [
+        {
+          "source": "",
+          "locator": "",
+          "checkType": "",
+          "finding": "",
+          "assertion": {
+            "subject": "",
+            "predicate": "",
+            "values": []
+          },
+          "verification": {
+            "type": "",
+            "needle": "",
+            "name": "",
+            "ref": "",
+            "repository": "",
+            "issue": 0
+          }
+        }
+      ]
+    }
+  },
+  "implementationPlan": {
+    "contract": "sourced-plan-v1",
+    "decisions": [
+      {
+        "kind": "",
+        "name": "",
+        "basis": "",
+        "label": "",
+        "confirmation": "",
+        "evidenceIndex": 0
+      }
+    ]
+  }
+}

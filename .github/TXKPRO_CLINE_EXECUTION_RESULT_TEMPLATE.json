@@ -1,0 +1,34 @@
+{
+  "type": "TXKPRO_CLINE_EXECUTION_RESULT",
+  "schemaVersion": "cline-execution-v1",
+  "executor": "Cline Act mode",
+  "issue": 0,
+  "taskId": "WXX-00",
+  "contractId": "<chat implementation contract id>",
+  "status": "IMPLEMENTED",
+  "summary": "What Cline actually changed.",
+  "changedPaths": [
+    "app/example/file.ts"
+  ],
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "result": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "deviations": [],
+  "blockers": [],
+  "productionDeploymentPerformed": false,
+  "productionMigrationPerformed": false
+}

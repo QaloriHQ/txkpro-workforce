@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+let input = {};
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+} catch {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const rawTaskId = String(input?.taskId || "unknown");
+const taskId = rawTaskId.replace(/[^A-Za-z0-9._-]/g, "_");
+const workspaceRoot =
+  Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
+    ? input.workspaceRoots[0]
+    : process.cwd();
+const marker = path.join(
+  os.tmpdir(),
+  "txkpro-cline-confirmation-gates",
+  taskId + ".json",
+);
+
+let gate = null;
+try {
+  gate = JSON.parse(fs.readFileSync(marker, "utf8"));
+} catch {}
+
+if (gate?.state !== "IMPLEMENTATION_RUN_ACTIVE") {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
+const result = spawnSync(
+  process.execPath,
+  [
+    script,
+    "finish",
+    "--cline-task-id",
+    rawTaskId,
+    "--outcome",
+    "completed",
+  ],
+  {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  },
+);
+
+if (!result.error && result.status === 0) {
+  try {
+    fs.writeFileSync(
+      marker,
+      JSON.stringify(
+        {
+          ...gate,
+          state: "RUN_COMPLETE",
+          usageRunFinishedAt: new Date().toISOString(),
+          outcome: "completed",
+        },
+        null,
+        2,
+      ),
+    );
+  } catch {}
+}
+
+process.stdout.write(
+  JSON.stringify({
+    cancel: false,
+    contextModification:
+      result.status === 0
+        ? "TXKPRO completed-run token/cost actuals were synchronized to the GitHub issue."
+        : "TXKPRO TaskComplete could not finalize token telemetry. The PreToolUse completion gate remains the primary finalization path.",
+  }),
+);

@@ -1,0 +1,162 @@
+# TXKPRO Workforce — Cline Adapter
+
+## MANDATORY GOVERNANCE
+
+Before any planning, repository mutation, test, migration, PR, deployment, or completion claim:
+
+1. Read `AGENTS.md`.
+2. Read `docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`.
+3. Follow the live-source, preflight, evidence, staging, UAT, and completion rules defined there.
+
+Cline-specific instructions never override the authoritative protocol.
+
+## EXECUTOR-ONLY DEFAULT
+
+- ChatGPT Chat mode is the TXKPRO roadmap orchestrator and verifier.
+- Cline Act mode may mutate the repository only when a pre-existing owner-authored ChatGPT implementation contract has been resolved and bound to the current run.
+- Cline must not select the next roadmap task, perform product reasoning as an authority, invent implementation decisions, or silently broaden scope.
+- If a contracted decision or path is insufficient, return a structured BLOCKED execution result so ChatGPT can revise the contract.
+- What's next? in Cline must return the ChatGPT orchestration handoff by default; do not run roadmap selection unless TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true is explicitly set.
+- Before completion, Cline must validate TXKPRO_CLINE_EXECUTION_RESULT against the bound contract. Cline completion remains pending ChatGPT verification.
+
+## LEGACY CLINE ORCHESTRATION — COMPATIBILITY ONLY
+
+This section applies only when `TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true` is explicitly enabled for recovery/testing. It is not the normal roadmap workflow.
+
+- Treat architecture analysis, roadmap review, issue review, implementation planning, and "what's next" as read-only Plan work only in this legacy path.
+- Run task context/preflight and all eight confirmation checks without mutation.
+- Preserve the existing `semantic-provenance-v3` and `sourced-plan-v1` gate.
+- Even when the legacy confirmation gate reaches `CONFIRMED_AWAITING_APPROVAL`, Cline may not mutate until a matching pre-existing ChatGPT implementation contract is resolved.
+- In the normal workflow, return the ChatGPT orchestration handoff instead of selecting or reasoning about roadmap work in Cline.
+
+## CONNECTOR OUTPUT
+
+- Slack is the preferred remote connector for TXKPRO because it supports longer engineering responses and thread-oriented sessions.
+- Discord remains an optional fallback only.
+- Never skip or simplify protocol execution because Discord/Slack output is long, truncated, or times out.
+- If a long response must be compressed, compress wording only after completing the required roadmap, dependency, source, Definition-of-Ready, and preflight checks.
+- The optimized `roadmap-next-eligible.mjs` performs one Project snapshot scan and must be the canonical "what's next" path.
+- If that selector errors or times out, report/diagnose the failure. Do not retry by switching to `roadmap-next-planned.mjs`, manually guessing from the board, or asking the owner to check GitHub.
+
+## LEGACY DETERMINISTIC CONFIRMATION GATE
+
+Only when `TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true`, for `What's next?` and next-eligible planning:
+- the workspace hooks under `.cline/hooks/` are mandatory;
+- first read `.github/TXKPRO_READONLY_CONFIRMATION_TEMPLATE.json` and `scripts/txkpro-confirmation-check.mjs`; never guess the schema;
+- inspect the authoritative source or execute the relevant non-secret live-state check for every required confirmation;
+- create `semantic-provenance-v3` evidence and run `node scripts/txkpro-confirmation-check.mjs --evidence <path>`;
+- every evidence item must include `source`, `finding`, either `locator` or `checkType`, typed `assertion {subject,predicate,values}`, and supported machine-verifiable `verification` bound to that assertion;
+- source/issue text used as proof must contain the assertion subject and every asserted value; unrelated text may not prove a broader claim;
+- include `implementationPlan.contract: "sourced-plan-v1"`;
+- every API route, database field, status, event, URL pattern, credential, and owner in the plan must be `SOURCED` from a confirmation evidence entry or labeled exactly `PROPOSED — requires product/technical decision`;
+- plain strings, vague source labels, invented locators/findings, semantic extrapolation, inferred facts, and assumed environment/credential availability are invalid evidence;
+- do not use `attempt_completion`, `ask_followup_question`, or switch mode while the gate is pending;
+- validator status `INVALID` means read the validator errors/template, keep gathering concrete provenance, and retry automatically;
+- only the combination of `TXKPRO_CONFIRMATIONS_CONFIRMED` and `TXKPRO_PLAN_CONTRACT_CONFIRMED` clears the read-only confirmation gate;
+- `TXKPRO_CONFIRMATIONS_BLOCKED` means continue automatically to the next provisional candidate;
+- never ask the owner whether to continue read-only confirmation work.
+- **Prose cannot upgrade runtime state.** Only the exact armed validator command may produce the structured `TXKPRO_CONFIRMATION_VALIDATION_RESULT` that clears the gate; arbitrary sentinel strings are ignored.
+- After validation, finish planning with the exact persisted validator-derived `ownerFacingResponse`. Do not freehand extra implementation decisions or convert `PROPOSED`, `BLOCKED`, or `UNRESOLVED` into a stronger state.
+
+## AGENT USAGE TELEMETRY
+
+Every roadmap implementation run requires one GitHub issue usage summary using `<!-- txkpro-agent-usage:v1 -->`.
+
+- Before mutation, record the estimated run budget with `node scripts/txkpro-agent-usage.mjs start --issue <n> --task-id <id> --cline-task-id <id>`.
+- During an active Cline run, workspace hooks observe tool calls and token-budget thresholds.
+- Before normal completion, actual input/output tokens, cache counters, cost, tool counts, variance, outcome, and cumulative issue totals must be synchronized with `txkpro-agent-usage.mjs finish`.
+- Input + output is the canonical total token count; cache reads/writes are reported separately.
+- Never invent actual usage when Cline/provider telemetry is unavailable.
+- Budget warnings do not authorize skipping scope, tests, or protocol gates.
+- The Cline completion hook is allowed to block completion until POST-RUN actuals are written.
+
+## ACT MODE
+
+- Do not mutate unless the current Cline runtime is actually mutation-capable and the user has explicitly approved the plan.
+- Implement only the approved scope.
+- Retrieve the live GitHub issue requirements before editing.
+- Preserve unrelated user changes and use a dedicated feature branch/worktree where appropriate.
+- Never expose credentials or weaken role/scope authorization, RLS, tenant isolation, auditability, privacy, or evidence boundaries.
+
+## LIVE REPOSITORY DISCOVERY
+
+The Codespace may lag behind GitHub or contain unrelated local changes. For discovery, use:
+
+- `node scripts/repo-latest.mjs status`
+- `node scripts/repo-latest.mjs find <path-substring>`
+- `node scripts/repo-latest.mjs grep <extended-regex>`
+- `node scripts/repo-latest.mjs read <path>`
+
+The helper refreshes `origin/main` without merging/resetting/checking out/staging.
+
+Never claim a repository document or file is missing until the latest `origin/main` has been searched.
+
+For UI/design work, read:
+- `docs/product-sources/ui/README.md`
+- `docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt`
+
+## ROADMAP REFERENCE
+
+ChatGPT Chat mode owns normal roadmap selection. The commands below are reference material for ChatGPT orchestration and the explicitly enabled legacy Cline compatibility path.
+
+Canonical roadmap:
+- GitHub user owner: `QaloriHQ`
+- GitHub Projects v2 Project #1
+- Repository: `QaloriHQ/txkpro-workforce`
+
+The Project `Status` field is authoritative.
+
+For the earliest Planned candidate only:
+
+`node scripts/roadmap-next-planned.mjs --json`
+
+For "what's next", "next eligible task", or equivalent requests:
+
+`node scripts/roadmap-next-eligible.mjs --json`
+
+The dependency-aware selector returns **provisional candidates** whose automated dependency/Definition-of-Ready gate passed. It does not authorize mutation and does not by itself prove full eligibility.
+
+In the normal workflow, ChatGPT Chat mode resolves every returned `agentConfirmationsRequired` item. If legacy Cline orchestration is explicitly enabled, Cline MUST resolve them in the same Plan-mode turn. Do not ask the owner whether to gather those confirmation details.
+
+If a provisional candidate fails or cannot resolve a required confirmation, mark that confirmation blocked/unresolved and continue automatically to the next provisional candidate returned by the selector.
+
+Only the active orchestrator (ChatGPT Chat mode normally; legacy Cline only when explicitly enabled) may say **next eligible task confirmed** after all read-only confirmations pass.
+
+Until the owner explicitly approves mutation:
+- Automated Definition of Ready may be PASS.
+- Read-only confirmations may be CONFIRMED.
+- Mutation authorized must be NO.
+
+Never output "Mutation Allowed: Yes" or equivalent based only on automated preflight.
+
+Never infer Project status solely from issue state or body metadata. Never call the earliest Planned or automated-gate-only candidate "next eligible" before all read-only confirmations pass.
+
+## VERIFICATION
+
+Run applicable focused tests plus:
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+Authorization changes require positive/negative scope tests. Canonical-state changes require transition/idempotency/event/audit tests. Migration changes require migration-order and ledger evidence.
+
+## PROJECT STATUS EVIDENCE
+
+Do not manually convert an issue/Project item to Verification or Done.
+
+Create protocol evidence, validate it, render the completion report, and post it to the issue. Repository automation is the authority that accepts/rejects the evidence and performs the Project transition.
+
+A manual issue closure is not proof of Done.
+
+## DEPLOYMENT BOUNDARIES
+
+- Test/staging work may proceed when authorized by the protocol and user standing authority.
+- Browser staging UAT is user-owned unless explicitly requested.
+- Production deployment and production migrations require separate explicit user authorization every time.
+
+## CONNECTOR ACCESS
+
+- Slack is primary. Treat the configured Slack workspace + owner allowlist as authoritative.
+- Deny Slack requests whose participant key does not exactly match the configured workspace/team ID and allowed Slack user ID.
+- Discord may remain configured as a fallback; its owner allowlist remains authoritative when that transport is active.
+- Ignore or deny mutation requests from any participant other than the configured owner for the active transport.

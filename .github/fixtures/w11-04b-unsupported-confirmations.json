@@ -1,0 +1,250 @@
+{
+  "issue": 53,
+  "taskId": "W11-04B",
+  "evidenceContract": "semantic-provenance-v3",
+  "confirmations": {
+    "rolesAndScopes": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/product-sources/core/TXKPRO_ROLE_PERMISSIONS_MATRIX.txt",
+          "locator": "EMPLOYER",
+          "finding": "Claims Employer, Institution, and Student are affected by Course management.",
+          "assertion": {
+            "subject": "Course management capability",
+            "predicate": "capability_defined",
+            "values": [
+              "Employer",
+              "Institution",
+              "Student"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "EMPLOYER\n- employer_owner: employer account ownership, team, hiring configuration, candidate access."
+          }
+        }
+      ]
+    },
+    "dataOwnership": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt",
+          "locator": "DATA CLASS: EMPLOYER PROFILE",
+          "finding": "Claims Employer owns public Course/Lesson URLs, Institution owns course content, and Student owns visibility settings.",
+          "assertion": {
+            "subject": "Course/Lesson ownership",
+            "predicate": "data_class_owner",
+            "values": [
+              "Employer public URLs",
+              "Institution course content",
+              "Student visibility settings"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "DATA CLASS: EMPLOYER PROFILE\nCanonical owner: Employer domain"
+          }
+        }
+      ]
+    },
+    "statusesAndEvents": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt",
+          "locator": "DISCOVERABILITY_STATUS",
+          "finding": "Claims employer_discoverable is a canonical Course status.",
+          "assertion": {
+            "subject": "COURSE_STATUS",
+            "predicate": "status_family_defined",
+            "values": [
+              "employer_discoverable"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "7. DISCOVERABILITY_STATUS\ninstitution_only\nemployer_discoverable"
+          }
+        },
+        {
+          "source": "docs/product-sources/core/TXKPRO_CROSS_APP_EVENT_MAP.txt",
+          "locator": "CROSS-APP EVENT & SYNCHRONIZATION MAP",
+          "finding": "Claims URL_UPDATED is the canonical Course/Lesson publication event.",
+          "assertion": {
+            "subject": "Course/Lesson publication",
+            "predicate": "event_defined",
+            "values": [
+              "URL_UPDATED"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "EVENT: EMPLOYER_APPROVED"
+          }
+        }
+      ]
+    },
+    "iaAndDesign": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/product-sources/ui/UI_DESIGN_SYSTEM_STANDARD.txt",
+          "locator": "URL",
+          "finding": "Claims an exact public Employer training URL path is approved by the UI authority.",
+          "assertion": {
+            "subject": "public Employer Course URL",
+            "predicate": "route_pattern_defined",
+            "values": [
+              "/employer/[employer-slug]/training/[course-slug]"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "- URL;"
+          }
+        }
+      ]
+    },
+    "stagingTargets": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/STAGING_ENVIRONMENT.md",
+          "locator": "staging environment",
+          "finding": "Claims the staging branch exists from documentation alone.",
+          "assertion": {
+            "subject": "refs/heads/staging",
+            "predicate": "git_ref_exists",
+            "values": [
+              "refs/heads/staging"
+            ]
+          },
+          "verification": {
+            "type": "git_ref_exists",
+            "ref": "refs/heads/staging"
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "environment-variable-presence-check",
+          "checkType": "required-env-var-presence",
+          "finding": "Claims a dedicated SEO metadata API credential is present.",
+          "assertion": {
+            "subject": "SEO_METADATA_API_KEY",
+            "predicate": "credential_present",
+            "values": [
+              "SEO_METADATA_API_KEY"
+            ]
+          },
+          "verification": {
+            "type": "env_presence",
+            "name": "SEO_METADATA_API_KEY"
+          }
+        }
+      ]
+    },
+    "manualUat": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md",
+          "locator": "PHASE 15 — MANUAL UAT HANDOFF",
+          "finding": "Claims Product Manager is the canonical browser UAT owner.",
+          "assertion": {
+            "subject": "browser UAT owner",
+            "predicate": "uat_owner_defined",
+            "values": [
+              "Product Manager"
+            ]
+          },
+          "verification": {
+            "type": "source_text_match",
+            "needle": "When browser or signed-in visual verification remains, provide a concise UAT checklist"
+          }
+        }
+      ]
+    },
+    "unresolvedDecisions": {
+      "status": "CONFIRMED",
+      "evidence": [
+        {
+          "source": "github-issue:#53",
+          "locator": "Product decision",
+          "finding": "Claims Issue #53 establishes that no blockers remain.",
+          "assertion": {
+            "subject": "W11-04B blockers",
+            "predicate": "decision_resolved",
+            "values": [
+              "no blockers identified"
+            ]
+          },
+          "verification": {
+            "type": "github_issue_text_match",
+            "issue": 53,
+            "repository": "QaloriHQ/txkpro-workforce",
+            "needle": "Approved 2026-09-25: all TXKPRO user/entity types require shareable human-readable public profile/page capability"
+          }
+        }
+      ]
+    }
+  },
+  "implementationPlan": {
+    "contract": "sourced-plan-v1",
+    "decisions": [
+      {
+        "kind": "owner",
+        "name": "Employer Course/Lesson ownership",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "dataOwnership",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "status",
+        "name": "employer_discoverable",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "statusesAndEvents",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "event",
+        "name": "URL_UPDATED",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "statusesAndEvents",
+        "evidenceIndex": 1
+      },
+      {
+        "kind": "url_pattern",
+        "name": "/employer/[employer-slug]/training/[course-slug]",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "iaAndDesign",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "credential",
+        "name": "SEO_METADATA_API_KEY",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "credentials",
+        "evidenceIndex": 0
+      },
+      {
+        "kind": "owner",
+        "name": "Product Manager",
+        "basis": "SOURCED",
+        "label": "",
+        "confirmation": "manualUat",
+        "evidenceIndex": 0
+      }
+    ]
+  }
+}

@@ -13,6 +13,972 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - run: bash -n .devcontainer/bootstrap-agent.sh .devcontainer/start-agent.sh .devcontainer/start-slack-agent.sh .devcontainer/start-discord-agent.sh .devcontainer/slack-access-hook.sh .devcontainer/discord-access-hook.sh
+      - run: node --check .devcontainer/configure-cline.mjs
+      - name: Validate Slack connector configuration
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const manifest = JSON.parse(
+            fs.readFileSync("config/slack-cline-app-manifest.json", "utf8"),
+          );
+
+          if (manifest.settings?.socket_mode_enabled !== true) {
+            throw new Error("Slack manifest must enable Socket Mode");
+          }
+
+          const scopes = new Set(manifest.oauth_config?.scopes?.bot || []);
+          for (const scope of [
+            "app_mentions:read",
+            "chat:write",
+            "channels:history",
+            "groups:history",
+            "im:history",
+          ]) {
+            if (!scopes.has(scope)) {
+              throw new Error(`Slack manifest missing required bot scope: ${scope}`);
+            }
+          }
+
+          const events = new Set(
+            manifest.settings?.event_subscriptions?.bot_events || [],
+          );
+          for (const event of [
+            "app_mention",
+            "message.channels",
+            "message.groups",
+            "message.im",
+          ]) {
+            if (!events.has(event)) {
+              throw new Error(`Slack manifest missing required bot event: ${event}`);
+            }
+          }
+
+          const devcontainer = JSON.parse(
+            fs.readFileSync(".devcontainer/devcontainer.json", "utf8"),
+          );
+          if (
+            devcontainer.containerEnv?.TXKPRO_CLINE_PRIMARY_CONNECTOR !== "slack"
+          ) {
+            throw new Error("Slack must be the primary Cline connector");
+          }
+
+          const slackLauncher = fs.readFileSync(
+            ".devcontainer/start-slack-agent.sh",
+            "utf8",
+          );
+          const slackConnectCommand = slackLauncher
+            .split(/\r?\n/)
+            .find(
+              (line) =>
+                line.trim().startsWith("cline connect slack ") &&
+                line.includes("--bot-token"),
+            );
+          if (!slackConnectCommand) {
+            throw new Error("Primary Slack connector command was not found");
+          }
+          if (
+            /--mode\s+plan\b|(?:^|\s)--plan\b/.test(slackConnectCommand)
+          ) {
+            throw new Error(
+              "Primary Slack connector must not force Cline Plan mode",
+            );
+          }
+          if (!slackConnectCommand.includes("--enable-tools")) {
+            throw new Error(
+              "Primary Slack connector must keep implementation tools enabled",
+            );
+          }
+          NODE
+
+          allowed="$(
+            SLACK_ALLOWED_USER_ID="U_OWNER"             SLACK_TEAM_ID="T_OWNER"             bash .devcontainer/slack-access-hook.sh <<'JSON'
+          {"payload":{"actor":{"participantKey":"slack:team:T_OWNER:user:U_OWNER"}}}
+          JSON
+          )"
+          printf '%s' "$allowed" | grep -F '"action":"allow"'
+
+          denied="$(
+            SLACK_ALLOWED_USER_ID="U_OWNER"             SLACK_TEAM_ID="T_OWNER"             bash .devcontainer/slack-access-hook.sh <<'JSON'
+          {"payload":{"actor":{"participantKey":"slack:team:T_OWNER:user:U_OTHER"}}}
+          JSON
+          )"
+          printf '%s' "$denied" | grep -F '"action":"deny"'
+
+      - run: node --check scripts/roadmap-next-planned.mjs
+      - run: node --check scripts/roadmap-next-eligible.mjs
+      - run: node --check scripts/repo-latest.mjs
+      - run: node --check scripts/lib/txkpro-evidence.mjs
+      - run: node --check scripts/txkpro-task-context.mjs
+      - run: node --check scripts/txkpro-preflight.mjs
+      - run: node --check scripts/txkpro-wave-manifest.mjs
+      - run: node --check scripts/txkpro-protocol-check.mjs
+      - run: node --check scripts/txkpro-completion-report.mjs
+      - run: node --check scripts/txkpro-project-transition.mjs
+      - run: node --check scripts/txkpro-confirmation-check.mjs
+      - run: node --check scripts/txkpro-agent-usage.mjs
+      - run: node --check scripts/txkpro-chat-contract.mjs
+      - run: node --check scripts/txkpro-cline-execution-check.mjs
+      - run: node --check .cline/hooks/txkpro-orchestration-runtime.cjs
+      - run: node --check .cline/hooks/UserPromptSubmit
+      - run: node --check .cline/hooks/PreToolUse
+      - run: node --check .cline/hooks/PostToolUse
+      - run: node --check .cline/hooks/TaskCancel
+      - run: node --check .cline/hooks/TaskComplete
+      - name: Syntax check Project sync GitHub Script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/project-sync.yml")
+          lines = path.read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if line.strip() == "script: |")
+          base = len(lines[start]) - len(lines[start].lstrip())
+          block = []
+
+          for line in lines[start + 1:]:
+            indent = len(line) - len(line.lstrip())
+            if line.strip() and indent <= base:
+              break
+            block.append(line)
+
+          nonblank = [line for line in block if line.strip()]
+          strip = min(len(line) - len(line.lstrip()) for line in nonblank)
+          script = "\n".join(line[strip:] if line.strip() else "" for line in block) + "\n"
+          wrapped = "async function __txkproProjectSyncSyntaxCheck() {\n" + script + "\n}\n"
+          Path("/tmp/project-sync-script.js").write_text(wrapped)
+          PY
+
+          node --check /tmp/project-sync-script.js
+      - name: Validate TXKPRO protocol evidence gates
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const template = JSON.parse(
+            fs.readFileSync(".github/TXKPRO_PROTOCOL_EVIDENCE_TEMPLATE.json", "utf8"),
+          );
+
+          const verification = structuredClone(template);
+          verification.issue = 42;
+          verification.task_id = "W12-03";
+          verification.generated_at = new Date().toISOString();
+          verification.target_status = "Verification";
+          verification.verification.manual_uat = "remaining";
+          verification.verification.acceptance_criteria = "pending";
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/verification.json",
+            JSON.stringify(verification, null, 2),
+          );
+
+          const done = structuredClone(verification);
+          done.target_status = "Done";
+          done.verification.manual_uat = "passed";
+          done.verification.acceptance_criteria = "met";
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/done.json",
+            JSON.stringify(done, null, 2),
+          );
+
+          const invalid = structuredClone(done);
+          invalid.blockers = ["Unresolved security blocker"];
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/invalid.json",
+            JSON.stringify(invalid, null, 2),
+          );
+          NODE
+
+          node scripts/txkpro-protocol-check.mjs             --evidence "$RUNNER_TEMP/verification.json"
+          node scripts/txkpro-protocol-check.mjs             --evidence "$RUNNER_TEMP/done.json"
+
+          node scripts/txkpro-completion-report.mjs             --evidence "$RUNNER_TEMP/verification.json"             | grep -F '<!-- txkpro-protocol-evidence:v1 -->'
+
+          if node scripts/txkpro-protocol-check.mjs             --evidence "$RUNNER_TEMP/invalid.json"; then
+            echo "Invalid Done evidence unexpectedly passed" >&2
+            exit 1
+          fi
+
+          grep -F 'Closure alone does not prove Done' .github/workflows/project-sync.yml
+          node -e 'JSON.parse(require("fs").readFileSync(".github/txkpro-protocol-evidence.schema.json","utf8")); JSON.parse(require("fs").readFileSync("config/txkpro-agent-policy.json","utf8"));'
+      - name: Validate live repository discovery without worktree mutation
+        run: |
+          REMOTE="$RUNNER_TEMP/repo-latest-remote.git"
+          SEED="$RUNNER_TEMP/repo-latest-seed"
+          CLONE="$RUNNER_TEMP/repo-latest-clone"
+
+          git init --bare "$REMOTE"
+          git init "$SEED"
+          git -C "$SEED" config user.name "TXKPRO CI"
+          git -C "$SEED" config user.email "ci@txkpro.local"
+          printf 'base\n' > "$SEED/README.md"
+          git -C "$SEED" add README.md
+          git -C "$SEED" commit -m "base"
+          git -C "$SEED" branch -M main
+          git -C "$SEED" remote add origin "$REMOTE"
+          git -C "$SEED" push -u origin main
+          git --git-dir="$REMOTE" symbolic-ref HEAD refs/heads/main
+
+          git clone "$REMOTE" "$CLONE"
+          BASE_SHA="$(git -C "$CLONE" rev-parse HEAD)"
+
+          mkdir -p "$SEED/docs"
+          printf 'AUTHORITATIVE DESIGN SOURCE\n' > "$SEED/docs/NEW_DESIGN_DOC.txt"
+          git -C "$SEED" add docs/NEW_DESIGN_DOC.txt
+          git -C "$SEED" commit -m "add remote-only design doc"
+          git -C "$SEED" push origin main
+
+          printf 'local-only-change\n' >> "$CLONE/README.md"
+
+          (
+            cd "$CLONE"
+            node "$GITHUB_WORKSPACE/scripts/repo-latest.mjs" find NEW_DESIGN_DOC.txt               | grep -Fx "docs/NEW_DESIGN_DOC.txt"
+            node "$GITHUB_WORKSPACE/scripts/repo-latest.mjs" read docs/NEW_DESIGN_DOC.txt               | grep -Fx "AUTHORITATIVE DESIGN SOURCE"
+          )
+
+          test "$(git -C "$CLONE" rev-parse HEAD)" = "$BASE_SHA"
+          grep -Fx "local-only-change" "$CLONE/README.md"
+          test "$(git -C "$CLONE" status --short README.md)" = " M README.md"
+      - name: Validate Cline model token overrides
+        env:
+          CLINE_PLAN_MODEL: qwen/qwen3-coder
+          CLINE_ACT_MODEL: deepseek/deepseek-chat
+          CLINE_PLAN_MAX_TOKENS: "8192"
+          CLINE_ACT_MAX_TOKENS: "16384"
+        run: |
+          TEST_HOME="$RUNNER_TEMP/cline-config-test"
+          mkdir -p "$TEST_HOME"
+          HOME="$TEST_HOME" node .devcontainer/configure-cline.mjs
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const modelsPath = path.join(
+            process.env.RUNNER_TEMP,
+            "cline-config-test",
+            ".cline",
+            "data",
+            "settings",
+            "models.json",
+          );
+          const models = JSON.parse(fs.readFileSync(modelsPath, "utf8"));
+          const overrides = models.providers?.openrouter?.models ?? {};
+          if (overrides["qwen/qwen3-coder"]?.maxTokens !== 8192) {
+            throw new Error("Plan model maxTokens override was not persisted");
+          }
+          if (overrides["deepseek/deepseek-chat"]?.maxTokens !== 16384) {
+            throw new Error("Act model maxTokens override was not persisted");
+          }
+
+          const statePath = path.join(
+            process.env.RUNNER_TEMP,
+            "cline-config-test",
+            ".cline",
+            "data",
+            "globalState.json",
+          );
+          const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+          if (state.hooksEnabled !== true) {
+            throw new Error("Cline workspace hooks were not enabled");
+          }
+          if (state.planActMode !== "act") {
+            throw new Error(
+              `Cline persisted mode must be act for executor-only Slack runs; received ${state.planActMode}`,
+            );
+          }
+          NODE
+      - name: Validate authoritative roadmap selection
+        run: |
+          TEST_BIN="$RUNNER_TEMP/roadmap-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "roadmap helper did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "id": "PVT_test",
+                  "title": "TXKPRO Product Roadmap",
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "item_done",
+                        "createdAt": "2026-09-01T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Done",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 20,
+                          "title": "Older done issue",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-01T00:00:00Z",
+                          "body": "**Dependencies:** None",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/20",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_closed",
+                        "createdAt": "2026-09-02T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 10,
+                          "title": "Closed planned issue",
+                          "state": "CLOSED",
+                          "createdAt": "2026-07-01T00:00:00Z",
+                          "body": "**Dependencies:** None",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/10",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_next",
+                        "createdAt": "2026-09-10T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 30,
+                          "title": "[W11-15] Run Employer Learning security and UX QA",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-20T00:00:00Z",
+                          "body": "## Roadmap metadata\n- **Dependencies:** W11-13",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/30",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "item_later",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 90,
+                          "title": "Later planned issue",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-10T00:00:00Z",
+                          "body": "**Dependencies:** W14-25",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/90",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          PATH="$TEST_BIN:$PATH" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/roadmap-next-planned.mjs --json > "$RUNNER_TEMP/roadmap-result.json"
+
+          RESULT_PATH="$RUNNER_TEMP/roadmap-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+          if (result.issue !== 30) {
+            throw new Error(`Expected earliest-added Planned issue #30, received #${result.issue}`);
+          }
+          if (result.projectStatus !== "Planned") {
+            throw new Error("Roadmap status was not read from the Project field");
+          }
+          if (result.dependencies !== "W11-13") {
+            throw new Error(`Unexpected dependencies: ${result.dependencies}`);
+          }
+          if (result.selectionType !== "planned_candidate") {
+            throw new Error("Earliest Planned selector must label its result planned_candidate");
+          }
+          if (!String(result.whyCandidate || "").includes("Eligibility still requires")) {
+            throw new Error("Planned selector must explicitly distinguish candidate from eligible");
+          }
+          NODE
+      - name: Validate dependency-aware next eligible selection
+        run: |
+          TEST_BIN="$RUNNER_TEMP/eligible-roadmap-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "eligible selector did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+
+          if [[ -n "${GH_COUNT_FILE:-}" ]]; then
+            count=0
+            if [[ -f "$GH_COUNT_FILE" ]]; then
+              count="$(cat "$GH_COUNT_FILE")"
+            fi
+            printf '%s\n' "$((count + 1))" > "$GH_COUNT_FILE"
+          fi
+
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "id": "PVT_test",
+                  "title": "TXKPRO Product Roadmap",
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "dep_item",
+                        "createdAt": "2026-09-01T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "In Progress",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 13,
+                          "title": "[W11-13] Dependency still open",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-01T00:00:00Z",
+                          "body": "**Task ID:** W11-13\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] dependency work",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/13",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "blocked_candidate",
+                        "createdAt": "2026-09-10T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 30,
+                          "title": "[W11-15] Blocked earliest Planned candidate",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-20T00:00:00Z",
+                          "body": "**Task ID:** W11-15\n**Dependencies:** W11-13\n## Acceptance Criteria\n- [ ] run QA",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/30",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      },
+                      {
+                        "id": "eligible_candidate",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 31,
+                          "title": "[W11-16] First dependency-ready Planned candidate",
+                          "state": "OPEN",
+                          "createdAt": "2026-08-21T00:00:00Z",
+                          "body": "**Task ID:** W11-16\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] complete verification",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/31",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          GH_COUNT_FILE="$RUNNER_TEMP/eligible-gh-count"
+          printf '0\n' > "$GH_COUNT_FILE"
+
+          PATH="$TEST_BIN:$PATH" \
+            GH_COUNT_FILE="$GH_COUNT_FILE" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/roadmap-next-eligible.mjs --json > "$RUNNER_TEMP/eligible-result.json"
+
+          test "$(cat "$GH_COUNT_FILE")" = "1"
+
+          RESULT_PATH="$RUNNER_TEMP/eligible-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.selected?.issue !== 31) {
+            throw new Error(
+              `Expected dependency-ready issue #31, received #${result.selected?.issue}`,
+            );
+          }
+
+          if (result.selected?.preflight?.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Selected issue did not pass automated Definition of Ready");
+          }
+
+          const blocked = result.skippedCandidates.find((item) => item.issue === 30);
+          if (!blocked) {
+            throw new Error("Earliest Planned candidate #30 was not evaluated/skipped");
+          }
+
+          if (blocked.preflight?.automatedDefinitionOfReady !== "BLOCKED") {
+            throw new Error("Blocked dependency candidate #30 was not classified BLOCKED");
+          }
+
+          if (
+            !blocked.preflight?.dependencies?.some(
+              (dep) => dep.taskId === "W11-13" && dep.classification === "BLOCK",
+            )
+          ) {
+            throw new Error("Dependency W11-13 was not classified BLOCK for issue #30");
+          }
+
+          if (result.readOnlyConfirmationsRequired !== true) {
+            throw new Error("Selector must require read-only confirmation resolution");
+          }
+
+          if (result.confirmedEligible !== false) {
+            throw new Error("Selector must not mark automated-gate output fully eligible");
+          }
+
+          if (result.mutationAuthorized !== false) {
+            throw new Error("Selector must never authorize mutation before owner approval");
+          }
+
+          if (
+            result.selected?.eligibilityState !==
+            "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          ) {
+            throw new Error("Selected candidate must remain provisional pending confirmations");
+          }
+
+          if (result.selected?.confirmedEligible !== false) {
+            throw new Error("Selected provisional candidate must not be confirmed eligible");
+          }
+
+          if (result.selected?.mutationAuthorized !== false) {
+            throw new Error("Selected provisional candidate must not authorize mutation");
+          }
+
+          if (result.selected?.preflight?.mutationAllowedByAutomatedGate !== false) {
+            throw new Error("Automated preflight must not grant mutation permission");
+          }
+
+          if (!Array.isArray(result.provisionalCandidates) || result.provisionalCandidates.length < 1) {
+            throw new Error("Selector must return provisional candidates for confirmation review");
+          }
+
+          if (result.diagnostics?.projectGraphqlCalls !== 1) {
+            throw new Error(
+              `Expected one Project GraphQL snapshot call, received ${result.diagnostics?.projectGraphqlCalls}`,
+            );
+          }
+
+          if (result.diagnostics?.evidenceCommentCalls !== 0) {
+            throw new Error("Fixture should not require Verification evidence comment reads");
+          }
+
+          if (
+            !String(result.diagnostics?.executionModel || "").includes(
+              "no per-candidate task-context/preflight subprocesses",
+            )
+          ) {
+            throw new Error("Selector diagnostics do not confirm the optimized execution model");
+          }
+          NODE
+      - name: Validate confirmation-before-approval agent governance
+        run: |
+          node - <<'NODE'
+          const fs = require("node:fs");
+
+          const files = [
+            "AGENTS.md",
+            ".clinerules",
+            "CLAUDE.md",
+            "GEMINI.md",
+            ".github/copilot-instructions.md",
+            ".cursor/rules/txkpro-wave-protocol.mdc",
+            ".windsurfrules",
+          ];
+
+          for (const file of files) {
+            const text = fs.readFileSync(file, "utf8");
+            if (!/confirm/i.test(text)) {
+              throw new Error(file + " does not require confirmation resolution");
+            }
+            if (!/mutation/i.test(text)) {
+              throw new Error(file + " does not preserve the mutation approval boundary");
+            }
+            if (!/(same turn|same planning turn|automatically|automatic)/i.test(text)) {
+              throw new Error(file + " does not require automatic read-only continuation");
+            }
+          }
+
+          const agents = fs.readFileSync("AGENTS.md", "utf8");
+          const cline = fs.readFileSync(".clinerules", "utf8");
+
+          for (const [name, text] of [["AGENTS.md", agents], [".clinerules", cline]]) {
+            if (!text.includes("Mutation authorized")) {
+              throw new Error(name + " must define explicit mutation authorization language");
+            }
+          }
+
+          const policy = JSON.parse(
+            fs.readFileSync("config/txkpro-agent-policy.json", "utf8"),
+          );
+          if (policy.approvalBoundary?.mutationAuthorizedBeforeExplicitApproval !== false) {
+            throw new Error("Machine policy must keep mutation unauthorized before approval");
+          }
+          if (
+            policy.approvalBoundary?.readOnlyConfirmations !==
+            "mandatory_same_turn_no_user_approval_required"
+          ) {
+            throw new Error("Machine policy must require same-turn read-only confirmations");
+          }
+          NODE
+
+      - name: Validate standalone preflight does not authorize mutation
+        run: |
+          TEST_BIN="$RUNNER_TEMP/preflight-auth-bin"
+          mkdir -p "$TEST_BIN"
+
+          cat > "$TEST_BIN/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [[ "${GH_TOKEN:-}" != "test-project-token" ]]; then
+            echo "preflight did not isolate PROJECTS_TOKEN as GH_TOKEN" >&2
+            exit 9
+          fi
+          cat <<'JSON'
+          {
+            "data": {
+              "user": {
+                "projectV2": {
+                  "items": {
+                    "nodes": [
+                      {
+                        "id": "eligible_candidate",
+                        "createdAt": "2026-09-20T00:00:00Z",
+                        "fieldValues": {
+                          "nodes": [
+                            {
+                              "name": "Planned",
+                              "field": {"name": "Status"}
+                            }
+                          ]
+                        },
+                        "content": {
+                          "number": 31,
+                          "title": "[W11-16] First dependency-ready Planned candidate",
+                          "state": "OPEN",
+                          "body": "**Task ID:** W11-16\n**Dependencies:** None\n## Acceptance Criteria\n- [ ] complete verification",
+                          "url": "https://github.com/QaloriHQ/txkpro-workforce/issues/31",
+                          "repository": {"nameWithOwner": "QaloriHQ/txkpro-workforce"}
+                        }
+                      }
+                    ],
+                    "pageInfo": {
+                      "hasNextPage": false,
+                      "endCursor": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+          JSON
+          SH
+          chmod +x "$TEST_BIN/gh"
+
+          PATH="$TEST_BIN:$PATH" \
+            PROJECTS_TOKEN="test-project-token" \
+            TXKPRO_ROADMAP_OWNER="QaloriHQ" \
+            TXKPRO_ROADMAP_PROJECT_NUMBER="1" \
+            TXKPRO_ROADMAP_REPO="QaloriHQ/txkpro-workforce" \
+            node scripts/txkpro-preflight.mjs --issue 31 --json > "$RUNNER_TEMP/preflight-result.json"
+
+          RESULT_PATH="$RUNNER_TEMP/preflight-result.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const result = JSON.parse(fs.readFileSync(process.env.RESULT_PATH, "utf8"));
+
+          if (result.automatedDefinitionOfReady !== "PASS") {
+            throw new Error("Fixture should pass automated Definition of Ready");
+          }
+          if (result.automatedGatePassed !== true) {
+            throw new Error("Preflight should distinguish automated gate PASS");
+          }
+          if (
+            result.eligibilityState !==
+            "AUTOMATED_GATE_PASSED_CONFIRMATIONS_PENDING"
+          ) {
+            throw new Error("Preflight must remain pending read-only confirmations");
+          }
+          if (result.readOnlyConfirmationsComplete !== false) {
+            throw new Error("Preflight cannot self-complete agent confirmations");
+          }
+          if (result.mutationAllowedByAutomatedGate !== false) {
+            throw new Error("Automated gate must not grant mutation permission");
+          }
+          if (result.mutationAuthorized !== false) {
+            throw new Error("Mutation must remain unauthorized before owner approval");
+          }
+          if (result.approvalRequiredBeforeMutation !== true) {
+            throw new Error("Explicit approval must remain required before mutation");
+          }
+          NODE
+
+      - name: Validate Cline structured confirmation runtime gate
+        run: node scripts/txkpro-confirmation-runtime-test.mjs
+
+      - name: Validate ChatGPT orchestrator to Cline executor runtime
+        run: node scripts/txkpro-orchestration-runtime-test.mjs
+
+      - name: Validate per-run agent token usage lifecycle
+        run: |
+          USAGE_STATE="$RUNNER_TEMP/agent-usage-state"
+          mkdir -p "$USAGE_STATE"
+
+          cat > "$RUNNER_TEMP/usage-issue.json" <<'JSON'
+          {
+            "number": 53,
+            "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
+            "body": "**Task ID:** W11-04B\n**Dependencies:** W11-01B, W11-04A\n## Acceptance Criteria\n- [ ] public SEO routes"
+          }
+          JSON
+
+          cat > "$RUNNER_TEMP/cline-usage.json" <<'JSON'
+          [
+            {
+              "id": "usage-task-123",
+              "tokensIn": 240000,
+              "tokensOut": 60000,
+              "cacheReads": 80000,
+              "cacheWrites": 0,
+              "totalCost": 0.1234,
+              "modelId": "deepseek/deepseek-chat",
+              "ts": 1790820000000
+            }
+          ]
+          JSON
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            CLINE_PLAN_MODEL="qwen/qwen3-coder" \
+            CLINE_ACT_MODEL="deepseek/deepseek-chat" \
+            node scripts/txkpro-agent-usage.mjs start \
+              --issue 53 \
+              --task-id W11-04B \
+              --cline-task-id usage-task-123 \
+              --issue-file "$RUNNER_TEMP/usage-issue.json" \
+              --no-sync \
+              > "$RUNNER_TEMP/usage-start.txt"
+
+          grep -F 'TXKPRO_USAGE_RUN_STARTED' "$RUNNER_TEMP/usage-start.txt"
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            node scripts/txkpro-agent-usage.mjs observe \
+              --cline-task-id usage-task-123 \
+              --success false \
+              --execution-ms 1250 \
+              --usage-file "$RUNNER_TEMP/cline-usage.json" \
+              > "$RUNNER_TEMP/usage-observe.json"
+
+          TXKPRO_AGENT_USAGE_STATE_DIR="$USAGE_STATE" \
+            node scripts/txkpro-agent-usage.mjs finish \
+              --cline-task-id usage-task-123 \
+              --outcome verification \
+              --usage-file "$RUNNER_TEMP/cline-usage.json" \
+              --no-sync \
+              > "$RUNNER_TEMP/usage-finish.txt"
+
+          grep -F 'TXKPRO_USAGE_RUN_FINISHED' "$RUNNER_TEMP/usage-finish.txt"
+
+          STATE_PATH="$USAGE_STATE/usage-task-123.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, "utf8"));
+          if (state.state !== "FINISHED") throw new Error("usage run did not finish");
+          if (state.actual?.tokensIn !== 240000) throw new Error("input tokens mismatch");
+          if (state.actual?.tokensOut !== 60000) throw new Error("output tokens mismatch");
+          if (state.actual?.totalTokens !== 300000) throw new Error("cache tokens were incorrectly double-counted");
+          if (state.actual?.cacheReads !== 80000) throw new Error("cache read telemetry missing");
+          if (state.actual?.totalCostUsd !== 0.1234) throw new Error("cost telemetry mismatch");
+          if (state.operations?.toolCalls !== 1) throw new Error("tool-call observation missing");
+          if (state.operations?.failedToolCalls !== 1) throw new Error("failed-tool observation missing");
+          if (state.operations?.toolExecutionMs !== 1250) throw new Error("tool execution time mismatch");
+          NODE
+
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const policy = JSON.parse(fs.readFileSync("config/txkpro-agent-policy.json", "utf8"));
+          if (policy.agentUsageTelemetry?.requiredForEveryImplementationRun !== true) {
+            throw new Error("agent usage telemetry must be mandatory for every implementation run");
+          }
+          if (policy.agentUsageTelemetry?.postRun?.tokenAccounting !== "tokensIn_plus_tokensOut_cache_reported_separately") {
+            throw new Error("token accounting policy must avoid cache double-counting");
+          }
+          NODE
+
+      - name: Validate direct roadmap implementation auto-starts usage tracking
+        run: |
+          DIRECT_STATE="$RUNNER_TEMP/direct-usage-state"
+          DIRECT_TMP="$RUNNER_TEMP/direct-hook-tmp"
+          mkdir -p "$DIRECT_STATE" "$DIRECT_TMP"
+
+          cat > "$RUNNER_TEMP/direct-usage-issue.json" <<'JSON'
+          {
+            "number": 53,
+            "title": "[W11-04B] Build public Employer course and lesson URLs with SEO",
+            "body": "**Task ID:** W11-04B\n**Dependencies:** W11-01B, W11-04A\n## Acceptance Criteria\n- [ ] public SEO routes"
+          }
+          JSON
+
+          node - <<'NODE'
+          const fs = require("node:fs");
+          const runtime = require("./.cline/hooks/txkpro-orchestration-runtime.cjs");
+          const contract = {
+            type: runtime.CHAT_CONTRACT_TYPE,
+            schemaVersion: runtime.CHAT_CONTRACT_SCHEMA,
+            orchestrator: runtime.CHAT_ORCHESTRATOR,
+            executor: runtime.CLINE_EXECUTOR,
+            state: runtime.CHAT_CONTRACT_READY,
+            issue: 53,
+            taskId: "W11-04B",
+            confirmationValidationId: "a".repeat(64),
+            evidenceDigest: "b".repeat(64),
+            sourcePlanContract: "sourced-plan-v1",
+            createdAt: "2026-10-01T20:00:00.000Z",
+            scope: {
+              summary: "CI direct implementation contract fixture.",
+              allowedPaths: ["app/**", "tests/**"],
+              steps: [
+                "Implement approved scope.",
+                "Run verification.",
+                "Return execution result."
+              ],
+              decisions: [
+                {
+                  kind: "test",
+                  name: "CI fixture",
+                  basis: "SOURCED",
+                  sourceRef: "confirmation:unresolvedDecisions[0]"
+                }
+              ]
+            },
+            verification: {
+              commands: ["npm run typecheck", "npm run lint", "npm run build"],
+              manualUat: []
+            },
+            boundaries: {
+              mutationAuthorized: false,
+              productionDeploymentAuthorized: false,
+              productionMigrationAuthorized: false
+            },
+            contractId: ""
+          };
+          contract.contractId = runtime.expectedContractId(contract);
+          fs.writeFileSync(
+            process.env.RUNNER_TEMP + "/direct-chat-contract-issue.json",
+            JSON.stringify({
+              number: 53,
+              title: "[W11-04B] Build public Employer course and lesson URLs with SEO",
+              body: "**Task ID:** W11-04B",
+              comments: [
+                {
+                  author: {login: "QaloriHQ"},
+                  createdAt: "2026-10-01T20:01:00.000Z",
+                  url: "https://github.com/QaloriHQ/txkpro-workforce/issues/53#issuecomment-ci",
+                  body:
+                    runtime.CHAT_CONTRACT_MARKER +
+                    "\n~~~json\n" +
+                    JSON.stringify(contract, null, 2) +
+                    "\n~~~"
+                }
+              ]
+            }, null, 2)
+          );
+          NODE
+
+          direct_result="$(
+            TMPDIR="$DIRECT_TMP" \
+            TXKPRO_AGENT_USAGE_STATE_DIR="$DIRECT_STATE" \
+            TXKPRO_AGENT_USAGE_NO_SYNC="true" \
+            TXKPRO_AGENT_USAGE_ISSUE_FILE="$RUNNER_TEMP/direct-usage-issue.json" \
+            TXKPRO_CHAT_CONTRACT_ISSUE_FILE="$RUNNER_TEMP/direct-chat-contract-issue.json" \
+            CLINE_PLAN_MODEL="qwen/qwen3-coder" \
+            CLINE_ACT_MODEL="deepseek/deepseek-chat" \
+            node .cline/hooks/UserPromptSubmit <<'JSON'
+          {"taskId":"direct-task-456","userPromptSubmit":{"prompt":"Implement W11-04B"}}
+          JSON
+          )"
+
+          printf '%s' "$direct_result" | grep -F 'TXKPRO CLINE ACT EXECUTOR'
+
+          STATE_PATH="$DIRECT_STATE/direct-task-456.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const state = JSON.parse(fs.readFileSync(process.env.STATE_PATH, "utf8"));
+          if (state.state !== "ACTIVE") throw new Error("direct implementation usage run did not start");
+          if (state.issue !== 53) throw new Error("direct implementation did not resolve issue #53");
+          if (state.taskId !== "W11-04B") throw new Error("direct implementation did not retain Task ID");
+          NODE
+
+          GATE_PATH="$DIRECT_TMP/txkpro-cline-confirmation-gates/direct-task-456.json" node - <<'NODE'
+          const fs = require("node:fs");
+          const gate = JSON.parse(fs.readFileSync(process.env.GATE_PATH, "utf8"));
+          if (gate.state !== "IMPLEMENTATION_RUN_ACTIVE") {
+            throw new Error("direct implementation hook did not activate run gate");
+          }
+          if (gate.issue !== 53 || gate.roadmapTaskId !== "W11-04B") {
+            throw new Error("direct implementation gate did not persist issue/task identity");
+          }
+          NODE
+
       - run: npm install
       - run: npm run typecheck
       - run: npm run wave11:qa

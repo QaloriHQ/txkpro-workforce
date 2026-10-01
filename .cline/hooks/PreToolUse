@@ -1,0 +1,391 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+const {
+  completionMatches,
+  parseValidatorInvocation,
+} = require("./txkpro-confirmation-runtime.cjs");
+const {
+  normalizeRepoPath,
+  parseExecutionValidatorInvocation,
+  pathMatchesAllowed,
+} = require("./txkpro-orchestration-runtime.cjs");
+
+let input = {};
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+} catch {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const rawTaskId = String(input?.taskId || "unknown");
+const taskId = rawTaskId.replace(/[^A-Za-z0-9._-]/g, "_");
+const workspaceRoot =
+  Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
+    ? input.workspaceRoots[0]
+    : process.cwd();
+const marker = path.join(
+  os.tmpdir(),
+  "txkpro-cline-confirmation-gates",
+  taskId + ".json",
+);
+const toolName = String(input?.preToolUse?.toolName || "");
+const parameters = input?.preToolUse?.parameters || {};
+
+function readMarker() {
+  try {
+    return JSON.parse(fs.readFileSync(marker, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeMarker(value) {
+  fs.mkdirSync(path.dirname(marker), { recursive: true });
+  fs.writeFileSync(marker, JSON.stringify(value, null, 2));
+}
+
+function runUsage(args) {
+  const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
+  const result = spawnSync(process.execPath, [script, ...args], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  });
+  return {
+    ok: !result.error && result.status === 0,
+    status: result.status,
+    stdout: String(result.stdout || "").trim(),
+    stderr: String(result.stderr || "").trim(),
+  };
+}
+
+function commandLooksMutating(value) {
+  const command = Array.isArray(value)
+    ? value.join("\n")
+    : typeof value === "object" && value !== null
+      ? JSON.stringify(value)
+      : String(value || "");
+
+  return /(^|\s)(git\s+(commit|push|merge|checkout|switch|reset|clean)|gh\s+(issue\s+(create|edit|comment|close|reopen)|pr\s+(create|merge|close|edit))|npm\s+(install|uninstall)|pnpm\s+(add|remove|install)|yarn\s+(add|remove|install)|supabase\s+(db\s+push|migration|functions\s+deploy)|vercel\s+(deploy|--prod)|rm\s|mv\s|cp\s|mkdir\s|touch\s|sed\s+-i|tee\s|apply_patch|cat\s+>)/i.test(
+    command,
+  );
+}
+
+function toolLooksMutating(name, params) {
+  const mutatingTools = new Set([
+    "write_to_file",
+    "replace_in_file",
+    "apply_diff",
+    "search_and_replace",
+    "insert_content",
+    "edit_file",
+    "create_file",
+    "delete_file",
+  ]);
+  if (mutatingTools.has(name)) return true;
+  if (name === "execute_command" || name === "run_commands") {
+    return commandLooksMutating(
+      params?.command ?? params?.commands ?? params?.cmd ?? params,
+    );
+  }
+  return false;
+}
+
+function explicitEditPath(name, params) {
+  const editTools = new Set([
+    "write_to_file",
+    "replace_in_file",
+    "search_and_replace",
+    "insert_content",
+    "edit_file",
+    "create_file",
+    "delete_file",
+  ]);
+  if (!editTools.has(name)) return "";
+  for (const key of ["path", "file_path", "filepath", "file", "target"]) {
+    if (typeof params?.[key] === "string" && params[key].trim()) {
+      return normalizeRepoPath(params[key]);
+    }
+  }
+  return "";
+}
+
+const gate = readMarker();
+if (!gate) {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+if (gate.state === "CHAT_ORCHESTRATION_REQUIRED") {
+  if (
+    toolName === "attempt_completion" &&
+    gate.ownerFacingResponse &&
+    completionMatches(parameters, gate.ownerFacingResponse)
+  ) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO Cline is executor-only for roadmap work; ChatGPT Chat orchestration is required first.",
+      contextModification:
+        "Do not run roadmap selectors, source-confirmation analysis, planning, or mutation in Cline. Finish only with the exact persisted handoff response:\n\n" +
+        String(gate.ownerFacingResponse || ""),
+    }),
+  );
+  process.exit(0);
+}
+
+if (gate.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+  const validatorInvocation = parseValidatorInvocation(toolName, parameters);
+  if (validatorInvocation) {
+    writeMarker({
+      ...gate,
+      validatorInvocation: {
+        ...validatorInvocation,
+        expectedIssue: gate.provisionalIssue || null,
+        expectedTaskId: gate.provisionalTaskId || null,
+        armedAt: new Date().toISOString(),
+      },
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO legacy confirmation validator armed. This compatibility path cannot authorize mutation without a later ChatGPT implementation contract.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  const blockedTools = new Set([
+    "attempt_completion",
+    "ask_followup_question",
+    "switch_mode",
+  ]);
+  if (!blockedTools.has(toolName)) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO legacy read-only confirmation gate is still pending.",
+      contextModification:
+        "Resolve semantic-provenance-v3 and sourced-plan-v1 without mutation. Even after this compatibility gate clears, Cline Act still requires a ChatGPT Chat implementation contract.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (gate.state === "CONFIRMED_AWAITING_APPROVAL") {
+  if (toolName === "ask_followup_question") {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO planning output is validator-owned after the legacy confirmation gate clears.",
+        contextModification:
+          "Use the exact persisted ownerFacingResponse. Mutation will still require a matching ChatGPT Chat implementation contract after owner approval.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (toolName === "attempt_completion") {
+    if (!gate.ownerFacingResponse || !completionMatches(parameters, gate.ownerFacingResponse)) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO final planning response does not exactly match the validator-derived response.",
+          contextModification:
+            "Use the exact validator-derived response without additions:\n\n" +
+            String(gate.ownerFacingResponse || ""),
+        }),
+      );
+      process.exit(0);
+    }
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  if (!toolLooksMutating(toolName, parameters)) {
+    process.stdout.write(JSON.stringify({ cancel: false }));
+    process.exit(0);
+  }
+
+  process.stdout.write(
+    JSON.stringify({
+      cancel: true,
+      errorMessage:
+        "TXKPRO mutation is not authorized. ChatGPT Chat must publish a matching implementation contract and the owner must approve execution.",
+    }),
+  );
+  process.exit(0);
+}
+
+if (gate.state === "IMPLEMENTATION_RUN_ACTIVE") {
+  if (["ask_followup_question", "switch_mode"].includes(toolName)) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO Cline Act cannot create or negotiate product decisions during execution.",
+        contextModification:
+          "Execute the bound ChatGPT contract exactly. If the contract cannot be executed, return a structured BLOCKED execution result instead of asking Cline to reinterpret requirements.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  const executionInvocation = parseExecutionValidatorInvocation(toolName, parameters);
+  if (executionInvocation) {
+    if (
+      path.resolve(executionInvocation.contractPath) !==
+      path.resolve(String(gate.chatContractPath || ""))
+    ) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO execution validator must use the exact ChatGPT contract file bound to this run.",
+        }),
+      );
+      process.exit(0);
+    }
+    writeMarker({
+      ...gate,
+      executionValidatorInvocation: {
+        ...executionInvocation,
+        expectedIssue: gate.issue,
+        expectedTaskId: gate.roadmapTaskId,
+        expectedContractId: gate.chatContractId,
+        armedAt: new Date().toISOString(),
+      },
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO Cline execution validator armed for the active ChatGPT contract. Sentinel text from arbitrary commands cannot clear the execution gate.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (toolName === "attempt_completion") {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO Cline Act cannot complete until a structured execution result is validated against the ChatGPT contract.",
+        contextModification:
+          "Write a TXKPRO_CLINE_EXECUTION_RESULT based on .github/TXKPRO_CLINE_EXECUTION_RESULT_TEMPLATE.json, then run: node scripts/txkpro-cline-execution-check.mjs --result <path> --contract " +
+          String(gate.chatContractPath || "") +
+          ". IMPLEMENTED must have zero deviations and all required verification PASS. Otherwise use BLOCKED.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  const editPath = explicitEditPath(toolName, parameters);
+  if (
+    editPath &&
+    !pathMatchesAllowed(editPath, gate?.chatContract?.scope?.allowedPaths || [])
+  ) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO edit target is outside the ChatGPT implementation contract: " +
+          editPath,
+        contextModification:
+          "Do not broaden implementation scope in Cline. Allowed paths are: " +
+          JSON.stringify(gate?.chatContract?.scope?.allowedPaths || []) +
+          ". If an additional path is genuinely required, return BLOCKED so ChatGPT can revise the contract.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+if (gate.state === "EXECUTION_VALIDATED_AWAITING_CHAT_REVIEW") {
+  if (toolName === "attempt_completion") {
+    if (
+      !gate.executorFacingResponse ||
+      !completionMatches(parameters, gate.executorFacingResponse)
+    ) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO Cline completion must exactly match the validated execution summary.",
+          contextModification:
+            "Cline may report execution evidence only; it may not claim verification or roadmap completion. Use exactly:\n\n" +
+            String(gate.executorFacingResponse || ""),
+        }),
+      );
+      process.exit(0);
+    }
+
+    const finish = runUsage([
+      "finish",
+      "--cline-task-id",
+      rawTaskId,
+      "--outcome",
+      gate.executionStatus === "BLOCKED" ? "blocked" : "agent_run_finished",
+    ]);
+    if (!finish.ok) {
+      process.stdout.write(
+        JSON.stringify({
+          cancel: true,
+          errorMessage:
+            "TXKPRO cannot complete the Cline run until token/cost telemetry is synchronized. " +
+            (finish.stderr || finish.stdout || "Usage finalization failed."),
+        }),
+      );
+      process.exit(0);
+    }
+
+    writeMarker({
+      ...gate,
+      state: "RUN_COMPLETE_AWAITING_CHAT_VERIFICATION",
+      usageRunFinishedAt: new Date().toISOString(),
+    });
+
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO Cline execution is finalized, but roadmap verification is not. ChatGPT Chat must independently compare the implementation/PR/CI evidence with the bound contract before any verification-complete or Done claim.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  if (toolLooksMutating(toolName, parameters)) {
+    process.stdout.write(
+      JSON.stringify({
+        cancel: true,
+        errorMessage:
+          "TXKPRO execution result is already validated; further mutation would invalidate the result. Return to ChatGPT verification or start a revised contract.",
+      }),
+    );
+    process.exit(0);
+  }
+}
+
+process.stdout.write(JSON.stringify({ cancel: false }));

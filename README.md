@@ -8,6 +8,40 @@ The first release is intentionally not a generic job board. It is built around t
 2. **Job-Ready Filter** — employers filter on job-relevant readiness attestations and work preferences before spending time on an interview.
 3. **30/60/90-Day Retention Pulse** — students who explicitly opt in receive brief SMS check-ins after hire; a help response creates a human intervention case for human follow-up.
 
+## Implementation governance
+
+All coding agents and contributors must start with `AGENTS.md`.
+
+The authoritative delivery process is:
+
+`docs/governance/TXKPRO_WAVE_IMPLEMENTATION_PROTOCOL.md`
+
+The protocol governs roadmap intake, Definition of Ready, dependency/risk gates, implementation contracts, branch/worktree preparation, migrations, testing, staging deployment, manual UAT handoff, GitHub/Project reconciliation, production authorization, and post-release monitoring.
+
+GitHub Project transitions to **Verification** and **Done** are evidence-gated. A closed issue or merged PR alone does not prove Done.
+
+Useful commands:
+
+```bash
+npm run roadmap:next:eligible -- --json
+npm run protocol:context -- --issue <number> --json
+npm run protocol:preflight -- --issue <number>
+npm run protocol:wave -- --wave <W12>
+npm run protocol:check -- --evidence <path>
+npm run protocol:report -- --evidence <path>
+```
+
+## Remote coding agent
+
+Slack is the primary remote Cline surface for TXKPRO Workforce. It uses Cline's native Socket Mode connector, so normal Slack operation does not require a public Codespaces webhook endpoint.
+
+Setup:
+
+- `docs/CLINE_SLACK_CODESPACE.md`
+- Slack app manifest: `config/slack-cline-app-manifest.json`
+
+Discord remains available as a fallback through `.devcontainer/start-discord-agent.sh`.
+
 ## Stack
 
 - Next.js 16.3.3 / React 19 / TypeScript
@@ -142,8 +176,11 @@ app/
 components/              Shared UI
 lib/                     Auth, Supabase, audit, SMS, types
 supabase/migrations/     Incremental migrations for the established TXKPRO backend
+docs/product-sources/ui/ Canonical UI/design-system/content-style sources
 .devcontainer/           Codespaces config
 .github/workflows/       CI + retention scheduler
 ```
 
 See `docs/ARCHITECTURE.md` for trust boundaries and next increments.
+
+For UI, UX, branding, component, responsive, accessibility, and content-style work, start with `docs/product-sources/ui/README.md` and follow the source precedence documented there.

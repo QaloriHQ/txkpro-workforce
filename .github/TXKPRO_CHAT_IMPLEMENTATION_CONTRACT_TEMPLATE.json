@@ -1,0 +1,49 @@
+{
+  "type": "TXKPRO_CHAT_IMPLEMENTATION_CONTRACT",
+  "schemaVersion": "chat-orchestrator-v1",
+  "orchestrator": "ChatGPT Chat mode",
+  "executor": "Cline Act mode",
+  "state": "READY_FOR_OWNER_APPROVAL",
+  "issue": 0,
+  "taskId": "WXX-00",
+  "confirmationValidationId": "<64-char confirmation validation id>",
+  "evidenceDigest": "<64-char evidence digest>",
+  "sourcePlanContract": "sourced-plan-v1",
+  "createdAt": "2026-10-01T00:00:00.000Z",
+  "scope": {
+    "summary": "Exact implementation scope approved for Cline Act.",
+    "allowedPaths": [
+      "app/example/**",
+      "tests/example/**"
+    ],
+    "steps": [
+      "Implement only the approved behavior.",
+      "Run the required verification commands.",
+      "Return a structured Cline execution result."
+    ],
+    "decisions": [
+      {
+        "kind": "example",
+        "name": "canonical decision",
+        "basis": "SOURCED",
+        "sourceRef": "confirmation:rolesAndScopes[0]"
+      }
+    ]
+  },
+  "verification": {
+    "commands": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm run build"
+    ],
+    "manualUat": [
+      "User-owned browser/staging UAT unless explicitly delegated."
+    ]
+  },
+  "boundaries": {
+    "mutationAuthorized": false,
+    "productionDeploymentAuthorized": false,
+    "productionMigrationAuthorized": false
+  },
+  "contractId": "<sha256 of canonical contract content excluding contractId>"
+}

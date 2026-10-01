@@ -1,0 +1,90 @@
+name: TXKPRO Protocol Status Gate
+
+on:
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number containing protocol evidence"
+        required: true
+        type: string
+      comment_id:
+        description: "Comment ID containing protocol evidence"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: txkpro-protocol-status-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  evidence-gate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.issue.pull_request == null &&
+        contains(github.event.comment.body, '<!-- txkpro-protocol-evidence:v1 -->') &&
+        (
+          github.event.comment.author_association == 'OWNER' ||
+          github.event.comment.author_association == 'MEMBER' ||
+          github.event.comment.author_association == 'COLLABORATOR'
+        )
+      )
+    runs-on: ubuntu-latest
+    env:
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      TXKPRO_ROADMAP_OWNER: QaloriHQ
+      TXKPRO_ROADMAP_PROJECT_NUMBER: "1"
+      TXKPRO_ROADMAP_REPO: QaloriHQ/txkpro-workforce
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Resolve protocol evidence comment
+        id: evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "issue_comment" ]]; then
+            ISSUE_NUMBER="$(jq -r '.issue.number' "$GITHUB_EVENT_PATH")"
+            COMMENT_ID="$(jq -r '.comment.id' "$GITHUB_EVENT_PATH")"
+            jq -r '.comment.body' "$GITHUB_EVENT_PATH" > "$RUNNER_TEMP/txkpro-protocol-comment.md"
+          else
+            ISSUE_NUMBER="${{ inputs.issue_number }}"
+            COMMENT_ID="${{ inputs.comment_id }}"
+            gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq '.body'               > "$RUNNER_TEMP/txkpro-protocol-comment.md"
+          fi
+
+          echo "issue_number=${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "comment_id=${COMMENT_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate protocol evidence
+        run: |
+          node scripts/txkpro-protocol-check.mjs             --comment "$RUNNER_TEMP/txkpro-protocol-comment.md"             --issue "${{ steps.evidence.outputs.issue_number }}"             --write-normalized "$RUNNER_TEMP/txkpro-protocol-evidence.json"
+
+      - name: Apply evidence-gated Project transition
+        id: transition
+        run: |
+          node scripts/txkpro-project-transition.mjs             --evidence "$RUNNER_TEMP/txkpro-protocol-evidence.json"             > "$RUNNER_TEMP/txkpro-transition-result.json"
+
+          cat "$RUNNER_TEMP/txkpro-transition-result.json"
+
+          STATUS="$(jq -r '.projectStatus' "$RUNNER_TEMP/txkpro-transition-result.json")"
+          TASK_ID="$(jq -r '.taskId' "$RUNNER_TEMP/txkpro-transition-result.json")"
+          echo "status=${STATUS}" >> "$GITHUB_OUTPUT"
+          echo "task_id=${TASK_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Record accepted transition
+        run: |
+          gh issue comment "${{ steps.evidence.outputs.issue_number }}"             --repo "${GITHUB_REPOSITORY}"             --body "TXKPRO protocol evidence accepted for **${{ steps.transition.outputs.task_id }}**. GitHub Project Status is now **${{ steps.transition.outputs.status }}**. Evidence source: comment #${{ steps.evidence.outputs.comment_id }}."

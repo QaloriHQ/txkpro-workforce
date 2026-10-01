@@ -1,0 +1,1095 @@
+TXKPRO™ WORKFORCE PLATFORM
+MVP1 TECHNICAL REQUIREMENTS DOCUMENT (TRD)
+
+Version: 1.0
+Date: September 2026
+Release: MVP1
+
+1. PURPOSE
+
+This TRD translates the TXKPRO Workforce MVP1 PRD into an implementable technical architecture.
+
+SOURCE-DERIVED REQUIREMENTS
+The product behavior is derived from the five supplied TXKPRO Workforce documents.
+
+EXISTING PROJECT IMPLEMENTATION CONTEXT
+The current implementation already uses:
+- Next.js / TypeScript;
+- GitHub / Codespaces;
+- Supabase Auth + Postgres;
+- one shared TXKPRO Supabase project;
+- server-side role resolution;
+- SMS-oriented workflows compatible with Twilio.
+
+Those stack choices come from the existing project implementation context, not from the uploaded source documents.
+
+2. TECHNICAL GOALS
+
+TG-01 Secure multi-role authentication and onboarding.
+TG-02 Tenant- and role-scoped authorization across institutions, cohorts, employers, students, and admins.
+TG-03 Instructor skill verification is authoritative and auditable.
+TG-04 Deterministic, explainable talent filtering.
+TG-05 Referral -> interview -> hire -> retention workflows.
+TG-06 Reliable Day 30/60/90 SMS scheduling/processing.
+TG-07 Pilot-scale support for roughly 1,000 students and 25 employers without architectural redesign.
+TG-08 Forward-compatible foundation for PRO Points, branded tenant subdomains, SSO, and multi-campus expansion.
+
+3. NON-GOALS
+
+MVP1 will not implement:
+- autonomous hiring decisions;
+- black-box candidate scores;
+- custom ML/AI candidate ranking;
+- enterprise SAML/SSO;
+- HRIS integrations;
+- custom enterprise APIs;
+- raw DMV/background/drug-test storage;
+- in-platform subscription payments;
+- full gamification economy;
+- wildcard tenant subdomain routing as a launch dependency.
+
+4. REFERENCE ARCHITECTURE
+
+Browser / Mobile Web
+        |
+        v
+Next.js App Router
+        |
+        +-----------------------------+
+        |                             |
+        v                             v
+Server Components /              Route Handlers /
+Server Actions                   API Endpoints
+        |                             |
+        +--------------+--------------+
+                       |
+                       v
+                Supabase Auth
+                       |
+                       v
+                PostgreSQL + RLS
+                       |
+          +------------+------------+
+          |                         |
+          v                         v
+      Audit/Event                Scheduled Jobs
+      Records                         |
+                                      v
+                                 SMS Provider
+                                      |
+                                      v
+                                 Student phone
+
+Auth email:
+Supabase Auth -> custom SMTP -> user email
+
+Reporting:
+Postgres role-scoped queries -> dashboards/exports
+
+Deployment:
+- Production origin: https://workforce.txkpro.com
+- Development/preview: approved localhost/Codespaces origins
+- Shared TXKPRO Supabase project
+- Isolation through explicit memberships/scopes/RLS
+
+5. APPLICATION LAYERS
+
+5.1 PRESENTATION
+- Next.js App Router
+- responsive web UI
+- light/dark theme
+- TXKPRO branding
+- mobile-first Student flows
+- dashboard-oriented Educator/Employer/Admin flows
+
+5.2 AUTHENTICATION
+- Supabase Auth
+- verified email/password
+- PKCE-compatible confirm/recovery
+- cookie-based SSR sessions
+- server-side claims validation
+- password recovery
+- signout
+- custom SMTP for production auth email
+
+5.3 AUTHORIZATION
+- role memberships
+- institution/program/cohort scope
+- employer scope
+- TXKPRO admin scope
+- Postgres RLS + server-side checks
+- no authorization from user-editable metadata
+
+5.4 DOMAIN MODULES
+- Identity / Onboarding
+- Institution / Program / Cohort
+- Student Profile
+- Skills
+- Referrals
+- Employer
+- Talent Discovery
+- Interviews
+- Placement
+- Retention
+- Engagement
+- Reporting
+- Audit
+
+5.5 INTEGRATIONS
+- SMTP
+- SMS/Twilio
+- CSV roster ingestion
+- scheduler/cron appropriate to deployment target
+
+6. TENANCY AND AUTHORIZATION MODEL
+
+6.1 CANONICAL IDENTITY
+Supabase auth.users.id (UUID) is the auth identity.
+Application user has a stable internal ID linked to auth.users.
+A person may hold multiple role memberships.
+
+6.2 LOGICAL ROLES
+- student
+- educator
+- institution_admin
+- employer_user
+- employer_admin/owner
+- txkpro_admin
+
+If the live schema uses different names, map to the existing canonical vocabulary rather than adding duplicate role systems.
+
+6.3 SCOPES
+- platform
+- institution
+- program
+- cohort
+- employer
+
+Example:
+Educator A = educator + Program Electrical scope.
+Recruiter B = employer_user + Employer ABC Electric scope.
+
+6.4 RLS PRINCIPLES
+
+RLS-01 Authenticated alone is insufficient; row access requires ownership/scope.
+RLS-02 Student can access permitted own profile fields.
+RLS-03 Educator can view/verify only assigned institution/program/cohort.
+RLS-04 Institution admin can access institution-scoped placement data.
+RLS-05 Employer can access only permitted discoverable talent and its own private hiring activity.
+RLS-06 TXKPRO admin gets platform operations scope with audit requirements.
+RLS-07 Never use user-editable auth metadata for authorization.
+
+7. LOGICAL DATA MODEL
+
+Important:
+These are logical entities. Map them to equivalent existing TXKPRO tables wherever they already exist. Do not create duplicate tables solely to match names below.
+
+7.1 USER / ACCESS
+
+users
+- stable_user_id
+- auth_user_id
+- first_name
+- last_name
+- phone
+- status
+- created_at
+- updated_at
+
+role_memberships
+- id
+- user/auth reference
+- role
+- scope_type
+- scope_id
+- status
+- approved_by
+- approved_at
+
+onboarding_accounts
+- auth_user_id
+- stable_user_id
+- selected_role
+- status
+- current_step
+- draft/profile_data
+- submitted_at
+- completed_at
+
+7.2 INSTITUTION
+
+institutions
+- institution_id
+- name
+- slug
+- status
+- city/state
+- logo_url
+
+programs
+- program_id
+- institution_id
+- name
+- trade_code
+- status
+- description
+
+cohorts
+- cohort_id
+- program_id
+- label
+- start_date
+- expected_graduation_date
+- status
+
+educator_assignments
+- assignment_id
+- educator_user_id
+- institution_id
+- program_id nullable
+- cohort_id nullable
+- status
+
+7.3 STUDENT
+
+student_profiles
+- student_id
+- user_id
+- institution_id
+- program_id
+- cohort_id
+- graduation_date
+- location
+- discoverable
+- profile_status
+- created_at
+- updated_at
+
+student_readiness
+- student_id
+- driver_license_status
+- driver_license_source
+- driving_record_attestation
+- driving_record_source
+- background_screen_willing
+- drug_screen_willing
+- shift_preferences
+- work_type_preferences
+- availability_date
+- updated_at
+
+Data minimization:
+Do not store raw license images, MVRs, drug screens, or criminal-background reports in MVP1.
+
+7.4 SKILLS
+
+skills
+- skill_id
+- program_id
+- skill_code
+- name
+- category
+- description
+- active
+- sort_order
+
+student_skill_status
+- id
+- student_id
+- skill_id
+- self_attested_status
+- self_attested_at
+- verified_status
+- verified_by_user_id
+- verified_at
+- optional evidence_ref
+- updated_at
+
+Possible state:
+NOT_STARTED
+SELF_ATTESTED
+IN_PROGRESS
+VERIFIED
+REVOKED
+
+Only authorized educator/admin paths may set verification.
+
+7.5 EMPLOYER
+
+employers
+- employer_id
+- legal_name
+- display_name
+- slug
+- approval_status
+- service_area
+- website
+- logo_url
+- verification_method
+- verified_at
+
+employer_memberships
+- employer_id
+- user_id
+- role
+- status
+
+employer_hiring_profiles
+- employer_id
+- trades
+- hiring_volume
+- shift_needs
+- work_type_needs
+- driver_license_required
+- driving_record_requirement
+- background_screen_required
+- drug_screen_required
+- target_hire_date
+- plan_code
+
+entitlements
+- plan_code
+- capability_code
+- enabled
+- optional limit_value
+
+7.6 REFERRAL / INTERVIEW / PLACEMENT
+
+referrals
+- referral_id
+- student_id
+- employer_id
+- referred_by_user_id
+- institution_id
+- program_id
+- note
+- status
+- timestamps
+
+interview_requests
+- interview_request_id
+- student_id
+- employer_id
+- created_by_user_id
+- referral_id nullable
+- trade/role
+- message
+- scheduling_url nullable
+- status
+- sent_at
+- responded_at
+
+placements
+- placement_id
+- student_id
+- employer_id
+- referral_id nullable
+- interview_request_id nullable
+- role_title
+- trade
+- hire_date
+- employment_type
+- status
+- timestamps
+
+7.7 RETENTION
+
+retention_milestones
+- milestone_id
+- placement_id
+- day_number: 30/60/90
+- scheduled_for
+- status
+- sent_at
+- response_received_at
+
+retention_messages
+- message_id
+- milestone_id
+- recipient_user_id
+- channel
+- provider_message_id
+- template_version
+- delivery_status
+- sent_at
+- optional error_code
+
+retention_responses
+- response_id
+- milestone_id
+- raw_response
+- normalized_score
+- received_at
+
+retention_cases
+- case_id
+- placement_id
+- milestone_id
+- severity
+- status
+- owner_user_id
+- opened_at
+- resolved_at
+- resolution_code
+
+retention_case_notes
+- note_id
+- case_id
+- author_user_id
+- note
+- created_at
+
+7.8 ENGAGEMENT
+
+daily_engagement_items
+- item_id
+- program_id nullable
+- item_type: safety_question/readiness_pulse
+- prompt
+- choices_json
+- correct_choice nullable
+- publish_date
+- active
+
+daily_engagement_responses
+- response_id
+- student_id
+- item_id
+- response
+- correct nullable
+- completed_at
+
+student_streaks
+- student_id
+- current_streak
+- longest_streak
+- last_completed_date
+
+Future-only PRO Points:
+pro_points_ledger
+- ledger_id
+- student_id
+- category
+- event_type
+- points
+- source_entity_type/id
+- awarded_by
+- created_at
+
+8. STATE MACHINES
+
+8.1 Onboarding
+not_started -> in_progress -> pending_review -> complete
+
+8.2 Employer
+pending -> approved -> suspended
+or pending -> rejected/closed
+
+8.3 Referral
+referred -> viewed -> interview_requested -> interview_accepted/scheduled -> hired
+or -> closed
+
+8.4 Interview
+draft -> sent -> accepted -> scheduled -> completed
+or -> declined / expired / cancelled
+
+8.5 Placement
+pending/start_scheduled -> active -> ended
+Retention outcomes may be modeled separately instead of overloading placement.status.
+
+8.6 Retention case
+open -> assigned -> contacted -> monitoring -> resolved
+or -> closed_no_response
+
+9. REQUIRED SERVER CAPABILITIES
+
+Exact route names may vary; capabilities are required.
+
+AUTH
+POST /auth/signup
+POST /auth/login
+POST /auth/logout
+POST /auth/forgot-password
+POST /auth/reset-password
+GET  /auth/confirm
+
+ONBOARDING
+GET  /api/onboarding
+PUT  /api/onboarding
+POST /api/onboarding/complete
+
+INSTITUTION
+GET  /api/institutions/:id/programs
+POST /api/institutions/:id/cohorts
+POST /api/institutions/:id/roster-import
+GET  /api/institutions/:id/dashboard
+
+SKILLS
+GET  /api/students/:id/skills
+PUT  /api/students/:id/skills/:skillId/self-attest
+POST /api/students/:id/skills/:skillId/verify
+POST /api/students/:id/skills/:skillId/revoke
+
+REFERRAL
+POST /api/referrals
+GET  /api/referrals
+PATCH /api/referrals/:id
+
+EMPLOYER
+GET  /api/employer/profile
+PUT  /api/employer/profile
+GET  /api/talent
+POST /api/talent/:studentId/save
+
+INTERVIEW
+POST /api/interviews
+PATCH /api/interviews/:id/respond
+PATCH /api/interviews/:id/status
+
+PLACEMENT
+POST /api/placements
+PATCH /api/placements/:id
+
+RETENTION
+POST /api/retention/run-due
+POST /api/sms/inbound
+GET  /api/retention/cases
+PATCH /api/retention/cases/:id
+
+ENGAGEMENT
+GET  /api/engagement/today
+POST /api/engagement/today/respond
+
+REPORTING
+GET  /api/reports/institution
+GET  /api/reports/employer
+GET  /api/reports/institution/export
+
+Security rule:
+Every mutation derives actor identity and permissions server-side. Never trust client-supplied role, verified_by, tenant, or institution IDs as authorization proof.
+
+10. TALENT FILTERING ENGINE
+
+MVP1 uses deterministic SQL/application filters.
+
+Pipeline:
+1. candidate is discoverable;
+2. candidate belongs to employer-authorized program/cohort;
+3. graduation/hire timing matches;
+4. required verified skills match;
+5. readiness fields match explicit criteria;
+6. shift/work-type matches;
+7. optional referral-only flag.
+
+Output:
+- candidate list;
+- visible match criteria;
+- provenance labels.
+
+Not allowed:
+- hidden employability score;
+- automatic rejection;
+- inferred protected/sensitive-trait ranking.
+
+11. VERIFIED SKILLS IMPLEMENTATION
+
+Source of truth:
+Verified state is separate from self-attestation.
+
+Write authorization:
+Only properly scoped educator or TXKPRO admin can verify/revoke.
+
+Audit payload:
+- actor_user_id
+- student_id
+- skill_id
+- previous state
+- new state
+- timestamp
+- correlation/request ID where available
+
+Concurrency:
+Use updated_at/version/optimistic concurrency to prevent silent overwrite.
+
+Batch verification:
+Not required in MVP1, but schema/API should not prevent later support.
+
+12. CSV ROSTER IMPORT
+
+Flow:
+UPLOAD -> PARSE -> VALIDATE -> PREVIEW -> CONFIRM -> COMMIT -> INVITE/LINK
+
+Required fields:
+- first name
+- last name
+- email
+- program/cohort context
+
+Optional:
+- phone
+- graduation date if not inherited
+
+Validation:
+- type/size
+- duplicate email
+- malformed email
+- required fields
+- unknown cohort
+- existing account linkage
+
+Idempotency:
+Repeated upload must not duplicate application users or cohort membership.
+
+Audit:
+Store import job summary, actor, counts, and errors.
+Do not retain original source file longer than operationally necessary unless explicitly required.
+
+13. INTERVIEW REQUEST MESSAGING
+
+Server flow:
+1. authorize employer;
+2. authorize student visibility;
+3. create interview request;
+4. audit;
+5. send notification.
+
+SMS only if:
+- phone exists;
+- SMS consent exists;
+- user not opted out.
+
+Fallback:
+- in-app
+- email
+
+If direct inbound SMS is used, map response safely to an active request. If multiple requests create ambiguity, use a secure authenticated response link.
+
+14. RETENTION PULSE DESIGN
+
+14.1 Schedule creation
+On active hire:
+create hire_date + 30, +60, +90 milestones.
+
+14.2 Scheduler
+Run at least daily; hourly if operationally simple.
+
+Select:
+status='pending'
+AND scheduled_for <= now()
+AND placement is active.
+
+14.3 Idempotency
+Before sending:
+- atomically claim/update milestone;
+- do not send already sent/responded/skipped;
+- persist provider message ID.
+
+14.4 Message
+Example:
+“How is the job going? Reply 1 = Going well, 2 = Okay, 3 = I need help.”
+
+14.5 Inbound webhook
+- validate provider signature;
+- normalize sender;
+- parse supported response;
+- map milestone;
+- persist raw + normalized value;
+- open case if at risk;
+- acknowledge safely.
+
+14.6 At-risk
+Score 3:
+- open case;
+- notify authorized institution/TXKPRO users;
+- no automatic employer action;
+- human intervention process.
+
+14.7 Consent
+Maintain:
+- sms_consent_at
+- consent_source
+- opt_out_at
+- status
+
+Honor STOP/unsubscribe immediately for the relevant messaging category.
+
+15. DAILY ENGAGEMENT DESIGN
+
+MVP1:
+- one item/student/program/date;
+- safety question OR readiness pulse;
+- one response per student/item;
+- streak update transaction;
+- centralized timezone policy.
+
+Anti-gaming:
+- reloads cannot create multiple completions;
+- streak does not alter skill verification or eligibility.
+
+No prizes/raffles in MVP1.
+
+16. REPORTING
+
+Institution:
+- activated students
+- profile completion
+- students with >=1 verified skill
+- verification count
+- referrals
+- interviews
+- hires
+- time-to-interview
+- time-to-hire
+- retention milestone response
+- at-risk/resolved cases
+
+Employer:
+- candidate pipeline
+- interview requests
+- acceptances
+- hires
+- retention milestones
+- cases where employer visibility is authorized
+
+TXKPRO:
+- approval queues
+- active tenants/users
+- placements
+- retention cases
+- messaging failures
+
+Exports:
+Generated server-side; re-check authorization.
+
+External benchmarks:
+Keep external claims tagged and separate from platform telemetry.
+
+17. AUDIT / EVENT MODEL
+
+Required events:
+AUTH_ACCOUNT_CREATED
+AUTH_EMAIL_CONFIRMED
+ROLE_MEMBERSHIP_CREATED
+ROLE_MEMBERSHIP_APPROVED
+INSTITUTION_APPROVED
+EMPLOYER_APPROVED
+ROSTER_IMPORTED
+SKILL_SELF_ATTESTED
+SKILL_VERIFIED
+SKILL_VERIFICATION_REVOKED
+REFERRAL_CREATED
+INTERVIEW_REQUESTED
+INTERVIEW_RESPONDED
+PLACEMENT_CREATED
+PLACEMENT_STATUS_CHANGED
+RETENTION_MESSAGE_SENT
+RETENTION_RESPONSE_RECEIVED
+RETENTION_CASE_OPENED
+RETENTION_CASE_RESOLVED
+REPORT_EXPORTED
+
+Audit fields:
+- event_id
+- event_type
+- actor_user_id nullable for system
+- target_type
+- target_id
+- tenant/scope IDs
+- safe before_json
+- safe after_json
+- correlation_id
+- created_at
+
+Never log secrets or raw auth tokens.
+
+18. AUTH EMAIL / SMTP
+
+Production:
+- Workforce explicitly provides Workforce redirect destination;
+- production origin = https://workforce.txkpro.com;
+- localhost/Codespaces are development-only allowlisted redirects;
+- hosted Supabase auth templates use generated confirmation/recovery URL patterns;
+- use authenticated custom SMTP;
+- SPF/DKIM configured;
+- DMARC recommended;
+- disable link tracking that rewrites single-use auth URLs.
+
+19. FUTURE SUBDOMAIN READINESS
+
+MVP1 does not depend on tenant subdomains.
+
+Prepare:
+- stable institution/employer slug;
+- logos/theme metadata;
+- tenant context based on authenticated scope;
+- no hardcoded single-tenant assumptions.
+
+Future:
+{tenant}.txkpro.com
+ -> host middleware
+ -> resolve tenant slug
+ -> branding / SSO discovery
+ -> membership validation
+ -> same central app/backend
+
+Host-derived tenant context is routing context, never authorization proof.
+
+20. PERFORMANCE / SCALE
+
+Reference:
+~1,000 students
+~25 employers
+small number of institutions
+daily engagement
+retention SMS events
+
+Targets:
+- candidate filter p95: <1 second at pilot data scale, excluding network latency;
+- verification write: <1 second typical;
+- dashboards: <2 seconds typical or use cached/materialized summaries;
+- 1,000-row roster import completes with progress/result and no duplicate accounts.
+
+Suggested indexes:
+- student program/cohort/discoverable
+- skill student_id/skill_id/status
+- employer approval status
+- referral employer/student/status
+- interview employer/student/status
+- placement student/employer/status/hire_date
+- retention scheduled_for/status
+
+21. RELIABILITY
+
+REL-01 Retention sends are idempotent.
+REL-02 Inbound SMS idempotent by provider message ID.
+REL-03 Webhook signature validation mandatory.
+REL-04 Failed sends retry without duplicate logical events.
+REL-05 CSV import idempotent.
+REL-06 Critical job failures surface to admin monitoring.
+REL-07 Database migrations versioned/reviewed.
+
+22. SECURITY
+
+SEC-01 Enable RLS on exposed sensitive tables.
+SEC-02 Server secret/service role never reaches browser.
+SEC-03 Use publishable key client-side.
+SEC-04 Authorization uses verified claims + database memberships.
+SEC-05 No authz based on raw user_metadata.
+SEC-06 Public signup cannot create admin.
+SEC-07 Educator access requires approved relationship.
+SEC-08 Employer talent access requires approved relationship.
+SEC-09 Exports enforce same permissions.
+SEC-10 Rate-limit sensitive endpoints.
+SEC-11 Validate object scope on every object fetch/mutation to prevent IDOR/BOLA.
+SEC-12 Sanitize user-generated display text.
+SEC-13 HTTPS + secure headers in production.
+SEC-14 Review relevant Supabase security advisor findings before public launch.
+
+23. PRIVACY / COMPLIANCE BOUNDARY
+
+MVP1 stores:
+- identity/contact
+- institution/program/cohort
+- skills
+- readiness attestations
+- referrals/interviews/placements
+- retention responses/cases
+
+MVP1 excludes:
+- grades/transcripts unless separately approved
+- financial aid / FAFSA / Pell
+- raw MVR
+- raw background reports
+- drug-screen reports
+- medical data
+
+Education-record principle:
+Institution-controlled data should be disclosed only for approved workforce-placement purposes. Obtain formal legal/compliance review before expanding into regulated education records.
+
+24. OBSERVABILITY
+
+Structured logs:
+- request ID
+- route/event
+- status
+- duration
+- non-sensitive actor ID where appropriate
+
+Operational metrics:
+- auth failures
+- onboarding failures
+- skill verification errors
+- CSV failures
+- SMS send/delivery failure
+- webhook failure
+- retention scheduler backlog
+- report failures
+
+Alerts:
+- repeated signature failures
+- scheduler stopped
+- high SMS failure rate
+- elevated 5xx rate
+- DB connectivity issue
+
+25. TEST STRATEGY
+
+UNIT:
+- role mapping
+- filter logic
+- streak
+- retention dates
+- response normalization
+- CSV validation
+- callback URL resolution
+
+INTEGRATION:
+- signup/confirm/login/reset
+- RLS by role/scope
+- verify skill
+- referral
+- employer candidate view
+- interview + notification
+- placement -> milestones
+- webhook -> response -> case
+
+SECURITY NEGATIVE TESTS:
+- student reads another private profile
+- educator reads outside scope
+- employer reads other employer data
+- unapproved employer browses talent
+- spoof verified_by
+- spoof admin role
+- export bypass
+- replay webhook
+
+E2E:
+Student: signup -> onboarding -> skills -> referral/interview -> hire -> pulse
+Educator: login -> roster -> verify -> refer -> monitor
+Employer: approval -> filter -> interview -> hire -> retention
+Admin: approve -> monitor -> resolve case -> report
+
+MOBILE:
+Test signup, onboarding, skill matrix, interview response, daily engagement, recovery flows.
+
+26. DEPLOYMENT / ENVIRONMENTS
+
+Environments:
+- local
+- Codespaces/preview
+- production
+
+Production:
+https://workforce.txkpro.com
+
+Required configuration:
+NEXT_PUBLIC_SITE_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+SUPABASE_SECRET_KEY
+SMS provider secrets
+
+SMTP credentials remain in hosted provider/Supabase configuration, not Git.
+
+CI:
+- locked dependency install
+- typecheck
+- lint
+- production build
+- optional auth configuration validation
+- migration checks later
+Delivery:
+feature branch -> PR -> CI -> review -> main.
+
+27. EXISTING BACKEND / MIGRATION RULE
+
+Because all TXKPRO systems share one Supabase project:
+1. inspect existing tables/functions/policies first;
+2. map logical entities to existing schema;
+3. use additive migrations;
+4. do not duplicate identity/role models;
+5. run security/advisor review;
+6. commit every migration to GitHub.
+
+28. BUILD ORDER
+
+Phase 1 — Foundation
+1. auth/session hardening
+2. role/scope model
+3. institution/program/cohort
+4. student profile
+5. employer approval/profile
+
+Phase 2 — Core Value Engine
+6. skills matrix
+7. instructor verification
+8. educator referral
+9. talent discovery/filtering
+10. interview request
+
+Phase 3 — Outcomes
+11. placement/hire
+12. 30/60/90 scheduler
+13. SMS inbound/outbound
+14. retention cases
+15. dashboards/report export
+
+Phase 4 — Engagement
+16. daily safety/readiness item
+17. streak
+18. engagement analytics
+
+Phase 5 — Pilot Hardening
+19. CSV import
+20. audit completeness
+21. mobile QA
+22. tenant isolation tests
+23. operational runbooks
+24. launch checklist
+
+29. TECHNICAL EXIT CRITERIA
+
+EC-01 Production build passes CI.
+EC-02 P0 PRD flows pass end-to-end.
+EC-03 RLS/authorization negative tests pass.
+EC-04 No secret key in client bundle/repo.
+EC-05 1,000-row import test succeeds without duplicates.
+EC-06 Employer filter meets pilot-scale performance target.
+EC-07 Skill verification provenance is auditable.
+EC-08 Test hire creates exactly three milestones.
+EC-09 At-risk SMS opens exactly one case.
+EC-10 Opted-out user receives no retention SMS.
+EC-11 Institution dashboard metrics are correct.
+EC-12 Report export respects scope.
+EC-13 Mobile core-flow QA passes.
+EC-14 Production auth links resolve to Workforce domain.
+EC-15 Operations runbook covers approvals, messaging failure, retention alerts, data correction.
+
+30. POST-MVP ROADMAP
+
+MVP1.1
+- PRO Points ledger
+- reliability/skill/community events
+- leaderboard periods
+- anti-abuse caps
+- sponsor campaigns if approved
+- richer notifications
+
+MVP1.2
+- branded tenant subdomains
+- wildcard DNS/SSL
+- tenant theming
+- SSO discovery
+
+MVP2
+- SAML/OIDC SSO
+- HRIS
+- employer API
+- multi-campus controls
+- capacity forecasting
+- explainable matching assistance
+- extended retention analytics
+
+Any future AI matching must remain explainable, auditable, and human-in-the-loop.
+
+END OF TRD

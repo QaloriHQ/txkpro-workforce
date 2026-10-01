@@ -1,0 +1,128 @@
+TXK PRO — CONTRACTOR APP MVP
+
+PRIMARY PURPOSE
+===============
+Create and manage marketplace supply.
+
+
+MVP FLOW
+========
+Contractor Registration
+→ Company Profile
+→ Services
+→ Service Area
+→ Documents
+→ Approval
+→ Receive Leads
+→ Accept/Decline
+→ Estimate
+→ Schedule
+→ Complete Job
+→ Invoice/Payment
+→ Review
+
+
+CORE SCREENS
+============
+
+1. LOGIN / ACCOUNT
+- Sign in
+- Reset/recover access
+- Account status
+
+2. ONBOARDING
+- Business name
+- Contact details
+- Company type
+- Years in business
+- Services
+- Coverage area
+- License/insurance fields
+- Upload documents
+- Agreements
+
+3. DASHBOARD
+- New leads
+- Accepted leads
+- Estimates awaiting response
+- Upcoming jobs
+- Jobs needing action
+- Recent reviews
+
+4. LEAD INBOX
+Each lead:
+- Service
+- General location
+- Request details
+- Photos
+- Timing
+- Customer notes
+- Accept
+- Decline
+
+5. ESTIMATES
+- Create estimate
+- Line items
+- Labor
+- Materials
+- Notes
+- Expiration
+- Revision history
+- Send to homeowner
+
+6. JOBS
+Statuses might include:
+- New
+- Accepted
+- Estimate Sent
+- Estimate Approved
+- Scheduling
+- Scheduled
+- In Progress
+- Completed
+- Cancelled
+- Disputed
+
+7. CALENDAR / AVAILABILITY
+- Set working hours
+- Blackout dates
+- View upcoming jobs
+
+8. MESSAGING
+- Homeowner conversation
+- Attach files/photos
+- System notices
+
+9. DOCUMENTS
+- Insurance
+- Licenses
+- Certifications
+- Expiration dates
+
+10. PROFILE
+- Public company description
+- Services
+- Service area
+- Years experience
+- Portfolio photos
+- Ratings
+
+11. PERFORMANCE
+Basic:
+- Leads received
+- Leads accepted
+- Jobs won
+- Jobs completed
+- Average rating
+
+
+CONTRACTOR MVP SUCCESS CONDITION
+================================
+A contractor can independently move a lead from:
+Received
+→ Accepted
+→ Estimated
+→ Scheduled
+→ Completed
+
+with the Admin App able to observe or intervene at every step.

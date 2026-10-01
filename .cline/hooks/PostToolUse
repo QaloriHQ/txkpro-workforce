@@ -1,0 +1,371 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+const {
+  candidateListFromSelector,
+  parseSelectorResult,
+  parseValidationResult,
+  renderOwnerFacingSummary,
+  validateBlockedArtifact,
+  validateConfirmedArtifact,
+} = require("./txkpro-confirmation-runtime.cjs");
+const {
+  parseExecutionValidationResult,
+  renderExecutorFacingSummary,
+  validateExecutionValidationArtifact,
+} = require("./txkpro-orchestration-runtime.cjs");
+
+let input = {};
+try {
+  input = JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+} catch {
+  process.stdout.write(JSON.stringify({ cancel: false }));
+  process.exit(0);
+}
+
+const rawTaskId = String(input?.taskId || "unknown");
+const taskId = rawTaskId.replace(/[^A-Za-z0-9._-]/g, "_");
+const workspaceRoot =
+  Array.isArray(input?.workspaceRoots) && input.workspaceRoots[0]
+    ? input.workspaceRoots[0]
+    : process.cwd();
+const dir = path.join(os.tmpdir(), "txkpro-cline-confirmation-gates");
+const marker = path.join(dir, taskId + ".json");
+const resultValue = input?.postToolUse?.result;
+const toolName = String(input?.postToolUse?.toolName || "");
+const toolSuccess = input?.postToolUse?.success !== false;
+const executionTimeMs = Number(input?.postToolUse?.executionTimeMs || 0);
+
+function readMarker() {
+  try {
+    return JSON.parse(fs.readFileSync(marker, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeMarker(value) {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(marker, JSON.stringify(value, null, 2));
+}
+
+function runUsage(args) {
+  const script = path.join(workspaceRoot, "scripts", "txkpro-agent-usage.mjs");
+  const response = spawnSync(process.execPath, [script, ...args], {
+    cwd: workspaceRoot,
+    encoding: "utf8",
+    env: process.env,
+  });
+  return {
+    ok: !response.error && response.status === 0,
+    status: response.status,
+    stdout: String(response.stdout || "").trim(),
+    stderr: String(response.stderr || "").trim(),
+  };
+}
+
+let gate = readMarker();
+
+if (gate?.state === "READ_ONLY_CONFIRMATIONS_REQUIRED") {
+  const selector = parseSelectorResult(resultValue);
+  if (selector) {
+    const candidates = candidateListFromSelector(selector);
+    const selectedIssue = Number(selector.selected.issue);
+    const selectedTaskId = String(selector.selected.taskContext.taskId).trim();
+    writeMarker({
+      ...gate,
+      automatedGatePassed: true,
+      automatedDefinitionOfReady:
+        selector.selected?.preflight?.automatedDefinitionOfReady || "PASS",
+      provisionalIssue: selectedIssue,
+      provisionalTaskId: selectedTaskId,
+      provisionalCandidates: candidates,
+      provisionalCandidateIndex: Math.max(
+        0,
+        candidates.findIndex(
+          (candidate) =>
+            candidate.issue === selectedIssue &&
+            candidate.taskId === selectedTaskId,
+        ),
+      ),
+      selectorObservedAt: new Date().toISOString(),
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO legacy automated gate passed for provisional candidate " +
+          selectedTaskId +
+          " (#" +
+          selectedIssue +
+          "). Continue semantic confirmation. This compatibility path still cannot authorize Cline mutation without a ChatGPT implementation contract.",
+      }),
+    );
+    process.exit(0);
+  }
+
+  gate = readMarker();
+  const invocation = gate?.validatorInvocation;
+  if (invocation && invocation.toolName === toolName) {
+    const result = parseValidationResult(resultValue);
+    const expected = {
+      issue: invocation.expectedIssue || gate.provisionalIssue || null,
+      taskId: invocation.expectedTaskId || gate.provisionalTaskId || null,
+    };
+
+    if (!result) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: "structured_validator_result_missing_or_malformed",
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO ignored malformed legacy confirmation output. Sentinel strings alone have no authority.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    if (result.status === "BLOCKED") {
+      const errors = validateBlockedArtifact(result, expected);
+      if (errors.length > 0) {
+        writeMarker({
+          ...gate,
+          validatorInvocation: null,
+          lastValidationFailure: errors,
+          lastValidationFailureAt: new Date().toISOString(),
+        });
+        process.stdout.write(
+          JSON.stringify({
+            cancel: false,
+            contextModification:
+              "TXKPRO rejected the structured blocked result: " + errors.join("; "),
+          }),
+        );
+        process.exit(0);
+      }
+
+      const candidates = Array.isArray(gate.provisionalCandidates)
+        ? gate.provisionalCandidates
+        : [];
+      const currentIndex = Number.isInteger(Number(gate.provisionalCandidateIndex))
+        ? Number(gate.provisionalCandidateIndex)
+        : 0;
+      const nextIndex = currentIndex + 1;
+      const nextCandidate = candidates[nextIndex] || null;
+
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastBlockedValidation: result,
+        lastBlockedValidationId: result.validationId,
+        provisionalCandidateIndex: nextCandidate ? nextIndex : currentIndex,
+        provisionalIssue: nextCandidate ? nextCandidate.issue : gate.provisionalIssue,
+        provisionalTaskId: nextCandidate ? nextCandidate.taskId : gate.provisionalTaskId,
+        lastBlockedAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification: nextCandidate
+            ? "TXKPRO legacy confirmation is BLOCKED/UNRESOLVED. Continue automatically with " +
+              nextCandidate.taskId +
+              " (#" +
+              nextCandidate.issue +
+              ")."
+            : "TXKPRO legacy confirmation is BLOCKED/UNRESOLVED. Do not manufacture eligibility.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    if (!toolSuccess) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: "validator_command_failed",
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO legacy validator command failed. Keep the gate active.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    const errors = validateConfirmedArtifact(result, expected);
+    if (!gate.automatedGatePassed) {
+      errors.push("automated dependency/Definition-of-Ready selector PASS was not retained");
+    }
+    if (errors.length > 0) {
+      writeMarker({
+        ...gate,
+        validatorInvocation: null,
+        lastValidationFailure: errors,
+        lastValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO rejected the legacy validator result: " + errors.join("; "),
+        }),
+      );
+      process.exit(0);
+    }
+
+    const ownerFacingResponse = renderOwnerFacingSummary(result);
+    writeMarker({
+      ...gate,
+      state: "CONFIRMED_AWAITING_APPROVAL",
+      issue: Number(result.issue),
+      roadmapTaskId: String(result.taskId),
+      evidenceContract: result.evidenceContract,
+      planContract: result.planContract,
+      confirmationResult: result.confirmationResult,
+      planResult: result.planResult,
+      validatorSuccess: true,
+      successSentinels: result.successSentinels,
+      validationId: result.validationId,
+      evidenceDigest: result.evidenceDigest,
+      validatedConfirmations: result.confirmations,
+      validatedImplementationPlan: result.implementationPlan,
+      validatedResult: result,
+      ownerFacingResponse,
+      validatorInvocation: null,
+      confirmationsCompletedAt: new Date().toISOString(),
+    });
+
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO legacy confirmation gate cleared. Finish with the exact validator response. Mutation still requires a ChatGPT Chat implementation contract bound to validationId " +
+          result.validationId +
+          ".",
+      }),
+    );
+    process.exit(0);
+  }
+}
+
+gate = readMarker();
+if (gate?.state === "IMPLEMENTATION_RUN_ACTIVE") {
+  const invocation = gate.executionValidatorInvocation;
+  if (invocation && invocation.toolName === toolName) {
+    const result = parseExecutionValidationResult(resultValue);
+    if (!toolSuccess || !result) {
+      writeMarker({
+        ...gate,
+        executionValidatorInvocation: null,
+        lastExecutionValidationFailure: !toolSuccess
+          ? "execution_validator_command_failed"
+          : "structured_execution_validator_result_missing_or_malformed",
+        lastExecutionValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO execution result did not validate. The Cline run remains active and cannot complete. Arbitrary sentinel text has no authority.",
+        }),
+      );
+      process.exit(0);
+    }
+
+    const errors = validateExecutionValidationArtifact(result, {
+      issue: invocation.expectedIssue,
+      taskId: invocation.expectedTaskId,
+      contractId: invocation.expectedContractId,
+    });
+    if (errors.length > 0) {
+      writeMarker({
+        ...gate,
+        executionValidatorInvocation: null,
+        lastExecutionValidationFailure: errors,
+        lastExecutionValidationFailureAt: new Date().toISOString(),
+      });
+      process.stdout.write(
+        JSON.stringify({
+          cancel: false,
+          contextModification:
+            "TXKPRO rejected the structured Cline execution result: " +
+            errors.join("; "),
+        }),
+      );
+      process.exit(0);
+    }
+
+    const executorFacingResponse = renderExecutorFacingSummary(result);
+    writeMarker({
+      ...gate,
+      state: "EXECUTION_VALIDATED_AWAITING_CHAT_REVIEW",
+      executionStatus: result.executionStatus,
+      executionValidationId: result.validationId,
+      executionResultDigest: result.resultDigest,
+      validatedExecution: result.validatedExecution,
+      executorFacingResponse,
+      executionValidatorInvocation: null,
+      executionValidatedAt: new Date().toISOString(),
+    });
+    process.stdout.write(
+      JSON.stringify({
+        cancel: false,
+        contextModification:
+          "TXKPRO Cline execution evidence is validated against ChatGPT contract " +
+          result.contractId +
+          ". No further mutation is allowed in this run. Finish with attempt_completion using exactly the persisted execution summary; ChatGPT Chat verification is still required.\n\n" +
+          executorFacingResponse,
+      }),
+    );
+    process.exit(0);
+  }
+
+  const observation = runUsage([
+    "observe",
+    "--cline-task-id",
+    rawTaskId,
+    "--success",
+    toolSuccess ? "true" : "false",
+    "--execution-ms",
+    Number.isFinite(executionTimeMs) ? String(executionTimeMs) : "0",
+  ]);
+
+  if (observation.ok) {
+    try {
+      const parsed = JSON.parse(observation.stdout);
+      if (
+        parsed?.budgetStateChanged &&
+        ["WARNING", "SOFT_BUDGET", "ESCALATION"].includes(parsed?.budgetState)
+      ) {
+        const messages = {
+          WARNING:
+            "TXKPRO token usage crossed the warning threshold. Avoid redundant reads and repeated repair loops.",
+          SOFT_BUDGET:
+            "TXKPRO token usage crossed the soft budget. Continue only while the contracted implementation path remains productive.",
+          ESCALATION:
+            "TXKPRO token usage crossed the escalation threshold. If execution is stuck, return a structured BLOCKED result instead of consuming tokens indefinitely.",
+        };
+        process.stdout.write(
+          JSON.stringify({
+            cancel: false,
+            contextModification: messages[parsed.budgetState],
+          }),
+        );
+        process.exit(0);
+      }
+    } catch {}
+  }
+}
+
+process.stdout.write(JSON.stringify({ cancel: false }));

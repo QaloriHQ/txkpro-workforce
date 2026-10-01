@@ -1,0 +1,99 @@
+TXKPRO™ WORKFORCE
+SHARED ROLE & PERMISSIONS MATRIX
+Version 1.0 — September 2026
+
+PURPOSE
+Define the canonical Workforce role vocabulary, role intent, scope model, and cross-app permission expectations. This file is a product/architecture source of truth. Prototype "View as" controls are demonstration-only and are not production authorization.
+
+CANONICAL ROLE FAMILIES
+
+PLATFORM
+- super_admin: unrestricted TXKPRO platform administration.
+- admin: platform operations with broad but policy-limited authority.
+- support: customer support/operations access only where explicitly granted.
+- read_only_analyst: aggregate/reporting access where assigned.
+
+INSTITUTION
+- institution_admin: institution-wide workforce administration.
+- department_head: department/program-group management and reporting.
+- program_coordinator: program/cohort operations, roster, referral, placement coordination.
+- instructor: assigned student/cohort skill verification and referral workflow.
+- assistant_instructor: assigned cohort support; may prepare observations/review items but authoritative verification can require instructor approval.
+- career_services: readiness, employer relationship, referral, interview, placement, retention operations.
+
+EMPLOYER
+- employer_owner: employer account ownership, team, hiring configuration, candidate access.
+- employer_admin: employer operational administration.
+- recruiter: candidate discovery, referrals, interviews, hiring pipeline.
+- hiring_manager: scoped candidate and interview/hire workflows.
+- employer_read_only: permitted candidate/pipeline reporting without mutation.
+
+STUDENT
+- student: owns student profile, preferences, self-attestations, responses, visibility settings, and consent-controlled communications.
+
+SCOPE TYPES
+- platform
+- institution
+- department
+- program
+- cohort
+- employer
+- self
+
+AUTHORIZATION PRINCIPLES
+1. Authentication proves identity; it does not imply application authority.
+2. Production permissions are evaluated server-side.
+3. Role + scope are both required.
+4. User-editable profile metadata is never authorization proof.
+5. A person may hold multiple memberships.
+6. Cross-tenant access is denied by default.
+7. Every sensitive mutation is auditable.
+8. Prototype role toggles must never be reused as production auth logic.
+
+INSTITUTION PERMISSIONS
+
+Capability                         Super  Inst.  Dept.  Prog.  Instr.  Asst.  Career  Analyst
+                                   Admin  Admin  Head   Coord
+------------------------------------------------------------------------------------------------
+Institution settings               FULL   FULL   READ   READ   NONE    NONE   NONE    NONE
+Programs/cohorts                    FULL   FULL   FULL   FULL   READ    READ   READ    READ
+Roster import                       FULL   FULL   LIMIT  FULL   NONE    NONE   LIMIT   READ
+Student directory                   FULL   FULL   FULL   FULL   SCOPE   SCOPE  FULL    LIMIT
+Student readiness                   FULL   FULL   FULL   FULL   SCOPE   READ   FULL    READ
+Skills matrix config                FULL   FULL   FULL   FULL   READ    READ   READ    READ
+Skill verification                  FULL   FULL   FULL   FULL   FULL    PREP   READ    NONE
+Employer directory                  FULL   FULL   READ   FULL   READ    READ   FULL    READ
+Create referral                     FULL   FULL   FULL   FULL   FULL    DRAFT  FULL    NONE
+Referral management                 FULL   FULL   FULL   FULL   SCOPE   LIMIT  FULL    READ
+Placement management                FULL   FULL   READ   FULL   READ    READ   FULL    READ
+Retention case management           FULL   FULL   READ   FULL   SCOPE   SCOPE  FULL    READ
+Reports                             FULL   FULL   FULL   FULL   READ    READ   FULL    FULL
+Team & permissions                  FULL   FULL   LIMIT  READ   NONE    NONE   NONE    NONE
+Audit log                           FULL   READ   READ   READ   NONE    NONE   NONE    READ
+
+Legend:
+FULL = perform action in authorized scope.
+SCOPE = action/read limited to assigned students/cohorts.
+LIMIT = selected actions only.
+PREP = can prepare an item for authoritative approval.
+DRAFT = may draft but not finalize where institution policy requires instructor/career-services approval.
+READ = view only.
+NONE = hidden/denied.
+
+CROSS-APP VISIBILITY PRINCIPLES
+- Student-controlled visibility gates employer discovery.
+- Institution users see only students within authorized educational/workforce scope.
+- Employers see only approved/discoverable candidate data and their own hiring activity.
+- Institution users do not see employers' private HR notes/ratings.
+- Employers do not see institution-only internal notes.
+- Students do not see restricted institution/admin audit details.
+- Platform admins access only what operational policy authorizes; high-impact actions are logged.
+
+PROTOTYPE ROLE SIMULATION
+Institution prototype may provide a "View as" switcher for:
+Super Admin, Admin, Department Head, Program Coordinator, Instructor, Assistant Instructor, Career Services, Read-Only Analyst.
+
+Required banner:
+"Demo mode: role switching simulates Institution permissions. Production access is server-controlled."
+
+END

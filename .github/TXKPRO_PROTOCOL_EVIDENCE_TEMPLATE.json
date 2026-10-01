@@ -1,0 +1,42 @@
+{
+  "schema": "txkpro.protocol.evidence.v1",
+  "issue": 123,
+  "task_id": "W12-03",
+  "target_status": "Verification",
+  "risk": "MEDIUM",
+  "dependencies": [],
+  "implementation": {
+    "complete": true,
+    "pull_request": 123,
+    "merge_commit": "REPLACE_WITH_MERGE_SHA",
+    "merged_branch": "staging"
+  },
+  "ci": {
+    "required": true,
+    "passed": true,
+    "url": "https://github.com/QaloriHQ/txkpro-workforce/actions/runs/REPLACE"
+  },
+  "deployment": {
+    "staging_required": true,
+    "staging_deployed": true,
+    "revision": "REPLACE_WITH_STAGING_REVISION",
+    "url": "https://staging-workforce.txkpro.com",
+    "migrations_required": false,
+    "migrations_applied": false,
+    "migration_ledger_verified": false
+  },
+  "verification": {
+    "automated_required": true,
+    "automated_passed": true,
+    "sql_api": "passed",
+    "authorization_privacy": "passed",
+    "advisor_security": "not_applicable",
+    "manual_uat": "remaining",
+    "acceptance_criteria": "pending"
+  },
+  "blockers": [],
+  "known_followups": [],
+  "next_action": "User completes manual browser UAT and reports results.",
+  "notes": "",
+  "generated_at": "2026-09-30T00:00:00Z"
+}

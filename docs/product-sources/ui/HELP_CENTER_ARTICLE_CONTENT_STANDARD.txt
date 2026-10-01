@@ -1,0 +1,962 @@
+# Help Center Article Content Standard
+
+**Document ID:** HC-ARTICLE-STANDARD  
+**Version:** 1.0  
+**Status:** Source of Truth  
+**Applies to:** Any project using Help Center Manager  
+**File format:** Markdown stored in `.txt` files
+
+---
+
+## 1. Purpose
+
+This document defines the standard structure for Help Center articles imported through Help Center Manager.
+
+The goal is to make Help Center content:
+
+- Portable between projects
+- Easy to write manually
+- Easy to generate with AI
+- Predictable to import
+- Compatible with category-based folder structures
+- Search-friendly
+- Easy to review before publishing
+- Independent from any specific Help Center brand or product
+
+Each `.txt` file represents one Help Center article.
+
+Help Center Manager should parse article metadata from the Markdown source and populate the corresponding Help Center article fields automatically.
+
+---
+
+## 2. Canonical Article Format
+
+New Help Center articles should use YAML front matter followed by a Markdown article body.
+
+Preferred structure:
+
+---
+title: Understanding the Job Lifecycle
+category: Jobs & Messages
+category_id:
+slug: understanding-the-job-lifecycle
+keywords: jobs, lifecycle, messages, scheduling, service requests
+intro: Learn how a service request moves from submission through completion.
+---
+
+# Understanding the Job Lifecycle
+
+A service request moves through a series of stages from the initial request through completion.
+
+## Request submitted
+
+The customer begins by submitting a service request.
+
+## Request reviewed
+
+The request is reviewed and routed into the appropriate workflow.
+
+## Work begins
+
+Once accepted, the job moves into active work.
+
+## Related articles
+
+- Managing job messages
+- Completing a service request
+- Updating a service request
+
+---
+
+## 3. Standard Metadata Fields
+
+The following YAML fields are supported.
+
+### `title`
+
+Example:
+
+title: Understanding the Job Lifecycle
+
+Purpose:
+
+The user-facing Help Center article title.
+
+Recommended:
+
+Yes.
+
+If omitted:
+
+Help Center Manager may use the first Markdown H1 heading.
+
+---
+
+### `category`
+
+Example:
+
+category: Jobs & Messages
+
+Purpose:
+
+Identifies the Help Center category the article belongs to.
+
+Recommended:
+
+Required for predictable imports.
+
+The category value should match the intended Help Center category name.
+
+---
+
+### `category_id`
+
+Example:
+
+category_id:
+
+or:
+
+category_id: 4fe09d79-example-category-uuid
+
+Purpose:
+
+Stores the external Help Center platform's category identifier when known.
+
+Recommended:
+
+Usually leave blank.
+
+When blank, Help Center Manager should attempt to resolve the Category ID by matching the `category` value against the active workspace's reconstructed category index.
+
+This allows article source files to remain portable between Help Centers and workspaces.
+
+---
+
+### `slug`
+
+Example:
+
+slug: understanding-the-job-lifecycle
+
+Purpose:
+
+Defines the URL-friendly article identifier.
+
+Recommended:
+
+Yes.
+
+Rules:
+
+- Lowercase
+- Use hyphens between words
+- Avoid spaces
+- Avoid punctuation where possible
+- Keep concise and descriptive
+
+If omitted:
+
+Help Center Manager may automatically generate the slug from the article title.
+
+---
+
+### `keywords`
+
+Example:
+
+keywords: jobs, lifecycle, service requests, scheduling, messages
+
+Purpose:
+
+Provides Help Center search and content-discovery terms.
+
+Recommended:
+
+Yes.
+
+Use comma-separated phrases.
+
+Keywords should describe:
+
+- User terminology
+- Feature terminology
+- Common questions
+- Relevant workflow concepts
+- Alternative terms users may search
+
+Avoid excessive keyword stuffing.
+
+---
+
+### `intro`
+
+Example:
+
+intro: Learn how a service request moves from submission through completion.
+
+Purpose:
+
+Provides a short article summary or introduction for Help Center listings and article metadata.
+
+Recommended:
+
+Yes.
+
+Guidelines:
+
+- One concise sentence
+- Plain language
+- Describe what the reader will learn
+- Prefer fewer than 255 characters
+- Do not use navigation links
+- Do not use raw URLs
+- Do not duplicate the title
+
+---
+
+## 4. Article Body Structure
+
+After the YAML front matter, write the article using standard Markdown.
+
+Recommended structure:
+
+# Article Title
+
+Short opening explanation.
+
+## Main topic
+
+Article content.
+
+## Another topic
+
+Article content.
+
+## Related articles
+
+- Related article
+- Related article
+
+---
+
+## 5. H1 Heading Standard
+
+Each article should normally contain one Markdown H1:
+
+# Article Title
+
+The H1 should match or closely correspond to the YAML `title`.
+
+When converting Markdown to Help Center HTML, Help Center Manager may remove the article-body H1 because the Help Center platform already renders the article title separately.
+
+This prevents duplicate titles.
+
+---
+
+## 6. Heading Hierarchy
+
+Use headings semantically.
+
+Recommended:
+
+# Article title
+
+## Major section
+
+### Subsection
+
+#### Detail when necessary
+
+Do not skip heading levels unnecessarily.
+
+Avoid using headings merely for visual styling.
+
+---
+
+## 7. Introduction Paragraph
+
+The first body paragraph should explain the topic naturally.
+
+Example:
+
+A service request moves through several stages between the initial customer request and final completion. Understanding these stages makes it easier to know what happens next and where to find important information.
+
+Do not begin an article body with administrative navigation information such as:
+
+Help Center  
+Customer portal: https://example.com  
+Contractor portal: https://example.com  
+Website: https://example.com
+
+Portal and website information should appear only where contextually relevant.
+
+Help Center Manager should not use URL-heavy, navigation-only, metadata, or administrative blocks as automatic Intro text.
+
+---
+
+## 8. Lists
+
+Use standard Markdown lists.
+
+Unordered:
+
+- First item
+- Second item
+- Third item
+
+Ordered:
+
+1. First step
+2. Second step
+3. Third step
+
+Use numbered lists for procedures where order matters.
+
+Use bullets for choices, requirements, features, or reference information.
+
+---
+
+## 9. Procedures
+
+Task-based articles should use direct procedural language.
+
+Recommended:
+
+## Create a project
+
+1. Open the Projects page.
+2. Select **New Project**.
+3. Enter the project name.
+4. Choose the appropriate project type.
+5. Select **Create Project**.
+
+Prefer direct verbs such as:
+
+- Open
+- Select
+- Enter
+- Choose
+- Upload
+- Save
+- Review
+- Export
+
+Avoid vague instructions such as:
+
+- Proceed accordingly
+- Continue as needed
+- Execute the process
+- Utilize the functionality
+
+---
+
+## 10. Interface Labels
+
+When referring to buttons, menus, tabs, or interface labels, preserve the exact product language.
+
+Example:
+
+Select **Save Project**.
+
+Open **Account Settings**.
+
+Choose **Export PDF** from the **Export** menu.
+
+Use bold text for interface labels when practical.
+
+Do not invent interface labels.
+
+---
+
+## 11. Notes, Warnings, and Important Information
+
+Use plain-language emphasis.
+
+Example:
+
+**Note:** Changes are not applied until you select **Save**.
+
+Example:
+
+**Important:** Deleting a project cannot be undone.
+
+Example:
+
+**Warning:** Confirm that you have exported any information you need before clearing the project.
+
+Avoid excessive warning language.
+
+---
+
+## 12. Links
+
+Use descriptive link text whenever links appear in Markdown.
+
+Preferred:
+
+[Open the Help Center](https://help.example.com)
+
+Avoid:
+
+[Click here](https://help.example.com)
+
+Do not place large blocks of raw URLs at the beginning of articles.
+
+---
+
+## 13. Related Articles
+
+Where useful, end the article with:
+
+## Related articles
+
+- Getting started
+- Managing your account
+- Exporting a report
+
+Actual Help Center hyperlinks may be added later by Help Center Manager, the publishing platform, or manual editing.
+
+Do not require article URLs to exist before content can be imported.
+
+---
+
+## 14. Category Folder Structure
+
+Help Center content should normally be organized into folders representing Help Center categories.
+
+Recommended:
+
+Help_Center/
+│
+├── 01_Getting_Started/
+│   ├── 01_Welcome.txt
+│   ├── 02_Create_Your_First_Project.txt
+│   └── 03_Navigate_the_Dashboard.txt
+│
+├── 02_Account_And_Profile/
+│   ├── 01_Create_an_Account.txt
+│   ├── 02_Update_Your_Profile.txt
+│   └── 03_Reset_Your_Password.txt
+│
+├── 03_Projects/
+│   ├── 01_Create_a_Project.txt
+│   ├── 02_Edit_a_Project.txt
+│   └── 03_Delete_a_Project.txt
+│
+├── 04_Reports_And_Exports/
+│   ├── 01_Export_PDF.txt
+│   └── 02_Export_CSV.txt
+│
+└── 05_Troubleshooting/
+    ├── 01_Common_Errors.txt
+    └── 02_Contact_Support.txt
+
+Folder names represent categories.
+
+Files represent articles.
+
+---
+
+## 15. Folder Naming
+
+Numeric prefixes may be used to preserve intended ordering.
+
+Example:
+
+01_Getting_Started
+02_Account
+03_Projects
+04_Reports
+05_Troubleshooting
+
+The numeric prefix is organizational metadata only.
+
+Help Center Manager should remove or ignore numeric ordering prefixes when generating a category name.
+
+Example:
+
+01_Getting_Started
+
+becomes:
+
+Getting Started
+
+---
+
+## 16. Article Filename Standard
+
+Recommended:
+
+01_Getting_Started.txt
+
+02_Create_a_Project.txt
+
+03_Managing_Notifications.txt
+
+Filename numbers are optional and exist primarily for sorting.
+
+Help Center Manager should not depend on the filename as the primary source for article metadata when Markdown metadata is available.
+
+Priority should be:
+
+1. Markdown metadata
+2. Markdown H1
+3. Folder structure
+4. Filename
+
+---
+
+## 17. Metadata Parsing Priority
+
+Help Center Manager should treat the Markdown file as the primary source of truth.
+
+Recommended parsing priority:
+
+### Title
+
+1. YAML `title`
+2. First H1
+3. Filename
+
+### Category
+
+1. YAML `category`
+2. Folder name
+
+### Category ID
+
+1. YAML `category_id`
+2. Matching category from current workspace category index
+
+### Slug
+
+1. YAML `slug`
+2. Automatically generated from title
+
+### Keywords
+
+1. YAML `keywords`
+2. Blank if unavailable
+
+Do not manufacture keywords from unrelated content unless explicitly configured.
+
+### Intro
+
+1. YAML `intro`
+2. YAML `summary`
+3. Suitable first article paragraph
+
+The fallback paragraph must not be:
+
+- Metadata
+- Navigation
+- URL-only content
+- A heading
+- A divider
+- Administrative text
+
+### Article HTML
+
+Convert the complete Markdown article body to HTML after metadata has been removed.
+
+---
+
+## 18. Markdown-to-HTML Conversion
+
+Help Center Manager should convert supported Markdown into clean article HTML.
+
+Examples:
+
+Markdown:
+
+## Getting started
+
+HTML:
+
+<h2>Getting started</h2>
+
+Markdown:
+
+**Save Project**
+
+HTML:
+
+<strong>Save Project</strong>
+
+Markdown:
+
+- Item one
+- Item two
+
+HTML:
+
+<ul>
+  <li>Item one</li>
+  <li>Item two</li>
+</ul>
+
+The entire article body should be converted.
+
+Do not convert only the first paragraph.
+
+---
+
+## 19. Metadata Must Not Appear in Published Content
+
+YAML front matter is article configuration, not article content.
+
+This:
+
+---
+title: Getting Started
+category: General
+keywords: setup, onboarding
+intro: Learn the basics.
+---
+
+must not render inside Article HTML.
+
+Only the Markdown body should become the published article.
+
+---
+
+## 20. Backward-Compatible Metadata Format
+
+Help Center Manager may also support legacy articles that use bold Markdown metadata.
+
+Example:
+
+# Getting Started
+
+**Article ID:** HC-GS-001
+**Help Center:** General
+**Category:** Getting Started
+**Slug:** getting-started
+**Keywords:** setup, onboarding, basics
+**Summary:** Learn the basics of using the product.
+
+---
+
+## Introduction
+
+Welcome to the product.
+
+Supported legacy fields may include:
+
+- Article ID
+- Help Center
+- Category
+- Category ID
+- Slug
+- Keywords
+- Summary
+- Intro
+
+These metadata lines should be parsed and removed from the published article body.
+
+YAML front matter remains the preferred format for new content.
+
+---
+
+## 21. Portable Content Principle
+
+Article source files should avoid embedding environment-specific identifiers when possible.
+
+Prefer:
+
+category: Projects
+category_id:
+
+instead of permanently storing a category UUID.
+
+The Help Center Manager can resolve the current workspace's category identifier during import.
+
+This allows the same content structure and templates to be reused across:
+
+- Development Help Centers
+- Production Help Centers
+- Different brands
+- Different projects
+- Migrated workspaces
+
+---
+
+## 22. Generic Template
+
+Use this template when creating a new article:
+
+---
+title: [Article title]
+category: [Category name]
+category_id:
+slug: [article-slug]
+keywords: [keyword one], [keyword two], [keyword three]
+intro: [One-sentence description of what the reader will learn.]
+---
+
+# [Article title]
+
+[Brief opening paragraph explaining the subject and why it matters.]
+
+## [Primary section]
+
+[Content]
+
+## [Secondary section]
+
+[Content]
+
+## [Procedure, if applicable]
+
+1. [Step]
+2. [Step]
+3. [Step]
+
+## [Additional information]
+
+[Content]
+
+## Related articles
+
+- [Related article]
+- [Related article]
+
+---
+
+## 23. Minimal Valid Article
+
+A lightweight article may use:
+
+---
+category: Getting Started
+intro: Learn the basics of using this feature.
+---
+
+# Using This Feature
+
+This feature helps users complete a common task.
+
+## Get started
+
+Follow the steps below.
+
+1. Open the feature.
+2. Enter the required information.
+3. Select **Save**.
+
+Help Center Manager may derive:
+
+- Title from the H1
+- Slug from the title
+- Category ID from the category name
+
+---
+
+## 24. Recommended Complete Article
+
+For the most predictable import behavior, provide:
+
+- `title`
+- `category`
+- `slug`
+- `keywords`
+- `intro`
+- H1
+- Full article body
+
+Leave `category_id` blank unless there is a specific reason to bind the article source to one Help Center category UUID.
+
+---
+
+## 25. Content Quality Standard
+
+Every article should answer a clear user question or task.
+
+A good Help Center article should make it obvious:
+
+1. What this feature or concept is
+2. When the user would use it
+3. What they need before beginning
+4. What steps to take
+5. What happens afterward
+6. What to do if something goes wrong
+
+Not every article requires all six sections, but the relevant information should be easy to locate.
+
+---
+
+## 26. Writing Style
+
+Help Center content should be:
+
+- Clear
+- Practical
+- Direct
+- Friendly
+- Professional
+- Easy to scan
+- Free from unnecessary jargon
+
+Prefer:
+
+"Select **Save** to keep your changes."
+
+Instead of:
+
+"Users may proceed with persistence of their configuration by utilizing the Save functionality."
+
+Write for users completing a task, not developers describing a system.
+
+---
+
+## 27. Search Optimization
+
+Titles should match likely user questions or tasks.
+
+Preferred:
+
+How to reset your password
+
+Export a project as PDF
+
+Understanding job statuses
+
+Upload photos to a project
+
+Avoid vague titles such as:
+
+More Information
+
+Overview 2
+
+Important Details
+
+Other Settings
+
+Keywords should reflect words users are likely to search.
+
+---
+
+## 28. Avoid Product Assumptions
+
+This standard defines article structure, not product behavior.
+
+Article generators must not invent:
+
+- Features
+- Buttons
+- Workflows
+- Permissions
+- Policies
+- Pricing
+- URLs
+- Support processes
+- Account behavior
+- Integrations
+
+Product-specific information must come from the source material for the individual project.
+
+---
+
+## 29. Help Center Manager Review Behavior
+
+When reviewing an imported article, Help Center Manager should display editable fields for:
+
+- Title
+- Category
+- Category ID
+- Slug
+- Keywords
+- Intro text
+- Article HTML
+- Rendered preview
+
+The review screen should indicate when fields were successfully:
+
+Parsed from Markdown
+
+The user must be able to manually modify parsed fields before creating or updating the article.
+
+Manual changes should remain intact unless the user explicitly reparses or resets the article.
+
+---
+
+## 30. Import Principle
+
+The Help Center Manager import hierarchy is:
+
+Markdown Source
+↓
+Parse Metadata
+↓
+Resolve Category
+↓
+Convert Markdown Body
+↓
+Populate Article Fields
+↓
+Review
+↓
+Queue
+↓
+Create or Update in Help Center Platform
+
+The Markdown source should remain the canonical content source during initial parsing.
+
+---
+
+## 31. Source File Principle
+
+The standard relationship is:
+
+Folder
+↓
+Category
+
+TXT file
+↓
+Article
+
+YAML front matter
+↓
+Article metadata
+
+Markdown body
+↓
+Article HTML
+
+Help Center workspace
+↓
+Platform-specific Category IDs and publishing state
+
+---
+
+## 32. Final Standard
+
+For all Help Center Manager projects:
+
+1. Store source articles as Markdown inside `.txt` files.
+2. Use one `.txt` file per article.
+3. Use YAML front matter for new article metadata.
+4. Treat Markdown as the primary source of truth during import.
+5. Organize article files into category folders.
+6. Allow numeric prefixes for ordering.
+7. Prefer category names over hard-coded Category IDs.
+8. Resolve Category IDs against the active Help Center workspace when possible.
+9. Generate missing slugs from titles.
+10. Use concise Intro text.
+11. Convert the complete Markdown body to Article HTML.
+12. Remove YAML and legacy metadata from published content.
+13. Avoid duplicate H1 titles in rendered articles.
+14. Preserve manual edits made during review.
+15. Keep article source files portable between projects.
+16. Do not invent product-specific content that is not supported by project sources.
+17. Use the same standard across all projects that rely on Help Center Manager.
+
+---
+
+## 33. Core Principle
+
+> **Write the Help Center article once as structured Markdown. Let Help Center Manager translate that source into the fields and HTML required by the publishing platform.**
