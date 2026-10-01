@@ -119,6 +119,8 @@ jobs:
       - run: node --check scripts/txkpro-agent-usage.mjs
       - run: node --check scripts/txkpro-chat-contract.mjs
       - run: node --check scripts/txkpro-cline-execution-check.mjs
+      - run: node --check scripts/txkpro-slack-lifecycle.mjs
+      - run: node --check .cline/hooks/txkpro-slack-lifecycle.cjs
       - run: node --check .cline/hooks/txkpro-orchestration-runtime.cjs
       - run: node --check .cline/hooks/UserPromptSubmit
       - run: node --check .cline/hooks/PreToolUse
