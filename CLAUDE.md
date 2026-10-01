@@ -12,6 +12,7 @@ Claude-specific behavior:
 - If a provisional candidate fails a required confirmation, continue to the next provisional candidate automatically.
 - Never say `Mutation Allowed: Yes` or equivalent before explicit owner approval. Before approval, mutation authorization is always NO.
 - Ask for explicit approval only after the next eligible task has been confirmed and the implementation plan is complete.
+- For every implementation run, write the PRE-RUN estimated token/cost budget and POST-RUN actual usage to the issue using `scripts/txkpro-agent-usage.mjs`; do not claim the run finalized while required actual telemetry is missing.
 - Do not treat local filesystem absence as proof a repository source is missing; query the latest `origin/main`.
 - Do not bypass Definition of Ready, dependency/risk gates, verification gates, staging/UAT distinctions, or production authorization.
 - Do not mark or describe work as Done without protocol evidence accepted by the repository automation.
