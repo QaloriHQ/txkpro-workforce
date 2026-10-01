@@ -31,6 +31,17 @@ npm run protocol:check -- --evidence <path>
 npm run protocol:report -- --evidence <path>
 ```
 
+## Remote coding agent
+
+Slack is the primary remote Cline surface for TXKPRO Workforce. It uses Cline's native Socket Mode connector, so normal Slack operation does not require a public Codespaces webhook endpoint.
+
+Setup:
+
+- `docs/CLINE_SLACK_CODESPACE.md`
+- Slack app manifest: `config/slack-cline-app-manifest.json`
+
+Discord remains available as a fallback through `.devcontainer/start-discord-agent.sh`.
+
 ## Stack
 
 - Next.js 16.3.3 / React 19 / TypeScript
