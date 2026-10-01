@@ -1,4 +1,8 @@
 # TXKPRO AI Agent Governance
+## Chat orchestrator / Cline executor
+
+For TXKPRO roadmap work, ChatGPT Chat mode is the orchestration and verification authority; Cline Act mode is the implementation executor. A valid TXKPRO_CHAT_IMPLEMENTATION_CONTRACT must pre-exist Cline Act and be bound to the run before repository mutation. Cline returns TXKPRO_CLINE_EXECUTION_RESULT; ChatGPT independently verifies the resulting branch/PR/CI against the contract before roadmap completion. See docs/governance/TXKPRO_CHAT_CLINE_ORCHESTRATION.md.
+
 
 ## Authority
 

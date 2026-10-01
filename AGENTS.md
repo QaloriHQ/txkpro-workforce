@@ -117,6 +117,18 @@ node scripts/txkpro-wave-manifest.mjs --wave <WAVE>
 
 Do not mutate implementation files until Definition of Ready passes or an explicit protocol exception is approved.
 
+## ChatGPT Chat → Cline Act separation of duties
+
+Normal TXKPRO roadmap implementation uses docs/governance/TXKPRO_CHAT_CLINE_ORCHESTRATION.md.
+
+- ChatGPT Chat mode owns roadmap selection, source review, reasoning, confirmation, implementation decisions, contract construction, and post-implementation verification.
+- Cline Act mode is an executor. It writes code, runs commands/tests, and returns structured execution evidence only after a pre-existing ChatGPT implementation contract is validated.
+- Cline may execute a decision; Cline may not create a product or technical decision during execution.
+- Cline may not call a task verification complete, advance roadmap state, or replace ChatGPT verification with its own prose.
+- A direct Cline implementation request must resolve an owner-authored issue comment containing <!-- txkpro-chat-implementation-contract:v1 --> and a valid TXKPRO_CHAT_IMPLEMENTATION_CONTRACT before mutation starts.
+- Before Cline completion, validate TXKPRO_CLINE_EXECUTION_RESULT with scripts/txkpro-cline-execution-check.mjs. The resulting state remains RUN_COMPLETE_AWAITING_CHAT_VERIFICATION.
+- Cline What's next? reasoning is disabled by default. TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true is compatibility/emergency only.
+
 ## Planning and approval
 
 Default to planning/analysis before mutation.

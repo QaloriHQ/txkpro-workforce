@@ -10,6 +10,15 @@ Before any planning, repository mutation, test, migration, PR, deployment, or co
 
 Cline-specific instructions never override the authoritative protocol.
 
+## EXECUTOR-ONLY DEFAULT
+
+- ChatGPT Chat mode is the TXKPRO roadmap orchestrator and verifier.
+- Cline Act mode may mutate the repository only when a pre-existing owner-authored ChatGPT implementation contract has been resolved and bound to the current run.
+- Cline must not select the next roadmap task, perform product reasoning as an authority, invent implementation decisions, or silently broaden scope.
+- If a contracted decision or path is insufficient, return a structured BLOCKED execution result so ChatGPT can revise the contract.
+- What's next? in Cline must return the ChatGPT orchestration handoff by default; do not run roadmap selection unless TXKPRO_ALLOW_LEGACY_CLINE_ORCHESTRATION=true is explicitly set.
+- Before completion, Cline must validate TXKPRO_CLINE_EXECUTION_RESULT against the bound contract. Cline completion remains pending ChatGPT verification.
+
 ## PLAN MODE DEFAULT
 
 - Treat architecture analysis, roadmap review, issue review, structural-file inspection, implementation planning, and "what's next" requests as PLAN work.
