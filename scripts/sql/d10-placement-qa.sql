@@ -74,11 +74,11 @@ create function pg_temp.denied(query text,expected_state text,label text) return
  perform pg_temp.check_true(rejected,label); end; $$;
 set local role authenticated;
 do $$ declare actor text; d jsonb; begin
- foreach actor in array array['platform','admin','career','coordinator','bound','employer'] loop
+ foreach actor in array array['platform','admin','career','coordinator','employer'] loop
    perform pg_temp.actor(actor);
    perform pg_temp.check_true(security.placement_can_confirm_start(auth.uid(),'D10QA-PA'),actor||' scoped confirmation allowed');
  end loop;
- foreach actor in array array['instructor','assistant','department','analyst','student','inactive','disabled','spoof','unscoped_admin','stitched','ambiguous','other_admin'] loop
+ foreach actor in array array['instructor','assistant','department','analyst','student','inactive','disabled','spoof','unscoped_admin','stitched','ambiguous','bound','other_admin'] loop
    perform pg_temp.actor(actor);
    perform pg_temp.denied('select public.placement_confirm_start(''D10QA-PA'',current_date)','42501',actor||' confirmation denied');
  end loop;
@@ -117,6 +117,9 @@ insert into public.wf_interview_requests(interview_request_id,student_id,employe
  values('D10QA-INT','D10QA-SC','D10QA-E','QA role','completed');
 set local role authenticated;
 do $$ declare d jsonb; pid text; begin
+ perform pg_temp.actor('unscoped_admin');
+ perform pg_temp.denied('select public.employer_record_hire(''D10QA-E'',''D10QA-INT'',''QA role'',null,current_date-90,''Full-time'')','P0001','unscoped admin hire denied');
+ perform pg_temp.denied('select public.employer_update_placement_status(''D10QA-E'',''D10QA-PA'',''ended'',null)','P0001','unscoped admin end denied');
  perform pg_temp.actor('employer');
  d:=public.employer_record_hire('D10QA-E','D10QA-INT','QA role',null,current_date-90,'Full-time');
  pid:=d->>'placementId';

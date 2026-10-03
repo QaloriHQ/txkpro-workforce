@@ -36,3 +36,12 @@ test('confirmation is authenticated and both employment mutations are button-ope
   assert.match(read('components/employer/placement-status-actions.tsx'), /WorkspaceForm/);
   assert.doesNotMatch(read('components/employer/placement-status-actions.tsx'), /Mark Active|window\.prompt|window\.confirm/);
 });
+
+test('placement mutations never inherit the legacy unscoped admin shortcut', () => {
+  const name = readdirSync(new URL('../supabase/staging/migrations', import.meta.url)).find(p => p.endsWith('_workforce_d10_placement_authorization_hardening.sql'));
+  const hardened = read(`supabase/staging/migrations/${name}`);
+  assert.doesNotMatch(hardened, /security\.is_admin|security\.has_employer_role|security\.can_manage_interview/);
+  assert.match(hardened, /security\.retention_platform_admin\(p_actor\)/);
+  assert.match(hardened, /r\.scope_id=p_employer_id/);
+  assert.match(hardened, /h\.assigned_hiring_manager_user_id=security\.current_legacy_user_id\(\)/);
+});
