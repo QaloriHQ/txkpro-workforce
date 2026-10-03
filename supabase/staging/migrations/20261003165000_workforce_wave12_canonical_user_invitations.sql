@@ -220,10 +220,23 @@ declare
   v_count integer:=0;
 begin
   for v_inv in
-    update public.wf_user_invitations
+    update public.wf_user_invitations i
     set status='expired',updated_at=now()
-    where status='pending' and expires_at<=now()
-    returning *
+    where i.status='pending'
+      and i.expires_at<=now()
+      and (
+        security.is_admin()
+        or security.user_invitation_actor_can_manage(
+          i.role,i.scope_type,i.scope_id,i.institution_id,i.employer_id
+        )
+        or i.email_normalized=coalesce((
+          select lower(btrim(coalesce(u.email,'')))
+          from public.users u
+          where u.auth_user_id=(select auth.uid())
+          limit 1
+        ),'')
+      )
+    returning i.*
   loop
     v_count:=v_count+1;
 
