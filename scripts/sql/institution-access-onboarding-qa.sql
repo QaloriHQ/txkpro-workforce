@@ -24,7 +24,6 @@ create temp table access_qa_checks(label text);
 create temp table access_qa_baseline as select
  (select count(*) from auth.users) auth_count,(select count(*) from public.users) user_count,
  (select jsonb_agg(to_jsonb(r) order by id) from public.app_role_memberships r) memberships,
- (select count(*) from public.wf_instructor_seats) seats,
  (select count(*) from public.wf_role_memberships) workforce_memberships,
  (select count(*) from public.wf_institutions) institution_count;
 grant select on access_qa_actors to authenticated;
@@ -80,7 +79,7 @@ do $$ declare d jsonb; a text; k uuid:=gen_random_uuid(); i text; begin
  perform pg_temp.denied('select public.marketing_access_request(''QA'',''qa194@example.invalid'',''student'',''access'')','42501','authenticated intake RPC denied');
  perform pg_temp.denied('select * from public.wf_access_requests','42501','authenticated direct intake read denied');
  perform pg_temp.denied('select * from public.wf_institution_creation_receipts','42501','receipt inaccessible');
- perform pg_temp.denied('select * from public.wf_institutions','42501','broad institution read remains denied');
+ perform pg_temp.check_true(not exists(select 1 from public.wf_institutions),'broad institution reads remain RLS filtered');
 end; $$;
 reset role;
 -- Existing owner test account can finish without persisting test contact data.
@@ -89,7 +88,7 @@ set local role authenticated;
 select pg_temp.check_true((public.save_educator_onboarding('{"firstName":"QA","lastName":"Person","institutionId":"INS-STG-TC"}',4,true)->>'status')='complete','owner test Institution Admin completes');
 reset role;
 select pg_temp.check_true((select jsonb_agg(to_jsonb(r) order by id) from public.app_role_memberships r)=(select memberships from access_qa_baseline),'all roles scopes and statuses unchanged');
-select pg_temp.check_true((select count(*) from public.wf_instructor_seats)=(select seats from access_qa_baseline),'no Instructor seats added');
+select pg_temp.check_true(to_regclass('public.wf_instructor_seats') is null,'obsolete Instructor seats table not recreated');
 select pg_temp.check_true((select count(*) from public.wf_role_memberships)=(select workforce_memberships from access_qa_baseline),'no workforce roles added');
 select pg_temp.check_true((select count(*) from public.platform_audit_events where action='workforce.institution.created' and entity_id in (select institution_id from public.wf_institutions where name='QA194 Created'))=1,'institution audit exactly once');
 select pg_temp.check_true((select count(*) from public.platform_audit_events where action='workforce.onboarding.completed' and actor_user_id in (select user_id from access_qa_actors))=4,'onboarding audit once per transition');
@@ -114,6 +113,20 @@ select pg_temp.check_true((select count(*) from public.wf_institutions)=(select 
 select pg_temp.actor('super');
 set local role authenticated;
 select pg_temp.check_true(exists(select 1 from jsonb_array_elements(public.platform_access_requests_list()) r where r->>'email'='qa194-intake@example.invalid'),'Super Admin reviews intake');
+do $$ declare d jsonb; v_inst text; v_email text; v_inv text; begin
+ select institution_id into v_inst from public.wf_institutions where name='QA194 Created';
+ select email into v_email from access_qa_actors where name='instructor';
+ perform pg_temp.actor('super');
+ d:=public.user_invitation_create(v_email,'institution_admin','institution',v_inst,v_inst,null,now()+interval '7 days');
+ v_inv:=d->>'invitationId';
+ perform pg_temp.check_true(v_inv is not null and d->>'status'='pending','Super Admin invites administrator to new institution');
+ perform pg_temp.actor('instructor');
+ perform pg_temp.check_true(not exists(select 1 from public.app_role_memberships where auth_user_id=(select auth.uid()) and role='institution_admin' and scope_id=v_inst and status='active'),'invited administrator remains inactive before acceptance');
+ d:=public.user_invitation_accept(v_inv);
+ perform pg_temp.check_true(d->>'status'='accepted','new institution administrator accepts canonical invitation');
+ perform pg_temp.check_true((select (x->>'authorized')::boolean from jsonb_array_elements(public.onboarding_institutions_directory()) x where x->>'institution_id'=v_inst),'accepted administrator has exact new institution affiliation');
+ perform pg_temp.check_true(exists(select 1 from public.app_role_memberships where auth_user_id=(select auth.uid()) and role='instructor' and scope_type='cohort' and scope_id='QA194-CA' and status='active'),'existing Instructor scope preserved after separate admin invitation');
+end; $$;
 reset role;
 select count(*) as passed_checks from access_qa_checks;
 rollback;

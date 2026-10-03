@@ -22,3 +22,11 @@ Owner signed-in UAT:
 5. Check keyboard validation, focus, error/success feedback, responsive layout, and light/dark theme. Existing invitation acceptance, login, and password recovery still work.
 
 Production deployment and migrations are outside this authorization. Project Verification and issue closure remain evidence-gated; pending owner UAT is not Done.
+
+## Staging automated evidence (2026-10-03)
+
+PR #195 initial CI passed: https://github.com/QaloriHQ/txkpro-workforce/actions/runs/37149293607. Local typecheck/lint/build and all 51 Wave 12 regression checks passed. The real-role rollback SQL suite passed 99 checks, including the existing owner test Institution Admin's completion and the new-institution → Super Admin invitation → recipient acceptance flow. Fixtures were rolled back; no test contact data or institutions remain.
+
+Applied provisioning migration: `20261003195118_workforce_institution_access_onboarding.sql`; ledger name `workforce_institution_access_onboarding`; raw SQL MD5 `a279a751855180bb7d6b4da8424b5749` matches the ledger. The original migration was renamed to the applied ledger version without changing its SQL. The removed old service-route code referenced nonexistent `wf_instructor_seats`; completion now preserves the canonical membership directly.
+
+Advisors show unchanged baseline warnings (121 existing public authenticated definer functions, leaked-password protection, and three duplicate indexes). Two new RLS-without-policy INFO entries are intentional: intake and retry receipts have no direct client grants. A forward receipt foreign-key index migration addresses the new unindexed-FK INFO finding. Final CI, index ledger, staging deployment revision and manual UAT are recorded on #194.
