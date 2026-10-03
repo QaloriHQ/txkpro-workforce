@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getAuthCallbackUrl } from "@/lib/site-url";
@@ -15,8 +15,10 @@ const publicRoles: Array<{ value: Exclude<Role, "admin">; title: string; copy: s
   { value: "employer", title: "Employer", copy: "Create a hiring profile and find job-ready local talent." },
 ];
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
   const [role, setRole] = useState<Exclude<Role, "admin">>("student");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -29,6 +31,7 @@ export default function SignupPage() {
   const [resendBusy, setResendBusy] = useState(false);
 
   function confirmationRedirect(accountRole: Exclude<Role, "admin">) {
+    if (inviteToken) return getAuthCallbackUrl(`/activate/${inviteToken}`);
     return getAuthCallbackUrl(`/onboarding?role=${accountRole}`);
   }
 
@@ -60,7 +63,7 @@ export default function SignupPage() {
       return;
     }
     if (data.session) {
-      router.push(`/onboarding?role=${role}`);
+      router.push(inviteToken ? `/activate/${inviteToken}` : `/onboarding?role=${role}`);
       router.refresh();
       return;
     }
@@ -127,5 +130,13 @@ export default function SignupPage() {
         <p className="footer-note">Already have an account? <Link href="/login"><strong>Sign in</strong></Link>. TXKPRO administrator accounts are provisioned internally and are not available through public registration.</p>
       </section>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupContent />
+    </Suspense>
   );
 }
