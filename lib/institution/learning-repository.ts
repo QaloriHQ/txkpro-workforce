@@ -7,6 +7,7 @@ import type {
   InstitutionAssignmentInput,
   InstitutionAssignmentPreview,
   InstitutionAssignmentResult,
+  InstitutionCohortUpsertInput,
   InstitutionEmployerLearningContext,
   InstitutionAssignmentDetail,
   InstitutionAssignmentFilters,
@@ -14,6 +15,8 @@ import type {
   InstitutionEmployerDetail,
   InstitutionEmployerDirectoryItem,
   InstitutionMicroCertAssignment,
+  InstitutionProgramCohortManagement,
+  InstitutionProgramManagementCohort,
   InstitutionReferralCreateContext,
   InstitutionReferralCreateInput,
   InstitutionReferralCreateResult,
@@ -61,6 +64,31 @@ export async function getInstitutionEmployerLearningContext(
     "institution_employer_learning_context",
     { p_institution_id: context.institutionId },
   );
+}
+
+export async function getInstitutionProgramCohortManagement(
+  context: InstitutionContext,
+) {
+  return rpc<InstitutionProgramCohortManagement>(
+    "institution_program_cohort_management",
+    { p_institution_id: context.institutionId },
+  );
+}
+
+export async function upsertInstitutionCohort(
+  context: InstitutionContext,
+  input: InstitutionCohortUpsertInput,
+) {
+  return rpc<InstitutionProgramManagementCohort>("institution_cohort_upsert", {
+    p_institution_id: context.institutionId,
+    p_cohort_id: input.cohortId ?? null,
+    p_name: input.name,
+    p_program_name: input.programName ?? null,
+    p_trade_id: input.tradeId ?? null,
+    p_term: input.term ?? null,
+    p_graduation_date: input.graduationDate ?? null,
+    p_status: input.status ?? "active",
+  });
 }
 
 export async function previewInstitutionMicroCertAssignment(

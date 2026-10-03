@@ -87,6 +87,71 @@ export type InstitutionEmployerLearningContext = {
   courses: InstitutionLearningCourse[];
 };
 
+export type InstitutionProgramCohortMetrics = {
+  studentCount: number;
+  profileCompleteCount: number;
+  verifiedSkillCount: number;
+  assignmentCount: number;
+  completedAssignmentCount: number;
+  inProgressAssignmentCount: number;
+  referralCount: number;
+  openReferralCount: number;
+  placementCount: number;
+  activePlacementCount: number;
+  retentionMilestoneCount: number;
+  openRetentionCaseCount: number;
+};
+
+export type InstitutionProgramManagementProgram =
+  InstitutionProgramCohortMetrics & {
+    programKey: string;
+    programName: string;
+    tradeId: string | null;
+    cohortCount: number;
+    activeCohortCount: number;
+    lastActivityAt: string | null;
+    canManage: boolean;
+  };
+
+export type InstitutionProgramManagementStudent = {
+  studentId: string;
+  displayName: string;
+  profileStatus: string | null;
+  verifiedSkillCount: number;
+  assignmentCount: number;
+  referralCount: number;
+  placementCount: number;
+};
+
+export type InstitutionProgramManagementCohort =
+  InstitutionProgramCohortMetrics & {
+    cohortId: string;
+    name: string;
+    programKey: string | null;
+    programName: string | null;
+    tradeId: string | null;
+    term: string | null;
+    graduationDate: string | null;
+    status: string;
+    students: InstitutionProgramManagementStudent[];
+    canManage: boolean;
+  };
+
+export type InstitutionProgramCohortManagement = {
+  programs: InstitutionProgramManagementProgram[];
+  cohorts: InstitutionProgramManagementCohort[];
+};
+
+export type InstitutionCohortUpsertInput = {
+  cohortId?: string | null;
+  name: string;
+  programName?: string | null;
+  tradeId?: string | null;
+  term?: string | null;
+  graduationDate?: string | null;
+  status?: string | null;
+};
+
 export type InstitutionAssignmentTargetType =
   | "program"
   | "cohort"
