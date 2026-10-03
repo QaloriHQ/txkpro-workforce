@@ -438,3 +438,135 @@ export type InstitutionStudentReadinessSummary = {
     startedAt: string | null;
   }>;
 };
+
+export type InstitutionReferralStatus =
+  | "draft"
+  | "referred"
+  | "delivered"
+  | "viewed"
+  | "interview_requested"
+  | "interview_accepted"
+  | "interview_declined"
+  | "hired"
+  | "closed"
+  | "expired";
+
+export type InstitutionReferralConsent = {
+  allowed: boolean;
+  status: string;
+  source: string;
+};
+
+export type InstitutionReferralCreateStudent = {
+  studentId: string;
+  displayName: string;
+  programName: string | null;
+  cohortId: string | null;
+  cohortName: string | null;
+  primaryTradeId: string | null;
+  profileStatus: string | null;
+  referralConsent: InstitutionReferralConsent;
+};
+
+export type InstitutionReferralEmployer = {
+  employerId: string;
+  employerName: string;
+};
+
+export type InstitutionReferralHiringNeed = {
+  hiringNeedId: string;
+  employerId: string;
+  employerName: string;
+  title: string;
+  tradeId: string | null;
+  roleType: string | null;
+  targetHires: number | null;
+  workTypes: unknown[];
+  shifts: unknown[];
+  requiredVerifiedSkills: unknown[];
+  optionalVerifiedSkills: unknown[];
+};
+
+export type InstitutionReferralCreateContext = {
+  students: InstitutionReferralCreateStudent[];
+  employers: InstitutionReferralEmployer[];
+  hiringNeeds: InstitutionReferralHiringNeed[];
+};
+
+export type InstitutionReferralSummary = {
+  referralId: string;
+  studentId: string;
+  studentName: string;
+  employerId: string;
+  employerName: string | null;
+  institutionId: string;
+  institutionName: string | null;
+  program: string | null;
+  cohortId: string | null;
+  cohortName: string | null;
+  primaryTradeId: string | null;
+  hiringNeedId: string | null;
+  hiringNeedTitle: string | null;
+  status: InstitutionReferralStatus;
+  institutionSharedNote: string | null;
+  referralConsentStatus: string | null;
+  referralConsentSource: string | null;
+  referralNotePolicy: string | null;
+  referralNoteVisibility: string | null;
+  referredAt: string | null;
+  deliveredAt: string | null;
+  viewedAt: string | null;
+  closedAt: string | null;
+  updatedAt: string | null;
+  latestInterviewStatus: string | null;
+  placementStatus: string | null;
+};
+
+export type InstitutionReferralInterview = {
+  interviewRequestId: string;
+  employerId: string;
+  employerName: string;
+  roleTitle: string | null;
+  status: string;
+  scheduledFor: string | null;
+  interviewFormat: string | null;
+  sentAt: string | null;
+  respondedAt: string | null;
+  completedAt: string | null;
+};
+
+export type InstitutionReferralPlacement = {
+  placementId: string;
+  employerId: string;
+  employerName: string;
+  roleTitle: string | null;
+  tradeId: string | null;
+  employmentType: string | null;
+  status: string;
+  hireDate: string | null;
+  startedAt: string | null;
+};
+
+export type InstitutionReferralDetail = InstitutionReferralSummary & {
+  technicalSnapshot: Record<string, unknown>;
+  professionalSnapshot: Record<string, unknown>;
+  operationalSnapshot: Record<string, unknown>;
+  companyTrainingSnapshot: Record<string, unknown> | null;
+  referralConsentCheckedAt: string | null;
+  interviews: InstitutionReferralInterview[];
+  placements: InstitutionReferralPlacement[];
+};
+
+export type InstitutionReferralCreateInput = {
+  studentId: string;
+  employerId: string;
+  hiringNeedId?: string | null;
+  note?: string | null;
+};
+
+export type InstitutionReferralCreateResult = {
+  referralId: string;
+  status: InstitutionReferralStatus;
+  referralConsent: InstitutionReferralConsent;
+  notePolicy: string | null;
+};

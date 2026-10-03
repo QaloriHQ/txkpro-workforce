@@ -12,6 +12,11 @@ import type {
   InstitutionAssignmentFilters,
   InstitutionCompanyBadgeEvidence,
   InstitutionMicroCertAssignment,
+  InstitutionReferralCreateContext,
+  InstitutionReferralCreateInput,
+  InstitutionReferralCreateResult,
+  InstitutionReferralDetail,
+  InstitutionReferralSummary,
   InstitutionStudentReadinessSummary,
   InstitutionWorkforceSummary,
 } from "@/lib/institution/types";
@@ -174,4 +179,47 @@ export async function cancelInstitutionMicroCertAssignment(
       p_reason: reason ?? null,
     },
   );
+}
+
+export async function getInstitutionReferralCreateContext(
+  context: InstitutionContext,
+) {
+  return rpc<InstitutionReferralCreateContext>(
+    "institution_referral_create_context",
+    { p_institution_id: context.institutionId },
+  );
+}
+
+export async function listInstitutionReferrals(
+  context: InstitutionContext,
+  filters: { status?: string | null; studentId?: string | null } = {},
+) {
+  return rpc<InstitutionReferralSummary[]>("institution_referrals_list", {
+    p_institution_id: context.institutionId,
+    p_status: filters.status ?? null,
+    p_student_id: filters.studentId ?? null,
+  });
+}
+
+export async function getInstitutionReferralDetail(
+  context: InstitutionContext,
+  referralId: string,
+) {
+  return rpc<InstitutionReferralDetail>("institution_referral_detail", {
+    p_institution_id: context.institutionId,
+    p_referral_id: referralId,
+  });
+}
+
+export async function createInstitutionReferral(
+  context: InstitutionContext,
+  input: InstitutionReferralCreateInput,
+) {
+  return rpc<InstitutionReferralCreateResult>("institution_create_referral", {
+    p_institution_id: context.institutionId,
+    p_student_id: input.studentId,
+    p_employer_id: input.employerId,
+    p_hiring_need_id: input.hiringNeedId ?? null,
+    p_note: input.note ?? null,
+  });
 }
