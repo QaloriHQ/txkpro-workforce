@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -31,7 +33,7 @@ export function InstitutionCreateForm() {
     } catch { setMessage("Connection failed. Retry with the same details to check the saved request."); } finally { setBusy(false); }
   }
 
-  return <form className="card form-stack" onSubmit={submit}>
+  return <WorkspaceForm modalTitle="Create institution" busy={Boolean(busy)} className="card form-stack" onSubmit={submit}>
     <h2>Create institution</h2>
     <label><span>Institution name (required)</span><input className="input" name="name" maxLength={160} required /></label>
     <label><span>Type (required)</span><select className="select" name="institutionType" required>
@@ -42,5 +44,5 @@ export function InstitutionCreateForm() {
     <p className="muted">The institution becomes available for onboarding. User access is provisioned separately by invitation.</p>
     {message ? <p className="alert" role="status">{message}</p> : null}
     <button className="button button-brand" type="submit" disabled={busy}>{busy ? "Creating…" : "Create institution"}</button>
-  </form>;
+  </WorkspaceForm>;
 }

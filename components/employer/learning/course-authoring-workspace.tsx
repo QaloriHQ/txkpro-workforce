@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   ArchiveBoxIcon,
   ArrowDownIcon,
@@ -350,7 +352,7 @@ export function CourseAuthoringWorkspace({
           </div>
         </div>
 
-        <form className="txk-form-stack" onSubmit={saveCourse}>
+        <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit course" busy={Boolean(busyKey)} className="txk-form-stack" onSubmit={saveCourse}>
           <div className="txk-form-grid-2">
             <FormField label="Course title">
               <Input
@@ -425,7 +427,7 @@ export function CourseAuthoringWorkspace({
               </Button>
             </div>
           ) : null}
-        </form>
+        </WorkspaceForm>
       </Card>
 
       <section className="txk-section">
@@ -509,7 +511,7 @@ export function CourseAuthoringWorkspace({
 
               <details className="txk-authoring-details" open={course.lessons.length <= 2}>
                 <summary>Lesson details</summary>
-                <form
+                <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit lesson" busy={Boolean(busyKey)}
                   className="txk-form-stack"
                   onSubmit={(event) => saveLesson(event, lesson)}
                 >
@@ -577,7 +579,7 @@ export function CourseAuthoringWorkspace({
                       Save lesson
                     </Button>
                   ) : null}
-                </form>
+                </WorkspaceForm>
               </details>
 
               <div className="txk-block-stack">
@@ -589,7 +591,7 @@ export function CourseAuthoringWorkspace({
                       <span>{block.blockType.replaceAll("_", " ")}</span>
                     </summary>
                     <div className="txk-content-block-body">
-                      <form
+                      <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit content block" busy={Boolean(busyKey)}
                         className="txk-form-stack"
                         onSubmit={(event) => saveBlock(event, lesson, block)}
                       >
@@ -673,7 +675,7 @@ export function CourseAuthoringWorkspace({
                             </Button>
                           </div>
                         ) : null}
-                      </form>
+                      </WorkspaceForm>
                     </div>
                   </details>
                 ))}
@@ -685,7 +687,7 @@ export function CourseAuthoringWorkspace({
                     <PlusIcon aria-hidden="true" />
                     Add content block
                   </summary>
-                  <form
+                  <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Add content block" busy={Boolean(busyKey)}
                     className="txk-form-stack"
                     onSubmit={(event) => createBlock(event, lesson)}
                   >
@@ -717,7 +719,7 @@ export function CourseAuthoringWorkspace({
                       <PlusIcon aria-hidden="true" />
                       Add block
                     </Button>
-                  </form>
+                  </WorkspaceForm>
                 </details>
               ) : null}
             </Card>
@@ -730,7 +732,7 @@ export function CourseAuthoringWorkspace({
               <p className="txk-eyebrow">Add lesson</p>
               <h3>New course lesson</h3>
             </div>
-            <form className="txk-form-stack" onSubmit={createLesson}>
+            <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Create lesson" busy={Boolean(busyKey)} className="txk-form-stack" onSubmit={createLesson}>
               <div className="txk-form-grid-2">
                 <FormField label="Lesson title">
                   <Input name="title" required />
@@ -753,7 +755,7 @@ export function CourseAuthoringWorkspace({
                 <PlusIcon aria-hidden="true" />
                 Add lesson
               </Button>
-            </form>
+            </WorkspaceForm>
           </Card>
         ) : null}
       </section>

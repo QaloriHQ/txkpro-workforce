@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import DOMPurify from "dompurify";
 import {
   ArrowDownIcon,
@@ -990,7 +992,7 @@ export function LessonEditor({
             <StatusBadge tone={lesson.status === "ready" ? "info" : "neutral"}>{lesson.status}</StatusBadge>
           </summary>
           <div className="txk-collapsed-settings-body">
-            <form className="txk-form-stack" onSubmit={saveLessonSettings}>
+            <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit lesson settings" busy={saveState === "Saving…"} className="txk-form-stack" onSubmit={saveLessonSettings}>
               <div className="txk-form-grid-2">
                 <FormField label="Lesson title"><Input name="title" defaultValue={lesson.title} disabled={!canEdit} /></FormField>
                 <FormField label="Status">
@@ -1006,7 +1008,7 @@ export function LessonEditor({
                 <label className="txk-check-field"><input type="checkbox" name="required" defaultChecked={lesson.required} disabled={!canEdit} /><span>Required lesson</span></label>
               </div>
               {canEdit ? <Button tone="primary" type="submit">Save lesson settings</Button> : null}
-            </form>
+            </WorkspaceForm>
           </div>
         </details>
 

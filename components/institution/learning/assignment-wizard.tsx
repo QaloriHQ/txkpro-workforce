@@ -1,5 +1,7 @@
 "use client";
 
+import { ActionModal } from "@/components/design-system/action-modal";
+
 import {
   ArrowLeftIcon,
   BellAlertIcon,
@@ -142,6 +144,7 @@ export function InstitutionAssignmentWizard({
     preview?.students.filter((student) => !student.eligible) ?? [];
 
   return (
+    <ActionModal title="Assign Employer Training" triggerLabel="Assign training" busy={busy}>
     <div className="institution-assignment-wizard">
       <div className="institution-assignment-back">
         <Link href="/institution/learning">
@@ -452,5 +455,6 @@ export function InstitutionAssignmentWizard({
         </Card>
       ) : null}
     </div>
+    </ActionModal>
   );
 }

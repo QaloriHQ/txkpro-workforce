@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   CheckBadgeIcon,
   ClockIcon,
@@ -145,7 +147,7 @@ export function CompanyBadgeLibrary({
             <CheckBadgeIcon className="txk-requirements-icon" aria-hidden="true" />
           </div>
 
-          <form className="txk-form-stack" onSubmit={createBadge}>
+          <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Create company badge" busy={Boolean(busy)} className="txk-form-stack" onSubmit={createBadge}>
             <div className="txk-form-grid-2">
               <FormField label="Badge title">
                 <Input name="title" required placeholder="Residential Service Ready" />
@@ -169,7 +171,7 @@ export function CompanyBadgeLibrary({
                 {busy === "create" ? "Creating…" : "Create badge"}
               </Button>
             </div>
-          </form>
+          </WorkspaceForm>
         </Card>
       ) : null}
 
@@ -200,7 +202,7 @@ export function CompanyBadgeLibrary({
                   </StatusBadge>
                 </div>
 
-                <form className="txk-form-stack" onSubmit={(event) => saveBadge(event, badge)}>
+                <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit company badge" busy={Boolean(busy)} className="txk-form-stack" onSubmit={(event) => saveBadge(event, badge)}>
                   <div>
                     <h3>{badge.title}</h3>
                     <p>
@@ -268,7 +270,7 @@ export function CompanyBadgeLibrary({
                       </div>
                     </details>
                   ) : null}
-                </form>
+                </WorkspaceForm>
               </Card>
             ))}
           </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState } from "react";
 import type { ProductionRequest, ProductionStatus } from "@/lib/concierge";
 import { productionStatuses } from "@/lib/concierge-statuses";
@@ -68,7 +70,7 @@ export function ProductionWorkspace({
     {view !== "admin" && canCreate && <section className="txk-card" style={{ padding: 24, marginBottom: 24 }}>
       <h2>Request a training module</h2>
       <p>Describe the field gap and the outcome. TXKPRO manages production and contracts separately. No Institution payment checkout is required here.</p>
-      <form id="concierge-request-form" className="txk-form" action={submit}>
+      <WorkspaceForm feedback={<>{error && <p role="alert" className="callout">{error}</p>}{success && <p role="status" className="callout">{success}</p>}</>} modalTitle="Request training module" busy={Boolean(busy)} id="concierge-request-form" className="txk-form" action={submit}>
         {view === "institution" && <>
           <label>Employer <select name="employerId" required defaultValue=""><option value="">Select employer</option>{employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
           <label>Program / cohort <select name="cohortId" required defaultValue=""><option value="">Select cohort</option>{cohorts.map((c) => <option key={c.id} value={c.id}>{c.name}{c.program ? ` · ${c.program}` : ""}</option>)}</select></label>
@@ -78,7 +80,7 @@ export function ProductionWorkspace({
         <label>Desired student outcome <textarea name="desiredOutcome" required maxLength={2000} /></label>
         <label>Target launch date <input type="date" name="targetLaunchDate" /></label>
         <button className="txk-button txk-button-primary" disabled={busy || !employers.length}>Submit request</button>
-      </form>
+      </WorkspaceForm>
     </section>}
     {error && <p role="alert" className="callout">{error}</p>}
     {success && <p role="status" className="callout">{success}</p>}
@@ -95,10 +97,10 @@ export function ProductionWorkspace({
           <p><strong>Employer:</strong> {item.employer_id} {item.program_name ? `· ${item.program_name}` : ""}</p>
           <p><strong>Target launch:</strong> {item.target_launch_date || "To be scheduled"}</p>
           {item.resulting_micro_cert_id && <p>Course: {item.resulting_micro_cert_id}</p>}
-          {view === "admin" && next && <form action={(form) => advance(item, form)}>
+          {view === "admin" && next && <WorkspaceForm feedback={<>{error && <p role="alert" className="callout">{error}</p>}{success && <p role="status" className="callout">{success}</p>}</>} modalTitle="Update production status" busy={Boolean(busy)} action={(form) => advance(item, form)}>
             <label>Production note <input name="note" maxLength={1000} placeholder="Optional internal transition note" /></label>
             <button disabled={busy} className="txk-button txk-button-primary">Move to {labels[next]}</button>
-          </form>}
+          </WorkspaceForm>}
         </article>;
       })}
     </div>

@@ -131,7 +131,7 @@ export default async function InstitutionReferralsPage({
           />
         </section>
 
-        <section className="institution-student-profile-grid">
+        <section className="institution-referral-queue">
           <InstitutionReferralCreateForm
             institutionId={context.institutionId}
             students={createContext.students}

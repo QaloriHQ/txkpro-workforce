@@ -1,4 +1,6 @@
 "use client";
+
+import { WorkspaceForm } from "@/components/design-system/action-modal";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -87,6 +89,21 @@ export function RetentionCaseDetail({
       setBusy(false);
     }
   }
+  const feedback = (
+    <>
+      <div aria-live="polite" role={conflict || failed ? "alert" : "status"}>
+        <p>{message}</p>
+      </div>
+      {failed ? (
+        <Button type="button" disabled={busy} onClick={() => {
+          if (pending.current) void send(pending.current);
+        }}>
+          Retry same update
+        </Button>
+      ) : null}
+      {conflict ? <Button type="button" onClick={() => router.refresh()}>Refresh case</Button> : null}
+    </>
+  );
   return (
     <>
       <Link
@@ -178,7 +195,7 @@ export function RetentionCaseDetail({
           ) : closed ? (
             <p>This case is closed. Its history remains available.</p>
           ) : (
-            <form
+            <WorkspaceForm feedback={feedback} modalTitle="Manage retention case" busy={Boolean(busy)}
               ref={form}
               className="retention-editor"
               onSubmit={(event) => {
@@ -289,27 +306,9 @@ export function RetentionCaseDetail({
                   {busy ? "Saving…" : "Save case"}
                 </Button>
               </fieldset>
-            </form>
+            </WorkspaceForm>
           )}
-          <div
-            aria-live="polite"
-            role={conflict || failed ? "alert" : "status"}
-          >
-            <p>{message}</p>
-          </div>
-          {failed ? (
-            <Button
-              disabled={busy}
-              onClick={() => {
-                if (pending.current) void send(pending.current);
-              }}
-            >
-              Retry same update
-            </Button>
-          ) : null}
-          {conflict ? (
-            <Button onClick={() => router.refresh()}>Refresh case</Button>
-          ) : null}
+          {feedback}
         </Card>
       </div>
       <Card className="retention-notes">

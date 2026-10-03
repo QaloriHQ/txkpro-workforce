@@ -52,7 +52,7 @@ test("W12-05 Programs UI renders lifecycle and canonical evidence sections", () 
   const page = read("app/institution/programs/page.tsx");
   for (const expected of [
     "Programs & Cohorts",
-    "Create a Cohort in authorized scope",
+    "CohortEditor",
     "Student affiliation",
     "Readiness",
     "Employer Training",
@@ -62,7 +62,12 @@ test("W12-05 Programs UI renders lifecycle and canonical evidence sections", () 
     assert.match(page, new RegExp(expected.replaceAll(" ", "\\s+")));
   }
   assert.match(page, /institutionCanManage\(context, "programs"\)/);
-  assert.match(page, /action=\{saveCohort\}/);
+  assert.match(page, /saveAction=\{saveCohort\}/);
+  const editor = read("components/institution/cohort-editor.tsx");
+  assert.match(editor, /WorkspaceForm/);
+  assert.match(editor, /useActionState/);
+  assert.match(editor, /name="cohortId"/);
+  assert.match(editor, /name="tradeId"/);
 });
 
 test("W12 QA includes Program/Cohort management regression coverage", () => {

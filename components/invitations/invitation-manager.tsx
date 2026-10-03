@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { FormEvent, useMemo, useState } from "react";
 import { Card, EmptyState, StatusBadge } from "@/components/design-system";
 import type {
@@ -125,14 +127,14 @@ export function InvitationManager({
     <section className="txk-section">
       <div className="txk-section-heading">
         <div>
-          <p className="txk-eyebrow">Canonical invitations</p>
+          <p className="txk-eyebrow">Invitations</p>
           <h2>{title}</h2>
           <p>{description}</p>
         </div>
       </div>
 
-      <Card>
-        <form className="institution-student-directory-filters" onSubmit={submit}>
+      <div className="institution-action-bar">
+        <WorkspaceForm modalTitle="Invite user" busy={Boolean(busy)} className="institution-student-directory-filters" onSubmit={submit}>
           <label className="institution-filter-search">
             <span>Email</span>
             <div>
@@ -169,11 +171,11 @@ export function InvitationManager({
           <button className="txk-button txk-button-primary txk-button-md" disabled={busy || !role || !selectedScope} type="submit">
             {busy ? "Working…" : "Invite"}
           </button>
-        </form>
         {selectedRole ? <p className="txk-muted-text">{selectedRole.description}</p> : null}
         {selectedScope?.description ? <p className="txk-muted-text">{selectedScope.description}</p> : null}
         {message ? <div role="status" aria-live="polite" className="alert" style={{ marginTop: 12 }}>{message}</div> : null}
-      </Card>
+        </WorkspaceForm>
+      </div>
 
       <div className="institution-evidence-stack" style={{ marginTop: 18 }}>
         {items.length ? (

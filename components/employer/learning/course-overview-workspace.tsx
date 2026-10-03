@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   CheckCircleIcon,
   DocumentDuplicateIcon,
@@ -195,7 +197,7 @@ export function CourseOverviewWorkspace({
             </div>
           ) : null}
 
-          <form className="txk-form-stack" onSubmit={saveCourse}>
+          <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit course" busy={Boolean(busy)} className="txk-form-stack" onSubmit={saveCourse}>
             <div className="txk-form-grid-2">
               <FormField label="Course title">
                 <Input name="title" defaultValue={course.title} required disabled={!canEdit} />
@@ -258,7 +260,7 @@ export function CourseOverviewWorkspace({
                 </Button>
               </div>
             ) : null}
-          </form>
+          </WorkspaceForm>
         </div>
       </details>
     </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { InterviewEvaluation } from "@/lib/employer/types";
@@ -43,7 +45,7 @@ export function InterviewEvaluationForm({
   }
 
   return (
-    <form onSubmit={submit} className="form-stack">
+    <WorkspaceForm modalTitle="Evaluate interview" busy={Boolean(busy)} onSubmit={submit} className="form-stack">
       <div className="callout">
         <strong>Employer-private evaluation</strong>
         This information is not synchronized to Student or Institution views and does not alter Verified Skills.
@@ -75,6 +77,6 @@ export function InterviewEvaluationForm({
         </button>
         {message ? <span className="muted">{message}</span> : null}
       </div>
-    </form>
+    </WorkspaceForm>
   );
 }

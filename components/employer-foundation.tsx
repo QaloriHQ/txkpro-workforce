@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useMemo, useState, type FormEvent } from "react";
 import type {
   EmployerCompanyProfile,
@@ -103,6 +105,7 @@ export function EmployerFoundation({
   async function createNeed(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canCreateHiringNeed) return;
+    const element = event.currentTarget;
     setNeedBusy(true);
     setMessage("");
     try {
@@ -146,7 +149,7 @@ export function EmployerFoundation({
         },
       );
       setHiringNeeds((current) => [result.hiringNeed, ...current]);
-      event.currentTarget.reset();
+      element.reset();
       setMessage("Draft hiring need saved.");
     } catch (error) {
       setMessage(
@@ -177,7 +180,7 @@ export function EmployerFoundation({
       ) : null}
 
       <div className="grid grid-2 employer-management-grid">
-        <form className="card" onSubmit={saveCompany}>
+        <WorkspaceForm feedback={message ? <div className="callout" role="status">{message}</div> : null} modalTitle="Edit company" busy={companyBusy} className="card" onSubmit={saveCompany}>
           <div className="card-header">
             <div>
               <h2>Company Profile</h2>
@@ -338,9 +341,9 @@ export function EmployerFoundation({
           >
             {companyBusy ? "Saving…" : canManageCompany ? "Save Company Profile" : "Read-only"}
           </button>
-        </form>
+        </WorkspaceForm>
 
-        <form className="card" onSubmit={createNeed}>
+        <WorkspaceForm feedback={message ? <div className="callout" role="status">{message}</div> : null} modalTitle="Create hiring need" busy={needBusy} className="card" onSubmit={createNeed}>
           <div className="card-header">
             <div>
               <h2>Create Hiring Need</h2>
@@ -428,7 +431,7 @@ export function EmployerFoundation({
           >
             {needBusy ? "Saving…" : "Save Draft Hiring Need"}
           </button>
-        </form>
+        </WorkspaceForm>
       </div>
 
       <section className="card employer-hiring-needs-list">

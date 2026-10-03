@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   ArrowPathIcon,
   DocumentCheckIcon,
@@ -182,7 +184,7 @@ export function EmployerCertificationLibrary({
             />
           </div>
 
-          <form className="txk-form-stack" onSubmit={createDefinition}>
+          <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Create certification" busy={Boolean(busy)} className="txk-form-stack" onSubmit={createDefinition}>
             <div className="txk-form-grid-2">
               <FormField label="Course">
                 <select className="txk-input" name="microCertId" required>
@@ -227,7 +229,7 @@ export function EmployerCertificationLibrary({
                   : "Create certification definition"}
               </Button>
             </div>
-          </form>
+          </WorkspaceForm>
         </Card>
       ) : null}
 
@@ -265,7 +267,7 @@ export function EmployerCertificationLibrary({
                   </StatusBadge>
                 </div>
 
-                <form
+                <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit certification" busy={Boolean(busy)}
                   className="txk-form-stack"
                   onSubmit={(event) => saveDefinition(event, definition)}
                 >
@@ -362,7 +364,7 @@ export function EmployerCertificationLibrary({
                       </div>
                     </details>
                   ) : null}
-                </form>
+                </WorkspaceForm>
               </Card>
             ))}
           </div>

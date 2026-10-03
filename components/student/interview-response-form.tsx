@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ActionModal } from "@/components/design-system/action-modal";
 
 export function StudentInterviewResponseForm({
   interviewRequestId,
@@ -36,6 +37,7 @@ export function StudentInterviewResponseForm({
   }
 
   return (
+    <ActionModal title="Respond to interview" triggerLabel="Respond to interview" busy={busy}>
     <div className="form-stack">
       <label>
         <span>Optional note to Employer</span>
@@ -61,5 +63,6 @@ export function StudentInterviewResponseForm({
       </div>
       {message ? <span className="muted">{message}</span> : null}
     </div>
+    </ActionModal>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -57,7 +59,7 @@ export function InterviewScheduleForm({
   }
 
   return (
-    <form onSubmit={submit} className="form-stack">
+    <WorkspaceForm modalTitle="Schedule interview" busy={Boolean(busy)} onSubmit={submit} className="form-stack">
       <label>
         <span>Date and time</span>
         <input className="input" type="datetime-local" name="scheduledFor" defaultValue={localDefault} required />
@@ -80,6 +82,6 @@ export function InterviewScheduleForm({
         </button>
         {message ? <span className="muted">{message}</span> : null}
       </div>
-    </form>
+    </WorkspaceForm>
   );
 }

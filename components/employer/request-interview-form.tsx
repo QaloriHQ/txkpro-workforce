@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -60,7 +62,7 @@ export function RequestInterviewForm({
   }
 
   return (
-    <form onSubmit={submit} className="form-stack">
+    <WorkspaceForm modalTitle="Request interview" busy={Boolean(busy)} onSubmit={submit} className="form-stack">
       <label>
         <span>Role title</span>
         <input
@@ -102,6 +104,6 @@ export function RequestInterviewForm({
         </button>
         {message ? <span className="muted">{message}</span> : null}
       </div>
-    </form>
+    </WorkspaceForm>
   );
 }
