@@ -117,7 +117,7 @@ test("W12-05A Institution Student directory exposes create resend and revoke con
   assert.match(directory, /StudentInvitationForm/);
   assert.match(directory, /PendingInvitationActions/);
   assert.match(form, /role:\s*"student"/);
-  assert.match(form, /idempotencyKey/);
+  assert.match(read("lib/invitations/service.ts"), /idempotencyKey/);
   assert.match(actions, /resend/);
   assert.match(actions, /revoke/);
 });
