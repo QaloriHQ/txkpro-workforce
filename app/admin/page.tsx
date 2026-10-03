@@ -1,16 +1,22 @@
 import { Brand } from "@/components/brand";
+import { EducatorApprovalQueue } from "@/components/admin/educator-approval-queue";
 import { EmployerApprovalQueue } from "@/components/admin/employer-approval-queue";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireRole } from "@/lib/auth";
+import { listPendingEducatorApprovals } from "@/lib/admin/educator-approvals";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  await requireRole(["admin"]);
-  const pendingEmployers = await listPendingEmployerApprovals();
+  const account = await requireRole(["admin"]);
+  const [pendingEmployers, pendingEducators] = await Promise.all([
+    listPendingEmployerApprovals(),
+    listPendingEducatorApprovals(account),
+  ]);
+  const pendingCount = pendingEmployers.length + pendingEducators.length;
 
   return (
     <>
@@ -32,7 +38,7 @@ export default async function AdminPage() {
               Review account approvals and manage platform-controlled access.
             </p>
           </div>
-          <span className="pill">{pendingEmployers.length} approvals waiting</span>
+          <span className="pill">{pendingCount} approvals waiting</span>
         </div>
 
         <div className="callout" style={{ marginBottom: 18 }}>
@@ -41,6 +47,7 @@ export default async function AdminPage() {
           membership. User onboarding can never create Admin access.
         </div>
 
+        <EducatorApprovalQueue initialItems={pendingEducators} />
         <EmployerApprovalQueue initialItems={pendingEmployers} />
         <p style={{ marginTop: 24 }}><Link className="txk-button txk-button-default" href="/admin/concierge">Concierge production queue</Link></p>
       </main>
