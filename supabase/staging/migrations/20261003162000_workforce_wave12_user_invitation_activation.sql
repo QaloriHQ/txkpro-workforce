@@ -758,6 +758,40 @@ begin
 end;
 $$;
 
+create or replace function public.workforce_invitation_resolve_identity(
+  p_invitation_id text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $
+declare
+  v_inv public.wf_user_invitations%rowtype;
+  v_auth_user_id uuid;
+begin
+  select * into v_inv
+  from public.wf_user_invitations
+  where invitation_id=p_invitation_id;
+
+  if not found then raise exception 'Invitation not found'; end if;
+
+  select a.id into v_auth_user_id
+  from auth.users a
+  where lower(btrim(coalesce(a.email,'')))=lower(btrim(v_inv.email))
+  limit 1;
+
+  if v_auth_user_id is not null and v_inv.status='pending' then
+    return public.workforce_invitation_link_identity(
+      p_invitation_id,
+      v_auth_user_id
+    );
+  end if;
+
+  return security.workforce_invitation_json(v_inv);
+end;
+$;
+
 create or replace function public.workforce_invitation_mark_delivery(
   p_invitation_id text,
   p_status text,
@@ -988,6 +1022,7 @@ revoke all on function public.workforce_my_invitation(text) from public,anon;
 revoke all on function public.workforce_invitation_action(text,text,timestamptz) from public,anon;
 revoke all on function public.workforce_invitation_accept(text) from public,anon;
 revoke all on function public.workforce_invitation_link_identity(text,uuid) from public,anon,authenticated;
+revoke all on function public.workforce_invitation_resolve_identity(text) from public,anon,authenticated;
 revoke all on function public.workforce_invitation_mark_delivery(text,text,text) from public,anon,authenticated;
 
 grant execute on function public.workforce_invitation_create(text,text,text,text,text,text,timestamptz,text,jsonb) to authenticated;
@@ -997,4 +1032,5 @@ grant execute on function public.workforce_my_invitation(text) to authenticated;
 grant execute on function public.workforce_invitation_action(text,text,timestamptz) to authenticated;
 grant execute on function public.workforce_invitation_accept(text) to authenticated;
 grant execute on function public.workforce_invitation_link_identity(text,uuid) to service_role;
+grant execute on function public.workforce_invitation_resolve_identity(text) to service_role;
 grant execute on function public.workforce_invitation_mark_delivery(text,text,text) to service_role;
