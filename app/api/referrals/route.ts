@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { getEmployerContext } from "@/lib/employer/auth";
 import { listReferrals } from "@/lib/employer/workflow-repository";
 import { jsonError } from "@/lib/http";
+import { validateReferralNotePolicy } from "@/lib/referrals/policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const referralNote = validateReferralNotePolicy(body.note);
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase.rpc("institution_create_referral", {
       p_institution_id: institutionId,
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
       p_employer_id: employerId,
       p_hiring_need_id:
         typeof body.hiringNeedId === "string" ? body.hiringNeedId : null,
-      p_note: typeof body.note === "string" ? body.note.trim().slice(0, 2000) : null,
+      p_note: referralNote.note,
     });
     if (error) throw error;
 
