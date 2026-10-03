@@ -38,6 +38,11 @@ export type StudentInterview = {
 };
 
 export type StudentPlacement = {
+  employmentStartDate?: string | null;
+  startConfirmedAt?: string | null;
+  officialPlacement?: boolean;
+  canConfirmStart?: boolean;
+
   placementId: string;
   employerName: string;
   roleTitle: string;

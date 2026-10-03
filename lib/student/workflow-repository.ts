@@ -42,6 +42,10 @@ function mapInterview(value: unknown): StudentInterview {
 function mapPlacement(value: unknown): StudentPlacement {
   const row = objectValue(value);
   return {
+    employmentStartDate: text(row.employmentStartDate),
+    startConfirmedAt: text(row.startConfirmedAt),
+    officialPlacement: row.officialPlacement === true,
+    canConfirmStart: row.canConfirmStart === true,
     placementId: String(row.placementId ?? ""),
     employerName: String(row.employerName ?? "Employer"),
     roleTitle: String(row.roleTitle ?? ""),

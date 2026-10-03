@@ -109,6 +109,10 @@ function mapMilestone(value: unknown): RetentionMilestone {
 function mapPlacement(value: unknown): PlacementSummary {
   const row = objectValue(value);
   return {
+    employmentStartDate: text(row.employmentStartDate),
+    startConfirmedAt: text(row.startConfirmedAt),
+    officialPlacement: row.officialPlacement === true,
+    canConfirmStart: row.canConfirmStart === true,
     placementId: String(row.placementId ?? ""),
     studentId: String(row.studentId ?? ""),
     studentName: String(row.studentName ?? "Student"),

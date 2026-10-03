@@ -26,10 +26,10 @@ export default async function EmployerPlacementsPage() {
             <p className="eyebrow">Employer · Placements</p>
             <h1>Placement outcomes</h1>
             <p className="card-sub">
-              Placement owns the employment outcome. Interview and Referral retain their historical state.
+              Official placements require confirmed employment starts. Scheduled starts remain pending_start; retention milestones have their own status.
             </p>
           </div>
-          <span className="pill pill-good">{placements.length} placements</span>
+          <span className="pill pill-good">{placements.filter(p => p.officialPlacement).length} official placements · {placements.filter(p => p.status === "pending_start").length} pending starts</span>
         </div>
 
         <div className="grid grid-2">
@@ -44,8 +44,9 @@ export default async function EmployerPlacementsPage() {
                   {placement.status.replaceAll("_", " ")}
                 </span>
               </div>
+              <p className="card-sub">{placement.officialPlacement ? `Employment started ${placement.employmentStartDate}` : "Employment start confirmation required"}</p>
               <div className="readiness-list">
-                <div className="readiness-row"><span>Start date</span><strong>{placement.hireDate}</strong></div>
+                <div className="readiness-row"><span>Scheduled start</span><strong>{placement.hireDate}</strong></div>
                 <div className="readiness-row"><span>Employment type</span><strong>{placement.employmentType ?? "—"}</strong></div>
                 <div className="readiness-row"><span>Hiring Need</span><strong>{placement.hiringNeedTitle ?? "—"}</strong></div>
                 <div className="readiness-row"><span>Retention milestones</span><strong>{placement.milestoneCount}</strong></div>

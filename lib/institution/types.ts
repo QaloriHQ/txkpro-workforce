@@ -139,6 +139,11 @@ export type InstitutionStudentInterviewEvidence = {
 };
 
 export type InstitutionStudentPlacementEvidence = {
+  employmentStartDate?: string | null;
+  startConfirmedAt?: string | null;
+  officialPlacement?: boolean;
+  canConfirmStart?: boolean;
+
   placementId: string;
   referralId: string | null;
   interviewRequestId: string | null;
@@ -608,6 +613,7 @@ export type InstitutionWorkforceSummary = {
   activeInterviews: number;
   completedInterviews: number;
   totalHires: number;
+  pendingStarts?: number;
   activePlacements: number;
   retentionMilestonesDue: number;
   retentionMilestonesCompleted: number;
@@ -776,6 +782,11 @@ export type InstitutionReferralInterview = {
 };
 
 export type InstitutionReferralPlacement = {
+  employmentStartDate?: string | null;
+  startConfirmedAt?: string | null;
+  officialPlacement?: boolean;
+  canConfirmStart?: boolean;
+
   placementId: string;
   employerId: string;
   employerName: string;
@@ -885,6 +896,11 @@ export type InstitutionEmployerReferral = {
 };
 
 export type InstitutionEmployerPlacement = {
+  employmentStartDate?: string | null;
+  startConfirmedAt?: string | null;
+  officialPlacement?: boolean;
+  canConfirmStart?: boolean;
+
   placementId: string;
   studentId: string;
   studentName: string;
