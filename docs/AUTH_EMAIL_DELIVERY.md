@@ -61,3 +61,45 @@ Do not place SMTP passwords or provider API keys in this repository.
 7. After deployment, set `NEXT_PUBLIC_SITE_URL=https://workforce.txkpro.com` in the production environment and repeat the reset + signup tests against the production host.
 
 Existing emails are not rewritten after URL configuration changes. Always request a new verification or recovery email when testing a new redirect configuration.
+
+
+## Workforce invitations
+
+W12-05A sends canonical User Invitation activation through Supabase Auth rather
+than emailing a bare authorization link.
+
+- New Auth identities use `auth.admin.inviteUserByEmail`.
+- Existing Auth identities use `signInWithOtp` with
+  `shouldCreateUser: false`.
+- Both flows set their redirect to the Workforce `/auth/confirm` callback,
+  which then returns the authenticated recipient to the one-time
+  `/activate/<token>` route.
+- The application token is stored only as a SHA-256 hash in
+  `public.user_invitations`; role and scope remain server-controlled database
+  state.
+- Email delivery outcome is written to `delivery_status` /
+  `delivery_error`. A failed email does not silently convert the invitation
+  into an active membership.
+- Resend rotates the one-time activation token and sends a new Auth-backed
+  email.
+
+Hosted Supabase Invite and Magic Link templates must preserve
+`{{ .ConfirmationURL }}` (or an equivalent token-hash server callback) and
+must not replace it with a hard-coded application URL. Disable provider link
+tracking because Auth links are single-use.
+
+### Invitation validation
+
+1. Invite a new test email from an authorized Institution or Employer team
+   surface.
+2. Confirm `delivery_status` becomes `sent` and the email returns through
+   `/auth/confirm` to `/activate/<token>`.
+3. Confirm the invited email activates only the stored role/scope.
+4. Resend while pending and confirm the previous activation token no longer
+   works.
+5. Invite an already-registered test account and confirm the no-create sign-in
+   link reaches the same activation route without creating a duplicate Auth
+   identity.
+6. Revoke a pending invitation and confirm activation is rejected.
+7. Verify a user from another Institution/Employer cannot list, resend, revoke,
+   or accept the invitation.
