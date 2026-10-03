@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "wave11:qa": "node --test scripts/wave11-config-qa.mjs",
-    "wave12:qa": "node --test scripts/wave12-role-authorization-qa.mjs scripts/wave12-referral-policy-qa.mjs scripts/wave12-institution-referral-workspace-qa.mjs scripts/wave12-institution-employer-directory-qa.mjs scripts/wave12-institution-program-cohort-management-qa.mjs scripts/wave12-institution-student-directory-profile-qa.mjs scripts/wave12-canonical-user-invitations-qa.mjs",
+    "wave12:qa": "node --test scripts/wave12-role-authorization-qa.mjs scripts/wave12-referral-policy-qa.mjs scripts/wave12-institution-referral-workspace-qa.mjs scripts/wave12-institution-employer-directory-qa.mjs scripts/wave12-institution-program-cohort-management-qa.mjs scripts/wave12-institution-student-directory-profile-qa.mjs scripts/wave12-canonical-user-invitations-qa.mjs scripts/wave12-invitation-convergence-qa.mjs",
     "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs",
     "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs",
     "wave8:smoke": "node --env-file-if-exists=.env.local scripts/wave8-smoke.mjs",
