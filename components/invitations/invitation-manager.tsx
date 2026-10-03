@@ -93,7 +93,11 @@ export function InvitationManager({
         ? "That user already has the active role/scope."
         : result.idempotent
           ? "A pending invitation already exists for that user and scope."
-          : "Invitation created. Delivery status is queued until messaging sends it.",
+          : result.deliveryStatus === "failed"
+            ? `Invitation created, but email delivery failed (${result.deliveryError ?? "delivery_failed"}). Use the activation link as a manual fallback or resend after email delivery is corrected.`
+            : result.deliveryStatus === "sent"
+              ? "Invitation sent."
+              : "Invitation created and queued for delivery.",
     );
     await refresh();
   }
@@ -116,7 +120,15 @@ export function InvitationManager({
       return;
     }
     if ("activationUrl" in result) setActivationUrl(result.activationUrl ?? null);
-    setMessage(action === "resend" ? "Invitation queued for resend." : "Invitation revoked.");
+    setMessage(
+      action === "resend"
+        ? result.deliveryStatus === "failed"
+          ? `A new activation link was created, but email delivery failed (${result.deliveryError ?? "delivery_failed"}).`
+          : result.deliveryStatus === "sent"
+            ? "Invitation resent."
+            : "Invitation queued for resend."
+        : "Invitation revoked.",
+    );
     await refresh();
   }
 
