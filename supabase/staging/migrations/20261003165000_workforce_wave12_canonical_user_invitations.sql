@@ -800,6 +800,7 @@ declare
   v_redirect text;
   v_selected_role text;
   v_membership_status text;
+  v_auth_email text:=security.current_auth_email();
 begin
   perform security.expire_user_invitations();
 
