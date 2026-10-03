@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
-import { getAccountContext } from "@/lib/auth";
+import { getAccountContext, hasRoleMembership } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
@@ -15,7 +15,19 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   // public workforce onboarding.
   if (account.role === "admin") redirect("/admin");
 
-  if (account.onboarding?.status === "complete" && account.role) {
+  const requestedMembershipRole =
+    requestedRole && hasRoleMembership(account.memberships, requestedRole)
+      ? requestedRole
+      : null;
+  const switchingRoleFamily =
+    Boolean(requestedMembershipRole) &&
+    requestedMembershipRole !== account.onboarding?.selected_role;
+
+  if (
+    account.onboarding?.status === "complete" &&
+    account.role &&
+    (!requestedMembershipRole || requestedMembershipRole === account.role)
+  ) {
     if (account.role === "employer") redirect("/employer");
     if (account.role === "student") redirect("/student");
     redirect("/dashboard");
@@ -48,12 +60,20 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           firstName={account.firstName}
           lastName={account.lastName}
           phone={account.phone}
-          provisionedRole={account.role}
-          initialRole={account.onboarding?.selected_role ?? account.role ?? requestedRole}
-          initialStep={account.onboarding?.current_step ?? 1}
-          initialData={account.onboarding?.profile_data ?? {}}
+          provisionedRole={requestedMembershipRole ?? account.role}
+          initialRole={
+            requestedMembershipRole ??
+            account.onboarding?.selected_role ??
+            account.role ??
+            requestedRole
+          }
+          initialStep={switchingRoleFamily ? 1 : (account.onboarding?.current_step ?? 1)}
+          initialData={switchingRoleFamily ? {} : (account.onboarding?.profile_data ?? {})}
           institutions={institutions ?? []}
-          pending={account.onboarding?.status === "pending_review"}
+          pending={
+            !switchingRoleFamily &&
+            account.onboarding?.status === "pending_review"
+          }
         />
       </div>
     </main>
