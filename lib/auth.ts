@@ -51,18 +51,43 @@ export type AuthContext = AccountContext & {
   userId: string;
 };
 
+export function hasRoleMembership(
+  memberships: Membership[],
+  role: Role,
+) {
+  const active = memberships.filter(
+    (membership) => membership.status.toLowerCase() === "active",
+  );
+  if (role === "admin") {
+    return active.some((membership) =>
+      ADMIN_ROLES.has(membership.role.toLowerCase()),
+    );
+  }
+  if (role === "educator") {
+    return active.some(
+      (membership) =>
+        EDUCATOR_ROLES.has(membership.role.toLowerCase()) &&
+        !(
+          membership.role.toLowerCase() === "read_only_analyst" &&
+          membership.scope_type.toLowerCase() === "platform"
+        ),
+    );
+  }
+  if (role === "employer") {
+    return active.some((membership) =>
+      EMPLOYER_ROLES.has(membership.role.toLowerCase()),
+    );
+  }
+  return active.some(
+    (membership) => membership.role.toLowerCase() === "student",
+  );
+}
+
 export function normalizeRole(memberships: Membership[]): Role | null {
-  const active = memberships.filter((membership) => membership.status.toLowerCase() === "active");
-  if (active.some((membership) => ADMIN_ROLES.has(membership.role.toLowerCase()))) return "admin";
-  if (active.some((membership) =>
-    EDUCATOR_ROLES.has(membership.role.toLowerCase())
-    && !(
-      membership.role.toLowerCase() === "read_only_analyst"
-      && membership.scope_type.toLowerCase() === "platform"
-    )
-  )) return "educator";
-  if (active.some((membership) => EMPLOYER_ROLES.has(membership.role.toLowerCase()))) return "employer";
-  if (active.some((membership) => membership.role.toLowerCase() === "student")) return "student";
+  if (hasRoleMembership(memberships, "admin")) return "admin";
+  if (hasRoleMembership(memberships, "educator")) return "educator";
+  if (hasRoleMembership(memberships, "employer")) return "employer";
+  if (hasRoleMembership(memberships, "student")) return "student";
   return null;
 }
 
