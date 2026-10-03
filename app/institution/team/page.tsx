@@ -111,7 +111,7 @@ export default async function InstitutionTeamPage() {
         <PageHeader
           eyebrow="Institution Workspace · Team"
           title="Team & Student invitations"
-          description="Create, inspect, resend, and revoke scoped invitations. Activation links never carry editable authorization data; the server grants only the role and scope recorded on the invitation."
+          description="Invite team members and students, check delivery, and manage pending invitations."
         />
 
         <InstitutionRoleContext
@@ -126,7 +126,7 @@ export default async function InstitutionTeamPage() {
           roles={institutionInviteRoles}
           scopes={scopes}
           title="Invite Students and Institution team members"
-          description="Use the same canonical invitation service that CSV roster import will call. Duplicate pending invites are idempotent and accepted invites link to canonical identities."
+          description="Choose the person’s role and the institution, program, or cohort they should access."
         />
       </main>
     </>

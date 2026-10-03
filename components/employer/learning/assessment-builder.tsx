@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   ArrowDownIcon,
   ArrowLeftIcon,
@@ -1077,7 +1079,7 @@ export function AssessmentBuilder({
           </StatusBadge>
         </summary>
         <Card>
-          <form className="txk-form-stack" onSubmit={saveSettings}>
+          <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit assessment settings" busy={Boolean(busy)} className="txk-form-stack" onSubmit={saveSettings}>
             <FormField label="Title">
               <Input
                 name="title"
@@ -1182,7 +1184,7 @@ export function AssessmentBuilder({
                 Save assessment settings
               </Button>
             ) : null}
-          </form>
+          </WorkspaceForm>
         </Card>
       </details>
 

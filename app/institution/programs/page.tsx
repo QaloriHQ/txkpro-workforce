@@ -7,6 +7,8 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
+import { CohortEditor, type CohortSaveState } from "@/components/institution/cohort-editor";
 import { Brand } from "@/components/brand";
 import {
   ButtonLink,
@@ -40,15 +42,6 @@ import type {
 
 export const dynamic = "force-dynamic";
 
-const cohortStatuses = [
-  "planning",
-  "active",
-  "enrolling",
-  "in_progress",
-  "completed",
-  "paused",
-  "archived",
-];
 
 function pretty(value: string | null | undefined) {
   return value ? value.replaceAll("_", " ") : "Not provided";
@@ -74,22 +67,23 @@ function formValue(formData: FormData, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-async function saveCohort(formData: FormData) {
+async function saveCohort(_state: CohortSaveState, formData: FormData): Promise<CohortSaveState> {
   "use server";
-
-  const context = await requireInstitutionPageContext({
-    capability: "programs",
-  });
-  await upsertInstitutionCohort(context, {
-    cohortId: formValue(formData, "cohortId"),
-    name: formValue(formData, "name") ?? "",
-    programName: formValue(formData, "programName"),
-    tradeId: formValue(formData, "tradeId"),
-    term: formValue(formData, "term"),
-    graduationDate: formValue(formData, "graduationDate"),
-    status: formValue(formData, "status") ?? "active",
-  });
-  revalidatePath("/institution/programs");
+  try {
+    const context = await requireInstitutionPageContext({ capability: "programs" });
+    await upsertInstitutionCohort(context, {
+      cohortId: formValue(formData, "cohortId"), name: formValue(formData, "name") ?? "",
+      programName: formValue(formData, "programName"), tradeId: formValue(formData, "tradeId"),
+      term: formValue(formData, "term"), graduationDate: formValue(formData, "graduationDate"),
+      status: formValue(formData, "status") ?? "active",
+    });
+    revalidatePath("/institution/programs");
+    return { ok: true, message: formValue(formData, "cohortId") ? "Cohort updated." : "Program and cohort saved." };
+  } catch (error) {
+    unstable_rethrow(error);
+    const message = error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : "Unable to save. Check your details and institution access, then try again.";
+    return { ok: false, message };
+  }
 }
 
 function total(
@@ -100,72 +94,6 @@ function total(
     const value = item[key as keyof typeof item];
     return typeof value === "number" ? sum + value : sum;
   }, 0);
-}
-
-function CohortForm({
-  cohort,
-  canManage,
-}: {
-  cohort?: InstitutionProgramManagementCohort;
-  canManage: boolean;
-}) {
-  if (!canManage) return null;
-
-  return (
-    <form action={saveCohort} className="txk-form-grid">
-      <input type="hidden" name="cohortId" value={cohort?.cohortId ?? ""} />
-      <label>
-        <span>Cohort name</span>
-        <input
-          name="name"
-          required
-          defaultValue={cohort?.name ?? ""}
-          placeholder="Fall 2026 Electrical"
-        />
-      </label>
-      <label>
-        <span>Program</span>
-        <input
-          name="programName"
-          defaultValue={cohort?.programName ?? ""}
-          placeholder="Electrical Technology"
-        />
-      </label>
-      <label>
-        <span>Trade ID</span>
-        <input
-          name="tradeId"
-          defaultValue={cohort?.tradeId ?? ""}
-          placeholder="electrical"
-        />
-      </label>
-      <label>
-        <span>Term</span>
-        <input name="term" defaultValue={cohort?.term ?? ""} placeholder="Fall 2026" />
-      </label>
-      <label>
-        <span>Graduation date</span>
-        <input
-          name="graduationDate"
-          defaultValue={cohort?.graduationDate ?? ""}
-          placeholder="2027-05-15"
-        />
-      </label>
-      <label>
-        <span>Status</span>
-        <select name="status" defaultValue={cohort?.status ?? "active"}>
-          {cohortStatuses.map((status) => (
-            <option key={status} value={status}>
-              {pretty(status)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button className="button button-primary" type="submit">
-        {cohort ? "Update Cohort" : "Create Cohort"}
-      </button>
-    </form>
-  );
 }
 
 export default async function InstitutionProgramsPage() {
@@ -204,7 +132,7 @@ export default async function InstitutionProgramsPage() {
         <PageHeader
           eyebrow="Institution Workspace - Programs"
           title="Programs & Cohorts"
-          description="Manage authorized Program and Cohort lifecycle state while reviewing canonical Student affiliation, readiness, Employer Training, referral, placement, and retention metrics."
+          description="Create programs and cohorts, manage student groups, and review their training and outcomes."
         />
 
         <InstitutionRoleContext
@@ -217,7 +145,7 @@ export default async function InstitutionProgramsPage() {
           <MetricCard
             label="Programs"
             value={data.programs.length}
-            detail="Derived from authorized Cohorts"
+            detail="Programs with cohorts"
           />
           <MetricCard
             label="Cohorts"
@@ -238,29 +166,16 @@ export default async function InstitutionProgramsPage() {
           />
         </section>
 
-        {canManagePrograms ? (
-          <section className="txk-section">
-            <Card>
-              <div className="txk-section-heading">
-                <div>
-                  <p className="txk-eyebrow">Lifecycle</p>
-                  <h2>Create a Cohort in authorized scope</h2>
-                  <p>
-                    Program names are grouped from Cohort records. The server
-                    re-checks role and scope before creating or updating a Cohort.
-                  </p>
-                </div>
-              </div>
-              <CohortForm canManage={canManagePrograms} />
-            </Card>
-          </section>
-        ) : null}
+        {canManagePrograms ? <div className="institution-action-bar">
+          <CohortEditor programs={data.programs} newProgram saveAction={saveCohort} />
+          {data.programs.some(p => p.canManage) ? <CohortEditor programs={data.programs} saveAction={saveCohort} /> : null}
+        </div> : null}
 
         <section className="txk-section">
           <div className="txk-section-heading">
             <div>
               <p className="txk-eyebrow">Program rollups</p>
-              <h2>Canonical metrics by Program</h2>
+              <h2>Programs</h2>
             </div>
           </div>
 
@@ -279,9 +194,12 @@ export default async function InstitutionProgramsPage() {
                     </p>
                     <p>Last activity: {date(program.lastActivityAt)}</p>
                   </div>
-                  <StatusBadge tone={program.canManage ? "success" : "info"}>
-                    {program.canManage ? "Manage" : "Read"}
-                  </StatusBadge>
+                  <div className="institution-program-actions">
+                    {program.canManage ? <CohortEditor programs={data.programs} defaultProgramKey={program.programKey} saveAction={saveCohort} /> : null}
+                    <StatusBadge tone={program.canManage ? "success" : "info"}>
+                      {program.canManage ? "Manage" : "Read"}
+                    </StatusBadge>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -418,7 +336,7 @@ export default async function InstitutionProgramsPage() {
                     ) : null}
                   </div>
 
-                  <CohortForm cohort={cohort} canManage={cohort.canManage} />
+                  {cohort.canManage ? <CohortEditor cohort={cohort} programs={data.programs} saveAction={saveCohort} /> : null}
                 </Card>
               ))}
             </div>

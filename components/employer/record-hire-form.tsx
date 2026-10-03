@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -50,7 +52,7 @@ export function RecordHireForm({
   }
 
   return (
-    <form onSubmit={submit} className="form-stack">
+    <WorkspaceForm modalTitle="Record hire" busy={Boolean(busy)} onSubmit={submit} className="form-stack">
       <div className="callout">
         <strong>Human hiring decision</strong>
         Recording a hire creates the Placement outcome and exactly three retention milestones: Day 30, Day 60, and Day 90.
@@ -83,6 +85,6 @@ export function RecordHireForm({
         </button>
         {message ? <span className="muted">{message}</span> : null}
       </div>
-    </form>
+    </WorkspaceForm>
   );
 }

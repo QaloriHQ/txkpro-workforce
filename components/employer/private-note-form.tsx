@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +19,8 @@ export function PrivateNoteForm({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
-    const form = new FormData(event.currentTarget);
+    const element = event.currentTarget;
+    const form = new FormData(element);
     const note = String(form.get("note") ?? "").trim();
     if (!note) return;
 
@@ -41,13 +44,13 @@ export function PrivateNoteForm({
       return;
     }
 
-    event.currentTarget.reset();
+    element.reset();
     setMessage("Private note saved.");
     router.refresh();
   }
 
   return (
-    <form onSubmit={submit}>
+    <WorkspaceForm modalTitle="Add private note" busy={Boolean(busy)} onSubmit={submit}>
       <label>
         <span className="field-title">Employer-private note</span>
         <textarea
@@ -64,6 +67,6 @@ export function PrivateNoteForm({
         </button>
         {message ? <span className="muted">{message}</span> : null}
       </div>
-    </form>
+    </WorkspaceForm>
   );
 }

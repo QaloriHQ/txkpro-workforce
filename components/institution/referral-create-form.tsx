@@ -1,10 +1,11 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Button,
-  Card,
   FormField,
   StatusBadge,
   Textarea,
@@ -86,19 +87,9 @@ export function InstitutionReferralCreateForm({
   }
 
   return (
-    <Card>
-      <div className="txk-section-heading">
-        <div>
-          <p className="txk-eyebrow">Create referral</p>
-          <h2>Send policy-approved Employer referral</h2>
-          <p>
-            The server re-checks Institution scope, Student referral visibility
-            consent, and D-09 note policy before delivery.
-          </p>
-        </div>
-      </div>
-
-      <form className="institution-assignment-form" onSubmit={submit}>
+    <div className="institution-action-bar">
+      {!canCreate ? <p>Your role can review referrals. Sending requires management access.</p> : null}
+      {canCreate ? <WorkspaceForm modalTitle="Send referral" busy={Boolean(pending)} className="institution-assignment-form" onSubmit={submit}>
         <FormField
           label="Student"
           help={
@@ -208,7 +199,7 @@ export function InstitutionReferralCreateForm({
             {pending ? "Sending…" : "Send referral"}
           </Button>
         </div>
-      </form>
-    </Card>
+      </WorkspaceForm> : null}
+    </div>
   );
 }

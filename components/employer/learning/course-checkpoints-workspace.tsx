@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import {
   ArrowDownIcon,
   ArrowTopRightOnSquareIcon,
@@ -377,7 +379,7 @@ export function CourseCheckpointsWorkspace({
 
               <details className="txk-authoring-details">
                 <summary>Checkpoint settings</summary>
-                <form
+                <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit checkpoint" busy={Boolean(busy)}
                   className="txk-form-stack"
                   onSubmit={(event) => saveCheckpoint(event, checkpoint)}
                 >
@@ -481,7 +483,7 @@ export function CourseCheckpointsWorkspace({
                       </Button>
                     </div>
                   ) : null}
-                </form>
+                </WorkspaceForm>
               </details>
             </Card>
           ))}
@@ -491,7 +493,7 @@ export function CourseCheckpointsWorkspace({
           <Card className="txk-new-checkpoint-card">
             <p className="txk-eyebrow">Add checkpoint</p>
             <h3>New interactive checkpoint</h3>
-            <form className="txk-form-stack" onSubmit={createCheckpoint}>
+            <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Create checkpoint" busy={Boolean(busy)} className="txk-form-stack" onSubmit={createCheckpoint}>
               <div className="txk-form-grid-2">
                 <FormField label="Title">
                   <Input name="title" />
@@ -537,7 +539,7 @@ export function CourseCheckpointsWorkspace({
                 <PlusIcon aria-hidden="true" />
                 Add checkpoint
               </Button>
-            </form>
+            </WorkspaceForm>
           </Card>
         ) : null}
       </section>
@@ -552,7 +554,7 @@ export function CourseCheckpointsWorkspace({
             <ShieldCheckIcon className="txk-requirements-icon" aria-hidden="true" />
           </div>
 
-          <form className="txk-form-stack" onSubmit={saveRequirements}>
+          <WorkspaceForm feedback={error ? <div className="alert" role="alert">{error}</div> : null} modalTitle="Edit completion requirements" busy={Boolean(busy)} className="txk-form-stack" onSubmit={saveRequirements}>
             <FormField
               label="Checkpoint rule"
               help="Required checkpoints always remain mandatory. Weighted mode additionally requires the configured percentage of total checkpoint weight."
@@ -660,7 +662,7 @@ export function CourseCheckpointsWorkspace({
                 Save completion rules
               </Button>
             ) : null}
-          </form>
+          </WorkspaceForm>
         </Card>
 
         <Card>

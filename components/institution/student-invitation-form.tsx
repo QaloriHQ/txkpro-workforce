@@ -1,5 +1,7 @@
 "use client";
 
+import { WorkspaceForm } from "@/components/design-system/action-modal";
+
 import { FormEvent, useState } from "react";
 import { UserPlusIcon } from "@heroicons/react/24/outline";
 
@@ -82,18 +84,8 @@ export function StudentInvitationForm({
   }
 
   return (
-    <section className="card institution-invitation-card">
-      <div className="card-header">
-        <div>
-          <h2>Invite Student</h2>
-          <p className="card-sub">
-            Add a Student by email to an authorized Institution or Cohort
-            scope. Access remains pending until the recipient accepts.
-          </p>
-        </div>
-        <UserPlusIcon aria-hidden="true" width={24} height={24} />
-      </div>
-      <form className="form-stack" onSubmit={submit}>
+    <section className="institution-action-bar">
+      <WorkspaceForm modalTitle="Invite student" busy={Boolean(busy)} className="form-stack" onSubmit={submit}>
         <div className="grid grid-2">
           <label>
             <span>First name</span>
@@ -146,12 +138,12 @@ export function StudentInvitationForm({
           <UserPlusIcon aria-hidden="true" width={20} height={20} />
           {busy ? "Sending…" : "Send invitation"}
         </button>
-      </form>
       {message ? (
         <div className="alert" role="status" style={{ marginTop: 14 }}>
           {message}
         </div>
       ) : null}
+      </WorkspaceForm>
     </section>
   );
 }
