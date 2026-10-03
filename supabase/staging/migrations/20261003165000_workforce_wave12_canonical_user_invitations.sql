@@ -293,7 +293,7 @@ declare
   v_actor_user_id text:=security.current_legacy_user_id();
   v_activation_policy text:='auto_activate';
   v_idempotency_key text:=left(
-    v_idempotency_key,
+    nullif(btrim(coalesce(p_idempotency_key,'')),''),
     240
   );
   v_first_name text:=left(
@@ -380,6 +380,7 @@ begin
       'status',v_existing.status,
       'deliveryStatus',v_existing.delivery_status,
       'expiresAt',v_existing.expires_at,
+      'activationPolicy',v_existing.activation_policy,
       'recipientExistingIdentity',v_existing.recipient_existing_identity
     );
   end if;
