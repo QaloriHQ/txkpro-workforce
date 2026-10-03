@@ -51,6 +51,7 @@ export type InvitationCreateResult = {
   activationPath?: string | null;
   activationUrl?: string | null;
   deliveryStatus?: string;
+  deliveryError?: string | null;
   membershipId?: string;
   error?: string;
 };
