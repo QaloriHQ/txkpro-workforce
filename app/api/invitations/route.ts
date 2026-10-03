@@ -58,15 +58,18 @@ export async function POST(request: Request) {
     const body = parsed.body;
     returnTo = safeReturnTo(body.returnTo);
 
-    const invitation = await createAndSendInvitation({
-      email: String(body.email ?? ""),
-      role: String(body.role ?? ""),
-      scopeType: String(body.scopeType ?? ""),
-      scopeId: body.scopeId ? String(body.scopeId) : null,
-      institutionId: body.institutionId ? String(body.institutionId) : null,
-      contractorId: body.contractorId ? String(body.contractorId) : null,
-      source: body.source ? String(body.source) : "individual",
-    });
+    const invitation = await createAndSendInvitation(
+      {
+        email: String(body.email ?? ""),
+        role: String(body.role ?? ""),
+        scopeType: String(body.scopeType ?? ""),
+        scopeId: body.scopeId ? String(body.scopeId) : null,
+        institutionId: body.institutionId ? String(body.institutionId) : null,
+        contractorId: body.contractorId ? String(body.contractorId) : null,
+        source: body.source ? String(body.source) : "individual",
+      },
+      new URL(request.url).origin,
+    );
 
     if (isForm) {
       const redirectUrl = new URL(returnTo, request.url);
