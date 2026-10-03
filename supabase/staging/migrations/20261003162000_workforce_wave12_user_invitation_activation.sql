@@ -765,7 +765,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path=''
-as $
+as $invitation_resolve$
 declare
   v_inv public.wf_user_invitations%rowtype;
   v_auth_user_id uuid;
@@ -790,7 +790,7 @@ begin
 
   return security.workforce_invitation_json(v_inv);
 end;
-$;
+$invitation_resolve$;
 
 create or replace function public.workforce_invitation_mark_delivery(
   p_invitation_id text,
