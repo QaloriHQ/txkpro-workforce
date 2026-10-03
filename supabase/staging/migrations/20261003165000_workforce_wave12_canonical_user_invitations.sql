@@ -453,7 +453,7 @@ begin
     p_institution_id,p_employer_id,v_membership_key,'pending',v_activation_policy,v_expires_at,
     v_user.auth_user_id is not null,(select auth.uid()),v_actor_user_id,
     v_idempotency_key,
-    coalesce(p_metadata,'{}'::jsonb)
+    v_metadata
   )
   returning * into v_inv;
 
@@ -1047,7 +1047,7 @@ grant execute on function public.user_invitation_accept(text)
   to authenticated,service_role;
 
 comment on table public.wf_user_invitations is
-  'W12-05A canonical invitation lifecycle. Pending memberships are non-authoritative read-model projections until server-side acceptance activates them.';
+  'W12-05A canonical invitation lifecycle. Pending memberships are non-authoritative projections; recipient acceptance activates them only when canonical approval policy permits.';
 comment on function public.user_invitation_create(text,text,text,text,text,text,timestamptz,text,jsonb) is
   'Creates or idempotently returns a scoped canonical invitation after server-side actor role/scope authorization.';
 comment on function public.user_invitation_accept(text) is
