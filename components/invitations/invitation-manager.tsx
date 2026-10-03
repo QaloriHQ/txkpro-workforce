@@ -59,7 +59,19 @@ export function InvitationManager({
     const result = (await response.json().catch(() => ({}))) as {
       invitations?: InvitationRecord[];
     };
-    if (response.ok && result.invitations) setItems(result.invitations);
+    if (response.ok && result.invitations) {
+      const roleSet = new Set(roles.map((item) => item.value));
+      const scopeSet = new Set(
+        scopes.map((item) => `${item.scopeType}:${item.scopeId ?? ""}`),
+      );
+      setItems(
+        result.invitations.filter(
+          (item) =>
+            roleSet.has(item.role) &&
+            scopeSet.has(`${item.scopeType}:${item.scopeId ?? ""}`),
+        ),
+      );
+    }
   }
 
   async function submit(event: FormEvent) {
