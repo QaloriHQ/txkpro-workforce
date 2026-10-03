@@ -10,6 +10,7 @@ type Props = {
   scopeType: string;
   organizationName: string;
   status: string;
+  activationPolicy: "auto_activate" | "approval_required";
   expiresAt: string;
   recipientExistingIdentity: boolean;
 };
@@ -28,6 +29,7 @@ export function InvitationActivationCard({
   scopeType,
   organizationName,
   status,
+  activationPolicy,
   expiresAt,
   recipientExistingIdentity,
 }: Props) {
@@ -98,6 +100,14 @@ export function InvitationActivationCard({
           <dd>{new Date(expiresAt).toLocaleString()}</dd>
         </div>
       </dl>
+
+      {active && activationPolicy === "approval_required" ? (
+        <div className="alert" style={{ marginTop: 18 }}>
+          Accepting confirms your identity and links the requested membership.
+          An authorized Institution approver must activate the membership before
+          scoped staff access becomes available.
+        </div>
+      ) : null}
 
       {active ? (
         <form className="form-stack" onSubmit={accept}>
