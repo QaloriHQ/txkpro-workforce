@@ -632,7 +632,7 @@ begin
 end;
 $$;
 
-create or replace function security.user_invitation_record_delivery(
+create or replace function public.user_invitation_record_delivery(
   p_invitation_id text,
   p_success boolean,
   p_error_code text default null
@@ -902,14 +902,14 @@ revoke all on function security.user_invitation_actor_can_manage(text,text,text,
   from public,anon,authenticated;
 revoke all on function security.expire_user_invitations()
   from public,anon,authenticated;
-revoke all on function security.user_invitation_record_delivery(text,boolean,text)
+revoke all on function public.user_invitation_record_delivery(text,boolean,text)
   from public,anon,authenticated;
 
 grant execute on function security.is_super_admin() to service_role;
 grant execute on function security.user_invitation_actor_can_manage(text,text,text,text,text)
   to service_role;
 grant execute on function security.expire_user_invitations() to service_role;
-grant execute on function security.user_invitation_record_delivery(text,boolean,text)
+grant execute on function public.user_invitation_record_delivery(text,boolean,text)
   to service_role;
 
 revoke all on function public.user_invitation_create(text,text,text,text,text,text,timestamptz,text,jsonb)
