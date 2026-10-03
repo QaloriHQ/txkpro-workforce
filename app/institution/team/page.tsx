@@ -17,6 +17,9 @@ import { listUserInvitations } from "@/lib/invitations/service";
 export const dynamic = "force-dynamic";
 
 const institutionInviteRoles = [
+  { value: "institution_super_admin", label: "Institution super admin", description: "Institution-wide administration; requires the canonical inviter policy." },
+  { value: "institution_admin", label: "Institution admin", description: "Institution-wide administration; requires the canonical inviter policy." },
+  { value: "department_head", label: "Department head", description: "Contained Department, Program or Cohort team scope." },
   {
     value: "student",
     label: "Student",

@@ -67,8 +67,9 @@ export async function POST(request: Request) {
 
     const results = [];
     for (const rawItem of rawItems) {
-      const input = invitationInput(rawItem);
+      let input: UserInvitationCreateInput | null = null;
       try {
+        input = invitationInput(rawItem);
         const result = await createAndDeliverUserInvitation(input);
         results.push({
           ok: true,
@@ -78,10 +79,11 @@ export async function POST(request: Request) {
         if (rawItems.length === 1) throw error;
         const status = error instanceof Response ? error.status : 500;
         let message = "Invitation failed.";
-        if (error instanceof Error) message = error.message;
+        if (error instanceof Response) message = await error.text();
+        else if (error instanceof Error) message = error.message;
         results.push({
           ok: false,
-          email: input.email,
+          email: input?.email ?? null,
           status,
           error: message,
         });
