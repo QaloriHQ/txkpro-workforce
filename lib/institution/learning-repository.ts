@@ -82,6 +82,10 @@ export async function listInstitutionStudents(
   context: InstitutionContext,
   filters: InstitutionStudentDirectoryFilters = {},
 ) {
+  // Canonical invitation state owns expiry. Expire only invitations the
+  // current actor is authorized to manage before reading the directory
+  // projection backed by app_role_memberships.
+  await rpc<number>("workforce_invitations_expire", {});
   return rpc<InstitutionStudentDirectoryItem[]>("institution_student_directory", {
     p_institution_id: context.institutionId,
     p_query: filters.query ?? null,
