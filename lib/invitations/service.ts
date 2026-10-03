@@ -157,7 +157,33 @@ export async function deliverUserInvitation(invitationId: string) {
           },
         },
       );
-      if (error) throw error;
+      if (error) {
+        const code =
+          typeof error.code === "string" ? error.code.toLowerCase() : "";
+        const alreadyExists =
+          code === "email_exists" ||
+          code === "user_already_exists" ||
+          /already.+(?:registered|exists)/i.test(error.message);
+        if (!alreadyExists) throw error;
+
+        const { error: magicLinkError } = await admin.auth.signInWithOtp({
+          email: invitation.email,
+          options: {
+            shouldCreateUser: false,
+            emailRedirectTo: callback,
+          },
+        });
+        if (magicLinkError) throw magicLinkError;
+
+        const { error: linkStateError } = await admin
+          .from("wf_user_invitations")
+          .update({
+            recipient_existing_identity: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("invitation_id", invitation.invitationId);
+        if (linkStateError) throw linkStateError;
+      }
     }
 
     await recordDelivery(invitation.invitationId, true);
