@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         skipped.push(`${placement.id}:${recipient.type}:no-consent-or-phone`);
         continue;
       }
-      const sms = await sendSms(recipient.phone, recipient.body);
+      const sms = await sendSms(recipient.phone, recipient.body, "retention");
       const { data: pulse, error: pulseError } = await admin.from("retention_pulses").insert({
         placement_id: placement.id,
         milestone_day: milestone,
