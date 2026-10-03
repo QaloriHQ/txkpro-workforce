@@ -775,8 +775,14 @@ begin
 end;
 $$;
 
-revoke all on table public.wf_user_invitations
-  from public,anon,authenticated;
+do $
+begin
+  if to_regclass('public.wf_user_invitations') is not null then
+    execute 'revoke all on table public.wf_user_invitations from public,anon,authenticated';
+    execute 'comment on table public.wf_user_invitations is ''DEPRECATED W12-05A staging-only prototype table. No authenticated API grants remain; public.user_invitations is canonical.''';
+  end if;
+end;
+$;
 
 revoke all on function security.is_super_admin()
   from public,anon,authenticated;
@@ -795,5 +801,3 @@ grant execute on function public.invitation_mark_delivery(text,text,text)
 
 comment on function public.invitation_mark_delivery(text,text,text) is
   'W12-05A server-only delivery state writer for canonical invitation email delivery.';
-comment on table public.wf_user_invitations is
-  'DEPRECATED W12-05A staging-only prototype table. No authenticated API grants remain; public.user_invitations is canonical.';
