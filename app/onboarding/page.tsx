@@ -3,7 +3,7 @@ import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 import { getAccountContext } from "@/lib/auth";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { onboardingInstitutions } from "@/lib/institutions";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
   const params = await searchParams;
@@ -21,12 +21,12 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     redirect("/dashboard");
   }
 
-  const supabase = await createServerSupabaseClient();
-  const { data: institutions } = await supabase
-    .from("wf_institutions")
-    .select("institution_id, name, city, state")
-    .eq("active", true)
-    .order("name");
+  const institutions = await onboardingInstitutions().catch(() => null);
+  const educatorInstitutions = institutions?.filter(item => item.authorized) ?? [];
+  const initialData = { ...(account.onboarding?.profile_data ?? {}) };
+  if ((account.role === "educator" || account.onboarding?.selected_role === "educator") && !initialData.institutionId && educatorInstitutions.length === 1) {
+    initialData.institutionId = educatorInstitutions[0].institution_id;
+  }
 
   return (
     <main className="onboarding-wrap">
@@ -51,8 +51,9 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           provisionedRole={account.role}
           initialRole={account.onboarding?.selected_role ?? account.role ?? requestedRole}
           initialStep={account.onboarding?.current_step ?? 1}
-          initialData={account.onboarding?.profile_data ?? {}}
-          institutions={institutions ?? []}
+          initialData={initialData}
+          institutions={account.role === "educator" || account.onboarding?.selected_role === "educator" ? educatorInstitutions : institutions ?? []}
+          directoryError={institutions === null ? "Institution directory is unavailable. Please try again shortly." : null}
           pending={account.onboarding?.status === "pending_review"}
         />
       </div>

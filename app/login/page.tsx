@@ -177,8 +177,8 @@ function LoginContent() {
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
         <p className="footer-note">
           New to TXKPRO Workforce?{" "}
-          <Link href="/signup">
-            <strong>Create an account</strong>
+          <Link href="/request-access">
+            <strong>Request access</strong>
           </Link>.
         </p>
       </section>

@@ -112,8 +112,8 @@ export default function EmployersPage() {
               visibility—without handing hiring decisions to an opaque score.
             </p>
             <div className="marketing-actions">
-              <Link className="button button-brand" href="/signup">
-                Create employer account <ArrowRightIcon aria-hidden="true" />
+              <Link className="button button-brand" href="/request-access">
+                Request employer access <ArrowRightIcon aria-hidden="true" />
               </Link>
               <Link className="button button-ghost" href="/institutions">
                 See institution workflows
@@ -198,7 +198,7 @@ export default function EmployersPage() {
             <p>Use transparent readiness evidence and human hiring decisions to connect with local technical talent.</p>
           </div>
           <div className="marketing-actions">
-            <Link className="button button-brand" href="/signup">Create employer account</Link>
+            <Link className="button button-brand" href="/request-access">Request employer access</Link>
             <Link className="button button-ghost" href="/credentials">Verify a credential</Link>
           </div>
         </section>

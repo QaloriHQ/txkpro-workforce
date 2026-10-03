@@ -28,6 +28,7 @@ export function OnboardingWizard({
   initialData,
   institutions,
   pending,
+  directoryError,
 }: {
   firstName: string;
   lastName: string;
@@ -38,6 +39,7 @@ export function OnboardingWizard({
   initialData: Data;
   institutions: Institution[];
   pending: boolean;
+  directoryError: string | null;
 }) {
   const allowedRoles = useMemo<Role[]>(() => provisionedRole ? [provisionedRole] : ["student", "educator", "employer"], [provisionedRole]);
   const [role, setRole] = useState<Role>(provisionedRole ?? initialRole ?? "student");
@@ -56,50 +58,58 @@ export function OnboardingWizard({
   }
 
   async function save(nextStep: number) {
-    setBusy(true);
-    setMessage(null);
-    const response = await fetch("/api/onboarding", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ role, currentStep: nextStep, profileData: data }),
-    });
-    const body = await response.json();
-    setBusy(false);
-    if (!response.ok) {
-      setMessage(body.error ?? "Unable to save onboarding.");
+    if (step === 2 && role === "educator" && !institutions.some(item => item.institution_id === data.institutionId)) {
+      setMessage("Choose your institution before continuing.");
       return false;
     }
-    if (typeof body.redirectTo === "string" && body.redirectTo) {
-      window.location.replace(body.redirectTo);
+    setBusy(true);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/onboarding", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role, currentStep: nextStep, profileData: data }),
+      });
+      const body = await response.json();
+      setBusy(false);
+      if (!response.ok) {
+        setMessage(body.error ?? "Unable to save onboarding.");
+        return false;
+      }
+      if (typeof body.redirectTo === "string" && body.redirectTo) {
+        window.location.replace(body.redirectTo);
+        return true;
+      }
+      setStep(nextStep);
       return true;
-    }
-    setStep(nextStep);
-    return true;
+    } catch { setMessage("Connection failed. Please try again."); return false; } finally { setBusy(false); }
   }
 
   async function finish() {
     setBusy(true);
     setMessage(null);
-    const response = await fetch("/api/onboarding", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ role, profileData: data }),
-    });
-    const body = await response.json();
-    setBusy(false);
-    if (!response.ok) {
-      setMessage(body.error ?? "Unable to complete onboarding.");
-      return;
-    }
-    const fallback =
-      role === "employer"
-        ? "/employer"
-        : role === "student"
-          ? "/student"
-          : role === "admin"
-            ? "/admin"
-            : "/dashboard";
-    window.location.replace(body.redirectTo ?? fallback);
+    try {
+      const response = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role, profileData: data }),
+      });
+      const body = await response.json();
+      setBusy(false);
+      if (!response.ok) {
+        setMessage(body.error ?? "Unable to complete onboarding.");
+        return;
+      }
+      const fallback =
+        role === "employer"
+          ? "/employer"
+          : role === "student"
+            ? "/student"
+            : role === "admin"
+              ? "/admin"
+              : "/dashboard";
+      window.location.replace(body.redirectTo ?? fallback);
+    } catch { setMessage("Connection failed. Please try again."); } finally { setBusy(false); }
   }
 
   if (pending) {
@@ -199,6 +209,8 @@ export function OnboardingWizard({
         </section>
       ) : null}
 
+      {directoryError ? <div className="alert" role="alert">{directoryError}</div> : null}
+      {role === "educator" && institutions.length === 0 ? <div className="alert" role="alert">No institution access is available. Ask TXKPRO to confirm your institution invitation.</div> : null}
       {message ? <div className="alert" style={{ marginTop: 18 }}>{message}</div> : null}
       <div className="wizard-actions">
         {step > 1 ? <button className="button button-ghost" type="button" onClick={() => setStep(step - 1)} disabled={busy}>Back</button> : <span />}

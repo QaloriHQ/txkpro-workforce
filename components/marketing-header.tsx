@@ -35,8 +35,8 @@ export function MarketingHeader() {
           <Link className="button button-ghost button-small marketing-signin" href="/login">
             Sign in
           </Link>
-          <Link className="button button-dark button-small marketing-create" href="/signup">
-            Create account
+          <Link className="button button-dark button-small marketing-create" href="/request-access">
+            Request access
           </Link>
 
           <details className="marketing-mobile-menu">
@@ -51,7 +51,7 @@ export function MarketingHeader() {
                   {item.label}
                 </Link>
               ))}
-              <Link href="/signup">Create account</Link>
+              <Link href="/request-access">Request access</Link>
             </nav>
           </details>
         </div>

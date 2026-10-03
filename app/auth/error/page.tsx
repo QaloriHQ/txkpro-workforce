@@ -12,7 +12,7 @@ export default async function AuthErrorPage({
   const title = recovery ? "Recovery link unavailable" : "We couldn’t confirm that link";
   const copy = recovery
     ? "The password-recovery link may have expired, already been used, or opened in a different authentication flow. Request a new link and try again."
-    : "The confirmation link may have expired, already been used, or been opened after the authentication request changed. You can sign in or request another verification email.";
+    : "The confirmation link may have expired, already been used, or been opened after the authentication request changed. You can sign in or ask TXKPRO to resend your invitation.";
 
   return (
     <main className="auth-wrap">
@@ -27,8 +27,8 @@ export default async function AuthErrorPage({
           ) : (
             <Link className="button button-brand" href="/login">Back to sign in</Link>
           )}
-          <Link className="button button-ghost" href={recovery ? "/login" : "/signup"}>
-            {recovery ? "Sign in" : "Create account"}
+          <Link className="button button-ghost" href={recovery ? "/login" : "/request-access"}>
+            {recovery ? "Sign in" : "Request access"}
           </Link>
         </div>
       </section>
