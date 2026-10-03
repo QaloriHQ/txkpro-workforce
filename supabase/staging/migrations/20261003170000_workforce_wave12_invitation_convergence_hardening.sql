@@ -509,7 +509,7 @@ begin
   end if;
 
   if v_invitation.status='accepted' then
-    if v_invitation.accepted_by_auth_user_id<>v_auth_user_id then
+    if v_invitation.accepted_by_auth_user_id is distinct from v_auth_user_id then
       raise exception 'Invitation already accepted by another identity';
     end if;
     return jsonb_build_object(
