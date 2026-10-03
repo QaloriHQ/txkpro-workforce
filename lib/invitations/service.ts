@@ -94,7 +94,11 @@ async function deliverInvitation(invitation: WorkforceInvitation) {
   const redirectTo = activationUrl(invitation.invitationId);
 
   try {
-    let authUserId = invitation.targetAuthUserId;
+    const resolved = await serviceRpc<WorkforceInvitation>(
+      "workforce_invitation_resolve_identity",
+      { p_invitation_id: invitation.invitationId },
+    );
+    let authUserId = resolved.targetAuthUserId;
 
     if (authUserId) {
       const { error } = await admin.auth.signInWithOtp({
