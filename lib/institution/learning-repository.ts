@@ -22,6 +22,9 @@ import type {
   InstitutionReferralCreateResult,
   InstitutionReferralDetail,
   InstitutionReferralSummary,
+  InstitutionStudentDirectoryFilters,
+  InstitutionStudentDirectoryItem,
+  InstitutionStudentProfile,
   InstitutionStudentReadinessSummary,
   InstitutionWorkforceSummary,
 } from "@/lib/institution/types";
@@ -73,6 +76,29 @@ export async function getInstitutionProgramCohortManagement(
     "institution_program_cohort_management",
     { p_institution_id: context.institutionId },
   );
+}
+
+export async function listInstitutionStudents(
+  context: InstitutionContext,
+  filters: InstitutionStudentDirectoryFilters = {},
+) {
+  return rpc<InstitutionStudentDirectoryItem[]>("institution_student_directory", {
+    p_institution_id: context.institutionId,
+    p_query: filters.query ?? null,
+    p_program_name: filters.programName ?? null,
+    p_cohort_id: filters.cohortId ?? null,
+    p_status: filters.status ?? null,
+  });
+}
+
+export async function getInstitutionStudentProfile(
+  context: InstitutionContext,
+  studentId: string,
+) {
+  return rpc<InstitutionStudentProfile>("institution_student_profile", {
+    p_institution_id: context.institutionId,
+    p_student_id: studentId,
+  });
 }
 
 export async function upsertInstitutionCohort(

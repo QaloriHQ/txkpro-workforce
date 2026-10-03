@@ -1,6 +1,7 @@
 import {
   AcademicCapIcon,
   CheckBadgeIcon,
+  ClipboardDocumentCheckIcon,
   MagnifyingGlassIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -9,6 +10,7 @@ import { Brand } from "@/components/brand";
 import {
   Card,
   EmptyState,
+  MetricCard,
   PageHeader,
   StatusBadge,
 } from "@/components/design-system";
@@ -19,8 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { requireInstitutionPageContext } from "@/lib/institution/auth";
 import {
   getInstitutionEmployerLearningContext,
-  listInstitutionCompanyBadgeEvidence,
-  listInstitutionMicroCertAssignments,
+  listInstitutionStudents,
 } from "@/lib/institution/learning-repository";
 import { institutionAccess } from "@/lib/institution/policy";
 import {
@@ -31,7 +32,12 @@ import {
 export const dynamic = "force-dynamic";
 
 type RouteContext = {
-  searchParams: Promise<{ q?: string; program?: string; cohort?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    program?: string;
+    cohort?: string;
+    status?: string;
+  }>;
 };
 
 export default async function InstitutionStudentsPage({
@@ -39,43 +45,32 @@ export default async function InstitutionStudentsPage({
 }: RouteContext) {
   const query = await searchParams;
   const context = await requireInstitutionPageContext({ capability: "students" });
-  const [learning, assignments, badges] = await Promise.all([
+  const [learning, students] = await Promise.all([
     getInstitutionEmployerLearningContext(context),
-    listInstitutionMicroCertAssignments(context),
-    listInstitutionCompanyBadgeEvidence(context),
+    listInstitutionStudents(context, {
+      query: query.q,
+      programName: query.program,
+      cohortId: query.cohort,
+      status: query.status,
+    }),
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
-  const q = query.q?.trim().toLowerCase() ?? "";
 
-  const assignmentNames = new Map(
-    assignments.map((assignment) => [
-      assignment.studentId,
-      assignment.studentName,
-    ]),
+  const activeRoster = students.filter(
+    (student) => student.recordType === "student",
+  ).length;
+  const pendingInvitations = students.filter(
+    (student) => student.recordType === "invitation",
+  ).length;
+  const verifiedSkills = students.reduce(
+    (total, student) => total + student.verifiedSkillCount,
+    0,
   );
-  const badgeCounts = new Map<string, number>();
-  for (const badge of badges) {
-    for (const award of badge.awards) {
-      if (award.status !== "active") continue;
-      badgeCounts.set(
-        award.studentId,
-        (badgeCounts.get(award.studentId) ?? 0) + 1,
-      );
-    }
-  }
-
-  const students = learning.students.filter((student) => {
-    const name = assignmentNames.get(student.studentId) ?? student.displayName;
-    return (
-      (!q ||
-        name.toLowerCase().includes(q) ||
-        (student.programName ?? "").toLowerCase().includes(q) ||
-        student.cohortName.toLowerCase().includes(q)) &&
-      (!query.program || student.programName === query.program) &&
-      (!query.cohort || student.cohortId === query.cohort)
-    );
-  });
+  const activeTraining = students.reduce(
+    (total, student) => total + student.activeTrainingCount,
+    0,
+  );
 
   return (
     <>
@@ -99,7 +94,7 @@ export default async function InstitutionStudentsPage({
         <PageHeader
           eyebrow="Institution Workspace · Students"
           title="Students"
-          description="Review Students in your authorized scope and move between technical verification, Employer Training, Company Badge, interview, and placement evidence without combining them into a single score."
+          description="Review Students and pending Student invitations in your authorized scope, with verified skills, self-attested evidence, Employer Training, referrals, interviews, placements, and retention signals kept distinct."
         />
 
         <InstitutionRoleContext
@@ -107,6 +102,29 @@ export default async function InstitutionStudentsPage({
           scopeLabel={scopeLabel}
           accessLevel={institutionAccess(context, "students")}
         />
+
+        <section className="txk-metric-grid institution-student-profile-metrics">
+          <MetricCard
+            label="Roster Students"
+            value={activeRoster}
+            detail="Canonical Student profiles in scope"
+          />
+          <MetricCard
+            label="Pending invitations"
+            value={pendingInvitations}
+            detail="Student memberships not yet accepted"
+          />
+          <MetricCard
+            label="Verified Skills"
+            value={verifiedSkills}
+            detail="Instructor-authoritative evidence"
+          />
+          <MetricCard
+            label="Active Training"
+            value={activeTraining}
+            detail="Assigned or in-progress Employer Training"
+          />
+        </section>
 
         <form className="institution-student-directory-filters" method="get">
           <label className="institution-filter-search">
@@ -143,6 +161,17 @@ export default async function InstitutionStudentsPage({
               ))}
             </select>
           </label>
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={query.status ?? ""}>
+              <option value="">All statuses</option>
+              <option value="student">Roster Students</option>
+              <option value="invitation">Pending invitations</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="invited">Invited</option>
+            </select>
+          </label>
           <button className="txk-button txk-button-primary txk-button-md" type="submit">
             Filter
           </button>
@@ -154,51 +183,81 @@ export default async function InstitutionStudentsPage({
         {students.length ? (
           <div className="institution-student-directory">
             {students.map((student) => {
-              const studentAssignments = assignments.filter(
-                (assignment) => assignment.studentId === student.studentId,
-              );
-              const activeTraining = studentAssignments.find(
-                (assignment) =>
-                  assignment.status === "assigned" ||
-                  assignment.status === "in_progress",
-              );
-              const name =
-                assignmentNames.get(student.studentId) ?? student.displayName;
+              const cardKey =
+                student.studentId ??
+                student.membershipKey ??
+                `${student.recordType}-${student.displayName}`;
 
               return (
-                <Card className="institution-student-directory-card" key={student.studentId}>
+                <Card className="institution-student-directory-card" key={cardKey}>
                   <div className="institution-student-directory-head">
                     <UserCircleIcon aria-hidden="true" />
                     <div>
-                      <Link
-                        className="institution-student-link"
-                        href={`/institution/students/${encodeURIComponent(
-                          student.studentId,
-                        )}`}
-                      >
-                        {name}
-                      </Link>
+                      {student.studentId ? (
+                        <Link
+                          className="institution-student-link"
+                          href={`/institution/students/${encodeURIComponent(
+                            student.studentId,
+                          )}`}
+                        >
+                          {student.displayName}
+                        </Link>
+                      ) : (
+                        <strong>{student.displayName}</strong>
+                      )}
                       <span>
-                        {student.programName ?? "Program"} · {student.cohortName}
+                        {student.programName ?? "Program"} ·{" "}
+                        {student.cohortName ?? "Pending cohort"}
                       </span>
+                      {student.email ? <small>{student.email}</small> : null}
                     </div>
-                    <StatusBadge tone={student.profileStatus === "active" ? "success" : "neutral"}>
-                      {student.profileStatus ?? "profile"}
+                    <StatusBadge
+                      tone={
+                        student.recordType === "invitation"
+                          ? "warning"
+                          : student.profileStatus === "active"
+                            ? "success"
+                            : "neutral"
+                      }
+                    >
+                      {student.recordType === "invitation"
+                        ? `Invitation ${student.invitationStatus ?? "pending"}`
+                        : (student.profileStatus ?? "profile")}
                     </StatusBadge>
                   </div>
 
                   <div className="institution-student-signal-grid">
                     <div>
+                      <CheckBadgeIcon aria-hidden="true" />
+                      <span>
+                        <strong>{student.verifiedSkillCount}</strong>
+                        <small>Verified Skills</small>
+                      </span>
+                    </div>
+                    <div>
+                      <ClipboardDocumentCheckIcon aria-hidden="true" />
+                      <span>
+                        <strong>
+                          {student.selfAttestedSkillCount +
+                            student.inProgressSkillCount}
+                        </strong>
+                        <small>Self-attested or in review</small>
+                      </span>
+                    </div>
+                    <div>
                       <AcademicCapIcon aria-hidden="true" />
                       <span>
-                        <strong>{studentAssignments.length}</strong>
-                        <small>Employer Training assignments</small>
+                        <strong>
+                          {student.completedTrainingCount}/
+                          {student.employerTrainingCount}
+                        </strong>
+                        <small>Employer Training completed</small>
                       </span>
                     </div>
                     <div>
                       <CheckBadgeIcon aria-hidden="true" />
                       <span>
-                        <strong>{badgeCounts.get(student.studentId) ?? 0}</strong>
+                        <strong>{student.companyBadgeCount}</strong>
                         <small>Active Company Badges</small>
                       </span>
                     </div>
@@ -206,22 +265,22 @@ export default async function InstitutionStudentsPage({
 
                   <div className="institution-student-directory-footer">
                     <span>
-                      {activeTraining
-                        ? `${activeTraining.courseTitle} · ${
-                            activeTraining.status === "assigned"
-                              ? "Not started"
-                              : "In progress"
-                          }`
-                        : "No active Employer Training"}
+                      {student.recordType === "invitation"
+                        ? "Pending Student invitation; canonical profile opens after acceptance."
+                        : `${student.referralCount} referrals · ${student.activeInterviewCount} active interviews · ${student.activePlacementCount} active placements · ${student.openRetentionCaseCount} open retention cases`}
                     </span>
-                    <Link
-                      className="txk-button txk-button-default txk-button-sm"
-                      href={`/institution/students/${encodeURIComponent(
-                        student.studentId,
-                      )}`}
-                    >
-                      Open profile
-                    </Link>
+                    {student.studentId ? (
+                      <Link
+                        className="txk-button txk-button-default txk-button-sm"
+                        href={`/institution/students/${encodeURIComponent(
+                          student.studentId,
+                        )}`}
+                      >
+                        Open profile
+                      </Link>
+                    ) : (
+                      <span className="txk-muted-text">Awaiting acceptance</span>
+                    )}
                   </div>
                 </Card>
               );

@@ -23,10 +23,7 @@ import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav"
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireInstitutionPageContext } from "@/lib/institution/auth";
-import {
-  getInstitutionStudentReadinessEvidence,
-  getInstitutionStudentReadinessSummary,
-} from "@/lib/institution/learning-repository";
+import { getInstitutionStudentProfile } from "@/lib/institution/learning-repository";
 import { institutionAccess } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
@@ -48,13 +45,8 @@ export default async function InstitutionStudentProfilePage({
   const scopeLabel = institutionScopeLabel(context);
 
   let profile;
-  let evidence;
   try {
-    profile = await getInstitutionStudentReadinessSummary(
-      context,
-      decodeURIComponent(studentId),
-    );
-    evidence = await getInstitutionStudentReadinessEvidence(
+    profile = await getInstitutionStudentProfile(
       context,
       decodeURIComponent(studentId),
     );
@@ -63,6 +55,16 @@ export default async function InstitutionStudentProfilePage({
     throw error;
   }
 
+  const evidence = profile.readinessEvidence;
+  const verifiedSkills = profile.technicalSkills.filter(
+    (skill) => skill.evidenceClass === "verified",
+  );
+  const selfAttestedSkills = profile.technicalSkills.filter(
+    (skill) => skill.evidenceClass === "self_attested",
+  );
+  const inProgressSkills = profile.technicalSkills.filter(
+    (skill) => skill.evidenceClass === "in_progress",
+  );
   const activeBadges = evidence.companyBadges.filter(
     (badge) => badge.status === "active",
   ).length;
@@ -74,6 +76,9 @@ export default async function InstitutionStudentProfilePage({
   );
   const activePlacement = profile.placements.find(
     (item) => item.status === "active",
+  );
+  const openRetentionCases = profile.retention.cases.filter((item) =>
+    ["open", "assigned", "contacted", "monitoring"].includes(item.status),
   );
 
   return (
@@ -118,11 +123,57 @@ export default async function InstitutionStudentProfilePage({
           accessLevel={institutionAccess(context, "students")}
         />
 
+        <Card className="institution-learning-connection">
+          <div>
+            <p className="txk-eyebrow">Identity and membership</p>
+            <h2>Canonical Student profile</h2>
+            <p>
+              Accepted Student invitations resolve to this profile and linked
+              user membership. Pending invitations remain visible in the
+              directory until acceptance.
+            </p>
+          </div>
+          <div className="institution-student-signal-grid">
+            <div>
+              <UserGroupIcon aria-hidden="true" />
+              <span>
+                <strong>
+                  {profile.student.invitationStatus ?? "accepted"}
+                </strong>
+                <small>Membership status</small>
+              </span>
+            </div>
+            <div>
+              <DocumentCheckIcon aria-hidden="true" />
+              <span>
+                <strong>
+                  {profile.student.institutionValidationStatus ?? "not set"}
+                </strong>
+                <small>Institution validation</small>
+              </span>
+            </div>
+            <div>
+              <AcademicCapIcon aria-hidden="true" />
+              <span>
+                <strong>
+                  {profile.student.availabilityStatus ?? "availability"}
+                </strong>
+                <small>Availability</small>
+              </span>
+            </div>
+          </div>
+        </Card>
+
         <section className="txk-metric-grid institution-student-profile-metrics">
           <MetricCard
             label="Verified Skills"
-            value={profile.verifiedSkills.length}
+            value={verifiedSkills.length}
             detail="Instructor-authoritative technical evidence"
+          />
+          <MetricCard
+            label="Self-attested"
+            value={selfAttestedSkills.length + inProgressSkills.length}
+            detail="Student-supplied or pending review evidence"
           />
           <MetricCard
             label="Employer Training"
@@ -143,6 +194,11 @@ export default async function InstitutionStudentProfilePage({
               "No active outcome"
             }
           />
+          <MetricCard
+            label="Retention"
+            value={openRetentionCases.length}
+            detail={`${profile.retention.milestones.length} milestones visible`}
+          />
         </section>
 
         <section className="institution-student-profile-grid">
@@ -150,16 +206,16 @@ export default async function InstitutionStudentProfilePage({
             <div className="txk-section-heading">
               <div>
                 <p className="txk-eyebrow">Technical readiness</p>
-                <h2>Instructor Verified Skills</h2>
+                <h2>Verified Skills</h2>
                 <p>
                   These are authoritative technical competency records and are
-                  separate from Employer Training.
+                  separate from self-attested skills and Employer Training.
                 </p>
               </div>
             </div>
-            {profile.verifiedSkills.length ? (
+            {verifiedSkills.length ? (
               <div className="institution-evidence-stack">
-                {profile.verifiedSkills.map((skill) => (
+                {verifiedSkills.map((skill) => (
                   <div className="institution-evidence-compact" key={skill.studentSkillId}>
                     <CheckCircleIcon aria-hidden="true" />
                     <span>
@@ -172,6 +228,9 @@ export default async function InstitutionStudentProfilePage({
                             ).toLocaleDateString()}`
                           : ""}
                       </small>
+                      {skill.verifiedByName ? (
+                        <small>Verified by {skill.verifiedByName}</small>
+                      ) : null}
                     </span>
                     <StatusBadge tone="success">Verified</StatusBadge>
                   </div>
@@ -185,10 +244,59 @@ export default async function InstitutionStudentProfilePage({
           <Card>
             <div className="txk-section-heading">
               <div>
-                <p className="txk-eyebrow">Company readiness</p>
-                <h2>Company Badges</h2>
+                <p className="txk-eyebrow">Student-supplied evidence</p>
+                <h2>Self-attested and in review</h2>
+                <p>
+                  These records remain visibly distinct from Instructor Verified
+                  Skills until reviewed.
+                </p>
               </div>
             </div>
+            {selfAttestedSkills.length || inProgressSkills.length ? (
+              <div className="institution-evidence-stack">
+                {[...selfAttestedSkills, ...inProgressSkills].map((skill) => (
+                  <div className="institution-evidence-compact" key={skill.studentSkillId}>
+                    <DocumentCheckIcon aria-hidden="true" />
+                    <span>
+                      <strong>{skill.name}</strong>
+                      <small>
+                        {skill.category ?? "Skill"} · {skill.provenance.replaceAll("_", " ")}
+                        {skill.selfAttestedAt
+                          ? ` · attested ${new Date(
+                              skill.selfAttestedAt,
+                            ).toLocaleDateString()}`
+                          : ""}
+                      </small>
+                    </span>
+                    <StatusBadge
+                      tone={
+                        skill.evidenceClass === "self_attested"
+                          ? "warning"
+                          : "neutral"
+                      }
+                    >
+                      {skill.status.replaceAll("_", " ")}
+                    </StatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No self-attested skills"
+                description="Student-supplied evidence will appear here before it becomes Instructor Verified."
+              />
+            )}
+          </Card>
+        </section>
+
+        <section className="txk-section">
+          <div className="txk-section-heading">
+            <div>
+              <p className="txk-eyebrow">Company readiness</p>
+              <h2>Company Badges</h2>
+            </div>
+          </div>
+          <Card>
             {evidence.companyBadges.length ? (
               <div className="institution-evidence-stack">
                 {evidence.companyBadges.map((badge) => (
@@ -340,6 +448,38 @@ export default async function InstitutionStudentProfilePage({
             <div className="txk-section-heading">
               <div>
                 <p className="txk-eyebrow">Employer pipeline</p>
+                <h2>Referrals</h2>
+              </div>
+            </div>
+            {profile.referrals.length ? (
+              <div className="institution-evidence-stack">
+                {profile.referrals.map((referral) => (
+                  <div className="institution-evidence-compact" key={referral.referralId}>
+                    <UserGroupIcon aria-hidden="true" />
+                    <span>
+                      <strong>{referral.employerName}</strong>
+                      <small>
+                        {referral.referredAt
+                          ? `Referred ${new Date(
+                              referral.referredAt,
+                            ).toLocaleDateString()}`
+                          : "Referral created"}
+                        {referral.hiringNeedId ? ` · Need ${referral.hiringNeedId}` : ""}
+                      </small>
+                    </span>
+                    <StatusBadge tone="info">{referral.status}</StatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No referrals yet" />
+            )}
+          </Card>
+
+          <Card>
+            <div className="txk-section-heading">
+              <div>
+                <p className="txk-eyebrow">Employer pipeline</p>
                 <h2>Interviews</h2>
               </div>
             </div>
@@ -399,14 +539,130 @@ export default async function InstitutionStudentProfilePage({
           </Card>
         </section>
 
+        <section className="institution-student-profile-grid">
+          <Card>
+            <div className="txk-section-heading">
+              <div>
+                <p className="txk-eyebrow">Retention</p>
+                <h2>Milestones</h2>
+              </div>
+            </div>
+            {profile.retention.milestones.length ? (
+              <div className="institution-evidence-stack">
+                {profile.retention.milestones.map((milestone) => (
+                  <div className="institution-evidence-compact" key={milestone.milestoneId}>
+                    <CheckCircleIcon aria-hidden="true" />
+                    <span>
+                      <strong>
+                        Day {milestone.dayNumber} · {milestone.employerName}
+                      </strong>
+                      <small>
+                        {milestone.roleTitle ?? "Placement"} · scheduled{" "}
+                        {new Date(milestone.scheduledFor).toLocaleDateString()}
+                      </small>
+                    </span>
+                    <StatusBadge
+                      tone={
+                        milestone.status === "responded"
+                          ? "success"
+                          : milestone.status === "failed"
+                            ? "danger"
+                            : "neutral"
+                      }
+                    >
+                      {milestone.status}
+                    </StatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No retention milestones" />
+            )}
+          </Card>
+
+          <Card>
+            <div className="txk-section-heading">
+              <div>
+                <p className="txk-eyebrow">Retention</p>
+                <h2>Cases</h2>
+              </div>
+            </div>
+            {profile.retention.cases.length ? (
+              <div className="institution-evidence-stack">
+                {profile.retention.cases.map((retentionCase) => (
+                  <div className="institution-evidence-compact" key={retentionCase.caseId}>
+                    <DocumentCheckIcon aria-hidden="true" />
+                    <span>
+                      <strong>{retentionCase.employerName}</strong>
+                      <small>
+                        {retentionCase.roleTitle ?? "Placement"} ·{" "}
+                        {retentionCase.severity} severity · opened{" "}
+                        {new Date(retentionCase.openedAt).toLocaleDateString()}
+                      </small>
+                    </span>
+                    <StatusBadge
+                      tone={
+                        retentionCase.status === "resolved"
+                          ? "success"
+                          : retentionCase.status === "cancelled"
+                            ? "neutral"
+                            : "warning"
+                      }
+                    >
+                      {retentionCase.status}
+                    </StatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No retention cases"
+                description="Case notes and raw retention replies are not exposed here."
+              />
+            )}
+          </Card>
+        </section>
+
+        <section className="txk-section institution-learning-connection">
+          <div>
+            <p className="txk-eyebrow">Permitted activity</p>
+            <h2>Activity history</h2>
+            <p>
+              This timeline includes event type, status, and timestamp only;
+              private Employer notes, interview evaluations, and retention
+              response text stay outside the Institution Student profile.
+            </p>
+          </div>
+          <div className="institution-evidence-stack">
+            {profile.activity.length ? (
+              profile.activity.map((activity) => (
+                <div className="institution-evidence-compact" key={`${activity.activityType}-${activity.sourceId}`}>
+                  <BriefcaseIcon aria-hidden="true" />
+                  <span>
+                    <strong>{activity.title}</strong>
+                    <small>
+                      {activity.activityType.replaceAll("_", " ")} ·{" "}
+                      {new Date(activity.occurredAt).toLocaleString()}
+                    </small>
+                  </span>
+                  <StatusBadge tone="neutral">{activity.status}</StatusBadge>
+                </div>
+              ))
+            ) : (
+              <EmptyState title="No permitted activity yet" />
+            )}
+          </div>
+        </section>
+
         <section className="txk-section institution-learning-connection">
           <div>
             <p className="txk-eyebrow">Evidence boundary</p>
             <h2>Readiness signals remain explainable</h2>
             <p>
-              Verified Skills, Employer Training, Company Badges, interviews,
-              and placement outcomes are displayed separately. TXKPRO does not
-              merge them into a hidden employability score.
+              Verified Skills, self-attested skills, Employer Training, Company
+              Badges, referrals, interviews, placements, and retention outcomes
+              are displayed separately. TXKPRO does not merge them into a hidden
+              employability score.
             </p>
           </div>
           <div className="txk-reference-row">

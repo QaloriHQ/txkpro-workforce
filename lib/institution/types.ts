@@ -1,3 +1,5 @@
+import type { StudentReadinessEvidence } from "@/lib/student/readiness";
+
 export type InstitutionLearningScope = {
   scopeType: "institution" | "department" | "program" | "cohort";
   scopeId: string;
@@ -49,6 +51,179 @@ export type InstitutionLearningStudent = {
   graduationDate: string | null;
   profileStatus: string | null;
   canAssign: boolean;
+};
+
+export type InstitutionStudentDirectoryItem = {
+  recordType: "student" | "invitation";
+  studentId: string | null;
+  membershipKey: string | null;
+  userId: string | null;
+  authUserId: string | null;
+  displayName: string;
+  email: string | null;
+  phone: string | null;
+  invitationStatus: string | null;
+  invitationSource: string | null;
+  invitedAt: string | null;
+  acceptedAt: string | null;
+  profileStatus: string | null;
+  availabilityStatus: string | null;
+  programName: string | null;
+  cohortId: string | null;
+  cohortName: string | null;
+  tradeId: string | null;
+  graduationDate: string | null;
+  verifiedSkillCount: number;
+  selfAttestedSkillCount: number;
+  inProgressSkillCount: number;
+  employerTrainingCount: number;
+  completedTrainingCount: number;
+  activeTrainingCount: number;
+  companyBadgeCount: number;
+  referralCount: number;
+  activeInterviewCount: number;
+  placementCount: number;
+  activePlacementCount: number;
+  retentionMilestoneDueCount: number;
+  openRetentionCaseCount: number;
+  lastActivityAt: string | null;
+};
+
+export type InstitutionStudentDirectoryFilters = {
+  query?: string | null;
+  programName?: string | null;
+  cohortId?: string | null;
+  status?: string | null;
+};
+
+export type InstitutionStudentSkillEvidence = {
+  studentSkillId: string;
+  skillId: string;
+  name: string;
+  category: string | null;
+  tradeId: string | null;
+  status: string;
+  provenance: string;
+  evidenceClass: "verified" | "self_attested" | "in_progress";
+  selfAttestedAt: string | null;
+  verifiedAt: string | null;
+  verifiedByName: string | null;
+};
+
+export type InstitutionStudentReferralEvidence = {
+  referralId: string;
+  employerId: string;
+  employerName: string;
+  hiringNeedId: string | null;
+  status: string;
+  referredAt: string | null;
+  deliveredAt: string | null;
+  viewedAt: string | null;
+  closedAt: string | null;
+};
+
+export type InstitutionStudentInterviewEvidence = {
+  interviewRequestId: string;
+  referralId: string | null;
+  hiringNeedId: string | null;
+  employerId: string;
+  employerName: string;
+  roleTitle: string | null;
+  tradeId: string | null;
+  status: string;
+  sentAt: string | null;
+  respondedAt: string | null;
+  scheduledFor: string | null;
+  completedAt: string | null;
+  interviewFormat: string | null;
+};
+
+export type InstitutionStudentPlacementEvidence = {
+  placementId: string;
+  referralId: string | null;
+  interviewRequestId: string | null;
+  hiringNeedId: string | null;
+  employerId: string;
+  employerName: string;
+  roleTitle: string | null;
+  employmentType: string | null;
+  status: string;
+  hireDate: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+
+export type InstitutionStudentRetentionMilestone = {
+  milestoneId: string;
+  placementId: string;
+  employerName: string;
+  roleTitle: string | null;
+  dayNumber: number;
+  scheduledFor: string;
+  status: string;
+  sentAt: string | null;
+  responseReceivedAt: string | null;
+};
+
+export type InstitutionStudentRetentionCase = {
+  caseId: string;
+  placementId: string;
+  milestoneId: string;
+  employerName: string;
+  roleTitle: string | null;
+  severity: string;
+  status: string;
+  openedAt: string;
+  resolvedAt: string | null;
+  resolutionCode: string | null;
+};
+
+export type InstitutionStudentActivityItem = {
+  activityType:
+    | "employer_training"
+    | "referral"
+    | "interview"
+    | "placement"
+    | "retention";
+  title: string;
+  status: string;
+  occurredAt: string;
+  sourceId: string;
+};
+
+export type InstitutionStudentProfile = {
+  student: {
+    studentId: string;
+    userId: string | null;
+    authUserId: string | null;
+    displayName: string;
+    email: string | null;
+    phone: string | null;
+    membershipKey: string | null;
+    invitationStatus: string | null;
+    invitationSource: string | null;
+    acceptedAt: string | null;
+    programName: string | null;
+    cohortId: string | null;
+    cohortName: string | null;
+    tradeId: string | null;
+    graduationDate: string | null;
+    profileStatus: string | null;
+    availabilityStatus: string | null;
+    discoverabilityStatus: string | null;
+    institutionValidationStatus: string | null;
+  };
+  technicalSkills: InstitutionStudentSkillEvidence[];
+  readinessEvidence: StudentReadinessEvidence;
+  employerTraining: InstitutionMicroCertAssignment[];
+  referrals: InstitutionStudentReferralEvidence[];
+  interviews: InstitutionStudentInterviewEvidence[];
+  placements: InstitutionStudentPlacementEvidence[];
+  retention: {
+    milestones: InstitutionStudentRetentionMilestone[];
+    cases: InstitutionStudentRetentionCase[];
+  };
+  activity: InstitutionStudentActivityItem[];
 };
 
 export type InstitutionLearningCourse = {
