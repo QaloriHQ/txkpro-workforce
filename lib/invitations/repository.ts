@@ -1,5 +1,6 @@
 import "server-only";
 
+import { deliverInvitation } from "@/lib/invitations/delivery";
 import { getPublicAppOrigin } from "@/lib/site-url";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
@@ -50,7 +51,7 @@ export async function createInvitation(input: InvitationCreateInput) {
     p_metadata: input.metadata ?? {},
     p_expires_hours: input.expiresHours ?? 168,
   });
-  return withActivationUrl(result);
+  return deliverInvitation(withActivationUrl(result));
 }
 
 export async function createBulkInvitations(inputs: InvitationCreateInput[]) {
@@ -67,9 +68,13 @@ export async function createBulkInvitations(inputs: InvitationCreateInput[]) {
       })),
     },
   );
+  const results: InvitationCreateResult[] = [];
+  for (const item of result.results) {
+    results.push(await deliverInvitation(withActivationUrl(item)));
+  }
   return {
     ...result,
-    results: result.results.map(withActivationUrl),
+    results,
   };
 }
 
@@ -91,7 +96,7 @@ export async function resendInvitation(invitationId: string) {
   const result = await rpc<InvitationCreateResult>("invitation_resend", {
     p_invitation_id: invitationId,
   });
-  return withActivationUrl(result);
+  return deliverInvitation(withActivationUrl(result));
 }
 
 export async function revokeInvitation(invitationId: string, reason?: string | null) {
