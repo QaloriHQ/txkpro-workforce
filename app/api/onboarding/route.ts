@@ -185,7 +185,7 @@ async function provisionStudent(admin: ReturnType<typeof createAdminClient>, acc
     typeof acceptedInvitation.scope_id === "string"
       ? acceptedInvitation.scope_id
       : null;
-  const schoolId = invitedInstitutionId ?? text(data.schoolId, 120) || null;
+  const schoolId = invitedInstitutionId ?? (text(data.schoolId, 120) || null);
   const payload = {
     user_id: account.legacyUserId,
     profile_status: "active",
@@ -193,7 +193,7 @@ async function provisionStudent(admin: ReturnType<typeof createAdminClient>, acc
     first_name_public: text(data.firstName, 100) || account.firstName,
     last_initial_public: (text(data.lastName, 100) || account.lastName).slice(0, 1).toUpperCase(),
     preferred_name: text(data.preferredName, 100) || null,
-    program_type: invitedProgram ?? text(data.programType, 120) || null,
+    program_type: invitedProgram ?? (text(data.programType, 120) || null),
     school_id: schoolId,
     ...(invitedCohortId ? { cohort_id: invitedCohortId } : {}),
     graduation_year: text(data.graduationYear, 8) || null,
