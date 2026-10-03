@@ -64,7 +64,7 @@ The service-only `retention_claim_due_milestones` RPC:
 The Next.js route then:
 
 - skips missing-phone or non-consented messages;
-- sends through Twilio in live mode;
+- sends through the TXKPRO Workforce Twilio Messaging Service in live mode;
 - records the provider message ID and moves the milestone to `sent`;
 - marks failed sends explicitly instead of silently creating fake provider IDs.
 
@@ -150,8 +150,19 @@ CRON_SECRET
 TXKPRO_SMS_MODE=live
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
-TWILIO_FROM_NUMBER
+TWILIO_WORKFORCE_MESSAGING_SERVICE_SID
 TWILIO_INBOUND_WEBHOOK_URL
 ```
 
 The existing GitHub Actions retention scheduler remains the single scheduler for this wave.
+
+
+## A2P campaign boundary
+
+Wave 10 retention SMS belongs to the TXKPRO Workforce transactional messaging program.
+
+- Use a Workforce-specific Twilio Messaging Service attached to the Workforce A2P campaign.
+- Do not reuse the TXK Home Services Messaging Service.
+- Do not send daily engagement or streak reminders through this transactional sender.
+- The public legal pages used for the campaign must identify **Qalori, LLC dba TXKPRO** and must include the SMS opt-in-data no-sharing disclosure.
+- A2P campaign resubmission remains blocked until the exact public Privacy Policy and Terms URLs used in Twilio are verified while logged out.
