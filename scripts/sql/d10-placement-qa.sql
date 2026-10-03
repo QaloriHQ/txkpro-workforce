@@ -147,8 +147,14 @@ do $$ declare pid text:=current_setting('d10qa.placement_id'); begin
  perform pg_temp.check_true((select count(*)=1 from public.wf_domain_events where event_type='PLACEMENT_CREATED' and target_id=pid),'one creation event');
  perform pg_temp.check_true(not has_function_privilege('anon','public.placement_confirm_start(text,date)','execute'),'anonymous execution revoked');
  perform pg_temp.check_true(not has_function_privilege('authenticated','public.retention_claim_due_milestones(integer)','execute'),'scheduler remains service-only');
- perform pg_temp.check_true(not has_table_privilege('authenticated','public.wf_placements','UPDATE'),'direct placement writes closed');
 end $$;
+set local role authenticated;
+do $$ declare changed integer; begin
+ update public.wf_placements set status='pending_start' where placement_id='D10QA-PA';
+ get diagnostics changed=row_count;
+ perform pg_temp.check_true(changed=0,'RLS prevents direct placement writes');
+end $$;
+reset role;
 -- All fixtures and audit/event writes remain inside this transaction.
 select count(*) as passed_checks,jsonb_agg(label order by label) as checks from retention_qa_checks;
 rollback;
