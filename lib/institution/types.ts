@@ -570,3 +570,164 @@ export type InstitutionReferralCreateResult = {
   referralConsent: InstitutionReferralConsent;
   notePolicy: string | null;
 };
+
+export type InstitutionEmployerDirectoryItem = {
+  employerId: string;
+  employerName: string;
+  approvalStatus: string;
+  accountStatus: string;
+  city: string | null;
+  state: string | null;
+  website: string | null;
+  foundingPartnerStatus: string | null;
+  tradeIds: unknown[];
+  hiringNeedCount: number;
+  microCertCount: number;
+  referralCount: number;
+  activeReferralCount: number;
+  placementCount: number;
+  activePlacementCount: number;
+  retentionCaseCount: number;
+  openRetentionCaseCount: number;
+  exposureEventCount: number;
+  lastActivityAt: string | null;
+};
+
+export type InstitutionEmployerHiringNeed = {
+  hiringNeedId: string;
+  title: string;
+  tradeId: string | null;
+  roleType: string | null;
+  targetHires: number;
+  targetHireDate: string | null;
+  workTypes: unknown[];
+  shifts: unknown[];
+  requiredVerifiedSkills: unknown[];
+  optionalVerifiedSkills: unknown[];
+  minimumVerifiedSkillCount: number;
+  requiresDriversLicense: boolean;
+  requiresDrivingRecordAttestation: boolean;
+  requiresBackgroundWillingness: boolean;
+  requiresDrugScreenWillingness: boolean;
+  sharedNotes: string | null;
+  status: string;
+  updatedAt: string | null;
+};
+
+export type InstitutionEmployerMicroCert = {
+  microCertId: string;
+  title: string;
+  description: string | null;
+  microCertVersionId: string;
+  versionNumber: number;
+  status: "ready" | "live";
+  learningObjective: string | null;
+  contentType: string;
+  durationMinutes: number | null;
+  companyBadge: InstitutionCompanyBadgeSummary | null;
+  eligibleStudentCount: number;
+  assignmentCount: number;
+  completedCount: number;
+};
+
+export type InstitutionEmployerReferral = {
+  referralId: string;
+  studentId: string;
+  studentName: string;
+  program: string | null;
+  cohortName: string | null;
+  hiringNeedId: string | null;
+  hiringNeedTitle: string | null;
+  status: InstitutionReferralStatus;
+  referralConsentStatus: string | null;
+  referredAt: string | null;
+  updatedAt: string | null;
+};
+
+export type InstitutionEmployerPlacement = {
+  placementId: string;
+  studentId: string;
+  studentName: string;
+  roleTitle: string | null;
+  tradeId: string | null;
+  employmentType: string | null;
+  status: string;
+  hireDate: string | null;
+  startedAt: string | null;
+};
+
+export type InstitutionEmployerRetentionMilestone = {
+  milestoneId: string;
+  placementId: string;
+  dayNumber: number;
+  status: string;
+  scheduledFor: string;
+  sentAt: string | null;
+  responseReceivedAt: string | null;
+};
+
+export type InstitutionEmployerRetentionCase = {
+  caseId: string;
+  placementId: string;
+  milestoneId: string;
+  severity: string;
+  status: string;
+  summary: string | null;
+  openedAt: string;
+  resolvedAt: string | null;
+  resolutionCode: string | null;
+};
+
+export type InstitutionEmployerExposureEvent = {
+  exposureEventId: string;
+  studentId: string;
+  eventType: string;
+  sourceType: string;
+  sourceId: string | null;
+  microCertId: string | null;
+  assignmentId: string | null;
+  occurredAt: string;
+};
+
+export type InstitutionEmployerDetail = Pick<
+  InstitutionEmployerDirectoryItem,
+  | "employerId"
+  | "employerName"
+  | "approvalStatus"
+  | "accountStatus"
+  | "city"
+  | "state"
+  | "website"
+  | "foundingPartnerStatus"
+  | "tradeIds"
+> & {
+  description: string | null;
+  businessEmail: string | null;
+  businessPhone: string | null;
+  county: string | null;
+  dispatchRadiusMiles: number | null;
+  serviceArea: Record<string, unknown>;
+  hiringRoles: unknown[];
+  annualHiringVolume: number | null;
+  hiringHorizon: string | null;
+  workforceDescription: string | null;
+  talentScopes: Array<{
+    talentScopeId: string;
+    institutionId: string | null;
+    cohortId: string | null;
+    cohortName: string | null;
+    tradeId: string | null;
+    programName: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+  }>;
+  hiringNeeds: InstitutionEmployerHiringNeed[];
+  microCerts: InstitutionEmployerMicroCert[];
+  referrals: InstitutionEmployerReferral[];
+  placements: InstitutionEmployerPlacement[];
+  retention: {
+    milestones: InstitutionEmployerRetentionMilestone[];
+    cases: InstitutionEmployerRetentionCase[];
+  };
+  exposure: InstitutionEmployerExposureEvent[];
+};

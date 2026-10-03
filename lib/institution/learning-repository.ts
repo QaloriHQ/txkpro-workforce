@@ -11,6 +11,8 @@ import type {
   InstitutionAssignmentDetail,
   InstitutionAssignmentFilters,
   InstitutionCompanyBadgeEvidence,
+  InstitutionEmployerDetail,
+  InstitutionEmployerDirectoryItem,
   InstitutionMicroCertAssignment,
   InstitutionReferralCreateContext,
   InstitutionReferralCreateInput,
@@ -221,5 +223,22 @@ export async function createInstitutionReferral(
     p_employer_id: input.employerId,
     p_hiring_need_id: input.hiringNeedId ?? null,
     p_note: input.note ?? null,
+  });
+}
+
+export async function listInstitutionEmployers(context: InstitutionContext) {
+  return rpc<InstitutionEmployerDirectoryItem[]>(
+    "institution_employers_directory",
+    { p_institution_id: context.institutionId },
+  );
+}
+
+export async function getInstitutionEmployerDetail(
+  context: InstitutionContext,
+  employerId: string,
+) {
+  return rpc<InstitutionEmployerDetail>("institution_employer_detail", {
+    p_institution_id: context.institutionId,
+    p_employer_id: employerId,
   });
 }
