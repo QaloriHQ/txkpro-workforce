@@ -22,6 +22,7 @@ export type UserInvitationCreateResult = {
   status: string;
   deliveryStatus: string;
   expiresAt: string;
+  activationPolicy: "auto_activate" | "approval_required";
   recipientExistingIdentity: boolean;
 };
 
@@ -34,6 +35,7 @@ export type UserInvitationSummary = {
   institutionId: string | null;
   employerId: string | null;
   status: string;
+  activationPolicy: "auto_activate" | "approval_required";
   expiresAt: string;
   recipientExistingIdentity: boolean;
   deliveryStatus: string;
@@ -54,6 +56,7 @@ export type UserInvitationRecipient = {
   employerId: string | null;
   organizationName: string;
   status: string;
+  activationPolicy: "auto_activate" | "approval_required";
   expiresAt: string;
   recipientExistingIdentity: boolean;
 };
