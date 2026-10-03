@@ -1,9 +1,13 @@
 import {
   AcademicCapIcon,
+  ArrowPathIcon,
   CheckBadgeIcon,
   ClipboardDocumentCheckIcon,
+  EnvelopeIcon,
   MagnifyingGlassIcon,
+  PaperAirplaneIcon,
   UserCircleIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
@@ -37,6 +41,7 @@ type RouteContext = {
     program?: string;
     cohort?: string;
     status?: string;
+    invite?: string;
   }>;
 };
 
@@ -56,6 +61,15 @@ export default async function InstitutionStudentsPage({
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
+  const canInviteStudents = context.roles.some((candidate) =>
+    [
+      "institution_super_admin",
+      "institution_admin",
+      "department_head",
+      "program_coordinator",
+    ].includes(candidate.toLowerCase()),
+  );
+  const assignableCohorts = learning.cohorts.filter((cohort) => cohort.canAssign);
 
   const activeRoster = students.filter(
     (student) => student.recordType === "student",
@@ -103,6 +117,101 @@ export default async function InstitutionStudentsPage({
           accessLevel={institutionAccess(context, "students")}
         />
 
+        {query.invite ? (
+          <Card>
+            <p
+              className={query.invite === "error" ? "form-error" : "muted"}
+              role={query.invite === "error" ? "alert" : "status"}
+            >
+              {query.invite === "sent"
+                ? "Student invitation sent."
+                : query.invite === "resent"
+                  ? "Student invitation resent with a new expiration."
+                  : query.invite === "revoke"
+                    ? "Student invitation revoked."
+                    : query.invite === "cancel"
+                      ? "Student invitation cancelled."
+                      : "The invitation action could not be completed. Review the scope and try again."}
+            </p>
+          </Card>
+        ) : null}
+
+        {canInviteStudents ? (
+          <Card>
+            <div className="institution-student-directory-head">
+              <EnvelopeIcon aria-hidden="true" />
+              <div>
+                <h2>Invite a Student</h2>
+                <p className="muted">
+                  Invitations are tied to a Cohort in your authorized scope. The
+                  role is activated only after the invited email accepts.
+                </p>
+              </div>
+            </div>
+            {assignableCohorts.length ? (
+              <form
+                className="institution-student-directory-filters"
+                action="/api/invitations"
+                method="post"
+              >
+                <input type="hidden" name="role" value="student" />
+                <input type="hidden" name="scopeType" value="cohort" />
+                <input
+                  type="hidden"
+                  name="institutionId"
+                  value={context.institutionId}
+                />
+                <input type="hidden" name="source" value="individual" />
+                <input
+                  type="hidden"
+                  name="returnTo"
+                  value="/institution/students"
+                />
+                <label className="institution-filter-search">
+                  <span>Student email</span>
+                  <div>
+                    <EnvelopeIcon aria-hidden="true" />
+                    <input
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="student@example.edu"
+                    />
+                  </div>
+                </label>
+                <label>
+                  <span>Cohort</span>
+                  <select name="scopeId" required defaultValue="">
+                    <option value="" disabled>
+                      Select a Cohort
+                    </option>
+                    {assignableCohorts.map((cohort) => (
+                      <option key={cohort.cohortId} value={cohort.cohortId}>
+                        {cohort.name}
+                        {cohort.programName ? ` · ${cohort.programName}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="txk-button txk-button-primary txk-button-md"
+                  type="submit"
+                >
+                  <PaperAirplaneIcon aria-hidden="true" />
+                  Send invitation
+                </button>
+              </form>
+            ) : (
+              <p className="muted">
+                Create or activate a Cohort in your authorized scope before
+                inviting Students.{" "}
+                <Link href="/institution/programs">Open Programs &amp; Cohorts</Link>
+              </p>
+            )}
+          </Card>
+        ) : null}
+
         <section className="txk-metric-grid institution-student-profile-metrics">
           <MetricCard
             label="Roster Students"
@@ -112,7 +221,7 @@ export default async function InstitutionStudentsPage({
           <MetricCard
             label="Pending invitations"
             value={pendingInvitations}
-            detail="Student memberships not yet accepted"
+            detail="Canonical invitations awaiting acceptance"
           />
           <MetricCard
             label="Verified Skills"
@@ -187,6 +296,10 @@ export default async function InstitutionStudentsPage({
                 student.studentId ??
                 student.membershipKey ??
                 `${student.recordType}-${student.displayName}`;
+              const invitationId =
+                student.invitationSource?.startsWith("user_invitation:")
+                  ? student.invitationSource.slice("user_invitation:".length)
+                  : null;
 
               return (
                 <Card className="institution-student-directory-card" key={cardKey}>
@@ -278,6 +391,49 @@ export default async function InstitutionStudentsPage({
                       >
                         Open profile
                       </Link>
+                    ) : invitationId ? (
+                      <div className="header-actions">
+                        <form
+                          action={`/api/invitations/${encodeURIComponent(
+                            invitationId,
+                          )}`}
+                          method="post"
+                        >
+                          <input type="hidden" name="action" value="resend" />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value="/institution/students"
+                          />
+                          <button
+                            className="txk-button txk-button-default txk-button-sm"
+                            type="submit"
+                          >
+                            <ArrowPathIcon aria-hidden="true" />
+                            Resend
+                          </button>
+                        </form>
+                        <form
+                          action={`/api/invitations/${encodeURIComponent(
+                            invitationId,
+                          )}`}
+                          method="post"
+                        >
+                          <input type="hidden" name="action" value="revoke" />
+                          <input
+                            type="hidden"
+                            name="returnTo"
+                            value="/institution/students"
+                          />
+                          <button
+                            className="txk-button txk-button-default txk-button-sm"
+                            type="submit"
+                          >
+                            <XMarkIcon aria-hidden="true" />
+                            Revoke
+                          </button>
+                        </form>
+                      </div>
                     ) : (
                       <span className="txk-muted-text">Awaiting acceptance</span>
                     )}
