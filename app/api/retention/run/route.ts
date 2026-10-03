@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         `TXKPRO Day ${claim.day_number} check-in: How is the job going? ` +
         "Reply 1 = Going well, 2 = Okay, 3 = I need help. Reply STOP to opt out.";
 
-      const sms = await sendSms(claim.recipient_phone, body);
+      const sms = await sendSms(claim.recipient_phone, body, "retention");
       const { error: sentError } = await admin.rpc(
         "retention_mark_message_sent",
         {
