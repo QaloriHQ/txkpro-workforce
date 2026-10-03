@@ -1,12 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createBrowserSupabaseClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginContent() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -45,7 +48,11 @@ export default function LoginPage() {
       );
       return;
     }
-    window.location.replace(result.destination);
+    window.location.replace(
+      next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : result.destination,
+    );
   }
 
   async function sendSignInCode() {
@@ -107,7 +114,11 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.replace(result.destination);
+    window.location.replace(
+      next && next.startsWith("/") && !next.startsWith("//")
+        ? next
+        : result.destination,
+    );
   }
 
   return (
@@ -164,8 +175,21 @@ export default function LoginPage() {
           </div>
         ) : null}
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
-        <p className="footer-note">New to TXKPRO Workforce? <Link href="/signup"><strong>Create an account</strong></Link>.</p>
+        <p className="footer-note">
+          New to TXKPRO Workforce?{" "}
+          <Link href={next?.startsWith("/activate/") ? `/signup?invite=${encodeURIComponent(next.replace("/activate/", ""))}` : "/signup"}>
+            <strong>Create an account</strong>
+          </Link>.
+        </p>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

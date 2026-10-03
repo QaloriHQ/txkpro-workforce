@@ -23,7 +23,8 @@ type EmployerSection =
   | "interviews"
   | "pipeline"
   | "placements"
-  | "learning";
+  | "learning"
+  | "team";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -100,6 +101,12 @@ const groups: NavGroup[] = [
         href: "/employer/learning",
         label: "Employer Learning",
         icon: AcademicCapIcon,
+      },
+      {
+        key: "team",
+        href: "/employer/team",
+        label: "Team",
+        icon: UserGroupIcon,
       },
     ],
   },
