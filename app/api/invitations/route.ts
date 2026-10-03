@@ -5,6 +5,8 @@ import {
   listInvitations,
 } from "@/lib/invitations/repository";
 
+const MAX_BULK_INVITATIONS = 100;
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -24,6 +26,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     if (Array.isArray(body.invitations)) {
+      if (body.invitations.length === 0) {
+        return Response.json(
+          { error: "At least one invitation is required." },
+          { status: 400 },
+        );
+      }
+      if (body.invitations.length > MAX_BULK_INVITATIONS) {
+        return Response.json(
+          {
+            error: `Bulk invitation requests are limited to ${MAX_BULK_INVITATIONS} rows.`,
+          },
+          { status: 400 },
+        );
+      }
       const result = await createBulkInvitations(body.invitations);
       return Response.json(result);
     }
