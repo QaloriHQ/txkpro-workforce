@@ -156,8 +156,8 @@ export default async function InstitutionReferralDetailPage({
           />
           <MetricCard
             label="Placements"
-            value={referral.placements.length}
-            detail="Canonical placement state"
+            value={referral.placements.filter(p => p.officialPlacement).length}
+            detail="Confirmed employment starts; scheduled starts shown below"
           />
         </section>
 

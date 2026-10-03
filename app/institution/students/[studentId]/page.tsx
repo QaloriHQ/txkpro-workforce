@@ -1,3 +1,4 @@
+import { ConfirmStartForm } from "@/components/placements/confirm-start-form";
 import {
   AcademicCapIcon,
   ArrowLeftIcon,
@@ -75,7 +76,7 @@ export default async function InstitutionStudentProfilePage({
     ["sent", "accepted", "scheduled"].includes(item.status),
   );
   const activePlacement = profile.placements.find(
-    (item) => item.status === "active",
+    (item) => item.status === "active" && item.officialPlacement,
   );
   const openRetentionCases = profile.retention.cases.filter((item) =>
     ["open", "assigned", "contacted", "monitoring"].includes(item.status),
@@ -530,6 +531,8 @@ export default async function InstitutionStudentProfilePage({
                     <StatusBadge tone={placement.status === "active" ? "success" : "neutral"}>
                       {placement.status}
                     </StatusBadge>
+                  <small>{placement.officialPlacement ? `Employment started ${placement.employmentStartDate}` : "Start confirmation required"}</small>
+                  {placement.canConfirmStart && !placement.startConfirmedAt ? <ConfirmStartForm placementId={placement.placementId} scheduledStartDate={placement.hireDate} /> : null}
                   </div>
                 ))}
               </div>

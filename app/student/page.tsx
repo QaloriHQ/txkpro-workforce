@@ -130,7 +130,8 @@ export default async function StudentWorkspacePage() {
                 <span>{placement.employerName}</span>
                 <strong style={{ fontSize: 22 }}>{placement.roleTitle}</strong>
                 <small>
-                  {placement.status.replaceAll("_", " ")} · Start {placement.hireDate}
+                  {placement.status.replaceAll("_", " ")} · Scheduled start {placement.hireDate}
+                  <br />{placement.officialPlacement ? `Employment start confirmed: ${placement.employmentStartDate}` : "Employment start confirmation required"}
                 </small>
               </div>
             ))}

@@ -1,3 +1,4 @@
+import { ConfirmStartForm } from "@/components/placements/confirm-start-form";
 import {
   AcademicCapIcon,
   ArrowLeftIcon,
@@ -344,6 +345,8 @@ export default async function InstitutionEmployerDetailPage({
                   <StatusBadge tone={statusTone(placement.status)}>
                     {pretty(placement.status)}
                   </StatusBadge>
+                  <small>{placement.officialPlacement ? `Employment started ${placement.employmentStartDate}` : "Start confirmation required"}</small>
+                  {placement.canConfirmStart && !placement.startConfirmedAt ? <ConfirmStartForm placementId={placement.placementId} scheduledStartDate={placement.hireDate} /> : null}
                 </div>
               ))}
               {!employer.placements.length ? (

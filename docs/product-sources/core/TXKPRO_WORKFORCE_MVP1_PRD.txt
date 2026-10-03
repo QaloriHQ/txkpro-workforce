@@ -329,6 +329,7 @@ FR-PLC-002 Store student, employer, role/trade, hire date, employment type, sour
 FR-PLC-003 Hire triggers retention milestones.
 FR-PLC-004 Institution sees aggregate outcomes.
 FR-PLC-005 Employment-state changes are audited.
+FR-PLC-006 D-10: Record hire creates pending_start regardless of scheduled date. Explicit authorized actual-start confirmation is required for official placement counts. Retention responses do not change placement status.
 
 8.10 30/60/90-DAY RETENTION PULSE
 
@@ -615,7 +616,7 @@ Mitigation: validate before publication.
 7. Which institution roles may export reports?
 8. Who authors daily safety questions?
 9. What content is allowed in referral notes?
-10. What exact status qualifies as official “placement”?
+10. RESOLVED D-10 (owner-approved 2026-10-03): Official placement requires an authorized Employer or permitted workforce operator confirming the Student started employment. Scheduled starts remain pending_start; retention milestones remain separate. See docs/D10_OFFICIAL_PLACEMENT.md.
 
 19. BACKLOG PRIORITY
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
+import { ConfirmStartForm } from "@/components/placements/confirm-start-form";
 import { PlacementStatusActions } from "@/components/employer/placement-status-actions";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -53,15 +54,17 @@ export default async function PlacementDetailPage({ params }: RouteContext) {
             <h2>Employment outcome</h2>
             <div className="readiness-list" style={{ marginTop: 16 }}>
               <div className="readiness-row"><span>Placement ID</span><strong>{placement.placementId}</strong></div>
-              <div className="readiness-row"><span>Start date</span><strong>{placement.hireDate}</strong></div>
+              <div className="readiness-row"><span>Scheduled start date</span><strong>{placement.hireDate}</strong></div>
               <div className="readiness-row"><span>Employment type</span><strong>{placement.employmentType ?? "—"}</strong></div>
               <div className="readiness-row"><span>Status</span><strong>{placement.status.replaceAll("_", " ")}</strong></div>
-              {placement.startedAt ? <div className="readiness-row"><span>Activated</span><strong>{new Date(placement.startedAt).toLocaleString()}</strong></div> : null}
+              <div className="readiness-row"><span>Official placement</span><strong>{placement.officialPlacement ? "Confirmed" : "Start confirmation required"}</strong></div>
+              {placement.startConfirmedAt ? <div className="readiness-row"><span>Employment started</span><strong>{placement.employmentStartDate} · confirmed {new Date(placement.startConfirmedAt).toLocaleString()}</strong></div> : null}
               {placement.endedAt ? <div className="readiness-row"><span>Ended</span><strong>{new Date(placement.endedAt).toLocaleString()}</strong></div> : null}
               {placement.endReason ? <div className="readiness-row"><span>End reason</span><strong>{placement.endReason}</strong></div> : null}
             </div>
             {context.role !== "employer_read_only" ? (
               <div style={{ marginTop: 18 }}>
+                {placement.canConfirmStart && !placement.startConfirmedAt ? <ConfirmStartForm placementId={placement.placementId} scheduledStartDate={placement.hireDate} /> : null}
                 <PlacementStatusActions placementId={placement.placementId} status={placement.status} />
               </div>
             ) : null}
@@ -95,7 +98,7 @@ export default async function PlacementDetailPage({ params }: RouteContext) {
           <div className="card-header">
             <div>
               <h2>Day 30 / 60 / 90 retention milestones</h2>
-              <p className="card-sub">Exactly three milestone templates are created when a hire is recorded.</p>
+              <p className="card-sub">Three templates are created when a hire is recorded. Unsent dates are anchored to the confirmed employment start. Check-ins require confirmed active employment; milestone status never changes placement status.</p>
             </div>
             <span className={`pill ${placement.milestones.length === 3 ? "pill-good" : "pill-warn"}`}>
               {placement.milestones.length} milestones

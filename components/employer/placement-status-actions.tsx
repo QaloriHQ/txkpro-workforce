@@ -1,7 +1,7 @@
 "use client";
-
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { WorkspaceForm } from "@/components/design-system/action-modal";
 
 export function PlacementStatusActions({
   placementId,
@@ -12,39 +12,66 @@ export function PlacementStatusActions({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-
-  async function update(nextStatus: "active" | "ended") {
+  const [message, setMessage] = useState("");
+  async function end(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (busy) return;
-    let endReason: string | null = null;
-    if (nextStatus === "ended") {
-      if (!window.confirm("End this placement? Historical Interview, Referral, and retention records will be preserved.")) return;
-      endReason = window.prompt("Optional end reason")?.trim() || null;
-    }
+    const endReason =
+      String(new FormData(event.currentTarget).get("endReason") ?? "").trim() ||
+      null;
     setBusy(true);
-    const response = await fetch(
-      `/api/placements/${encodeURIComponent(placementId)}`,
-      {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status: nextStatus, endReason }),
-      },
-    );
-    setBusy(false);
-    if (response.ok) router.refresh();
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/placements/${encodeURIComponent(placementId)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ status: "ended", endReason }),
+        },
+      );
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setMessage(
+          typeof body.error === "string"
+            ? body.error
+            : "Unable to end placement.",
+        );
+        return;
+      }
+      setMessage(
+        "Placement ended. Employment and retention history preserved.",
+      );
+      router.refresh();
+    } catch {
+      setMessage("Connection interrupted. Please retry.");
+    } finally {
+      setBusy(false);
+    }
   }
-
   if (status === "ended" || status === "unknown") return null;
-
   return (
-    <div className="hero-actions" style={{ marginTop: 0 }}>
-      {status === "pending_start" ? (
-        <button className="button button-brand" type="button" onClick={() => update("active")} disabled={busy}>
-          {busy ? "Updating…" : "Mark Active"}
-        </button>
-      ) : null}
-      <button className="button button-ghost" type="button" onClick={() => update("ended")} disabled={busy}>
-        {busy ? "Updating…" : "End Placement"}
+    <WorkspaceForm
+      modalTitle="End placement"
+      busy={busy}
+      onSubmit={end}
+      className="form-stack"
+    >
+      <p>
+        End this placement and cancel unsent retention check-ins. Interview,
+        Referral, and delivered retention history will be preserved.
+      </p>
+      <label>
+        <span>End reason (optional)</span>
+        <textarea className="textarea" name="endReason" maxLength={500} />
+      </label>
+      <label>
+        <input type="checkbox" required /> I confirm this placement should end.
+      </label>
+      <button className="button button-ghost" type="submit" disabled={busy}>
+        {busy ? "Ending…" : "End placement"}
       </button>
-    </div>
+      {message ? <p role="status">{message}</p> : null}
+    </WorkspaceForm>
   );
 }

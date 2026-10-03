@@ -338,6 +338,11 @@ export type RetentionMilestone = {
 };
 
 export type PlacementSummary = {
+  employmentStartDate?: string | null;
+  startConfirmedAt?: string | null;
+  officialPlacement?: boolean;
+  canConfirmStart?: boolean;
+
   placementId: string;
   studentId: string;
   studentName: string;

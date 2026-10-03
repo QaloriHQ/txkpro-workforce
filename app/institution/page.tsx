@@ -159,9 +159,9 @@ export default async function InstitutionDashboardPage() {
               href="/institution/referrals"
             />
             <MetricCard
-              label="Hires"
+              label="Official placements"
               value={summary.totalHires}
-              detail={`${summary.activePlacements} active placements`}
+              detail={`${summary.activePlacements} active · ${summary.pendingStarts ?? 0} pending starts`}
               href="/institution/placements"
             />
             <MetricCard

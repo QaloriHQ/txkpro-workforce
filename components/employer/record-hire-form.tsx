@@ -55,7 +55,7 @@ export function RecordHireForm({
     <WorkspaceForm modalTitle="Record hire" busy={Boolean(busy)} onSubmit={submit} className="form-stack">
       <div className="callout">
         <strong>Human hiring decision</strong>
-        Recording a hire creates the Placement outcome and exactly three retention milestones: Day 30, Day 60, and Day 90.
+        Recording a hire creates a pending start and three retention templates. Confirm that employment started before it counts as an official placement. Retention dates follow the confirmed start date.
       </div>
       <label>
         <span>Role title</span>
@@ -66,7 +66,7 @@ export function RecordHireForm({
         <input className="input" name="tradeId" defaultValue={defaultTradeId ?? ""} maxLength={120} />
       </label>
       <label>
-        <span>Hire / start date</span>
+        <span>Scheduled start date</span>
         <input className="input" name="hireDate" type="date" required />
       </label>
       <label>
