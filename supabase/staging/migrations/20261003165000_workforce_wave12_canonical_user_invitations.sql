@@ -59,12 +59,15 @@ create table if not exists public.wf_user_invitations (
 
 create unique index if not exists wf_user_invitations_open_semantic_key
   on public.wf_user_invitations(
-    email_normalized,role,scope_type,coalesce(scope_id,'')
+    email_normalized,role,scope_type,coalesce(scope_id,''),
+    coalesce(institution_id,''),coalesce(employer_id,'')
   )
   where status='pending';
 
 create unique index if not exists wf_user_invitations_idempotency_key
-  on public.wf_user_invitations(idempotency_key)
+  on public.wf_user_invitations(
+    idempotency_key,coalesce(institution_id,''),coalesce(employer_id,'')
+  )
   where idempotency_key is not null;
 
 create index if not exists wf_user_invitations_institution_status_idx
@@ -308,6 +311,8 @@ begin
     select * into v_existing
     from public.wf_user_invitations
     where idempotency_key=nullif(btrim(p_idempotency_key),'')
+      and coalesce(institution_id,'')=coalesce(p_institution_id,'')
+      and coalesce(employer_id,'')=coalesce(p_employer_id,'')
     limit 1;
     if found then
       if not security.user_invitation_actor_can_manage(
@@ -334,6 +339,8 @@ begin
     and role=v_role
     and scope_type=v_scope_type
     and coalesce(scope_id,'')=coalesce(v_scope_id,'')
+    and coalesce(institution_id,'')=coalesce(p_institution_id,'')
+    and coalesce(employer_id,'')=coalesce(p_employer_id,'')
     and status='pending'
   order by created_at desc
   limit 1;
