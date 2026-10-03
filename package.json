@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "wave11:qa": "node --test scripts/wave11-config-qa.mjs",
+    "wave12:qa": "node --test scripts/wave12-role-authorization-qa.mjs",
     "auth:check": "node --env-file-if-exists=.env.local scripts/check-auth-config.mjs",
     "wave7:smoke": "node --env-file-if-exists=.env.local scripts/wave7-smoke.mjs",
     "wave8:smoke": "node --env-file-if-exists=.env.local scripts/wave8-smoke.mjs",

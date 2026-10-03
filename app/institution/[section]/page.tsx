@@ -37,6 +37,7 @@ import {
 } from "@/lib/institution/learning-repository";
 import {
   institutionAccess,
+  institutionAuthoritySummary,
   type InstitutionCapability,
 } from "@/lib/institution/policy";
 import {
@@ -156,6 +157,7 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
+  const authority = institutionAuthoritySummary(context);
 
   const employers = new Map<string, string>();
   for (const course of learning.courses) {
@@ -175,6 +177,7 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           roles={context.roles}
+          scopes={context.scopes}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -193,6 +196,8 @@ export default async function InstitutionSectionPage({ params }: RouteContext) {
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           accessLevel={institutionAccess(context, config.capability)}
+          capabilityCount={authority.capabilityCount}
+          managementCapabilityCount={authority.managementCapabilityCount}
         />
 
         {section === "programs" ? (

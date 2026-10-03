@@ -63,6 +63,7 @@ export default async function InstitutionCompanyBadgesPage() {
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           roles={context.roles}
+          scopes={context.scopes}
         />
         <div className="header-actions">
           <ThemeToggle />

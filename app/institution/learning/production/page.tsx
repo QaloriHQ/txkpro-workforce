@@ -24,7 +24,7 @@ export default async function InstitutionProductionPage() {
       <Brand />
       <InstitutionWorkspaceNav active="learning" institutionName={context.institutionName}
         roleLabel={role.label} scopeLabel={institutionScopeLabel(context)}
-        roles={context.roles} />
+        roles={context.roles} scopes={context.scopes} />
       <div className="header-actions"><ThemeToggle /><SignOutButton /></div>
     </header>
     <main className="page-wrap txk-prototype-content">

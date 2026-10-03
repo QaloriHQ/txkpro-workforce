@@ -86,6 +86,7 @@ export default async function InstitutionStudentProfilePage({
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           roles={context.roles}
+          scopes={context.scopes}
         />
         <div className="header-actions">
           <ThemeToggle />

@@ -1,5 +1,8 @@
 import type { InstitutionContext } from "@/lib/institution/types";
-import { primaryInstitutionRolePolicy } from "@/lib/institution/policy";
+import {
+  institutionAuthoritySummary,
+  primaryInstitutionRolePolicy,
+} from "@/lib/institution/policy";
 
 export function primaryInstitutionRole(context: InstitutionContext) {
   const policy = primaryInstitutionRolePolicy(context);
@@ -33,4 +36,13 @@ export function institutionScopeLabel(context: InstitutionContext) {
   }
 
   return "Scoped access";
+}
+
+export function institutionAuthorityLabel(context: InstitutionContext) {
+  const summary = institutionAuthoritySummary(context);
+  const roleText = summary.roles.length ? summary.roles.join(", ") : "No active role";
+  const scopeText = summary.scopeTypes.length
+    ? summary.scopeTypes.join(" / ")
+    : "no scope";
+  return `${roleText} · ${scopeText}`;
 }

@@ -8,10 +8,14 @@ export function InstitutionRoleContext({
   roleLabel,
   scopeLabel,
   accessLevel,
+  capabilityCount,
+  managementCapabilityCount,
 }: {
   roleLabel: string;
   scopeLabel: string;
   accessLevel: InstitutionAccessLevel;
+  capabilityCount?: number;
+  managementCapabilityCount?: number;
 }) {
   const canAct = !["read", "none"].includes(accessLevel);
   const Icon = canAct ? PencilSquareIcon : EyeIcon;
@@ -20,7 +24,15 @@ export function InstitutionRoleContext({
       <Icon aria-hidden="true" />
       <span>
         <strong>{roleLabel}</strong>
-        <small>{scopeLabel} · {institutionAccessLabel(accessLevel)}</small>
+        <small>
+          {scopeLabel} · {institutionAccessLabel(accessLevel)}
+          {typeof capabilityCount === "number"
+            ? ` · ${capabilityCount} views`
+            : ""}
+          {typeof managementCapabilityCount === "number"
+            ? ` · ${managementCapabilityCount} action scopes`
+            : ""}
+        </small>
       </span>
     </div>
   );
