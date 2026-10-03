@@ -23,6 +23,7 @@ import {
 } from "@heroicons/react/24/outline";
 import {
   institutionCanView,
+  type InstitutionPolicyContext,
   type InstitutionCapability,
 } from "@/lib/institution/policy";
 
@@ -100,14 +101,17 @@ export function InstitutionWorkspaceNav({
   roleLabel,
   scopeLabel,
   roles,
+  scopes,
 }: {
   active?: InstitutionSection;
   institutionName: string;
   roleLabel?: string;
   scopeLabel?: string;
   roles: string[];
+  scopes: InstitutionPolicyContext["scopes"];
 }) {
   const [open, setOpen] = useState(false);
+  const policyContext = { roles, scopes };
 
   return (
     <>
@@ -168,7 +172,7 @@ export function InstitutionWorkspaceNav({
         <div className="institution-sidebar-links">
           {groups.map((group) => {
             const items = group.items.filter((item) =>
-              institutionCanView({ roles }, item.capability),
+              institutionCanView(policyContext, item.capability),
             );
             if (!items.length) return null;
             return (

@@ -1,5 +1,3 @@
-import type { InstitutionContext } from "@/lib/institution/types";
-
 export const INSTITUTION_ROLES = [
   "institution_super_admin",
   "institution_admin",
@@ -39,10 +37,27 @@ export type InstitutionAccessLevel =
   | "read"
   | "none";
 
+export type InstitutionPolicyContext = {
+  roles: string[];
+  scopes?: Array<{
+    scopeType: string;
+    scopeId: string | null;
+    role: string;
+  }>;
+};
+
 type RolePolicy = {
   label: string;
   priority: number;
   capabilities: Record<InstitutionCapability, InstitutionAccessLevel>;
+};
+
+export type InstitutionCapabilityProfile = {
+  capability: InstitutionCapability;
+  access: InstitutionAccessLevel;
+  canView: boolean;
+  canManage: boolean;
+  label: string;
 };
 
 const full = "full" as const;
@@ -144,6 +159,24 @@ const ACCESS_PRIORITY: Record<InstitutionAccessLevel, number> = {
   full: 5,
 };
 
+export const INSTITUTION_CAPABILITY_LABELS: Record<InstitutionCapability, string> = {
+  dashboard: "Dashboard",
+  students: "Students",
+  programs: "Programs & Cohorts",
+  readiness: "Readiness",
+  learning: "Employer Training",
+  assignments: "Assignments",
+  badges: "Company Badges",
+  employers: "Employers",
+  referrals: "Referrals",
+  placements: "Placements",
+  retention: "Retention",
+  reports: "Reports",
+  team: "Team & Permissions",
+  audit: "Audit",
+  settings: "Settings",
+};
+
 export function canonicalInstitutionRole(role: string): InstitutionRole | null {
   const normalized = role.trim().toLowerCase();
   if (normalized === "educator" || normalized === "institution") {
@@ -154,14 +187,14 @@ export function canonicalInstitutionRole(role: string): InstitutionRole | null {
     : null;
 }
 
-export function institutionRoles(context: Pick<InstitutionContext, "roles">) {
+export function institutionRoles(context: InstitutionPolicyContext) {
   return [...new Set(context.roles.map(canonicalInstitutionRole).filter(
     (role): role is InstitutionRole => Boolean(role),
   ))];
 }
 
 export function primaryInstitutionRolePolicy(
-  context: Pick<InstitutionContext, "roles">,
+  context: InstitutionPolicyContext,
 ) {
   const role = institutionRoles(context).sort(
     (a, b) =>
@@ -172,7 +205,7 @@ export function primaryInstitutionRolePolicy(
 }
 
 export function institutionAccess(
-  context: Pick<InstitutionContext, "roles">,
+  context: InstitutionPolicyContext,
   capability: InstitutionCapability,
 ): InstitutionAccessLevel {
   return institutionRoles(context).reduce<InstitutionAccessLevel>(
@@ -187,19 +220,75 @@ export function institutionAccess(
 }
 
 export function institutionCanView(
-  context: Pick<InstitutionContext, "roles">,
+  context: InstitutionPolicyContext,
   capability: InstitutionCapability,
 ) {
-  return institutionAccess(context, capability) !== "none";
+  return institutionHasServerScope(context) &&
+    institutionAccess(context, capability) !== "none";
 }
 
 export function institutionCanManage(
-  context: Pick<InstitutionContext, "roles">,
+  context: InstitutionPolicyContext,
   capability: InstitutionCapability,
 ) {
-  return ["full", "scoped", "limited", "prepare", "draft"].includes(
+  return institutionHasServerScope(context) && ["full", "scoped", "limited", "prepare", "draft"].includes(
     institutionAccess(context, capability),
   );
+}
+
+export function institutionHasServerScope(context: InstitutionPolicyContext) {
+  return !context.scopes || context.scopes.some(
+    (scope) =>
+      Boolean(scope.scopeId) &&
+      Boolean(canonicalInstitutionRole(scope.role)) &&
+      ["institution", "department", "program", "cohort"].includes(
+        scope.scopeType.toLowerCase(),
+      ),
+  );
+}
+
+export function institutionScopeTypes(context: InstitutionPolicyContext) {
+  return [...new Set((context.scopes ?? []).map((scope) => scope.scopeType.toLowerCase()))]
+    .filter((scopeType) =>
+      ["institution", "department", "program", "cohort"].includes(scopeType),
+    )
+    .sort();
+}
+
+export function institutionCapabilityProfile(
+  context: InstitutionPolicyContext,
+  capability: InstitutionCapability,
+): InstitutionCapabilityProfile {
+  const access = institutionAccess(context, capability);
+  return {
+    capability,
+    access,
+    canView: institutionCanView(context, capability),
+    canManage: institutionCanManage(context, capability),
+    label: INSTITUTION_CAPABILITY_LABELS[capability],
+  };
+}
+
+export function institutionCapabilityProfiles(context: InstitutionPolicyContext) {
+  return (Object.keys(INSTITUTION_CAPABILITY_LABELS) as InstitutionCapability[])
+    .map((capability) => institutionCapabilityProfile(context, capability));
+}
+
+export function institutionAuthoritySummary(context: InstitutionPolicyContext) {
+  const roleLabels = institutionRoles(context).map(
+    (role) => INSTITUTION_ROLE_POLICIES[role].label,
+  );
+  const scopeTypes = institutionScopeTypes(context);
+  return {
+    roles: roleLabels,
+    scopeTypes,
+    capabilityCount: institutionCapabilityProfiles(context).filter(
+      (profile) => profile.canView,
+    ).length,
+    managementCapabilityCount: institutionCapabilityProfiles(context).filter(
+      (profile) => profile.canManage,
+    ).length,
+  };
 }
 
 export function institutionAccessLabel(access: InstitutionAccessLevel) {

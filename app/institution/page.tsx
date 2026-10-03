@@ -28,6 +28,7 @@ import {
   listInstitutionMicroCertAssignments,
 } from "@/lib/institution/learning-repository";
 import { institutionAccess } from "@/lib/institution/policy";
+import { institutionAuthoritySummary } from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -47,6 +48,7 @@ export default async function InstitutionDashboardPage() {
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
+  const authority = institutionAuthoritySummary(context);
 
   const attentionCount =
     summary.notStartedAssignments +
@@ -65,6 +67,7 @@ export default async function InstitutionDashboardPage() {
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           roles={context.roles}
+          scopes={context.scopes}
         />
         <div className="header-actions">
           <ThemeToggle />
@@ -89,6 +92,8 @@ export default async function InstitutionDashboardPage() {
           roleLabel={role.label}
           scopeLabel={scopeLabel}
           accessLevel={institutionAccess(context, "dashboard")}
+          capabilityCount={authority.capabilityCount}
+          managementCapabilityCount={authority.managementCapabilityCount}
         />
 
         <section className="txk-section">
