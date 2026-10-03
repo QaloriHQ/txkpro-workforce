@@ -5,10 +5,10 @@
 create table if not exists public.wf_user_invitations (
   id uuid primary key default gen_random_uuid(),
   invitation_id text not null unique default security.new_legacy_id('INV'),
-  email text not null,
+  email text not null check (length(email)<=320),
   email_normalized text generated always as (lower(btrim(email))) stored,
-  role text not null,
-  scope_type text not null
+  role text not null check (length(role)<=80),
+  scope_type text not null check (length(scope_type)<=40)
     check (scope_type in ('platform','institution','department','program','cohort','employer')),
   scope_id text,
   institution_id text references public.wf_institutions(institution_id) on delete cascade,
@@ -34,7 +34,7 @@ create table if not exists public.wf_user_invitations (
   last_sent_at timestamptz,
   send_count integer not null default 0 check (send_count >= 0),
   delivery_error_code text,
-  idempotency_key text,
+  idempotency_key text check (idempotency_key is null or length(idempotency_key)<=240),
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -292,14 +292,29 @@ declare
   v_membership_key text;
   v_actor_user_id text:=security.current_legacy_user_id();
   v_activation_policy text:='auto_activate';
-  v_first_name text:=nullif(btrim(coalesce(p_metadata->>'firstName','')),'');
-  v_last_name text:=nullif(btrim(coalesce(p_metadata->>'lastName','')),'');
+  v_idempotency_key text:=left(
+    v_idempotency_key,
+    240
+  );
+  v_first_name text:=left(
+    nullif(btrim(coalesce(p_metadata->>'firstName','')),''),
+    100
+  );
+  v_last_name text:=left(
+    nullif(btrim(coalesce(p_metadata->>'lastName','')),''),
+    100
+  );
+  v_metadata jsonb;
 begin
   perform security.expire_user_invitations();
 
-  if v_email='' or position('@' in v_email)<2 then
+  if v_email='' or position('@' in v_email)<2 or length(v_email)>320 then
     raise exception 'Valid invitation email required';
   end if;
+  v_metadata:=jsonb_strip_nulls(jsonb_build_object(
+    'firstName',v_first_name,
+    'lastName',v_last_name
+  ));
   if v_expires_at is null or v_expires_at<=now() then
     raise exception 'Invitation expiration must be in the future';
   end if;
@@ -320,10 +335,10 @@ begin
     end if;
   end if;
 
-  if nullif(btrim(coalesce(p_idempotency_key,'')),'') is not null then
+  if v_idempotency_key is not null then
     select * into v_existing
     from public.wf_user_invitations
-    where idempotency_key=nullif(btrim(p_idempotency_key),'')
+    where idempotency_key=v_idempotency_key
       and coalesce(institution_id,'')=coalesce(p_institution_id,'')
       and coalesce(employer_id,'')=coalesce(p_employer_id,'')
     limit 1;
@@ -436,7 +451,7 @@ begin
     v_invitation_id,v_email,v_role,v_scope_type,v_scope_id,
     p_institution_id,p_employer_id,v_membership_key,'pending',v_activation_policy,v_expires_at,
     v_user.auth_user_id is not null,(select auth.uid()),v_actor_user_id,
-    nullif(btrim(coalesce(p_idempotency_key,'')),''),
+    v_idempotency_key,
     coalesce(p_metadata,'{}'::jsonb)
   )
   returning * into v_inv;
