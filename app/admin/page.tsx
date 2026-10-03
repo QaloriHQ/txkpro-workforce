@@ -31,6 +31,7 @@ export default async function AdminPage() {
 
       <main className="page-wrap">
         <Link className="button button-ghost" href="/admin/invitations">Manage invitations</Link>
+        <Link className="button button-ghost" href="/admin/retention">Retention cases</Link>
         <div className="page-heading">
           <div>
             <p className="eyebrow">TXKPRO operations</p>
