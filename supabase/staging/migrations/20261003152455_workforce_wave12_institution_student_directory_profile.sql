@@ -27,6 +27,7 @@ as $$
           p_scope_id
         )
         and security.institution_scope_contains(
+          p_institution_id,
           lower(r.scope_type),
           r.scope_id,
           lower(coalesce(p_scope_type,'')),
