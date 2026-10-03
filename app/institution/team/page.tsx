@@ -11,11 +11,15 @@ import {
   institutionScopeLabel,
   primaryInstitutionRole,
 } from "@/lib/institution/presentation";
-import { listInvitations } from "@/lib/invitations/repository";
+import { getInstitutionEmployerLearningContext } from "@/lib/institution/learning-repository";
+import { listUserInvitations } from "@/lib/invitations/service";
 
 export const dynamic = "force-dynamic";
 
 const institutionInviteRoles = [
+  { value: "institution_super_admin", label: "Institution super admin", description: "Institution-wide administration; requires the canonical inviter policy." },
+  { value: "institution_admin", label: "Institution admin", description: "Institution-wide administration; requires the canonical inviter policy." },
+  { value: "department_head", label: "Department head", description: "Contained Department, Program or Cohort team scope." },
   {
     value: "student",
     label: "Student",
@@ -54,29 +58,36 @@ export default async function InstitutionTeamPage() {
   const context = await requireInstitutionPageContext({ capability: "team" });
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
-  const invitations = await listInvitations({});
+  const invitations = await listUserInvitations({ institutionId: context.institutionId });
+  const learning = await getInstitutionEmployerLearningContext(context);
   const scopeKeys = new Set<string>();
   const scopes = [
-    {
+    ...(context.scopes.some(s => s.scopeType === "institution" && s.scopeId === context.institutionId) ? [{
       scopeType: "institution",
       scopeId: context.institutionId,
+      institutionId: context.institutionId,
       label: `${context.institutionName} · Institution`,
       description: "Institution-wide scope. Server policy decides which roles can use it.",
-    },
+    }] : []),
+    ...learning.programs.map(p => ({ scopeType: "program", scopeId: p.programKey, institutionId: context.institutionId, label: `${p.programName} · Program` })),
+    ...learning.cohorts.map(c => ({ scopeType: "cohort", scopeId: c.cohortId, institutionId: context.institutionId, label: `${c.name} · Cohort` })),
     ...context.scopes
       .filter((scope) => {
-        const key = `${scope.scopeType}:${scope.scopeId}`;
-        if (scopeKeys.has(key)) return false;
-        scopeKeys.add(key);
         return scope.scopeId !== context.institutionId || scope.scopeType !== "institution";
       })
       .map((scope) => ({
         scopeType: scope.scopeType,
         scopeId: scope.scopeId,
+        institutionId: context.institutionId,
         label: `${scope.scopeId} · ${scope.scopeType}`,
         description: `Contained by your ${scope.role.replaceAll("_", " ")} membership.`,
       })),
-  ];
+  ].filter(scope => {
+    const key = `${scope.scopeType}:${scope.scopeId}`;
+    if (scopeKeys.has(key)) return false;
+    scopeKeys.add(key);
+    return true;
+  });
 
   return (
     <>
@@ -110,10 +121,8 @@ export default async function InstitutionTeamPage() {
         />
 
         <InvitationManager
-          initial={invitations.filter(
-            (item) =>
-              item.roleGroup === "student" || item.roleGroup === "institution",
-          )}
+          initial={invitations}
+          tenantFilter={`?institutionId=${encodeURIComponent(context.institutionId)}`}
           roles={institutionInviteRoles}
           scopes={scopes}
           title="Invite Students and Institution team members"

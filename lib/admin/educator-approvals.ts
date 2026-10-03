@@ -1,3 +1,4 @@
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import "server-only";
 
 import { audit } from "@/lib/audit";
@@ -33,6 +34,7 @@ type MembershipRow = {
   scope_id: string | null;
   status: string;
   created_at: string | null;
+  source?: string;
 };
 
 function canonicalInstitutionRole(role: string) {
@@ -106,7 +108,7 @@ export async function listPendingEducatorApprovals(
 
   let query = admin
     .from("app_role_memberships")
-    .select("id, auth_user_id, user_id, role, scope_type, scope_id, status, created_at")
+    .select("id, auth_user_id, user_id, role, scope_type, scope_id, status, created_at, source")
     .eq("status", "pending")
     .in("role", [...EDUCATOR_APPROVAL_ROLES])
     .order("created_at", { ascending: true });
@@ -206,7 +208,7 @@ export async function decideEducatorApproval(input: {
   const admin = createAdminClient();
   const { data: target, error } = await admin
     .from("app_role_memberships")
-    .select("id, auth_user_id, user_id, role, scope_type, scope_id, status, created_at")
+    .select("id, auth_user_id, user_id, role, scope_type, scope_id, status, created_at, source")
     .eq("id", input.membershipId)
     .maybeSingle();
 
@@ -214,6 +216,16 @@ export async function decideEducatorApproval(input: {
   if (!target) throw new Response("Educator approval was not found.", { status: 404 });
 
   const targetRow = target as MembershipRow;
+  if (targetRow.source?.startsWith("canonical_invitation:")) {
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.rpc("user_invitation_decide_approval", {
+      p_invitation_id: targetRow.source.slice("canonical_invitation:".length),
+      p_decision: input.decision,
+    });
+    if (error) throw new Response("Invitation approval is not permitted or is no longer pending.", { status: 403 });
+    return { ...data, membershipId: targetRow.id, userId: targetRow.user_id };
+  }
+
   const actorAuthority = assertCanApproveEducator({
     actor: input.actor,
     target: targetRow,

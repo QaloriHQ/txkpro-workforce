@@ -14,7 +14,9 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/design-system";
+import { PendingInvitationActions } from "@/components/institution/pending-invitation-actions";
 import { InstitutionRoleContext } from "@/components/institution/role-context";
+import { StudentInvitationForm } from "@/components/institution/student-invitation-form";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -23,7 +25,10 @@ import {
   getInstitutionEmployerLearningContext,
   listInstitutionStudents,
 } from "@/lib/institution/learning-repository";
-import { institutionAccess } from "@/lib/institution/policy";
+import {
+  institutionAccess,
+  institutionRoles,
+} from "@/lib/institution/policy";
 import {
   institutionScopeLabel,
   primaryInstitutionRole,
@@ -56,6 +61,38 @@ export default async function InstitutionStudentsPage({
   ]);
   const role = primaryInstitutionRole(context);
   const scopeLabel = institutionScopeLabel(context);
+  const invitationRoles = new Set([
+    "institution_super_admin",
+    "institution_admin",
+    "department_head",
+    "program_coordinator",
+    "career_services",
+  ]);
+  const canInviteStudents = institutionRoles(context).some((item) =>
+    invitationRoles.has(item),
+  );
+  const invitationTargets = [
+    ...(context.scopes.some(
+      (scope) =>
+        scope.scopeType === "institution" &&
+        scope.scopeId === context.institutionId,
+    )
+      ? [
+          {
+            value: `institution|${context.institutionId}`,
+            label: `${context.institutionName} · Institution`,
+          },
+        ]
+      : []),
+    ...learning.programs.map((program) => ({
+      value: `program|${program.programKey}`,
+      label: `${program.programName} · Program`,
+    })),
+    ...learning.cohorts.map((cohort) => ({
+      value: `cohort|${cohort.cohortId}`,
+      label: `${cohort.name} · Cohort`,
+    })),
+  ];
 
   const activeRoster = students.filter(
     (student) => student.recordType === "student",
@@ -102,6 +139,13 @@ export default async function InstitutionStudentsPage({
           scopeLabel={scopeLabel}
           accessLevel={institutionAccess(context, "students")}
         />
+
+        {canInviteStudents ? (
+          <StudentInvitationForm
+            institutionId={context.institutionId}
+            targets={invitationTargets}
+          />
+        ) : null}
 
         <section className="txk-metric-grid institution-student-profile-metrics">
           <MetricCard
@@ -187,6 +231,10 @@ export default async function InstitutionStudentsPage({
                 student.studentId ??
                 student.membershipKey ??
                 `${student.recordType}-${student.displayName}`;
+              const invitationId =
+                student.invitationSource?.startsWith("canonical_invitation:")
+                  ? student.invitationSource.slice("canonical_invitation:".length)
+                  : null;
 
               return (
                 <Card className="institution-student-directory-card" key={cardKey}>
@@ -278,6 +326,8 @@ export default async function InstitutionStudentsPage({
                       >
                         Open profile
                       </Link>
+                    ) : invitationId ? (
+                      <PendingInvitationActions invitationId={invitationId} />
                     ) : (
                       <span className="txk-muted-text">Awaiting acceptance</span>
                     )}
