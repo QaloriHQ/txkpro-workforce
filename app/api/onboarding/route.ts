@@ -1,4 +1,4 @@
-import { getAccountContext } from "@/lib/auth";
+import { getAccountContext, hasRoleMembership } from "@/lib/auth";
 import { nativeBridgeKey, nativeId } from "@/lib/native-id";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -86,6 +86,41 @@ async function syncStudentRetentionSmsConsent(
     });
     if (error) throw error;
   }
+}
+
+async function syncAcceptedStudentInvitationAffiliation(
+  account: NonNullable<Awaited<ReturnType<typeof getAccountContext>>>,
+) {
+  const admin = createAdminClient();
+  const { data: invitation, error: invitationError } = await admin
+    .from("wf_user_invitations")
+    .select("institution_id, scope_type, scope_id")
+    .eq("target_auth_user_id", account.authUserId)
+    .eq("role", "student")
+    .eq("status", "accepted")
+    .order("accepted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (invitationError) throw invitationError;
+  if (!invitation?.institution_id) return;
+
+  const affiliation: Record<string, string> = {
+    school_id: invitation.institution_id,
+    updated_at: new Date().toISOString(),
+  };
+  if (invitation.scope_type === "cohort" && invitation.scope_id) {
+    affiliation.cohort_id = invitation.scope_id;
+  }
+  if (invitation.scope_type === "program" && invitation.scope_id) {
+    affiliation.program_type = invitation.scope_id;
+  }
+
+  const { error } = await admin
+    .from("wf_student_profiles")
+    .update(affiliation)
+    .eq("user_id", account.legacyUserId);
+  if (error) throw error;
 }
 
 async function ensureAppMembership(params: {
@@ -369,8 +404,22 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const role = requestedRole(body.role) ?? account.onboarding?.selected_role ?? account.role;
     if (!role) return Response.json({ error: "Choose an account type." }, { status: 400 });
-    if (account.role && role !== account.role) return Response.json({ error: "Your provisioned TXKPRO role cannot be changed through onboarding." }, { status: 403 });
-    if (role === "admin" && account.role !== "admin") return Response.json({ error: "Administrator access must be provisioned by TXKPRO." }, { status: 403 });
+    if (
+      account.role &&
+      role !== account.role &&
+      !hasRoleMembership(account.memberships, role)
+    ) {
+      return Response.json(
+        { error: "This onboarding role requires an active server-provisioned membership." },
+        { status: 403 },
+      );
+    }
+    if (role === "admin" && !hasRoleMembership(account.memberships, "admin")) {
+      return Response.json(
+        { error: "Administrator access must be provisioned by TXKPRO." },
+        { status: 403 },
+      );
+    }
     if (role === "admin" && account.role === "admin") {
       return Response.json({ ok: true, role: "admin", status: "complete", redirectTo: "/admin" });
     }
@@ -410,8 +459,22 @@ export async function POST(request: Request) {
     const body = await request.json();
     const role = requestedRole(body.role) ?? account.onboarding?.selected_role ?? account.role;
     if (!role) return Response.json({ error: "Choose an account type." }, { status: 400 });
-    if (account.role && role !== account.role) return Response.json({ error: "Your provisioned TXKPRO role cannot be changed through onboarding." }, { status: 403 });
-    if (role === "admin" && account.role !== "admin") return Response.json({ error: "Administrator access must be provisioned by TXKPRO." }, { status: 403 });
+    if (
+      account.role &&
+      role !== account.role &&
+      !hasRoleMembership(account.memberships, role)
+    ) {
+      return Response.json(
+        { error: "This onboarding role requires an active server-provisioned membership." },
+        { status: 403 },
+      );
+    }
+    if (role === "admin" && !hasRoleMembership(account.memberships, "admin")) {
+      return Response.json(
+        { error: "Administrator access must be provisioned by TXKPRO." },
+        { status: 403 },
+      );
+    }
     if (role === "admin" && account.role === "admin") {
       return Response.json({ ok: true, role: "admin", status: "complete", redirectTo: "/admin" });
     }
@@ -441,6 +504,7 @@ export async function POST(request: Request) {
       );
       if (error) throw error;
       if (role === "student") {
+        await syncAcceptedStudentInvitationAffiliation(account);
         await syncStudentRetentionSmsConsent(account, profileData);
       }
       return Response.json(
