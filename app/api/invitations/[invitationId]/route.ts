@@ -40,7 +40,7 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const invitation =
       action === "resend"
-        ? await resendInvitation(invitationId)
+        ? await resendInvitation(invitationId, new URL(request.url).origin)
         : action === "revoke" || action === "cancel"
           ? await closeInvitation(invitationId, action)
           : null;
