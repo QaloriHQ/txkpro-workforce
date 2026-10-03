@@ -156,10 +156,36 @@ async function ensureWorkforceMembership(params: {
 }
 
 async function provisionStudent(admin: ReturnType<typeof createAdminClient>, account: NonNullable<Awaited<ReturnType<typeof getAccountContext>>>, data: JsonObject) {
-  const { data: existing } = await admin.from("wf_student_profiles").select("student_id").eq("user_id", account.legacyUserId).maybeSingle();
+  const [{ data: existing }, { data: acceptedInvitation }] = await Promise.all([
+    admin.from("wf_student_profiles").select("student_id").eq("user_id", account.legacyUserId).maybeSingle(),
+    admin
+      .from("wf_user_invitations")
+      .select("invitation_id,institution_id,scope_type,scope_id,accepted_at")
+      .eq("accepted_by_user_id", account.legacyUserId)
+      .eq("role", "student")
+      .eq("status", "accepted")
+      .not("institution_id", "is", null)
+      .order("accepted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
   const studentId = existing?.student_id ?? nativeId("STU");
   const primaryTrade = text(data.primaryTrade, 120) || null;
-  const schoolId = text(data.schoolId, 120) || null;
+  const invitedInstitutionId =
+    typeof acceptedInvitation?.institution_id === "string"
+      ? acceptedInvitation.institution_id
+      : null;
+  const invitedCohortId =
+    acceptedInvitation?.scope_type === "cohort" &&
+    typeof acceptedInvitation.scope_id === "string"
+      ? acceptedInvitation.scope_id
+      : null;
+  const invitedProgram =
+    acceptedInvitation?.scope_type === "program" &&
+    typeof acceptedInvitation.scope_id === "string"
+      ? acceptedInvitation.scope_id
+      : null;
+  const schoolId = invitedInstitutionId ?? text(data.schoolId, 120) || null;
   const payload = {
     user_id: account.legacyUserId,
     profile_status: "active",
@@ -167,8 +193,9 @@ async function provisionStudent(admin: ReturnType<typeof createAdminClient>, acc
     first_name_public: text(data.firstName, 100) || account.firstName,
     last_initial_public: (text(data.lastName, 100) || account.lastName).slice(0, 1).toUpperCase(),
     preferred_name: text(data.preferredName, 100) || null,
-    program_type: text(data.programType, 120) || null,
+    program_type: invitedProgram ?? text(data.programType, 120) || null,
     school_id: schoolId,
+    ...(invitedCohortId ? { cohort_id: invitedCohortId } : {}),
     graduation_year: text(data.graduationYear, 8) || null,
     graduation_date: text(data.graduationDate, 20) || null,
     zip_code: text(data.zipCode, 20) || null,
@@ -204,7 +231,40 @@ async function provisionStudent(admin: ReturnType<typeof createAdminClient>, acc
   }
 
   await ensureAppMembership({ admin, authUserId: account.authUserId, userId: account.legacyUserId, role: "student", scopeType: "platform", scopeId: null, status: "active" });
-  await ensureWorkforceMembership({ admin, userId: account.legacyUserId, role: "student", status: "active" });
+  await ensureWorkforceMembership({
+    admin,
+    userId: account.legacyUserId,
+    role: "student",
+    institutionId: invitedInstitutionId,
+    status: "active",
+  });
+
+  if (invitedInstitutionId && invitedCohortId) {
+    const { error: eventError } = await admin.from("wf_domain_events").upsert(
+      {
+        event_key: `student_linked_to_cohort:${studentId}:${invitedCohortId}`,
+        event_type: "STUDENT_LINKED_TO_COHORT",
+        actor_auth_user_id: account.authUserId,
+        actor_user_id: account.legacyUserId,
+        target_type: "student",
+        target_id: studentId,
+        institution_id: invitedInstitutionId,
+        student_id: studentId,
+        result: "success",
+        after_json: {
+          institutionId: invitedInstitutionId,
+          cohortId: invitedCohortId,
+        },
+        metadata: {
+          source: "canonical_invitation_activation",
+          invitationId: acceptedInvitation?.invitation_id ?? null,
+        },
+      },
+      { onConflict: "event_key", ignoreDuplicates: true },
+    );
+    if (eventError) throw eventError;
+  }
+
   return { status: "complete" as const, entityId: studentId };
 }
 
