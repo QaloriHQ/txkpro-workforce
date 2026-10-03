@@ -731,6 +731,7 @@ declare
   v_user public.users%rowtype;
   v_redirect text;
   v_selected_role text;
+  v_membership_status text;
 begin
   perform security.expire_user_invitations();
 
@@ -758,6 +759,9 @@ begin
     if v_inv.accepted_by_auth_user_id=(select auth.uid()) then
       v_redirect:=case
         when v_inv.role='student' then '/onboarding?role=student'
+        when v_inv.scope_type in ('institution','department','program','cohort')
+             and v_inv.activation_policy='approval_required'
+          then '/onboarding?role=educator'
         when v_inv.scope_type in ('institution','department','program','cohort') then '/institution'
         when v_inv.scope_type='employer' then '/employer'
         else '/admin'
@@ -777,10 +781,15 @@ begin
     raise exception 'Invitation expired';
   end if;
 
+  v_membership_status:=case
+    when v_inv.activation_policy='approval_required' then 'pending'
+    else 'active'
+  end;
+
   update public.app_role_memberships
   set auth_user_id=(select auth.uid()),
       user_id=v_user.user_id,
-      status='active',
+      status=v_membership_status,
       source='canonical_invitation:'||v_inv.invitation_id,
       updated_at=now()
   where membership_key=v_inv.membership_key;
@@ -789,23 +798,24 @@ begin
     perform security.ensure_app_role_semantic(
       coalesce(v_inv.membership_key,'invite:'||v_inv.invitation_id),
       (select auth.uid()),v_user.user_id,v_inv.role,v_inv.scope_type,v_inv.scope_id,
-      'active','canonical_invitation:'||v_inv.invitation_id
+      v_membership_status,'canonical_invitation:'||v_inv.invitation_id
     );
   end if;
 
-  if not exists(
-    select 1 from public.wf_role_memberships wr
-    where wr.user_id=v_user.user_id
-      and lower(wr.role)=lower(v_inv.role)
-      and coalesce(wr.institution_id,'')=coalesce(v_inv.institution_id,'')
-      and coalesce(wr.contractor_id,'')=coalesce(v_inv.employer_id,'')
-      and lower(wr.status)='active'
-  ) then
+  update public.wf_role_memberships
+  set status=v_membership_status,updated_at=now()
+  where user_id=v_user.user_id
+    and lower(role)=lower(v_inv.role)
+    and coalesce(institution_id,'')=coalesce(v_inv.institution_id,'')
+    and coalesce(contractor_id,'')=coalesce(v_inv.employer_id,'');
+
+  if not found then
     insert into public.wf_role_memberships(
       user_id,role,institution_id,contractor_id,status,bridge_source_key,bridge_source_sheet
     ) values(
-      v_user.user_id,v_inv.role,v_inv.institution_id,v_inv.employer_id,'active',
-      'canonical_invitation:'||v_inv.invitation_id,'workforce_invitation'
+      v_user.user_id,v_inv.role,v_inv.institution_id,v_inv.employer_id,
+      v_membership_status,'canonical_invitation:'||v_inv.invitation_id,
+      'workforce_invitation'
     );
   end if;
 
@@ -851,15 +861,38 @@ begin
     v_redirect:='/onboarding?role=student';
   elsif v_inv.scope_type in ('institution','department','program','cohort') then
     v_selected_role:='educator';
-    insert into public.wf_onboarding_accounts(
-      auth_user_id,user_id,selected_role,status,current_step,profile_data,
-      submitted_at,completed_at,created_at,updated_at
-    ) values(
-      (select auth.uid()),v_user.user_id,'educator','complete',6,'{}'::jsonb,
-      now(),now(),now(),now()
-    )
-    on conflict (auth_user_id) do nothing;
-    v_redirect:='/institution';
+    if v_inv.activation_policy='approval_required' then
+      insert into public.wf_onboarding_accounts(
+        auth_user_id,user_id,selected_role,status,current_step,profile_data,
+        submitted_at,created_at,updated_at
+      ) values(
+        (select auth.uid()),v_user.user_id,'educator','pending_review',6,
+        jsonb_build_object('invitationId',v_inv.invitation_id),
+        now(),now(),now()
+      )
+      on conflict (auth_user_id) do update
+      set selected_role='educator',
+          status=case
+            when public.wf_onboarding_accounts.status='complete'
+              then public.wf_onboarding_accounts.status
+            else 'pending_review'
+          end,
+          profile_data=public.wf_onboarding_accounts.profile_data
+            || jsonb_build_object('invitationId',v_inv.invitation_id),
+          updated_at=now();
+      v_redirect:='/onboarding?role=educator';
+    else
+      insert into public.wf_onboarding_accounts(
+        auth_user_id,user_id,selected_role,status,current_step,profile_data,
+        submitted_at,completed_at,created_at,updated_at
+      ) values(
+        (select auth.uid()),v_user.user_id,'educator','complete',6,
+        jsonb_build_object('invitationId',v_inv.invitation_id),
+        now(),now(),now(),now()
+      )
+      on conflict (auth_user_id) do nothing;
+      v_redirect:='/institution';
+    end if;
   elsif v_inv.scope_type='employer' then
     v_selected_role:='employer';
     insert into public.wf_onboarding_accounts(
@@ -906,7 +939,7 @@ begin
     v_inv.institution_id,v_inv.employer_id,'success',
     jsonb_build_object(
       'role',v_inv.role,'scopeType',v_inv.scope_type,'scopeId',v_inv.scope_id,
-      'status','active'
+      'status',v_membership_status
     ),
     jsonb_build_object('invitationId',v_inv.invitation_id)
   );
@@ -928,6 +961,8 @@ begin
     'role',v_inv.role,
     'scopeType',v_inv.scope_type,
     'scopeId',v_inv.scope_id,
+    'activationPolicy',v_inv.activation_policy,
+    'membershipStatus',v_membership_status,
     'redirectTo',v_redirect,
     'idempotent',false
   );
