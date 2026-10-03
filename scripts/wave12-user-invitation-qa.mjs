@@ -42,7 +42,9 @@ test("W12-05A acceptance never takes role or scope from the client", () => {
     /user_invitation_accept\([\s\S]*p_role text[\s\S]*\)\s*returns jsonb/,
   );
   assert.match(sql, /Invitation recipient mismatch/);
+  assert.match(sql, /current_auth_email/);
   assert.match(sql, /email_normalized/);
+  assert.match(sql, /set auth_user_id=\(select auth\.uid\(\)\)/);
   assert.match(sql, /status=v_membership_status/);
   assert.match(sql, /canonical_invitation:/);
 });
@@ -83,6 +85,8 @@ test("W12-05A APIs reuse one service for individual and bulk invitations", () =>
   assert.match(service, /inviteUserByEmail/);
   assert.match(service, /signInWithOtp/);
   assert.match(service, /shouldCreateUser:\s*false/);
+  assert.match(service, /user_already_exists/);
+  assert.match(service, /recipient_existing_identity/);
   assert.match(service, /user_invitation_record_delivery/);
 });
 
