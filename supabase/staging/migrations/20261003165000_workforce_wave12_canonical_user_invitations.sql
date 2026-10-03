@@ -16,6 +16,8 @@ create table if not exists public.wf_user_invitations (
   membership_key text,
   status text not null default 'pending'
     check (status in ('pending','accepted','expired','revoked','cancelled')),
+  activation_policy text not null default 'auto_activate'
+    check (activation_policy in ('auto_activate','approval_required')),
   expires_at timestamptz not null,
   recipient_existing_identity boolean not null default false,
   invited_by_auth_user_id uuid references auth.users(id) on delete set null,
@@ -118,16 +120,35 @@ begin
     return false;
   end if;
 
-  -- TXKPRO Admin/Super Admin may provision canonical roles/scopes. A normal
-  -- platform Admin cannot mint another Super Admin.
-  if security.is_admin() then
-    if v_scope_type='platform' and v_role='super_admin' then
-      return security.is_super_admin();
+  -- Validate the target role family before any platform-admin bypass so an
+  -- authenticated administrator cannot mint an invented role/scope pair.
+  if v_scope_type='platform' then
+    if p_scope_id is not null
+       or p_institution_id is not null
+       or p_employer_id is not null
+       or v_role not in ('super_admin','admin','support','read_only_analyst') then
+      return false;
     end if;
+    if not security.is_admin() then return false; end if;
+    if v_role='super_admin' then return security.is_super_admin(); end if;
     return true;
   end if;
 
   if p_institution_id is not null then
+    if v_role<>'student'
+       and security.canonical_institution_role(v_role) not in (
+         'institution_super_admin','institution_admin','department_head',
+         'program_coordinator','instructor','assistant_instructor',
+         'career_services','read_only_analyst'
+       ) then
+      return false;
+    end if;
+    if security.is_admin() then
+      if v_role='student' and v_scope_type='department' then return false; end if;
+      return security.institution_scope_matches(
+        p_institution_id,v_scope_type,p_scope_id,null
+      );
+    end if;
     if v_scope_type not in ('institution','department','program','cohort') then
       return false;
     end if;
@@ -169,10 +190,13 @@ begin
       return false;
     end if;
     if v_role not in (
-      'employer_admin','recruiter','hiring_manager','employer_read_only'
+      'employer_owner','employer_admin','recruiter',
+      'hiring_manager','employer_read_only'
     ) then
       return false;
     end if;
+    if security.is_admin() then return true; end if;
+    if v_role='employer_owner' then return false; end if;
     return security.has_employer_role(
       p_employer_id,array['employer_owner','employer_admin']
     );
@@ -251,6 +275,7 @@ declare
   v_invitation_id text;
   v_membership_key text;
   v_actor_user_id text:=security.current_legacy_user_id();
+  v_activation_policy text:='auto_activate';
   v_first_name text:=nullif(btrim(coalesce(p_metadata->>'firstName','')),'');
   v_last_name text:=nullif(btrim(coalesce(p_metadata->>'lastName','')),'');
 begin
@@ -271,6 +296,14 @@ begin
     raise exception 'Invitation role or scope denied';
   end if;
 
+  if p_institution_id is not null and v_role<>'student' then
+    if not security.can_approve_institution_member(
+      p_institution_id,v_role,v_scope_type,v_scope_id
+    ) then
+      v_activation_policy:='approval_required';
+    end if;
+  end if;
+
   if nullif(btrim(coalesce(p_idempotency_key,'')),'') is not null then
     select * into v_existing
     from public.wf_user_invitations
@@ -289,6 +322,7 @@ begin
         'status',v_existing.status,
         'deliveryStatus',v_existing.delivery_status,
         'expiresAt',v_existing.expires_at,
+        'activationPolicy',v_existing.activation_policy,
         'recipientExistingIdentity',v_existing.recipient_existing_identity
       );
     end if;
@@ -376,11 +410,11 @@ begin
 
   insert into public.wf_user_invitations(
     invitation_id,email,role,scope_type,scope_id,institution_id,employer_id,
-    membership_key,status,expires_at,recipient_existing_identity,
+    membership_key,status,activation_policy,expires_at,recipient_existing_identity,
     invited_by_auth_user_id,invited_by_user_id,idempotency_key,metadata
   ) values(
     v_invitation_id,v_email,v_role,v_scope_type,v_scope_id,
-    p_institution_id,p_employer_id,v_membership_key,'pending',v_expires_at,
+    p_institution_id,p_employer_id,v_membership_key,'pending',v_activation_policy,v_expires_at,
     v_user.auth_user_id is not null,(select auth.uid()),v_actor_user_id,
     nullif(btrim(coalesce(p_idempotency_key,'')),''),
     coalesce(p_metadata,'{}'::jsonb)
@@ -407,6 +441,7 @@ begin
     'status',v_inv.status,
     'deliveryStatus',v_inv.delivery_status,
     'expiresAt',v_inv.expires_at,
+    'activationPolicy',v_inv.activation_policy,
     'recipientExistingIdentity',v_inv.recipient_existing_identity
   );
 end;
@@ -435,6 +470,7 @@ begin
       'institutionId',i.institution_id,
       'employerId',i.employer_id,
       'status',i.status,
+      'activationPolicy',i.activation_policy,
       'expiresAt',i.expires_at,
       'recipientExistingIdentity',i.recipient_existing_identity,
       'deliveryStatus',i.delivery_status,
@@ -511,6 +547,7 @@ begin
     'employerId',v_inv.employer_id,
     'organizationName',v_org_name,
     'status',v_inv.status,
+    'activationPolicy',v_inv.activation_policy,
     'expiresAt',v_inv.expires_at,
     'recipientExistingIdentity',v_inv.recipient_existing_identity
   );
