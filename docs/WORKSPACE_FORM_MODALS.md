@@ -16,8 +16,11 @@ The owner selected workspace management forms for this change. Create/edit forms
 | Institution | Team invitations, Student invitations, referrals, Employer Training assignment wizard, program/first-cohort creation, cohort creation and editing, retention case management, Concierge requests |
 | Employer | Company profile, hiring needs, interview request/scheduling/evaluation, private notes, hire recording, Concierge requests, course/lesson/block editors, checkpoints/completion requirements, assessment settings, Company Badges, Employer Certifications |
 | Internal Admin | Institution creation, invitations, retention case management, Concierge production-status updates |
+| Student | Interview response and optional note |
 
 Existing course creation, course structure dialogs, assessment creation, question editors, and block properties already open from buttons. They retain their existing modal implementations to avoid nesting a second dialog around the same form.
+
+The Media Library upload action already opens the system file picker from a button. Its upload progress/retry/stop controls remain in the library; no inline data-entry form is added.
 
 ## Interaction
 
