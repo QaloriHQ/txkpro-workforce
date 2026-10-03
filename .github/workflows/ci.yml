@@ -991,5 +991,6 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm run wave11:qa
+      - run: npm run wave12:qa
       - run: npm run lint
       - run: npm run build

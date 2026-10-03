@@ -177,7 +177,7 @@ function LoginContent() {
         {message ? <div className="alert" style={{ marginTop: 14 }}>{message}</div> : null}
         <p className="footer-note">
           New to TXKPRO Workforce?{" "}
-          <Link href={next?.startsWith("/activate/") ? `/signup?invite=${encodeURIComponent(next.replace("/activate/", ""))}` : "/signup"}>
+          <Link href="/signup">
             <strong>Create an account</strong>
           </Link>.
         </p>

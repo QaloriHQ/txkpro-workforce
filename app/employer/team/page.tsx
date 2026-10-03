@@ -1,11 +1,12 @@
+import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { InvitationManager } from "@/components/invitations/invitation-manager";
 import { PageHeader } from "@/components/design-system";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { requireEmployerContext } from "@/lib/employer/auth";
-import { listInvitations } from "@/lib/invitations/repository";
+import { canManageCompany, requireEmployerContext } from "@/lib/employer/auth";
+import { listUserInvitations } from "@/lib/invitations/service";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,9 @@ const employerInviteRoles = [
 
 export default async function EmployerTeamPage() {
   const context = await requireEmployerContext();
-  const invitations = await listInvitations({
-    scopeType: "employer",
-    scopeId: context.employerId,
+  if (!canManageCompany(context.role)) redirect("/employer");
+  const invitations = await listUserInvitations({
+    employerId: context.employerId,
   });
 
   return (
@@ -58,12 +59,14 @@ export default async function EmployerTeamPage() {
         />
 
         <InvitationManager
-          initial={invitations.filter((item) => item.roleGroup === "employer")}
+          initial={invitations}
+          tenantFilter={`?employerId=${encodeURIComponent(context.employerId)}`}
           roles={employerInviteRoles}
           scopes={[
             {
               scopeType: "employer",
               scopeId: context.employerId,
+              employerId: context.employerId,
               label: `${context.employerName} · Employer`,
               description:
                 "Employer Owner/Admin roles may invite permitted team roles into this employer only.",
