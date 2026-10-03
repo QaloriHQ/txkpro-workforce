@@ -78,8 +78,8 @@ export default function StudentsPage() {
               referrals, interviews, and placement activity.
             </p>
             <div className="marketing-actions">
-              <Link className="button button-brand" href="/signup">
-                Create student account <ArrowRightIcon aria-hidden="true" />
+              <Link className="button button-brand" href="/request-access">
+                Request student access <ArrowRightIcon aria-hidden="true" />
               </Link>
               <Link className="button button-ghost" href="/credentials">Verify a credential</Link>
             </div>

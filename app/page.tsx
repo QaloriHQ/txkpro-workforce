@@ -277,8 +277,8 @@ export default function HomePage() {
             </p>
           </div>
           <div className="marketing-actions">
-            <Link className="button button-brand" href="/signup">
-              Create an account
+            <Link className="button button-brand" href="/request-access">
+              Request access
             </Link>
             <Link className="button button-ghost" href="/credentials">
               Verify a credential

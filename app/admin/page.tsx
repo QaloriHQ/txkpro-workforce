@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth";
 import { listPendingEducatorApprovals } from "@/lib/admin/educator-approvals";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
 import Link from "next/link";
+import { isPlatformSuperAdmin } from "@/lib/institutions";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function AdminPage() {
       </header>
 
       <main className="page-wrap">
+        {isPlatformSuperAdmin(account) ? <Link className="button button-ghost" href="/admin/institutions">Institutions and access requests</Link> : null}
         <Link className="button button-ghost" href="/admin/invitations">Manage invitations</Link>
         <Link className="button button-ghost" href="/admin/retention">Retention cases</Link>
         <div className="page-heading">
