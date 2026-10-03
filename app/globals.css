@@ -1087,3 +1087,33 @@ html[data-theme="dark"] .txk-textarea {
     grid-column: 2;
   }
 }
+
+/* W12-07: shared retention queue/detail, token-based light/dark presentation. */
+.retention-workspace { display: grid; gap: 20px; }
+.retention-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.retention-filters label, .retention-editor label { display: grid; gap: 6px; min-width: 0; }
+.retention-filters label:first-child { flex: 1 1 240px; }
+.retention-filters input, .retention-filters select, .retention-editor input, .retention-editor select, .retention-editor textarea {
+  width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--txk-bg-panel); color: var(--txk-text-primary);
+}
+.retention-case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.retention-case-card { display: grid; gap: 12px; min-width: 0; }
+.retention-card-heading, .retention-card-footer, .retention-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.retention-card-heading h2 { flex: 1; margin: 0; font-size: 18px; }
+.retention-card-heading svg, .retention-facts svg, .retention-notes h2 svg { width: 22px; height: 22px; flex-shrink: 0; }
+.retention-facts { display: grid; gap: 12px; margin: 16px 0; }
+.retention-facts > div { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: 12px; }
+.retention-facts dt { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.retention-facts dd { margin: 0; overflow-wrap: anywhere; }
+.retention-card-footer { justify-content: space-between; }
+.retention-detail-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 20px; }
+.retention-editor fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; min-width: 0; }
+.retention-editor textarea { resize: vertical; }
+.retention-notes h2 { display: flex; gap: 10px; align-items: center; }
+.retention-notes ol { list-style: none; padding: 0; }
+.retention-notes li { border-top: 1px solid var(--line); padding: 12px 0; }
+.retention-note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .retention-detail-grid { grid-template-columns: 1fr; }
+  .retention-filters label { flex: 1 1 100%; }
+}
