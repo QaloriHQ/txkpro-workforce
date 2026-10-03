@@ -41,9 +41,6 @@ export function StudentInvitationForm({
         institutionId,
         scopeType,
         scopeId,
-        idempotencyKey: `institution-student:${institutionId}:${scopeType}:${scopeId}:${email
-          .trim()
-          .toLowerCase()}`,
       }),
     });
     const payload = (await response.json().catch(() => ({}))) as {
