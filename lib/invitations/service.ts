@@ -67,8 +67,34 @@ async function serviceRpc<T>(
   return data as T;
 }
 
-function activationUrl(invitationId: string) {
-  const url = new URL("/invitations/accept", getPublicAppOrigin());
+function invitationOrigin(requestOrigin?: string | null) {
+  const configured = getPublicAppOrigin();
+  if (configured !== "http://localhost:3000" || !requestOrigin) {
+    return configured;
+  }
+
+  try {
+    const candidate = new URL(requestOrigin);
+    if (
+      candidate.protocol === "https:" &&
+      candidate.hostname.endsWith(".app.github.dev")
+    ) {
+      return candidate.origin;
+    }
+  } catch {
+    // Keep the configured local origin when the request origin is malformed.
+  }
+  return configured;
+}
+
+function activationUrl(
+  invitationId: string,
+  requestOrigin?: string | null,
+) {
+  const url = new URL(
+    "/invitations/accept",
+    invitationOrigin(requestOrigin),
+  );
   url.searchParams.set("id", invitationId);
   return url.toString();
 }
@@ -89,9 +115,12 @@ async function markDelivery(
   }
 }
 
-async function deliverInvitation(invitation: WorkforceInvitation) {
+async function deliverInvitation(
+  invitation: WorkforceInvitation,
+  requestOrigin?: string | null,
+) {
   const admin = createAdminClient();
-  const redirectTo = activationUrl(invitation.invitationId);
+  const redirectTo = activationUrl(invitation.invitationId, requestOrigin);
 
   try {
     const resolved = await serviceRpc<WorkforceInvitation>(
@@ -149,6 +178,7 @@ async function deliverInvitation(invitation: WorkforceInvitation) {
 
 export async function createAndSendInvitation(
   input: WorkforceInvitationCreateInput,
+  requestOrigin?: string | null,
 ) {
   const invitation = await rpc<WorkforceInvitation>(
     "workforce_invitation_create",
@@ -164,10 +194,13 @@ export async function createAndSendInvitation(
       p_metadata: input.metadata ?? {},
     },
   );
-  return deliverInvitation(invitation);
+  return deliverInvitation(invitation, requestOrigin);
 }
 
-export async function resendInvitation(invitationId: string) {
+export async function resendInvitation(
+  invitationId: string,
+  requestOrigin?: string | null,
+) {
   const invitation = await rpc<WorkforceInvitation>(
     "workforce_invitation_action",
     {
@@ -176,7 +209,7 @@ export async function resendInvitation(invitationId: string) {
       p_expires_at: invitationExpiresAt(),
     },
   );
-  return deliverInvitation(invitation);
+  return deliverInvitation(invitation, requestOrigin);
 }
 
 export async function closeInvitation(
