@@ -24,10 +24,13 @@ export async function POST(request: Request) {
     const results: Array<Record<string, unknown>> = [];
     for (const item of body.invitations) {
       try {
-        const invitation = await createAndSendInvitation({
-          ...item,
-          source: item.source ?? "bulk",
-        });
+        const invitation = await createAndSendInvitation(
+          {
+            ...item,
+            source: item.source ?? "bulk",
+          },
+          new URL(request.url).origin,
+        );
         results.push({
           email: item.email,
           ok: true,
