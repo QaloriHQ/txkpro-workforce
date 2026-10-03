@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
@@ -33,6 +33,11 @@ export function RetentionCaseDetail({
   basePath: string;
 }) {
   const router = useRouter();
+  const followInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (followInput.current)
+      followInput.current.value = localDate(item.nextFollowUpAt);
+  }, [item.nextFollowUpAt]);
   const [status, setStatus] = useState<CaseStatus>(item.status);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -251,8 +256,8 @@ export function RetentionCaseDetail({
                   <input
                     name="follow"
                     type="datetime-local"
-                    defaultValue={localDate(item.nextFollowUpAt)}
-                    suppressHydrationWarning
+                    ref={followInput}
+                    defaultValue={item.nextFollowUpAt?.slice(0, 16) || ""}
                     disabled={closing}
                   />
                 </label>

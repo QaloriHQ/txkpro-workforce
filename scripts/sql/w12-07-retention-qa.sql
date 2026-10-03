@@ -4,7 +4,7 @@ create temp table retention_qa_actors(name text primary key,auth_id uuid,user_id
 insert into retention_qa_actors select name,gen_random_uuid(),security.new_legacy_id('QA'),
  'qa40-'||name||'-'||gen_random_uuid()||'@example.invalid'
  from unnest(array['platform','admin','career','coordinator','instructor','assistant','department','analyst',
- 'other_admin','employer','student','inactive','disabled','spoof','unscoped_admin','stitched','ambiguous']) name;
+ 'other_admin','employer','student','inactive','disabled','spoof','unscoped_admin','stitched','ambiguous','bound']) name;
 insert into auth.users(id,email,email_confirmed_at,aud,role,raw_app_meta_data,raw_user_meta_data)
  select auth_id,email,now(),'authenticated','authenticated','{}',
  case when name='spoof' then '{"role":"super_admin","scope_type":"platform"}'::jsonb else '{}'::jsonb end from retention_qa_actors;
@@ -45,10 +45,14 @@ insert into public.app_role_memberships(membership_key,auth_user_id,user_id,role
  ('other_admin','institution_admin','institution','QA40-B'),('employer','employer_admin','employer','QA40-E'),
  ('student','student','self','QA40-SA'),('inactive','instructor','cohort','QA40-CA'),('disabled','institution_admin','institution','QA40-A'),
  ('unscoped_admin','admin','cohort','QA40-CB'),('stitched','instructor','cohort','QA40-CB'),
- ('ambiguous','program_coordinator','program','QA40-Shared')) v(name,role,scope,scope_id) using(name);
+ ('bound','program_coordinator','program','QA40-Shared'),('ambiguous','program_coordinator','program','QA40-Shared')) v(name,role,scope,scope_id) using(name);
 insert into public.app_role_memberships(membership_key,auth_user_id,user_id,role,scope_type,scope_id,status,source)
  select 'qa40:stitched-read',auth_id,user_id,'read_only_analyst','institution','QA40-A','active','qa40'
  from retention_qa_actors where name='stitched';
+insert into public.wf_user_invitations(invitation_id,email,role,scope_type,scope_id,institution_id,membership_key,status,expires_at,invited_by_auth_user_id,invited_by_user_id,accepted_by_auth_user_id,accepted_by_user_id,accepted_at)
+ select 'QA40-INV',email,'program_coordinator','program','QA40-Shared','QA40-A','qa40:bound','accepted',now()+interval '1 day',auth_id,user_id,auth_id,user_id,now()
+ from retention_qa_actors where name='bound';
+update public.app_role_memberships set source='canonical_invitation:QA40-INV' where membership_key='qa40:bound';
 create temp table retention_qa_checks(label text);
 create temp table retention_qa_baseline as select
  (select count(*) from public.wf_notifications) notifications,
@@ -139,6 +143,20 @@ do $$ declare owner text; d jsonb; begin
  d:=public.retention_case_update('QA40-CB',0,gen_random_uuid(),'{"status":"cancelled","resolutionCode":"duplicate","note":"Cancelled by human operator"}');
  perform pg_temp.check_true(d->>'status'='cancelled' and d->>'closedAt' is not null,'human cancellation');
 end; $$;
+-- Accepted invitation disambiguates shared Program labels; legacy remains denied.
+reset role;
+update public.wf_student_profiles set cohort_id=case when student_id='QA40-SA' then 'QA40-AMB-A' else 'QA40-AMB-B' end
+ where student_id in ('QA40-SA','QA40-SB');
+select pg_temp.actor('bound');
+set local role authenticated;
+select pg_temp.check_true((public.retention_case_detail('QA40-CA')->>'canManage')::boolean,'accepted invitation binds shared Program to Institution');
+select pg_temp.denied('select public.retention_case_detail(''QA40-CB'')','42501','bound Program cannot cross Institution with same label');
+select pg_temp.actor('ambiguous');
+select pg_temp.denied('select public.retention_case_detail(''QA40-CA'')','42501','ambiguous legacy Program denied');
+reset role;
+update public.wf_student_profiles set cohort_id=case when student_id='QA40-SA' then 'QA40-CA' else 'QA40-CB' end
+ where student_id in ('QA40-SA','QA40-SB');
+set local role authenticated;
 -- Direct reads/writes and anonymous execution remain closed.
 select pg_temp.denied('select * from public.wf_retention_case_notes','42501','direct note table denied');
 select pg_temp.denied('update public.wf_retention_cases set status=''resolved'' where case_id=''QA40-CA''','42501','direct case writes denied');

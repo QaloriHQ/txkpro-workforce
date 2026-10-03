@@ -39,3 +39,12 @@ Owner UAT at staging:
 5. Mobile queue/detail, light/dark theme, keyboard navigation, visible focus, field labels, pending/error feedback and long notes.
 
 No browser staging validation or production release is claimed. Protocol/Project scripts require PROJECTS_TOKEN (unavailable); the standing owner-approved connector preflight exception applies. Provider token/cost telemetry is unavailable rather than fabricated. Project Verification reconciliation is subject to the existing missing Verification option.
+
+## Automated staging evidence (2026-10-03)
+
+- PR #193; initial required CI run 37144765372 passed before migration application.
+- 51 Wave 12 regression checks, typecheck and production build passed. Lint passes with two pre-existing unused onboarding helpers.
+- Staging `qwxlgzlkaeaqfzjodtis` applied `20261003183825_workforce_w12_07_retention_workspace.sql`. Ledger version/name match; byte-for-byte SQL MD5 is `ec9bfaca762dae8ab7f6bfce7da18ed6`.
+- Rollback-only SQL suite: 73 checks PASS under authenticated/anon. Post-run synthetic Auth/case/Institution counts all zero. Accepted invitation disambiguation, metadata spoofing, role/scope stitching and no Employer consequences are covered.
+- Security advisors: no new exposed definer warnings; 121 existing public-definer warnings and existing leaked-password protection warning remain. The new private receipt table has intentionally closed RLS/no browser privileges, producing one informational [no-policy notice](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Performance advisors show no new retention finding; three existing duplicate-index warnings remain.
+- Final CI, exact merged staging Vercel revision, API/log probe limitations and Project reconciliation are recorded in the issue completion evidence after deployment. Manual UAT remains outstanding.
