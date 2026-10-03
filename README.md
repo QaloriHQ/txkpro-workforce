@@ -122,14 +122,16 @@ Set:
 ```bash
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
-TWILIO_FROM_NUMBER=...
+TWILIO_WORKFORCE_MESSAGING_SERVICE_SID=...
 TWILIO_INBOUND_WEBHOOK_URL=https://YOUR-DOMAIN/api/twilio/inbound
 CRON_SECRET=...
 ```
 
-Then configure the Twilio number's incoming-message webhook to the same `/api/twilio/inbound` URL.
+Attach `TWILIO_WORKFORCE_MESSAGING_SERVICE_SID` to the dedicated TXKPRO Workforce A2P 10DLC campaign, and configure that Messaging Service's incoming-message webhook to the same `/api/twilio/inbound` URL.
 
-Retention messages are sent only when the Student has a mobile number and an active `wf_sms_consents` record for the `retention` category. Replying STOP changes that consent to `opted_out` immediately.
+The Workforce Messaging Service must not be reused for TXK Home Services. Workforce transactional SMS is restricted in code to approved transactional purposes. Daily engagement or streak nudges are not permitted on this sender and must remain in-app/email unless a separate messaging purpose, consent path, and applicable A2P campaign are intentionally approved.
+
+Retention messages are sent only when the Student has a mobile number and an active `wf_sms_consents` record for the `retention` category. Replying STOP changes that consent to `opted_out` immediately. See `docs/A2P_10DLC_WORKFORCE_COMPLIANCE.md`.
 
 ## Trigger retention pulses
 
