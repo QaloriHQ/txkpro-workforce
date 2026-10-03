@@ -102,6 +102,16 @@ as $$
   ),false);
 $$;
 
+create or replace function security.current_auth_email()
+returns text
+language sql
+stable
+security definer
+set search_path=''
+as $
+  select lower(btrim(coalesce((select auth.jwt())->>'email','')));
+$;
+
 create or replace function security.user_invitation_actor_can_manage(
   p_role text,
   p_scope_type text,
@@ -539,6 +549,7 @@ declare
   v_inv public.wf_user_invitations%rowtype;
   v_user public.users%rowtype;
   v_org_name text;
+  v_auth_email text:=security.current_auth_email();
 begin
   perform security.expire_user_invitations();
 
@@ -554,13 +565,34 @@ begin
     raise exception 'Invitation not found';
   end if;
 
+  if v_auth_email='' or v_auth_email<>v_inv.email_normalized then
+    raise exception 'Invitation recipient mismatch';
+  end if;
+
   select * into v_user
   from public.users
   where auth_user_id=(select auth.uid())
   limit 1;
 
-  if not found or lower(btrim(coalesce(v_user.email,'')))<>v_inv.email_normalized then
-    raise exception 'Invitation recipient mismatch';
+  if not found then
+    select * into v_user
+    from public.users
+    where lower(btrim(coalesce(email,'')))=v_auth_email
+    limit 1;
+
+    if not found then
+      raise exception 'Invitation recipient account missing';
+    end if;
+    if v_user.auth_user_id is not null
+       and v_user.auth_user_id<>(select auth.uid()) then
+      raise exception 'Invitation recipient mismatch';
+    end if;
+
+    update public.users
+    set auth_user_id=(select auth.uid()),updated_at=now()
+    where user_id=v_user.user_id
+      and auth_user_id is null
+    returning * into v_user;
   end if;
 
   if v_inv.institution_id is not null then
@@ -782,13 +814,34 @@ begin
 
   if not found then raise exception 'Invitation not found'; end if;
 
+  if v_auth_email='' or v_auth_email<>v_inv.email_normalized then
+    raise exception 'Invitation recipient mismatch';
+  end if;
+
   select * into v_user
   from public.users
   where auth_user_id=(select auth.uid())
   limit 1;
 
-  if not found or lower(btrim(coalesce(v_user.email,'')))<>v_inv.email_normalized then
-    raise exception 'Invitation recipient mismatch';
+  if not found then
+    select * into v_user
+    from public.users
+    where lower(btrim(coalesce(email,'')))=v_auth_email
+    limit 1;
+
+    if not found then
+      raise exception 'Invitation recipient account missing';
+    end if;
+    if v_user.auth_user_id is not null
+       and v_user.auth_user_id<>(select auth.uid()) then
+      raise exception 'Invitation recipient mismatch';
+    end if;
+
+    update public.users
+    set auth_user_id=(select auth.uid()),updated_at=now()
+    where user_id=v_user.user_id
+      and auth_user_id is null
+    returning * into v_user;
   end if;
 
   if v_inv.status='accepted' then
@@ -1005,6 +1058,7 @@ begin
 end;
 $$;
 
+revoke all on function security.current_auth_email() from public,anon,authenticated;
 revoke all on function security.is_super_admin() from public,anon,authenticated;
 revoke all on function security.user_invitation_actor_can_manage(text,text,text,text,text)
   from public,anon,authenticated;
@@ -1013,6 +1067,7 @@ revoke all on function security.expire_user_invitations()
 revoke all on function public.user_invitation_record_delivery(text,boolean,text)
   from public,anon,authenticated;
 
+grant execute on function security.current_auth_email() to service_role;
 grant execute on function security.is_super_admin() to service_role;
 grant execute on function security.user_invitation_actor_can_manage(text,text,text,text,text)
   to service_role;
