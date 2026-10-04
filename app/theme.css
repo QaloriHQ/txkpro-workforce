@@ -579,8 +579,16 @@ body:has(.employer-sidebar) .page-wrap {
 /* Employer dashboard */
 .employer-dashboard {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 26px;
 }
+
+.employer-dashboard > *,
+.employer-dashboard :is(.employer-dashboard-intro, .employer-dashboard-account, .employer-management-grid, .employer-management-grid > *, .employer-hiring-needs-list, .table-wrap) {
+  min-width: 0;
+}
+
+.employer-hiring-needs-cards { display: none; }
 
 .employer-dashboard-hero {
   position: relative;
@@ -772,29 +780,63 @@ body:has(.employer-sidebar) .page-wrap {
 
 @media (max-width: 620px) {
   .employer-dashboard {
-    gap: 20px;
+    gap: 18px;
   }
 
   .employer-dashboard-hero {
-    padding: 22px;
+    padding: 18px;
+    gap: 18px;
     border-radius: 20px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .employer-dashboard-intro h1 {
-    font-size: 42px;
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.1;
+    letter-spacing: -.04em;
   }
 
   .employer-dashboard-intro > p:not(.eyebrow) {
     font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
+  .employer-dashboard-intro .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+  .employer-dashboard-intro .hero-actions .button { width: 100%; min-height: 44px; white-space: normal; text-align: center; }
+
   .employer-dashboard-account {
-    padding: 17px;
+    padding: 14px;
+    min-height: 0;
   }
+
+  .employer-dashboard-account-top { flex-wrap: wrap; gap: 8px; margin-bottom: 0; }
+  .employer-dashboard-account > strong { margin-top: 12px; font-size: 20px; overflow-wrap: anywhere; }
+  .employer-dashboard-account > small { overflow-wrap: anywhere; }
 
   .employer-dashboard-section-heading {
     align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
   }
+
+  .employer-dashboard-section-heading .text-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .employer-dashboard .employer-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .employer-metrics .metric-card { min-width: 0; min-height: 0; padding: 14px; border-radius: 14px; overflow-wrap: anywhere; }
+  .employer-metrics .metric-card span { font-size: 12px; }
+  .employer-metrics .metric-card strong { margin-top: 10px; font-size: 28px; }
+  .employer-metrics .metric-card small { font-size: 11px; line-height: 1.4; }
+  .employer-dashboard .card-header { flex-wrap: wrap; gap: 10px; }
+  .employer-dashboard .card-header > div { min-width: 0; }
+  .employer-dashboard .card { padding: 16px; }
+  .employer-dashboard :is(h2, h3, .card-sub) { overflow-wrap: anywhere; }
+  .employer-dashboard .employer-hiring-needs-list .table-wrap { display: none; }
+  .employer-dashboard .employer-hiring-needs-cards { display: grid; gap: 12px; }
+  .employer-hiring-need-card { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-subtle); }
+  .employer-hiring-need-card h3 { margin: 0 0 12px; font-size: 16px; }
+  .employer-hiring-need-card dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 0; }
+  .employer-hiring-need-card dt { font-size: 11px; color: var(--muted); }
+  .employer-hiring-need-card dd { margin: 4px 0 0; font-size: 13px; overflow-wrap: anywhere; }
 }
 
 
