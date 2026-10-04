@@ -1,5 +1,7 @@
 "use client";
 
+import { ActionModal } from "@/components/design-system/action-modal";
+import { PublicProfileFields } from "@/components/student/public-profile-fields";
 import { useMemo, useState } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
 import type { Role } from "@/lib/types";
@@ -44,7 +46,7 @@ export function OnboardingWizard({
   const allowedRoles = useMemo<Role[]>(() => provisionedRole ? [provisionedRole] : ["student", "educator", "employer"], [provisionedRole]);
   const [role, setRole] = useState<Role>(provisionedRole ?? initialRole ?? "student");
   const [step, setStep] = useState(Math.min(4, Math.max(1, initialStep || 1)));
-  const [data, setData] = useState<Data>({ firstName, lastName, phone: phone ?? "", ...initialData });
+  const [data, setData] = useState<Data>({ firstName, lastName, phone: phone ?? "", publicDisplayName: [firstName, lastName.slice(0, 1)].filter(Boolean).join(" "), ...initialData });
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -58,6 +60,7 @@ export function OnboardingWizard({
   }
 
   async function save(nextStep: number) {
+    if (step === 3 && role === "student" && (!["public", "private"].includes(String(data.publicProfileVisibility)) || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(String(data.publicProfileSlug ?? "")) || String(data.publicProfileSlug ?? "").length < 3 || !String(data.publicDisplayName ?? "").trim())) { setMessage("Choose Public or Private, add a display name, and choose a valid profile URL before continuing."); return false; }
     if (step === 2 && role === "educator" && !institutions.some(item => item.institution_id === data.institutionId)) {
       setMessage("Choose your institution before continuing.");
       return false;
@@ -86,6 +89,7 @@ export function OnboardingWizard({
   }
 
   async function finish() {
+    if (role === "student" && !["public", "private"].includes(String(data.publicProfileVisibility))) { setMessage("Choose Public or Private before finishing."); return; }
     setBusy(true);
     setMessage(null);
     try {
@@ -132,6 +136,7 @@ export function OnboardingWizard({
   }
 
   return (
+    <ActionModal title="Set up your workforce profile" triggerLabel="Continue onboarding" busy={busy}>
     <div className="onboarding-panel">
       <div className="onboarding-progress" aria-label={`Step ${step} of 4`}>
         {[1, 2, 3, 4].map((item) => <span className={item <= step ? "active" : ""} key={item} />)}
@@ -186,6 +191,7 @@ export function OnboardingWizard({
         <section>
           <h2>{role === "student" ? "Job readiness & preferences" : role === "educator" ? "Teaching & placement" : role === "employer" ? "Hiring profile" : "Operations profile"}</h2>
           <p className="muted">These details make the first TXKPRO experience useful immediately after onboarding.</p>
+          {role === "student" ? <PublicProfileFields value={{ visibility: data.publicProfileVisibility === "public" || data.publicProfileVisibility === "private" ? data.publicProfileVisibility : null, slug: String(data.publicProfileSlug ?? ""), displayName: String(data.publicDisplayName ?? ""), headline: String(data.publicHeadline ?? ""), bio: String(data.publicBio ?? "") }} disabled={busy} onChange={(name, value) => setField(({ visibility: "publicProfileVisibility", slug: "publicProfileSlug", displayName: "publicDisplayName", headline: "publicHeadline", bio: "publicBio" })[name], value)} /> : null}
           {role === "student" ? <StudentReadiness data={data} setField={setField} toggleList={toggleList} /> : null}
           {role === "educator" ? <EducatorDetails data={data} setField={setField} toggleList={toggleList} /> : null}
           {role === "employer" ? <EmployerDetails data={data} setField={setField} toggleList={toggleList} /> : null}
@@ -200,7 +206,7 @@ export function OnboardingWizard({
           <div className="review-grid">
             <div><span>Name</span><strong>{String(data.firstName ?? "")} {String(data.lastName ?? "")}</strong></div>
             <div><span>Phone</span><strong>{String(data.phone ?? "Not provided")}</strong></div>
-            {role === "student" ? <><div><span>Trade</span><strong>{String(data.primaryTrade ?? "Not selected")}</strong></div><div><span>Location</span><strong>{String(data.city ?? "")}, {String(data.state ?? "")}</strong></div><div><span>Retention SMS</span><strong>{data.smsRetentionConsent === true ? "Opted in" : "Not opted in"}</strong></div></> : null}
+            {role === "student" ? <><div><span>Public profile</span><strong>{data.publicProfileVisibility === "public" ? "Public" : data.publicProfileVisibility === "private" ? "Private" : "Choice required"}</strong></div><div><span>Trade</span><strong>{String(data.primaryTrade ?? "Not selected")}</strong></div><div><span>Location</span><strong>{String(data.city ?? "")}, {String(data.state ?? "")}</strong></div><div><span>Retention SMS</span><strong>{data.smsRetentionConsent === true ? "Opted in" : "Not opted in"}</strong></div></> : null}
             {role === "educator" ? <div><span>Institution</span><strong>{institutions.find((item) => item.institution_id === data.institutionId)?.name ?? "Not selected"}</strong></div> : null}
             {role === "employer" ? <><div><span>Business</span><strong>{String(data.businessName ?? "Not provided")}</strong></div><div><span>Hiring trades</span><strong>{list(data.tradesHiring).join(", ") || "Not selected"}</strong></div></> : null}
           </div>
@@ -211,12 +217,13 @@ export function OnboardingWizard({
 
       {directoryError ? <div className="alert" role="alert">{directoryError}</div> : null}
       {role === "educator" && institutions.length === 0 ? <div className="alert" role="alert">No institution access is available. Ask TXKPRO to confirm your institution invitation.</div> : null}
-      {message ? <div className="alert" style={{ marginTop: 18 }}>{message}</div> : null}
+      {message ? <div className="alert" role="alert" style={{ marginTop: 18 }}>{message}</div> : null}
       <div className="wizard-actions">
         {step > 1 ? <button className="button button-ghost" type="button" onClick={() => setStep(step - 1)} disabled={busy}>Back</button> : <span />}
         {step < 4 ? <button className="button button-dark" type="button" onClick={() => save(step + 1)} disabled={busy}>{busy ? "Saving…" : "Save & continue"}</button> : <button className="button button-brand" type="button" onClick={finish} disabled={busy}>{busy ? "Finishing…" : role === "educator" && !provisionedRole ? "Submit for approval" : "Finish onboarding"}</button>}
       </div>
     </div>
+    </ActionModal>
   );
 }
 

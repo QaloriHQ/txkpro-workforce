@@ -1,3 +1,4 @@
+import { studentPublicSettings } from "@/lib/student-public-profile/repository";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -17,7 +18,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   if (account.onboarding?.status === "complete" && account.role) {
     if (account.role === "employer") redirect("/employer");
-    if (account.role === "student") redirect("/student");
+    if (account.role === "student") {
+      const settings = await studentPublicSettings();
+      redirect(settings.chosen ? "/student" : "/student/profile?privacy=required");
+    }
     redirect("/dashboard");
   }
 
