@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { buildHiringJourneys } from "@/lib/employer/candidate-pipeline";
 import type { PipelineSelection } from "@/lib/employer/candidate-pipeline";
 import { getEmployerHiringRecords } from "@/lib/employer/pipeline-repository";
@@ -29,11 +29,16 @@ export async function CandidatePipelineProgress({ context, ...selection }: Pipel
       <h2>Hiring progress</h2>
       {!journeys.length ? <p className="card-sub">No hiring activity is recorded{selection.hiringNeedId ? " for this Hiring Need" : ""}.</p> : null}
       {journeys.map(j => (
-        <div className="candidate-progress-journey" key={j.key}>
-          <div className="card-header">
-            <div><h3>{j.title}</h3><p className="card-sub">{j.detail}</p></div>
+        <details className="candidate-progress-journey" key={j.key}>
+          <summary className="candidate-progress-summary">
+            <span className="candidate-progress-title">{j.title}</span>
             <span className={`pill ${j.stage === "Employment Started" ? "pill-good" : j.stage === "Needs Review" ? "pill-warn" : "pill-info"}`}>{j.stage}</span>
-          </div>
+            <span className="candidate-progress-dots" aria-hidden="true">
+              {j.steps.map(step => <span key={step.label} className={`candidate-progress-dot${step.recorded ? " recorded" : ""}${step.current ? " current" : ""}`} />)}
+            </span>
+            <span className="candidate-progress-toggle"><span className="candidate-progress-show">View details</span><span className="candidate-progress-hide">Hide details</span><ChevronDownIcon aria-hidden="true" /></span>
+          </summary>
+          <p className="card-sub candidate-progress-description">{j.detail}</p>
           <ol className="candidate-progress-steps" aria-label={`Hiring stages for ${j.title}`}>
             {j.steps.map((step, index) => (
               <li key={step.label} className={`candidate-progress-step${step.current ? " current" : ""}`} aria-current={step.current ? "step" : undefined}>
@@ -45,9 +50,9 @@ export async function CandidatePipelineProgress({ context, ...selection }: Pipel
             ))}
           </ol>
           <div className="hero-actions">{j.links.map(link => <Link key={link.href} href={link.href} className="button button-ghost button-small">{link.label}</Link>)}</div>
-        </div>
+          <p className="footer-note">Employment Started requires a confirmed actual start. Retention check-ins are tracked separately.</p>
+        </details>
       ))}
-      {journeys.length ? <p className="footer-note">Employment Started requires a confirmed actual start. Retention check-ins are tracked separately.</p> : null}
     </section>
   );
 }

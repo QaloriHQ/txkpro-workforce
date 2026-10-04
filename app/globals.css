@@ -1,7 +1,21 @@
 .candidate-progress { margin-bottom: 18px; }
 .candidate-progress-journey { margin-top: 20px; }
 .candidate-progress-journey + .candidate-progress-journey { padding-top: 20px; border-top: 1px solid var(--txk-border); }
-.candidate-progress-journey h3 { margin: 0; font-size: 16px; }
+.candidate-progress-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 44px; padding: 6px 0; cursor: pointer; list-style: none; border-radius: var(--txk-radius-control); }
+.candidate-progress-summary::-webkit-details-marker { display: none; }
+.candidate-progress-summary:focus-visible { outline: 2px solid var(--txk-info); outline-offset: 4px; }
+.candidate-progress-title { font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.candidate-progress-dots { display: flex; align-items: center; gap: 12px; padding: 6px; }
+.candidate-progress-dot { width: 12px; height: 12px; flex: 0 0 12px; border: 2px solid var(--txk-border-strong); border-radius: 50%; background: var(--txk-bg-panel); }
+.candidate-progress-dot.recorded { border-color: var(--txk-success); background: var(--txk-success); }
+.candidate-progress-dot.current { border-color: var(--txk-info); background: var(--txk-info); outline: 2px solid var(--txk-info); outline-offset: 3px; }
+.candidate-progress-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12px; color: var(--txk-text-muted); }
+.candidate-progress-toggle svg { width: 18px; height: 18px; }
+.candidate-progress-hide { display: none; }
+.candidate-progress-journey[open] .candidate-progress-hide { display: inline; }
+.candidate-progress-journey[open] .candidate-progress-show { display: none; }
+.candidate-progress-journey[open] .candidate-progress-toggle svg { transform: rotate(180deg); }
+.candidate-progress-description { margin-top: 12px; }
 .candidate-progress-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 16px 0; }
 .candidate-progress-step { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 10px; border: 1px solid var(--txk-border); border-radius: var(--txk-radius-control); background: var(--txk-bg-subtle); }
 .candidate-progress-step.current { border: 2px solid var(--txk-info); background: var(--txk-info-bg); padding: 11px 9px; }
