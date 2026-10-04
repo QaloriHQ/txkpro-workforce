@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, EmptyState, PageHeader, StatusBadge } from "@/components/design-system";
 import { ActionModal, WorkspaceForm } from "@/components/design-system/action-modal";
 import type { AuditFilters, AuditQueue } from "@/lib/audit-workspace/types";
 
 function timestamp(value: string) { return new Date(value).toISOString().slice(0, 19).replace("T", " ") + " UTC"; }
 export function AuditWorkspace({ queue, filters, basePath }: { queue: AuditQueue; filters: AuditFilters; basePath: string }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  // Safari may wait for the user to choose View/Download. Keep the file alive
+  // while this workspace remains mounted, including after the modal closes.
+  useEffect(() => () => { if (downloadUrl) URL.revokeObjectURL(downloadUrl); }, [downloadUrl]);
   function query(offset?: number) {
     const q = new URLSearchParams();
     for (const key of ["institutionId", "eventType", "result", "from", "to"] as const) if (filters[key]) q.set(key, filters[key]);
@@ -25,12 +27,11 @@ export function AuditWorkspace({ queue, filters, basePath }: { queue: AuditQueue
       if (!response.ok) { const body = await response.json(); throw new Error(body.error || "Export failed."); }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob); const link = document.createElement("a");
+      setDownloadUrl(url);
       link.href = url; link.download = "audit-events.csv"; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
       setFeedback(response.headers.get("X-Export-Truncated") === "true"
-        ? "Exported the newest 1,000 matching records. Narrow the date range for a complete export."
-        : "Export downloaded and recorded in the audit trail.");
-      router.refresh();
+        ? "CSV ready with the newest 1,000 matching records. Narrow the date range for a complete export."
+        : "CSV ready. Choose View or Download in your browser. The export is recorded in the audit trail.");
     } catch (error) { setFeedback(error instanceof Error ? error.message : "Export failed."); }
     finally { setBusy(false); }
   }
@@ -54,9 +55,13 @@ export function AuditWorkspace({ queue, filters, basePath }: { queue: AuditQueue
         <p>{queue.total} records match the current filters. Export includes the safe fields visible here.</p>
         <button type="button" className="txk-button txk-button-primary" disabled={busy} onClick={download}>{busy ? "Exporting…" : "Download CSV"}</button>
         <p role="status">{feedback}</p>
+        {downloadUrl ? <div className="audit-toolbar" aria-label="Prepared CSV">
+          <a className="txk-button txk-button-default" href={downloadUrl} download="audit-events.csv">Download prepared CSV</a>
+          <a className="txk-button txk-button-default" href={downloadUrl} target="_blank" rel="noopener noreferrer">View CSV</a>
+        </div> : null}
       </ActionModal>
     </div>
-    <p>{queue.total} records in your authorized scope{filters.eventType ? ` · ${filters.eventType}` : ""}{filters.result ? ` · ${filters.result}` : ""}</p>
+    <p>{queue.total} {queue.total === 1 ? "record" : "records"} in your authorized scope{filters.eventType ? ` · ${filters.eventType}` : ""}{filters.result ? ` · ${filters.result}` : ""}</p>
     {!queue.items.length ? <EmptyState title="No matching activity" description="Try a different date range or clear filters. Only records with an established authorized scope appear." /> : null}
     <div className="audit-record-list">{queue.items.map(item => <Card key={item.recordId} className="audit-record-card">
       <div><h2>{item.eventType.replaceAll("_", " ")}</h2><p>{timestamp(item.createdAt)}</p>
