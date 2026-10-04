@@ -343,7 +343,7 @@ FR-RET-007 Dashboard shows milestone completion/risk.
 FR-RET-008 No automated employment action from response.
 
 MVP1 decision:
-Parallel employer pulse may be enabled later or during pilot; student pulse is minimum source-backed requirement.
+Owner-approved D-04 decision (2026-10-04, GitHub #216): MVP1 includes Student-only retention pulses. Employer-side pulses are deferred to a separately approved pilot/backlog task. Student pulse is the minimum source-backed requirement. This decision adds no Employer access to Student responses or internal case notes and no automatic employment consequence. Future Employer pulse work requires an explicit consent, data ownership, role/scope, event and delivery contract before implementation.
 
 8.11 REPORTING / DASHBOARDS
 
