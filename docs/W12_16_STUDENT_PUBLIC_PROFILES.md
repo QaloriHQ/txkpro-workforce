@@ -33,3 +33,7 @@ Required: typecheck, lint, build, Wave12 QA; `scripts/sql/w12-16-student-public-
 7. Test narrow/mobile and desktop, light/dark, keyboard focus, Escape, Cancel/X, busy controls, draft preservation, and persistent success/error feedback.
 
 Record UAT on #55; use Verification until it passes. Production remains separately authorized.
+
+## Applied staging ledger
+
+Supabase applied version `20261004223652`, name `workforce_w12_16_student_public_profile`, SQL MD5 `866b2d2eb43ea76847cc4448e0729f79`. The CLI-created source was renamed to the observed applied version; applied SQL is unchanged. No production migration.
