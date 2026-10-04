@@ -22,4 +22,6 @@ Future Employer pulse work must define its consent, permitted fields, roles/scop
 - W12-01: [#34](https://github.com/QaloriHQ/txkpro-workforce/issues/34), implemented by merged PR #131 at `9952a04c23384b24bc426bdd13aa405d9d4e219d`. Project status requires separate protocol evidence; issue closure alone is insufficient.
 - W12-07: [#40](https://github.com/QaloriHQ/txkpro-workforce/issues/40), implemented by merged PR #193. Its failed Verification transition can be rerun now that the option exists. Remaining owner UAT is documented in `docs/WAVE12_RETENTION_CASE_WORKSPACE.md`.
 
+The historical W12-01 migration file was recovered from staging ledger version `20260928233244` (SQL MD5 `ce59f4f1477e0d55167e8cb156fafd9b`). Its previous source filename/version differed and had been edited after application. The ledger SQL is now preserved as applied; the already-applied `20261003171815_workforce_wave12_invitation_scope_approval_compatibility.sql` remains the forward scoped-approval overload. This repair applies no migration and changes no current database authorization policy.
+
 No production migration/deployment is authorized by this decision. Verification and Done transitions use the existing protocol status gate.
