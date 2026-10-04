@@ -63,7 +63,7 @@ test("Production Institution auth avoids prototype role switching", () => {
 
 test("W12 SQL keeps role and scope checks server-side", () => {
   const sql = read(
-    "supabase/staging/migrations/20260928211726_workforce_wave12_institution_role_authorization.sql",
+    "supabase/staging/migrations/20260928233244_workforce_wave12_institution_role_authorization.sql",
   );
   assert.match(sql, /create or replace function security\.institution_scope_contains/);
   assert.match(sql, /create or replace function public\.institution_learning_access_context/);

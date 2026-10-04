@@ -357,9 +357,7 @@ $$;
 
 create or replace function security.can_approve_institution_member(
   p_institution_id text,
-  p_target_role text,
-  p_target_scope_type text default 'institution',
-  p_target_scope_id text default null
+  p_target_role text
 )
 returns boolean
 language sql
@@ -375,38 +373,23 @@ as $$
         'institution_admin','department_head','program_coordinator',
         'instructor','assistant_instructor','career_services',
         'read_only_analyst'
-      ) then
-        security.institution_role_scope_valid(
-          p_target_role,
-          coalesce(nullif(p_target_scope_type,''),'institution')
-        )
-        and security.institution_scope_matches(
-          p_institution_id,
-          coalesce(nullif(p_target_scope_type,''),'institution'),
-          coalesce(nullif(p_target_scope_id,''),p_institution_id),
-          null
-        )
-        and (
-          security.is_admin()
-          or exists(
+      ) then security.is_admin() or exists(
         select 1
         from public.app_role_memberships r
         where r.auth_user_id=(select auth.uid())
           and lower(r.status)='active'
           and (
             security.canonical_institution_role(r.role)='institution_super_admin'
-            or security.canonical_institution_role(r.role)='institution_admin'
+            or (
+              security.canonical_institution_role(r.role)='institution_admin'
+              and security.canonical_institution_role(p_target_role) in (
+                'instructor','assistant_instructor'
+              )
+            )
           )
-          and security.institution_role_scope_valid(r.role,r.scope_type)
-          and security.institution_scope_contains(
-            p_institution_id,
-            r.scope_type,
-            r.scope_id,
-            coalesce(nullif(p_target_scope_type,''),'institution'),
-            coalesce(nullif(p_target_scope_id,''),p_institution_id)
-          )
-          )
-        )
+          and lower(r.scope_type)='institution'
+          and r.scope_id=p_institution_id
+      )
     end,
     false
   );
@@ -479,8 +462,6 @@ revoke all on function security.can_invite_institution_member(text,text,text,tex
   from public,anon,authenticated;
 revoke all on function security.can_approve_institution_member(text,text)
   from public,anon,authenticated;
-revoke all on function security.can_approve_institution_member(text,text,text,text)
-  from public,anon,authenticated;
 
 grant execute on function security.canonical_institution_role(text) to service_role;
 grant execute on function security.institution_role_scope_valid(text,text) to service_role;
@@ -491,7 +472,6 @@ grant execute on function security.has_institution_learning_role(text,text,text[
 grant execute on function security.institution_learning_has_any_scope(text) to service_role;
 grant execute on function security.can_invite_institution_member(text,text,text,text) to service_role;
 grant execute on function security.can_approve_institution_member(text,text) to service_role;
-grant execute on function security.can_approve_institution_member(text,text,text,text) to service_role;
 
 revoke all on function public.institution_learning_access_context()
   from public,anon;
@@ -503,6 +483,4 @@ comment on table public.wf_institution_scope_bindings is
 comment on function security.can_invite_institution_member(text,text,text,text) is
   'W12-01 policy: Institution Super Admin/Admin, Department Head, and Program Coordinator may invite only into a role and scope contained by their own active scope.';
 comment on function security.can_approve_institution_member(text,text) is
-  'D-01/W12-01 compatibility wrapper: educator approval is allowed for TXKPRO Admin or scoped Institution Admin/Super Admin when the target scope is contained by the approver scope.';
-comment on function security.can_approve_institution_member(text,text,text,text) is
-  'D-01/W12-01 policy: TXKPRO Admin and scoped Institution Admin/Super Admin can approve educator access; target role/scope must be valid, contained, server-checked, and audited by the application action.';
+  'W12-01 policy: Institution Super Admin approves subordinate Institution roles; Institution Admin approves instructors and assistant instructors; TXKPRO platform Admin approves Institution Super Admin and may intervene.';
