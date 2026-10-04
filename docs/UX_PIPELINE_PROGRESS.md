@@ -21,7 +21,7 @@ The tracker is a server-rendered read model over existing authenticated, employe
 | Declined/cancelled/expired interview, closed referral, ended placement | Closed |
 | Unknown status or hired referral without visible placement evidence | Needs Review |
 
-Linked placement evidence takes precedence over interview, then referral. Skipped stages do not gain fabricated evidence. Recorded steps and dates indicate available evidence; current state has a visible text label and `aria-current="step"`. Retention milestones never advance hiring progress. Loading, empty and recoverable read failure states are explicit. Layout stacks on narrow screens and uses existing theme tokens.
+Linked placement evidence takes precedence over interview, then referral. Skipped stages do not gain fabricated evidence. Each journey is collapsed by default with its role title, current-stage text and six progress dots visible. Native details/summary disclosure expands recorded steps, dates and workflow links without client JavaScript. Recorded dots are filled; the current dot has an outer ring. Closed/Needs Review stays explicit in the stage label without inventing a current step. Expanded current state has `aria-current="step"`. Retention milestones never advance hiring progress. Loading, empty and recoverable read failure states are explicit. Layout wraps on narrow screens and uses existing theme tokens.
 
 ## Verification and owner UAT
 
@@ -34,6 +34,6 @@ Owner manual UAT remains required (no automated staging browser tests):
 3. A past scheduled hire and legacy active placement without confirmation remain Hire Scheduled with confirmation required. Confirm an actual start using the existing modal: tracker advances to Employment Started after refresh.
 4. Separate attempts for the same candidate stay separate; ending one placement closes only that journey. Retention check-ins do not alter hiring stage.
 5. Use an assigned Hiring Manager and an unrelated-company user: verify existing visibility boundaries and detail denials; read-only users see no new mutation control.
-6. At mobile width and in light/dark themes, check labels, dates, links and keyboard focus. Confirm current stage is understandable without color.
+6. At mobile width and in light/dark themes, check collapsed dots/current-stage label, expanded dates/links and keyboard focus. Tab to each summary and use Enter/Space to open/close; each journey expands independently. Confirm current stage is understandable without color and hidden links are absent from tab order when collapsed.
 
 Implementation/staging completion does not close #209 until manual acceptance is recorded. Missing Project `Verification` status and unavailable local Project/usage credentials are tracking follow-ups, not proof of acceptance.
