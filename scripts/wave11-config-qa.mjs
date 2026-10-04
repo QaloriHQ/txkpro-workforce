@@ -17,3 +17,4 @@ test("invalid configuration errors never echo supplied credentials", () => {
     );
   }
 });
+import "./wave11-public-learning-qa.mjs";

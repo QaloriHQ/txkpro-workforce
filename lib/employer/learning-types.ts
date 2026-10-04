@@ -644,3 +644,16 @@ export type EmployerCertificationVerification = {
     metadata: Record<string, unknown>;
   };
 };
+export type LearningPublicPageSettings = {
+  slug: string; canonicalPath?: string; visibility: "public" | "private";
+  publicationStatus: "draft" | "published" | "unpublished"; robotsIndex: boolean;
+  seoTitle?: string | null; metaDescription?: string | null;
+};
+export type LearningPublicSettings = {
+  employerSlug: string | null; employerPublished: boolean | null; course: LearningPublicPageSettings | null;
+  lessons: Array<LearningPublicPageSettings & { lessonId: string }>;
+};
+export type LearningPublicSettingsInput = Omit<LearningPublicPageSettings, "slug"> & {
+  employerSlug: string; publishEmployerPage: boolean; courseSlug: string; expectedCurrentVersionId: string;
+  lessons: Array<LearningPublicPageSettings & { lessonId: string }>;
+};

@@ -1188,3 +1188,8 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
   .txk-action-dialog-header, .txk-action-dialog-body { padding: 16px; }
   .txk-action-dialog :is(.grid-2, .grid-3, .form-grid, .txk-form-grid-2) { grid-template-columns: 1fr; }
 }
+/* Public learning reuses shared tokens and cards; long authored text must wrap. */
+.txk-public-learning { display: grid; gap: 1.25rem; min-width: 0; overflow-wrap: anywhere; }
+.txk-public-learning-breadcrumb { display: flex; flex-wrap: wrap; gap: .75rem; }
+.txk-public-learning-block p { white-space: pre-wrap; }
+.txk-public-learning-list { display: grid; gap: 1rem; padding-left: 1.25rem; }

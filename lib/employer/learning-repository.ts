@@ -1,5 +1,11 @@
 import "server-only";
 
+import type { LearningPublicSettings, LearningPublicSettingsInput } from "@/lib/employer/learning-types";
+
+export async function getLearningPublicSettings(courseId: string, input?: LearningPublicSettingsInput) {
+  return rpc<LearningPublicSettings>("employer_learning_public_settings", { p_course_id: courseId, p_input: input ?? null });
+}
+
 import type { EmployerContext } from "@/lib/employer/types";
 import type {
   EmployerLearningBlockInput,
