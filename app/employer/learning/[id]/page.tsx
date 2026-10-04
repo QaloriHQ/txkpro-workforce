@@ -12,7 +12,7 @@ import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
-import { getEmployerMicroCertModuleDetail } from "@/lib/employer/learning-repository";
+import { getEmployerMicroCertModuleDetail, getLearningPublicSettings } from "@/lib/employer/learning-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +29,7 @@ export default async function EmployerLearningCoursePage({
   );
   const canManage =
     context.role === "employer_owner" || context.role === "employer_admin";
+  const publicSettings = canManage ? await getLearningPublicSettings(course.microCertId) : undefined;
 
   return (
     <>
@@ -85,7 +86,7 @@ export default async function EmployerLearningCoursePage({
           </RoleViewBanner>
         ) : null}
 
-        <CourseOverviewWorkspace course={course} canManage={canManage} />
+        <CourseOverviewWorkspace course={course} canManage={canManage} publicSettings={publicSettings} />
       </main>
     </>
   );

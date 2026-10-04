@@ -20,6 +20,7 @@ import {
 } from "@/components/design-system";
 import type {
   EmployerMicroCertModuleDetail,
+  LearningPublicSettings,
   MicroCertStatus,
 } from "@/lib/employer/learning-types";
 
@@ -45,13 +46,16 @@ async function requestJson(url: string, init: RequestInit) {
 export function CourseOverviewWorkspace({
   course,
   canManage,
+  publicSettings,
 }: {
   course: EmployerMicroCertModuleDetail;
   canManage: boolean;
+  publicSettings?: LearningPublicSettings;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [publicationSaved, setPublicationSaved] = useState(false);
   const immutable =
     course.currentVersion.status === "live" ||
     course.currentVersion.status === "archived";
@@ -127,9 +131,63 @@ export function CourseOverviewWorkspace({
     }
   }
 
+  async function savePublication(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy("publication"); setError(null); setPublicationSaved(false);
+    try {
+      const isPublic = form.get("public") === "on";
+      const slug = String(form.get("courseSlug") ?? "").trim();
+      await requestJson(`${base}/public`, { method: "PATCH", body: JSON.stringify({
+        employerSlug: String(form.get("employerSlug") ?? "").trim(), courseSlug: slug,
+        publishEmployerPage: form.get("publishEmployerPage") === "on",
+        expectedCurrentVersionId: course.currentVersionId,
+        visibility: isPublic ? "public" : "private", publicationStatus: isPublic ? "published" : "unpublished",
+        robotsIndex: form.get("index") === "on",
+        seoTitle: String(form.get("seoTitle") ?? "").trim() || null,
+        metaDescription: String(form.get("metaDescription") ?? "").trim() || null,
+        lessons: course.lessons.filter(l => l.status !== "archived").map(l => ({
+          lessonId: l.lessonId, slug: String(form.get(`slug:${l.lessonId}`) ?? "").trim(),
+          visibility: form.get(`public:${l.lessonId}`) === "on" ? "public" : "private",
+          publicationStatus: form.get(`public:${l.lessonId}`) === "on" ? "published" : "unpublished",
+          robotsIndex: form.get(`index:${l.lessonId}`) === "on",
+        })),
+      }) });
+      setPublicationSaved(true); router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Unable to save publication settings."); }
+    finally { setBusy(null); }
+  }
+
   return (
     <div className="txk-authoring-layout">
       {error ? <div className="alert">{error}</div> : null}
+
+      {canManage ? <Card>
+        <h2>Public course page</h2>
+        <p>Share the live course and selected lessons. Private media, assessments, and student completion records remain in assigned training.</p>
+        {publicSettings?.course?.canonicalPath ? <p><a href={publicSettings.course.canonicalPath}>View public URL</a> · {publicSettings.course.visibility} / {publicSettings.course.publicationStatus}</p> : null}
+        <WorkspaceForm modalTitle="Public page settings" triggerLabel="Manage public pages" busy={busy === "publication"} onSubmit={savePublication}
+          description="Public courses need a published Employer Learning page showing your business name. Renaming a course or lesson preserves its previous URLs."
+          feedback={<>{error ? <p role="alert">{error}</p> : null}{publicationSaved ? <p role="status">Public page settings saved.</p> : null}</>}>
+          <FormField label="Employer URL slug"><Input name="employerSlug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={100} defaultValue={publicSettings?.employerSlug ?? ""} readOnly={Boolean(publicSettings?.employerSlug)} /></FormField>
+          {!publicSettings?.employerPublished ? <label><input name="publishEmployerPage" type="checkbox" /> Publish Employer Learning page displaying our business name</label> : <p>Employer Learning page is published.</p>}
+          <FormField label="Course URL slug"><Input name="courseSlug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={100} defaultValue={publicSettings?.course?.slug ?? ""} /></FormField>
+          <label><input name="public" type="checkbox" defaultChecked={publicSettings?.course?.visibility === "public" && publicSettings?.course?.publicationStatus === "published"} /> Publish course publicly (requires a live version)</label>
+          <label><input name="index" type="checkbox" defaultChecked={publicSettings?.course?.robotsIndex ?? false} /> Allow search engines to index this course</label>
+          <FormField label="SEO title"><Input name="seoTitle" maxLength={200} defaultValue={publicSettings?.course?.seoTitle ?? ""} /></FormField>
+          <FormField label="Search description"><Textarea name="metaDescription" maxLength={500} defaultValue={publicSettings?.course?.metaDescription ?? ""} /></FormField>
+          <h3>Lesson publication</h3>
+          {course.lessons.filter(l => l.status !== "archived").map(l => {
+            const saved = publicSettings?.lessons.find(s => s.lessonId === l.lessonId);
+            return <fieldset key={l.lessonId}><legend>{l.title} · {l.status}</legend>
+              <FormField label="Lesson URL slug"><Input name={`slug:${l.lessonId}`} required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={100} defaultValue={saved?.slug ?? l.lessonId.toLowerCase().replace(/[^a-z0-9-]/g, "-")} /></FormField>
+              <label><input name={`public:${l.lessonId}`} type="checkbox" defaultChecked={saved?.visibility === "public" && saved?.publicationStatus === "published"} disabled={l.status === "draft"} /> Publish lesson publicly (requires ready or published state)</label>
+              <label><input name={`index:${l.lessonId}`} type="checkbox" defaultChecked={saved?.robotsIndex ?? false} /> Allow search engines to index this lesson</label>
+            </fieldset>;
+          })}
+          <Button type="submit" tone="primary" disabled={Boolean(busy)}>{busy === "publication" ? "Saving…" : "Save publication settings"}</Button>
+        </WorkspaceForm>
+      </Card> : null}
 
       <section className="txk-metric-grid txk-course-overview-metrics">
         <MetricCard label="Lessons" value={activeLessons.length} detail={`${course.sections.length} section${course.sections.length === 1 ? "" : "s"}`} />
