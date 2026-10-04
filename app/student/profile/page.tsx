@@ -1,3 +1,5 @@
+import { studentPublicSettings } from "@/lib/student-public-profile/repository";
+import { StudentPublicProfileSettings } from "@/components/student/public-profile-settings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
@@ -16,9 +18,10 @@ function date(value: string) {
 export default async function StudentProfilePage() {
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
-  const [evidence, exposure] = await Promise.all([
+  const [evidence, exposure, publicSettings] = await Promise.all([
     getStudentReadinessEvidence(context.studentId),
     getStudentTrainingExposure(),
+    studentPublicSettings(),
   ]);
 
   return (
@@ -36,6 +39,8 @@ export default async function StudentProfilePage() {
             <p className="card-sub">Your evidence is grouped by its source. No combined readiness or employability score is calculated.</p>
           </div>
         </div>
+
+        <StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName.slice(0, 1)].filter(Boolean).join(" ")} />
 
         <section className="card">
           <div className="card-header"><div><p className="eyebrow">Technical readiness</p><h2>Instructor Verified Skills</h2><p className="card-sub">Technical competencies verified by an Instructor. Employer Training does not create these records.</p></div></div>

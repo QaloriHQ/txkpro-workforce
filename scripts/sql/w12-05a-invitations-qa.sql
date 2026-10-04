@@ -68,7 +68,7 @@ do $$ declare r jsonb; d jsonb; i text; e text; begin
  select id into i from invite_qa_ids where name='student';
  r:=public.user_invitation_accept(i); d:=public.user_invitation_accept(i);
  perform pg_temp.check_true(r->>'status'='accepted' and d->>'idempotent'='true','single-use idempotent acceptance');
- r:=public.complete_student_onboarding('{"firstName":"QA","lastName":"Student","schoolId":"QA185-B","discoverable":false}'::jsonb);
+ r:=public.complete_student_onboarding('{"firstName":"QA","lastName":"Student","publicProfileVisibility":"private","publicProfileSlug":"qa185-student","publicDisplayName":"QA Student","schoolId":"QA185-B","discoverable":false}'::jsonb);
  perform pg_temp.check_true(r->>'ok'='true','active Student onboarding RPC');
  select email into e from invite_qa_actors where name='wrong';
  perform pg_temp.denied(format('select public.user_invitation_create(%L,''instructor'',''institution'',''QA185-A'',''QA185-A'',null,now()+interval ''7 days'',null,''{}'')',e),'scope denied');
