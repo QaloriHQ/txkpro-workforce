@@ -24,12 +24,13 @@ insert into public.contractor_team_members(team_member_id,contractor_id,user_id,
 select 'SEC205-'||name,'SEC205-E',user_id,case when name='inactive_team' then 'disabled' else 'active' end
 from sec205_actors where name in ('legacy_team','disabled_team','inactive_team');
 insert into public.wf_student_profiles(student_id,user_id,school_id,profile_status)
-select 'SEC205-S',user_id,'SEC205-I','active' from sec205_actors where name='student';
+select student_id,user_id,'SEC205-I','active' from sec205_actors
+cross join unnest(array['SEC205-S','SEC205-U']) student_id where name='student';
 insert into public.wf_hiring_needs(hiring_need_id,employer_id,title,status,assigned_hiring_manager_user_id)
 select 'SEC205-NEED','SEC205-E','Synthetic need','draft',user_id from sec205_actors where name='hm';
 insert into public.wf_placements(placement_id,student_id,employer_id,role_title,hire_date,status,hiring_need_id) values
   ('SEC205-P','SEC205-S','SEC205-E','Synthetic role',current_date+5,'pending_start','SEC205-NEED'),
-  ('SEC205-UNASSIGNED','SEC205-S','SEC205-E','Unassigned role',current_date+5,'pending_start',null),
+  ('SEC205-UNASSIGNED','SEC205-U','SEC205-E','Unassigned role',current_date+5,'pending_start',null),
   ('SEC205-OTHER-P','SEC205-S','SEC205-OTHER','Other Employer role',current_date+5,'pending_start',null);
 insert into public.app_role_memberships(membership_key,auth_user_id,user_id,role,scope_type,scope_id,status,source)
 select 'sec205:'||name,auth_id,user_id,role,scope,scope_id,
@@ -48,7 +49,7 @@ from sec205_actors join (values
   ('student','student','self','SEC205-S')) v(name,role,scope,scope_id) using(name);
 -- A second membership cannot supply a role to the first membership's company scope.
 insert into public.app_role_memberships(membership_key,auth_user_id,user_id,role,scope_type,scope_id,status,source)
-select 'sec205:stitched-read',auth_id,user_id,'read_only_analyst','employer','SEC205-E','active','sec205qa'
+select 'sec205:stitched-read',auth_id,user_id,'legacy_observer','employer','SEC205-E','active','sec205qa'
 from sec205_actors where name='stitched';
 create temp table sec205_checks(label text);
 grant select on sec205_actors to authenticated;
@@ -113,9 +114,10 @@ perform pg_temp.denied('select public.employer_placement_detail(''SEC205-E'',''S
 perform pg_temp.actor('readonly');
 perform pg_temp.check_true(not security.can_manage_interview('SEC205-E','SEC205-NEED'),'read-only cannot mutate interview');
 perform pg_temp.actor('institution');
-perform pg_temp.check_true(security.has_institution_learning_role('SEC205-I',null,array['institution_admin']),'Institution path preserved');
-perform pg_temp.check_true(not security.has_institution_learning_role('SEC205-OTHER',null,array['institution_admin']),'Institution scope remains bounded');
-perform pg_temp.check_true(not security.can_manage_employer_learning_content('SEC205-E'),'Institution cannot manage Employer learning');
+d:=public.institution_workforce_summary('SEC205-I');
+perform pg_temp.check_true(d is not null,'Institution public RPC path preserved');
+perform pg_temp.denied('select public.institution_workforce_summary(''SEC205-OTHER'')','Institution scope remains bounded');
+perform pg_temp.denied('select security.can_manage_employer_learning_content(''SEC205-E'')','private learning helper remains closed to direct client execution');
 perform pg_temp.actor('student');
 perform pg_temp.check_true(security.student_owns('SEC205-S'),'Student own path preserved');
 perform pg_temp.check_true(not security.student_owns('SEC205-OTHER-S'),'Student cannot gain platform own shortcut');
