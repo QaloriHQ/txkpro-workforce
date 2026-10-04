@@ -444,6 +444,19 @@ export function EmployerFoundation({
           </div>
           <span className="pill">{hiringNeeds.length} records</span>
         </div>
+        <div className="employer-hiring-needs-cards">
+          {hiringNeeds.length ? hiringNeeds.map(need => (
+            <article className="employer-hiring-need-card" key={need.hiringNeedId}>
+              <h3>{need.title}</h3>
+              <dl>
+                <div><dt>Trade</dt><dd>{need.tradeId ?? "—"}</dd></div>
+                <div><dt>Target hires</dt><dd>{need.targetHires}</dd></div>
+                <div><dt>Status</dt><dd><span className="pill">{need.status}</span></dd></div>
+                <div><dt>Visibility</dt><dd>{need.visibility.replaceAll("_", " ")}</dd></div>
+              </dl>
+            </article>
+          )) : <div className="empty"><strong>No Hiring Needs yet</strong>Create the first draft after Employer approval.</div>}
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
