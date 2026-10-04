@@ -74,8 +74,8 @@ begin
       p_event_type=>'EMPLOYER_LEARNING_PUBLICATION_CHANGED',p_target_id=>result.public_page_id,
       p_event_key=>'publication:'||result.public_page_id||':'||result.updated_at::text,
       p_source=>case when security.is_admin() then 'txkpro' else 'employer' end,p_employer_id=>p_employer,
-      p_before=>jsonb_build_object('status',coalesce(old.publication_status,'draft'),'path',old.canonical_path),
-      p_after=>jsonb_build_object('status',result.publication_status,'path',result.canonical_path),
+      p_before=>jsonb_build_object('status',coalesce(old.publication_status,'draft'),'path',old.canonical_path,'visibility',old.visibility,'robotsIndex',old.robots_index,'seoTitle',old.seo_title,'metaDescription',old.meta_description),
+      p_after=>jsonb_build_object('status',result.publication_status,'path',result.canonical_path,'visibility',result.visibility,'robotsIndex',result.robots_index,'seoTitle',result.seo_title,'metaDescription',result.meta_description),
       p_metadata=>jsonb_build_object('public_page_id',result.public_page_id,'entity_type',p_type,'entity_id',p_entity,
         'from_status',coalesce(old.publication_status,'draft'),'to_status',result.publication_status,'canonical_path',result.canonical_path)
     );
