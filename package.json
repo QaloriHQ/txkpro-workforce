@@ -24,7 +24,8 @@
     "protocol:confirm": "node scripts/txkpro-confirmation-check.mjs",
     "protocol:usage": "node scripts/txkpro-agent-usage.mjs",
     "placement:qa": "node --test scripts/d10-placement-qa.mjs",
-    "authorization:qa": "node --test scripts/sec205-authorization-qa.mjs"
+    "authorization:qa": "node --test scripts/sec205-authorization-qa.mjs",
+    "pipeline:qa": "node --experimental-strip-types --test scripts/candidate-pipeline-qa.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

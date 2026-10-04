@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { CandidatePipelineProgress, HiringProgressLoading } from "@/components/employer/candidate-pipeline-progress";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { CloseReferralButton } from "@/components/employer/close-referral-button";
@@ -78,6 +80,10 @@ export default async function ReferralDetailPage({ params }: RouteContext) {
           </div>
           <span className="pill pill-info">{referral.status.replaceAll("_", " ")}</span>
         </div>
+
+        <Suspense fallback={<HiringProgressLoading />}>
+          <CandidatePipelineProgress context={context} studentId={referral.studentId} focus={{ kind: "referral", id: referral.referralId }} />
+        </Suspense>
 
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Referral evidence snapshot</strong>

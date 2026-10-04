@@ -994,5 +994,6 @@ jobs:
       - run: npm run wave12:qa
       - run: npm run placement:qa
       - run: npm run authorization:qa
+      - run: npm run pipeline:qa
       - run: npm run lint
       - run: npm run build

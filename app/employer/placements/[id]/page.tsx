@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { CandidatePipelineProgress, HiringProgressLoading } from "@/components/employer/candidate-pipeline-progress";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
@@ -43,6 +45,10 @@ export default async function PlacementDetailPage({ params }: RouteContext) {
             {placement.status.replaceAll("_", " ")}
           </span>
         </div>
+
+        <Suspense fallback={<HiringProgressLoading />}>
+          <CandidatePipelineProgress context={context} studentId={placement.studentId} focus={{ kind: "placement", id: placement.placementId }} />
+        </Suspense>
 
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Placement is the employment source of truth.</strong>
