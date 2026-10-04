@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { CandidatePipelineProgress, HiringProgressLoading } from "@/components/employer/candidate-pipeline-progress";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
@@ -76,6 +78,10 @@ export default async function CandidateDetailPage({
             saved={Boolean(candidate.savedCandidateId)}
           />
         </div>
+
+        <Suspense fallback={<HiringProgressLoading />}>
+          <CandidatePipelineProgress context={context} studentId={candidate.studentId} hiringNeedId={hiringNeedId} />
+        </Suspense>
 
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Evidence is separated by source.</strong>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { CandidatePipelineProgress, HiringProgressLoading } from "@/components/employer/candidate-pipeline-progress";
 import { notFound } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { CompleteInterviewButton } from "@/components/employer/complete-interview-button";
@@ -49,6 +51,10 @@ export default async function EmployerInterviewDetailPage({ params }: RouteConte
           </div>
           <span className="pill pill-info">{interview.status.replaceAll("_", " ")}</span>
         </div>
+
+        <Suspense fallback={<HiringProgressLoading />}>
+          <CandidatePipelineProgress context={context} studentId={interview.studentId} focus={{ kind: "interview", id: interview.interviewRequestId }} />
+        </Suspense>
 
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Separate canonical state machines</strong>
