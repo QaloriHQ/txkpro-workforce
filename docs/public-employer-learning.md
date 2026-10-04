@@ -21,7 +21,7 @@ Public output includes explicitly published course/lesson titles, descriptions, 
 
 Authenticated publication uses `public.employer_learning_public_settings`, a security-invoker wrapper around the guarded private-schema function. The database validates canonical active Employer Owner/Admin or TXKPRO platform-admin authority; recruiters, read-only users, other Employers and forged user metadata cannot publish. Platform admins can use the authenticated API without an Employer membership. Anonymous clients cannot call the service-only public read/sitemap RPCs or access the registry tables directly. Public reads use the server-only admin client and explicit field projections. No private-table grants are added.
 
-Migration: `supabase/staging/migrations/20261004032242_workforce_public_course_lesson_urls.sql`. Additive functions only; no existing data is published by the migration. Rollback application code if needed; leave functions in place or apply a reviewed forward fix. No production migration/deployment is included.
+Migration: `supabase/staging/migrations/20261004034003_workforce_public_course_lesson_urls.sql`. The Supabase connector recorded version `20261004034003`; the CLI-created filename was aligned with that ledger version after application, preserving the exact applied SQL. Additive functions only; no existing data is published by the migration. Rollback application code if needed; leave functions in place or apply a reviewed forward fix. No production migration/deployment is included.
 
 Verification:
 
