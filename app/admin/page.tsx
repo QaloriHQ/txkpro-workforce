@@ -34,6 +34,7 @@ export default async function AdminPage() {
         {isPlatformSuperAdmin(account) ? <Link className="button button-ghost" href="/admin/institutions">Institutions and access requests</Link> : null}
         <Link className="button button-ghost" href="/admin/invitations">Manage invitations</Link>
         <Link className="button button-ghost" href="/admin/retention">Retention cases</Link>
+        <Link className="button button-ghost" href="/admin/audit">Audit &amp; events</Link>
         <div className="page-heading">
           <div>
             <p className="eyebrow">TXKPRO operations</p>
