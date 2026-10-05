@@ -140,3 +140,8 @@ export async function requireRole(roles: Role[]) {
   if (!roles.includes(auth.role)) throw new Response("Forbidden", { status: 403 });
   return auth;
 }
+
+// Navigation only. Professional RPCs independently enforce current memberships.
+export function hasStaffProfileMembership(account: AccountContext) {
+  return account.userStatus.toLowerCase() === "active" && account.memberships.some(m => m.status.toLowerCase() === "active" && m.scope_type.toLowerCase() === "platform" && ["support", "read_only_analyst"].includes(m.role.toLowerCase()));
+}

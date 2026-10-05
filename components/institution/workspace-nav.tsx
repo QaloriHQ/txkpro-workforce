@@ -203,6 +203,7 @@ export function InstitutionWorkspaceNav({
           })}
         </div>
 
+        <Link href="/professional/profile" className="institution-sidebar-link" onClick={() => setOpen(false)}>My professional profile</Link>
         <div className="institution-sidebar-footer">
           <span className="institution-sidebar-status" aria-hidden="true" />
           <div>

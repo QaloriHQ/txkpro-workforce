@@ -989,6 +989,7 @@ jobs:
           NODE
 
       - run: npm install
+      - run: node --test scripts/professional-profile-render-qa.mjs
       - run: npm run portfolio:qa
       - run: npm run typecheck
       - run: npm run wave11:qa
