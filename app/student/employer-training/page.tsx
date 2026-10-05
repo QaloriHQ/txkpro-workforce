@@ -63,7 +63,7 @@ export default async function StudentEmployerTrainingPage() {
             const progress = assignment.progress?.requiredItems;
             const blocked = assignment.status === "cancelled";
             return { id: assignment.assignmentId, search: `${assignment.title} ${assignment.employerName} ${assignment.description || ""}`, status: assignment.status, content: (
-              <article className="card student-training-card" key={assignment.assignmentId}>
+              <article className="card student-training-card student-training-compact-card" key={assignment.assignmentId}>
                 <div className="student-training-card-top student-training-card-cover">
                   <span className="student-training-icon">
                     <BuildingOffice2Icon aria-hidden="true" />

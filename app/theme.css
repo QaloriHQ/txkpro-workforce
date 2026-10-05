@@ -7575,15 +7575,11 @@ body:has(.institution-sidebar) .topbar > .brand {
 .student-prototype-header { background:var(--txk-bg-panel); border-bottom:1px solid var(--line); }
 .student-prototype-brand { padding:16px max(20px,env(safe-area-inset-left)); background:var(--txk-bg-panel); }
 .student-prototype-brand .brand { width:fit-content; }
-.student-prototype-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px max(20px,env(safe-area-inset-right)); border-top:1px solid var(--line); }
 .student-prototype-tools { display:flex; align-items:center; gap:10px; min-width:0; }
 .student-prototype-tools > .txk-modal-action > button { min-width:44px; min-height:44px; padding:10px 14px; border:1px solid var(--line); border-radius:16px; background:var(--surface-subtle); color:var(--ink); display:flex; align-items:center; gap:8px; }
 .student-prototype-tools > .txk-modal-action > button svg { width:22px; height:22px; }
 .student-header-actions > .txk-modal-action:last-child > button { padding:0; border-radius:50%; background:transparent; }
 .student-avatar { display:grid; place-items:center; width:44px; height:44px; border:2px solid color-mix(in srgb,var(--brand) 40%,var(--line)); border-radius:50%; background:var(--brand); color:white; font-weight:800; }
-.student-connection { display:flex; align-items:center; gap:7px; padding:12px; border:1px solid var(--line); border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); }
-.student-connection i { width:8px; height:8px; border-radius:50%; background:var(--muted); }
-.student-connection i.connected { background:#22a86b; }
 .student-menu-links { display:grid; gap:12px; margin:16px 0 24px; }
 .student-menu-links a { padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--brand); font-weight:700; }
 body:has(.student-prototype-header) .page-heading h1 { font-size:clamp(24px,3vw,34px); }
@@ -7622,19 +7618,15 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
 @media(max-width:760px) {
  .student-prototype-brand { padding:14px; }
  .student-prototype-brand .brand { max-width:170px; }
- .student-prototype-toolbar { padding:10px 14px; gap:8px; }
  .student-prototype-tools { gap:8px; }
  .student-prototype-tools > .txk-modal-action > button { padding:10px; }
- .student-connection { padding:10px; font-size:11px; }
  .student-prototype-hero { padding:22px; }
  .student-section-heading { align-items:flex-start; flex-wrap:wrap; }
  .student-workspace-nav-link { font-size:10px; }
  .student-training-library { grid-template-columns:minmax(0,1fr); }
 }
 @media(max-width:360px) {
- .student-connection { padding:8px; }
  .student-prototype-tools { gap:5px; }
- .student-prototype-toolbar { padding:8px; }
  .student-training-search { grid-template-columns:minmax(0,1fr); }
 }
 
@@ -7643,3 +7635,34 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
 .student-training-card-cover { flex-wrap:wrap; }
 .student-training-cover-identity { flex-basis:100%; display:grid; gap:6px; padding-top:12px; }
 .student-training-cover-identity > span { color:var(--muted); font-size:12px; }
+
+/* Compact Student top bar and mobile course summary cards. */
+.student-prototype-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px max(20px,env(safe-area-inset-right)) 14px max(20px,env(safe-area-inset-left)); }
+.student-prototype-brand { padding:0; min-width:0; }
+.student-prototype-header .student-header-actions { flex-shrink:0; }
+.student-prototype-header .theme-toggle { width:44px; min-width:44px; height:44px; padding:10px; border-radius:16px; }
+.student-prototype-header .theme-toggle-label { display:none; }
+@media(max-width:760px) {
+ .student-prototype-header { padding:12px max(14px,env(safe-area-inset-right)) 12px max(14px,env(safe-area-inset-left)); gap:12px; }
+ .student-prototype-header .student-prototype-brand { padding:0; }
+ .student-prototype-header .brand-logo { width:130px; }
+ .student-header-actions { gap:6px; }
+ .student-training-compact-card { padding:16px; gap:12px; }
+ .student-training-compact-card .student-training-card-cover { display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:10px; padding:12px; }
+ .student-training-compact-card .student-training-card-cover .student-training-icon { width:36px; height:36px; border-radius:10px; }
+ .student-training-compact-card .student-training-card-cover .student-training-icon svg { width:22px; height:22px; }
+ .student-training-compact-card .student-training-cover-identity { grid-column:2; grid-row:1; padding:0; gap:3px; min-width:0; }
+ .student-training-compact-card .student-training-cover-identity strong { font-size:13px; line-height:1.35; overflow-wrap:anywhere; }
+ .student-training-compact-card .student-training-card-cover > .pill { grid-column:3; grid-row:1; font-size:10px; padding:6px 8px; }
+ .student-training-compact-card h2 { font-size:18px; line-height:1.35; margin:0; }
+ .student-training-compact-card h2 + p { margin:6px 0 0; font-size:12px; line-height:1.5; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+ .student-training-compact-card .student-training-facts { display:flex; flex-wrap:wrap; gap:8px 16px; margin:0; }
+ .student-training-compact-card .student-training-facts > div { display:flex; gap:5px; align-items:baseline; padding:0; background:transparent; border:0; }
+ .student-training-compact-card .student-training-facts > div:nth-child(3) { display:none; }
+ .student-training-compact-card .student-training-facts dt,.student-training-compact-card .student-training-facts dd { font-size:11px; margin:0; }
+ .student-training-compact-card .student-training-progress { gap:6px; }
+ .student-training-compact-card .student-training-progress small { display:none; }
+ .student-training-compact-card .student-training-card-footer { margin:0; padding:0; }
+ .student-training-compact-card .student-training-card-footer > span { display:none; }
+ .student-training-compact-card .student-training-card-footer > .button { min-height:44px; padding:10px 14px; }
+}
