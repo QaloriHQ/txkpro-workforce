@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { FileCard, ProjectDescription, SkillPills, portfolioFileUrl } from "./portfolio-cards";
 import { useState, type ReactNode, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceForm } from "@/components/design-system/action-modal";
@@ -110,14 +111,7 @@ function ProjectFields({
           defaultValue={project?.description || ""}
         />
       </label>
-      <label>
-        Skills demonstrated
-        <input
-          name="skills"
-          maxLength={600}
-          defaultValue={project?.skills || ""}
-        />
-      </label>
+      <fieldset className="portfolio-fieldset"><legend>Skills demonstrated (up to 3)</legend><p className="muted">Student-entered claims. One skill per field; no commas.</p>{[0, 1, 2].map(index => <label key={index}>Skill {index + 1}<input name={`skill${index}`} maxLength={60} pattern="[^,]*" defaultValue={project?.skills.split(",")[index]?.trim() || ""} /></label>)}</fieldset>
       <label>
         Project image
         <select name="imageId" defaultValue={project?.imageId || ""}>
@@ -197,8 +191,10 @@ function FileEditor({
     </EditModal>
   );
 }
-export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
+export function PortfolioEditor({ initial, section = "all" }: { initial: StudentPortfolio; section?: "all" | "projects" | "files" | "settings" | "images" }) {
   const [portfolio, setPortfolio] = useState(initial);
+  const [previousInitial, setPreviousInitial] = useState(initial);
+  if (previousInitial !== initial) { setPreviousInitial(initial); setPortfolio(initial); }
   const [savedNotice, setSavedNotice] = useState("");
   const [newProjectId, setNewProjectId] = useState(() => crypto.randomUUID());
   const router = useRouter();
@@ -213,7 +209,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
     id,
     title: d.get("title"),
     description: d.get("description"),
-    skills: d.get("skills"),
+    skills: [0, 1, 2].map(i => String(d.get(`skill${i}`) || "").trim()).filter(Boolean).join(", "),
     imageId: d.get("imageId"),
     visibility: d.get("visibility"),
   });
@@ -221,7 +217,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
   return (
     <section className="card portfolio-editor">
       {savedNotice ? <p role="status">{savedNotice}</p> : null}
-      <div className="card-header">
+      {section === "all" ? <div className="card-header">
         <div>
           <p className="eyebrow">Make it yours</p>
           <h2>Resume & portfolio</h2>
@@ -229,15 +225,15 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
             New uploads and projects start private. You choose what to share.
           </p>
         </div>
-      </div>
+      </div> : null}
       <div className="portfolio-actions">
-        <EditModal
-          title="Profile appearance & sharing"
+        {section === "settings" || section === "images" || section === "all" ? <EditModal
+          title={section === "images" ? "Edit profile images" : "Profile appearance & sharing"}
           onSaved={saved}
           action={{
             input: (d) => ({
               op: "preferences",
-              rankingScope: d.get("rankingScope"),
+              rankingScope: section === "images" ? prefs.rankingScope : d.get("rankingScope"),
               photoId: d.get("photoId"),
               coverId: d.get("coverId"),
               ...Object.fromEntries(
@@ -247,7 +243,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
                   "showBadges",
                   "showCertifications",
                   "showProgress",
-                ].map((k) => [k, d.get(k) === "on"]),
+                ].map((k) => [k, section === "images" ? prefs[k as "showSkills"] : d.get(k) === "on"]),
               ),
             }),
           }}
@@ -282,6 +278,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
             Upload photos first, then select them here. A selected image appears
             publicly only when its file access is Public.
           </p>
+          {section !== "images" ? <>
           <h3>Public profile sections</h3>
           {(
             [
@@ -305,8 +302,9 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
               <option value="txkpro">TXKPRO</option>
             </select>
           </label>
-        </EditModal>
-        <EditModal
+          </> : null}
+        </EditModal> : null}
+        {section === "files" || section === "all" ? <EditModal
           title="Upload a file"
           onSaved={saved}
           action={{
@@ -345,8 +343,8 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
             / 200 MB total. Uploads are private until you change access.
             Uploaded certificates are labeled Student-uploaded.
           </p>
-        </EditModal>
-        <EditModal
+        </EditModal> : null}
+        {section === "projects" || section === "all" ? <EditModal
           title="Add a project"
           onSaved={saved}
           action={{
@@ -355,19 +353,20 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
           }}
         >
           <ProjectFields portfolio={portfolio} />
-        </EditModal>
+        </EditModal> : null}
       </div>
-      <h3>My projects</h3>
+      {section === "projects" || section === "all" ? <>
+      <h2>My projects</h2>
       {portfolio.projects.length ? (
         <div className="portfolio-grid">
           {portfolio.projects.map((p) => (
             <article className="portfolio-item" key={p.id}>
               {p.imageId ? <div className="portfolio-project-image"><Image src={`/api/student/portfolio/files/${encodeURIComponent(p.imageId)}`} alt={p.title} width={600} height={360} unoptimized /></div> : null}
               <h4>{p.title}</h4>
-              {p.description ? <p className="portfolio-text">{p.description}</p> : null}
-              {p.skills ? <p><strong>Skills demonstrated: </strong>{p.skills}</p> : null}
+              <ProjectDescription text={p.description} />
+              <SkillPills skills={p.skills} />
               <p className="muted">{p.visibility} · Student-entered</p>
-              <div className="portfolio-actions">
+              <details className="portfolio-item-menu"><summary aria-label={`Actions for ${p.title}`}>•••</summary><div className="portfolio-menu-options">
                 <EditModal
                   title={`Edit ${p.title}`}
                   trigger="Edit project"
@@ -384,29 +383,24 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
                 >
                   <p>Remove this project from your portfolio?</p>
                 </EditModal>
-              </div>
+              </div></details>
             </article>
           ))}
         </div>
       ) : (
         <p className="empty">Add a project to showcase your work.</p>
       )}
-      <h3>My files</h3>
+      </> : null}
+      {section === "files" || section === "all" ? <>
+      <h2>My files</h2>
       {portfolio.files.length ? (
-        <div className="portfolio-grid">
+        <div className="portfolio-file-gallery">
           {portfolio.files.map((f) => (
             <article className="portfolio-item" key={f.id}>
-              <h4>{f.title}</h4>
-              <p className="muted">
-                {f.kind} ·{" "}
-                {f.access === "employer" ? "Authorized employers" : f.access} ·{" "}
-                {Math.ceil(f.size / 1024)} KB
-              </p>
-              <div className="portfolio-actions">
-                <a href={`/api/student/portfolio/files/${f.id}`} download>
-                  Download
-                </a>
-                <a href={`/api/student/portfolio/files/${f.id}?view=1`} target="_blank" rel="noopener noreferrer">View</a>
+              <FileCard file={f} />
+              <small className="muted">{f.access === "employer" ? "Authorized employers" : f.access}</small>
+              <details className="portfolio-item-menu"><summary aria-label={`Actions for ${f.title}`}>•••</summary><div className="portfolio-menu-options">
+                <a href={portfolioFileUrl(f.id)} download>Download</a>
                 <FileEditor file={f} onSaved={saved} />
                 <EditModal
                   title={`Remove ${f.title}`}
@@ -422,7 +416,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
                     images and projects.
                   </p>
                 </EditModal>
-              </div>
+              </div></details>
             </article>
           ))}
         </div>
@@ -431,6 +425,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
           Upload a resume, certificate, or photo to get started.
         </p>
       )}
+      </> : null}
     </section>
   );
 }
