@@ -1297,3 +1297,27 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
   .classes-page .institution-action-bar { gap: 8px; }
   .classes-page .institution-action-bar .button, .classes-page .institution-action-bar .txk-button { font-size: 13px; }
 }
+
+/* PRO Points and program workspaces: compact cards; every form stays in a native dialog. */
+.pro-workspace {display:grid;gap:1.25rem;min-width:0}
+.pro-toolbar,.pro-metrics,.pro-weekdays,.pro-badges {display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.pro-toolbar {justify-content:space-between}
+.pro-field {display:grid;gap:.4rem;margin-block:.85rem}
+.pro-field input,.pro-field select,.pro-field textarea {width:100%;max-width:100%;min-width:0;padding:.75rem;border:1px solid var(--border);border-radius:.65rem;background:var(--surface);color:inherit;font:inherit}
+.pro-field textarea {min-height:7rem;resize:vertical}
+.pro-check {display:flex;gap:.65rem;align-items:start}
+.pro-metrics>div {display:grid;gap:.25rem;flex:1;min-width:8rem}
+.pro-metrics strong {font-size:1.65rem}
+.pro-metrics span,.pro-streaks span {color:var(--muted)}
+.pro-ranking-list>div {display:flex;justify-content:space-between;gap:1rem;padding:.75rem;border-bottom:1px solid var(--border);text-transform:capitalize}
+.pro-streaks {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-block:1rem}
+.pro-streaks>div {display:grid;gap:.25rem;text-transform:capitalize}
+.pro-activity-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:1rem;margin-block:1rem}
+.pro-activity {box-shadow:none;min-width:0}
+.pro-program {min-width:0}
+.pro-program p,.pro-activity p {overflow-wrap:anywhere}
+.pro-submission {padding:.85rem 0;border-bottom:1px solid var(--border)}
+.pro-participant-list>div,.pro-ledger>div {display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--border)}
+.pro-ledger>div>span:last-child {flex-basis:100%}
+.pro-progress-card {margin-block:1rem}
+@media(max-width:600px){.pro-streaks{grid-template-columns:1fr}.pro-toolbar{align-items:stretch}.pro-toolbar h2{flex-basis:100%}.pro-metrics .txk-modal-action{flex-basis:100%}.pro-activity,.pro-program{padding:1rem}.pro-participant-list>div>strong{flex-basis:100%}}

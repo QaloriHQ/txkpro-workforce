@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { publicStudentPage } from "@/lib/student-public-profile/repository";
 import { PortfolioView } from "@/components/student/portfolio-view";
+import {ProgressCard} from "@/components/pro-points/progress-card";
+import {publicPoints} from "@/lib/pro-points/server";
 import { Brand } from "@/components/brand";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,6 +31,7 @@ export default async function PublicStudentProfile({ params }: Props) {
   const page = await publicStudentPage(`/students/${slug}`);
   if (!page.found) notFound();
   if (page.redirect && page.path) permanentRedirect(page.path);
+  const points = await publicPoints(`/students/${slug}`);
   return (
     <>
       <header className="topbar">
@@ -49,6 +52,7 @@ export default async function PublicStudentProfile({ params }: Props) {
             <p>{page.headline}</p>
           </article>
         )}
+        <ProgressCard summary={points}/>
       </main>
     </>
   );
