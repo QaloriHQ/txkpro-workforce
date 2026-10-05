@@ -9,12 +9,14 @@ export function PortfolioView({
   headline,
   bio,
   publicView = false,
+  identityOnly = false,
 }: {
   portfolio: StudentPortfolio;
   displayName: string;
   headline?: string | null;
   bio?: string | null;
   publicView?: boolean;
+  identityOnly?: boolean;
 }) {
   const { preferences, projects, files, evidence = [] } = portfolio;
   const documents = files.filter((f) =>
@@ -59,11 +61,12 @@ export function PortfolioView({
             )}
           </div>
           <p className="eyebrow">Skilled trades · Student portfolio</p>
-          <h1>{displayName}</h1>
+          {identityOnly ? <h2>{displayName}</h2> : <h1>{displayName}</h1>}
           {headline ? <p className="portfolio-headline">{headline}</p> : null}
           {bio ? <p className="portfolio-text">{bio}</p> : null}
         </div>
       </article>
+      {!identityOnly ? <>
       {evidence.length ? (
         <section className="card">
           <h2>Skills & credentials</h2>
@@ -189,6 +192,7 @@ export function PortfolioView({
           </p>
         </section>
       ) : null}
+      </> : null}
     </div>
   );
 }

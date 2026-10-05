@@ -7666,3 +7666,22 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
  .student-training-compact-card .student-training-card-footer > span { display:none; }
  .student-training-compact-card .student-training-card-footer > .button { min-height:44px; padding:10px 14px; }
 }
+
+/* Unified Student profile: one identity, explicit privacy and manageable sections. */
+.student-readiness-profile .student-portfolio-view { margin-top:0; }
+.student-profile-privacy-bar { display:flex; align-items:center; gap:12px 20px; flex-wrap:wrap; margin-top:16px; }
+.student-profile-privacy-bar > .card-header { margin:0; flex:1; min-width:180px; }
+.student-profile-privacy-bar h2 { font-size:16px; margin:0 0 4px; }
+.student-profile-privacy-bar p { margin:0; }
+.student-profile-privacy-bar > p > a { color:var(--brand); font-weight:700; }
+.student-unified-profile-sections [role="tabpanel"] > .card + .card { margin-top:16px; }
+.student-unified-profile-sections [hidden] { display:none; }
+.student-unified-profile-sections .portfolio-editor > h3 { margin-top:24px; }
+.student-unified-profile-sections .portfolio-editor .portfolio-item { min-width:0; }
+.student-unified-profile-sections .portfolio-editor .portfolio-project-image img { width:100%; height:auto; max-height:240px; object-fit:cover; border-radius:12px; }
+@media(max-width:760px) {
+ .student-profile-privacy-bar { align-items:flex-start; gap:12px; }
+ .student-profile-privacy-bar > .txk-modal-action { width:100%; }
+ .student-profile-privacy-bar > .txk-modal-action > button { width:100%; }
+ .student-unified-profile-sections .portfolio-actions { gap:8px; }
+}
