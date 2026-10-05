@@ -1,7 +1,5 @@
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import { redirect } from "next/navigation";
-import { Brand } from "@/components/brand";
-import { SignOutButton } from "@/components/sign-out-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
 import { PortfolioEditor } from "@/components/student/portfolio-editor";
 import { PortfolioView } from "@/components/student/portfolio-view";
@@ -18,13 +16,7 @@ export default async function PortfolioPage() {
   ]);
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="portfolio" />
       <main className="page-wrap student-training-page">
         <div className="page-heading">

@@ -1,11 +1,9 @@
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import { studentPublicSettings } from "@/lib/student-public-profile/repository";
 import { StudentPublicProfileSettings } from "@/components/student/public-profile-settings";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Brand } from "@/components/brand";
-import { SignOutButton } from "@/components/sign-out-button";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import { getStudentReadinessEvidence, getStudentTrainingExposure } from "@/lib/student/learning-repository";
 
@@ -26,10 +24,7 @@ export default async function StudentProfilePage() {
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions"><ThemeToggle /><SignOutButton /></div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="profile" trainingCount={evidence.employerTraining.filter((item) => item.status !== "cancelled").length} />
       <main className="page-wrap student-training-page student-readiness-profile">
         <div className="page-heading">

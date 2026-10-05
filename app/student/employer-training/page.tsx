@@ -1,16 +1,14 @@
+import { StudentTrainingLibrary } from "@/components/student/training-library";
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  AcademicCapIcon,
   ArrowRightIcon,
   BuildingOffice2Icon,
   CheckCircleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import { Brand } from "@/components/brand";
-import { SignOutButton } from "@/components/sign-out-button";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import { listStudentEmployerTrainingAssignments } from "@/lib/student/learning-repository";
 import type { StudentEmployerTrainingAssignmentStatus } from "@/lib/student/types";
@@ -42,20 +40,14 @@ export default async function StudentEmployerTrainingPage() {
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="training" trainingCount={activeCount} />
 
       <main className="page-wrap student-training-page">
         <div className="page-heading student-training-page-heading">
           <div>
-            <p className="eyebrow">Student · Employer Training</p>
-            <h1>Assigned company training</h1>
+            <p className="eyebrow">Employer learning</p>
+            <h1>Training Center</h1>
             <p className="card-sub">
               Complete company-specific readiness training assigned through your
               Institution. Employer Training is separate from Instructor Verified
@@ -65,35 +57,24 @@ export default async function StudentEmployerTrainingPage() {
           <span className="pill pill-info">{activeCount} active</span>
         </div>
 
-        <section className="student-training-context card">
-          <AcademicCapIcon aria-hidden="true" />
-          <div>
-            <strong>What this training means</strong>
-            <p>
-              These courses document readiness for a specific Employer&apos;s
-              process, equipment, policies, or expectations. Your technical
-              competency evidence remains your Instructor Verified Skills.
-            </p>
-          </div>
-        </section>
+        <section className="student-prototype-hero"><span className="pill">Employer learning</span><h2>Bridge the lab-to-field gap.</h2><p>Explore employer expectations, complete company-specific training, and earn workforce evidence. These credentials complement Instructor Verified Skills.</p><div className="student-hero-stats"><span>{assignments.filter(a => a.status === "completed").length} completed</span><span>{assignments.filter(a => a.status === "in_progress").length} in progress</span></div></section>
 
-        <section className="student-training-library" aria-label="Employer Training assignments">
-          {assignments.map((assignment) => {
+        <StudentTrainingLibrary items={assignments.map((assignment) => {
             const progress = assignment.progress?.requiredItems;
             const blocked = assignment.status === "cancelled";
-            return (
+            return { id: assignment.assignmentId, search: `${assignment.title} ${assignment.employerName} ${assignment.description || ""}`, status: assignment.status, content: (
               <article className="card student-training-card" key={assignment.assignmentId}>
-                <div className="student-training-card-top">
+                <div className="student-training-card-top student-training-card-cover">
                   <span className="student-training-icon">
                     <BuildingOffice2Icon aria-hidden="true" />
                   </span>
                   <span className={"pill " + statusTone(assignment.status)}>
                     {statusLabel(assignment.status)}
                   </span>
+                  <div className="student-training-cover-identity"><strong>{assignment.employerName}</strong><span>{assignment.durationMinutes ? `${assignment.durationMinutes} min` : "Self-paced"}</span></div>
                 </div>
 
                 <div>
-                  <p className="student-training-kicker">{assignment.employerName}</p>
                   <h2>{assignment.title}</h2>
                   {assignment.description ? <p>{assignment.description}</p> : null}
                 </div>
@@ -170,27 +151,15 @@ export default async function StudentEmployerTrainingPage() {
                       {assignment.status === "completed"
                         ? "Review"
                         : assignment.status === "in_progress"
-                          ? "Resume"
-                          : "Open"}
+                          ? "Continue"
+                          : "Start"}
                       <ArrowRightIcon aria-hidden="true" />
                     </Link>
                   ) : null}
                 </div>
               </article>
-            );
-          })}
-
-          {!assignments.length ? (
-            <div className="card student-training-empty">
-              <AcademicCapIcon aria-hidden="true" />
-              <h2>No Employer Training assignments yet</h2>
-              <p>
-                When your Institution assigns a company-specific course, it will
-                appear here.
-              </p>
-            </div>
-          ) : null}
-        </section>
+            ) };
+          })} />
       </main>
     </>
   );

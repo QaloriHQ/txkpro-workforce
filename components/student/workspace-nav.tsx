@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import {
-  AcademicCapIcon,
+  PlayCircleIcon,
+  ChatBubbleLeftRightIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
   HomeIcon,
-  UserCircleIcon,
   BriefcaseIcon,
-  Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 
 type StudentSection =
@@ -14,7 +14,9 @@ type StudentSection =
   | "training"
   | "opportunities"
   | "portfolio"
-  | "profile";
+  | "profile"
+  | "feed"
+  | "messages";
 
 export function StudentWorkspaceNav({
   active,
@@ -31,30 +33,29 @@ export function StudentWorkspaceNav({
       icon: HomeIcon,
     },
     {
+      key: "feed" as const,
+      href: "/student/feed",
+      label: "Feed",
+      icon: ChatBubbleOvalLeftEllipsisIcon,
+    },
+    {
       key: "training" as const,
       href: "/student/employer-training",
-      label: "Learn",
-      icon: AcademicCapIcon,
+      label: "Training",
+      icon: PlayCircleIcon,
       count: trainingCount,
     },
     {
       key: "opportunities" as const,
       href: "/student/opportunities",
-      label: "Opportunities",
-      mobileLabel: "Career",
+      label: "Career",
       icon: BriefcaseIcon,
     },
     {
-      key: "portfolio" as const,
-      href: "/student/portfolio",
-      label: "Portfolio",
-      icon: Square3Stack3DIcon,
-    },
-    {
-      key: "profile" as const,
-      href: "/student/profile",
-      label: "Profile",
-      icon: UserCircleIcon,
+      key: "messages" as const,
+      href: "/student/messages",
+      label: "Messages",
+      icon: ChatBubbleLeftRightIcon,
     },
   ];
 
@@ -74,7 +75,7 @@ export function StudentWorkspaceNav({
             aria-current={selected ? "page" : undefined}
           >
             <Icon aria-hidden="true" />
-            {"mobileLabel" in item ? <><span className="student-nav-desktop-label">{item.label}</span><span className="student-nav-mobile-label">{item.mobileLabel}</span></> : <span>{item.label}</span>}
+            <span>{item.label}</span>
             {"count" in item && item.count ? (
               <strong
                 aria-label={

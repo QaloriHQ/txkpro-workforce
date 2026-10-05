@@ -4,9 +4,10 @@ import { useId, useRef, type ComponentPropsWithRef, type ReactNode } from "react
 import { useFormStatus } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
-export function ActionModal({ title, triggerLabel, description, busy = false, children }: {
+export function ActionModal({ title, triggerLabel, triggerContent, description, busy = false, children }: {
   title: string;
   triggerLabel: string;
+  triggerContent?: ReactNode;
   description?: string;
   busy?: boolean;
   children: ReactNode;
@@ -21,8 +22,8 @@ export function ActionModal({ title, triggerLabel, description, busy = false, ch
   }
 
   return <div className="txk-modal-action">
-    <button ref={trigger} className="txk-button txk-button-primary txk-button-md" type="button" aria-haspopup="dialog" aria-controls={id} disabled={busy}
-      onClick={() => dialog.current?.showModal()}>{triggerLabel}</button>
+    <button ref={trigger} className="txk-button txk-button-primary txk-button-md" type="button" aria-label={triggerLabel} aria-haspopup="dialog" aria-controls={id} disabled={busy}
+      onClick={() => dialog.current?.showModal()}>{triggerContent ?? triggerLabel}</button>
     <dialog ref={dialog} id={id} className="txk-action-dialog" aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined}
       onCancel={event => { if (isPending()) event.preventDefault(); }}
       onClose={() => trigger.current?.focus()}>
