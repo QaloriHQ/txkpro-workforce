@@ -4891,10 +4891,19 @@ body:has(.institution-sidebar) .topbar > .header-actions {
 .student-training-completion-banner,
 .student-training-completion-pending {
   display: grid;
-  grid-template-columns: 46px minmax(0,1fr);
   gap: 14px;
   align-items: start;
   margin-top: 16px;
+}
+.student-training-completion-banner {
+  grid-template-columns: 46px minmax(0,1fr);
+}
+.student-training-completion-pending {
+  grid-template-columns: minmax(0,1fr);
+}
+.student-training-completion-banner > div,
+.student-training-completion-pending > div {
+  min-width: 0;
 }
 .student-training-completion-icon {
   width: 46px;
@@ -4933,8 +4942,7 @@ body:has(.institution-sidebar) .topbar > .header-actions {
 }
 
 @media (max-width: 520px) {
-  .student-training-completion-banner,
-  .student-training-completion-pending {
+  .student-training-completion-banner {
     grid-template-columns: 40px minmax(0,1fr);
   }
   .student-training-completion-icon {
