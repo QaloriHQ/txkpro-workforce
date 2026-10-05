@@ -1211,3 +1211,27 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
   .audit-record-card .txk-modal-action > button { width: 100%; }
   .audit-facts > div { grid-template-columns: minmax(0,1fr); gap: .15rem; }
 }
+
+/* W12-17 professional public identity and owner workspace. */
+.professional-workspace { max-width: 960px; }
+.professional-profile { display: grid; gap: 18px; }
+.professional-identity { padding: 0; overflow: hidden; }
+.professional-cover { min-height: 140px; background: linear-gradient(120deg, #0b3562, #1676d2); }
+.professional-identity-content { padding: 24px; }
+.professional-identity h1 { margin: 12px 0 8px; overflow-wrap: anywhere; }
+.professional-headline { font-size: 1.1rem; }
+.professional-affiliation { margin-top: 12px; }
+.professional-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.professional-pills, .professional-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.professional-controls { margin-bottom: 18px; }
+.professional-item { border-top: 1px solid var(--line, #dbe2ec); margin-top: 16px; padding-top: 16px; overflow-wrap: anywhere; scroll-margin-top: 100px; }
+.professional-item time { color: var(--muted); font-size: .85rem; }
+.professional-checkbox { display: flex !important; align-items: center; gap: 10px; padding: 6px 0; }
+.professional-checkbox input { width: auto !important; }
+.professional-workspace fieldset { border: 1px solid var(--line, #dbe2ec); border-radius: 12px; margin: 16px 0; padding: 14px; }
+@media (max-width: 640px) {
+ .professional-workspace { padding: 16px 12px; }
+ .professional-identity-content { padding: 18px; }
+ .professional-cover { min-height: 100px; }
+ .professional-controls .button { min-height: 44px; }
+}

@@ -1,0 +1,5 @@
+export type Kind = "educator" | "staff";
+export type Preferences = Record<"reviews" | "ratings" | "posts" | "activity" | "likes" | "comments" | "shares" | "reposts", boolean>;
+export type Post = { id: string; title: string | null; body: string; status?: "draft" | "published" | "hidden" | "removed"; publishedAt: string | null };
+export type Profile = { found?: boolean; redirect?: boolean; kind: Kind; path: string | null; displayName: string; headline: string; bio: string; specialties: string; credentials: string; robotsIndex?: boolean; robotsFollow?: boolean; affiliations: { name: string; programs: string[]; verified: boolean }[]; posts: Post[]; rating?: { average: number; count: number } | null; reviews?: { id: string; rating: number; title: string; body: string; reviewer: string; verifiedRelationship: boolean }[]; activity?: { type: string; body: string; title: string; author: string; path: string }[] };
+export type Settings = Profile & { chosen: boolean; visibility: "public" | "private"; slug: string; preferences: Preferences };
