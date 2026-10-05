@@ -2,6 +2,30 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
 import {csvRows,validateRoster,assertSafeXlsx} from "../lib/classes/roster.ts";
+import {directoryGraph,NODE_WIDTH,NODE_HEIGHT} from "../lib/classes/directory-graph.ts";
+
+test("directory filters, shared classes and collapsed branches preserve scoped connections",()=>{
+ const person=(cohortId,role="instructor")=>({userId:"staff",name:"Instructor",role,scopeType:"cohort",scopeId:cohortId,institutionId:"ins",institutionName:"College",cohortId,cohortName:cohortId,program:"Electrical"});
+ const item={classId:"class",institutionId:"ins",name:"Shared class",courseName:"Safety",status:"open",instructors:[],cohorts:[{cohortId:"a",name:"a",program:"Electrical"},{cohortId:"b",name:"b",program:"Electrical"}]};
+ const data={people:[person("a"),person("a"),person("b","program_coordinator")],classes:[item],assistance:[]};
+ const all=directoryGraph(data,"","",new Set());
+ assert.equal(all.nodes.filter(n=>n.kind==="staff").length,2);
+ assert.equal(all.nodes.filter(n=>n.kind==="class").length,2);
+ assert.equal(new Set(all.nodes.map(n=>n.id)).size,all.nodes.length);
+ const filtered=directoryGraph(data,"instructor","a",new Set());
+ assert.equal(filtered.nodes.filter(n=>n.kind==="staff").length,1);
+ assert.equal(filtered.nodes.some(n=>n.id==="cohort:b"),false);
+ assert.equal(filtered.nodes.some(n=>n.kind==="class"),false);
+ const collapsed=directoryGraph(data,"","",new Set(["cohort:a"]));
+ assert.equal(collapsed.nodes.some(n=>n.id.startsWith("cohort:a:")),false);
+ assert.equal(collapsed.nodes.some(n=>n.id.startsWith("cohort:b:")),true);
+ for(const graph of [all,filtered,collapsed]) {
+  const ids=new Set(graph.nodes.map(n=>n.id));
+  for(const e of graph.edges) assert.ok(ids.has(e.from.id)&&ids.has(e.to.id));
+  for(const n of graph.nodes) assert.ok(n.x>=0&&n.y>=0&&n.x+NODE_WIDTH<=graph.width&&n.y+NODE_HEIGHT<=graph.height);
+ }
+ assert.deepEqual(directoryGraph({people:[],classes:[],assistance:[]},"","",new Set()).nodes,[]);
+});
 test("CSV quoting, BOM and normalized headers",()=>{
  const rows=validateRoster(csvRows('\uFEFFemail,first_name,last_name\r\nTEST@EXAMPLE.COM,"Ada, Jr",Lovelace'));
  assert.equal(rows[0].email,"test@example.com");assert.equal(rows[0].firstName,"Ada, Jr");assert.equal(rows[0].error,undefined);
