@@ -4,6 +4,24 @@ import ExcelJS from "exceljs";
 import {csvRows,validateRoster,assertSafeXlsx} from "../lib/classes/roster.ts";
 import {directoryGraph,NODE_WIDTH,NODE_HEIGHT} from "../lib/classes/directory-graph.ts";
 
+test("employer canvas groups employees separately, filters and collapses without losing empty organization",()=>{
+ const person=(userId,role)=>({userId,name:userId,role,scopeType:"employer",scopeId:"company",institutionId:"company",institutionName:"Company",cohortId:role,cohortName:role,program:null});
+ const data={organizations:[{id:"company",name:"Company"}],people:[person("employee","employer_employee"),person("employee","employer_employee"),person("admin","employer_admin")],classes:[],assistance:[]};
+ const graph=directoryGraph(data,"","",new Set(),"employer");
+ assert.equal(graph.nodes.filter(n=>n.kind==="employer").length,1);
+ assert.equal(graph.nodes.filter(n=>n.kind==="employee").length,1);
+ assert.equal(graph.nodes.filter(n=>n.kind==="staff").length,1);
+ assert.equal(graph.nodes.some(n=>n.kind==="cohort"),false);
+ const filtered=directoryGraph(data,"employer_employee","",new Set(),"employer");
+ assert.equal(filtered.nodes.some(n=>n.name==="admin"),false);
+ const collapsed=directoryGraph(data,"","",new Set(["institution:company:role:employer_employee"]),"employer");
+ assert.equal(collapsed.nodes.some(n=>n.kind==="employee"),false);
+ const empty=directoryGraph({...data,people:[]},"","",new Set(),"employer");
+ assert.equal(empty.nodes.length,1);
+ assert.equal(empty.nodes[0].name,"Company");
+ for(const n of graph.nodes) assert.ok(n.x>=0&&n.y>=0&&n.x+NODE_WIDTH<=graph.width&&n.y+NODE_HEIGHT<=graph.height);
+});
+
 test("directory filters, shared classes and collapsed branches preserve scoped connections",()=>{
  const person=(cohortId,role="instructor")=>({userId:"staff",name:"Instructor",role,scopeType:"cohort",scopeId:cohortId,institutionId:"ins",institutionName:"College",cohortId,cohortName:cohortId,program:"Electrical"});
  const item={classId:"class",institutionId:"ins",name:"Shared class",courseName:"Safety",status:"open",instructors:[],cohorts:[{cohortId:"a",name:"a",program:"Electrical"},{cohortId:"b",name:"b",program:"Electrical"}]};

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
-import { getAccountContext, hasStaffProfileMembership } from "@/lib/auth";
+import { getAccountContext, hasStaffProfileMembership, hasEmployeeMembership } from "@/lib/auth";
 import { onboardingInstitutions } from "@/lib/institutions";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
@@ -11,6 +11,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const requestedRole = params.role === "student" || params.role === "educator" || params.role === "employer" ? params.role : null;
   const account = await getAccountContext();
   if (!account) redirect("/login");
+  if (!account.role && hasEmployeeMembership(account)) redirect("/employee");
   if (!account.role && hasStaffProfileMembership(account)) redirect("/professional/profile");
 
   // Platform administrators are provisioned server-side and never complete

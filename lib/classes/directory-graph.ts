@@ -1,12 +1,13 @@
 import type { ClassRecord } from "@/lib/classes/server";
 
 export type DirectoryData = {
+  organizations?: {id: string; name: string}[];
   classes: ClassRecord[];
   people: { userId: string; name: string; role: string; scopeType: string; scopeId: string; institutionId: string; institutionName: string; cohortId: string; cohortName: string; program: string | null }[];
   assistance: { name: string; institutionId: string; requestedAt: string }[];
 };
 export type DirectoryNode = {
-  id: string; kind: "institution" | "program" | "cohort" | "staff" | "class";
+  id: string; kind: "institution" | "employer" | "program" | "cohort" | "staff" | "student" | "employee" | "class";
   name: string; subtitle: string; details: string[]; children: DirectoryNode[];
   x: number; y: number;
 };
@@ -15,17 +16,31 @@ export const NODE_HEIGHT = 112;
 
 // Connections come only from the authorized read model. They describe scope
 // and affiliation, never inferred management reporting lines.
-export function directoryGraph(data: DirectoryData, role: string, cohort: string, collapsed: ReadonlySet<string>) {
+export function directoryGraph(data: DirectoryData, role: string, cohort: string, collapsed: ReadonlySet<string>, variant: "institution" | "employer" = "institution") {
   const people = data.people.filter(p => (!role || p.role === role) && (!cohort || p.cohortId === cohort));
   const classes = role ? [] : data.classes.filter(c => !cohort || c.cohorts.some(v => v.cohortId === cohort));
   const roots: DirectoryNode[] = [];
   const make = (id: string, kind: DirectoryNode["kind"], name: string, subtitle: string, details: string[] = []): DirectoryNode =>
     ({ id, kind, name, subtitle, details, children: [], x: 0, y: 0 });
-  const institutions = new Set([...people.map(p => p.institutionId), ...classes.map(c => c.institutionId)]);
+  const institutions = new Set([...(data.organizations ?? []).map(o => o.id),...people.map(p => p.institutionId), ...classes.map(c => c.institutionId)]);
   for (const id of institutions) {
     const staff = people.filter(p => p.institutionId === id);
     const linkedClasses = classes.filter(c => c.institutionId === id);
-    const root = make(`institution:${id}`, "institution", staff[0]?.institutionName ?? data.people.find(p => p.institutionId === id)?.institutionName ?? id, "Authorized institution");
+    const root = make(`institution:${id}`, variant, staff[0]?.institutionName ?? data.people.find(p => p.institutionId === id)?.institutionName ?? data.organizations?.find(o => o.id === id)?.name ?? id, `Authorized ${variant}`);
+    if (variant === "employer") {
+      for (const roleName of [...new Set(staff.map(p => p.role))].sort()) {
+        const branch = make(`${root.id}:role:${roleName}`, "program", roleName.replaceAll("_", " "), "Role group");
+        const seen = new Set<string>();
+        for (const person of staff.filter(p => p.role === roleName)) {
+          if (seen.has(person.userId)) continue;
+          seen.add(person.userId);
+          branch.children.push(make(`${branch.id}:${person.userId}`, person.role === "employer_employee" ? "employee" : "staff", person.name, roleName.replaceAll("_", " "), ["Active membership", "Employer-scoped access"]));
+        }
+        root.children.push(branch);
+      }
+      roots.push(root);
+      continue;
+    }
     const cohorts = new Map<string, { name: string; program: string }>();
     staff.forEach(p => cohorts.set(p.cohortId, { name: p.cohortName, program: p.program ?? "Program" }));
     linkedClasses.forEach(c => c.cohorts.filter(v => !cohort || v.cohortId === cohort).forEach(v => cohorts.set(v.cohortId, { name: v.name, program: v.program ?? "Program" })));
@@ -39,7 +54,7 @@ export function directoryGraph(data: DirectoryData, role: string, cohort: string
           const key = `${person.userId}:${person.role}:${person.scopeType}:${person.scopeId}`;
           if (seen.has(key)) continue;
           seen.add(key);
-          group.children.push(make(`${group.id}:staff:${key}`, "staff", person.name, person.role.replaceAll("_", " "),
+          group.children.push(make(`${group.id}:staff:${key}`, person.role === "student" ? "student" : "staff", person.name, person.role.replaceAll("_", " "),
             [`Role: ${person.role.replaceAll("_", " ")}`, `Scope: ${person.scopeType.replaceAll("_", " ")}`, `Cohort connection: ${value.name}`]));
         }
         for (const item of linkedClasses.filter(c => c.cohorts.some(v => v.cohortId === cohortId))) {

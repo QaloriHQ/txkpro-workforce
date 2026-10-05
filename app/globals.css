@@ -1321,3 +1321,10 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
 .pro-ledger>div>span:last-child {flex-basis:100%}
 .pro-progress-card {margin-block:1rem}
 @media(max-width:600px){.pro-streaks{grid-template-columns:1fr}.pro-toolbar{align-items:stretch}.pro-toolbar h2{flex-basis:100%}.pro-metrics .txk-modal-action{flex-basis:100%}.pro-activity,.pro-program{padding:1rem}.pro-participant-list>div>strong{flex-basis:100%}}
+
+.invitation-fields { border: 0; padding: 0; margin: 0; display: contents; }
+.directory-node-employer { border-top: 3px solid var(--txk-info); }
+.directory-branch .txk-icon { width: 16px; height: 16px; }
+.directory-zoom .txk-icon, .txk-modal-action .txk-icon { width: 20px; height: 20px; }
+.directory-zoom .button { min-width: 44px; min-height: 44px; }
+.employee-workspace-nav { display: flex; gap: 12px; flex-wrap: wrap; }
