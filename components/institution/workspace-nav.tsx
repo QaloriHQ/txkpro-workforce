@@ -30,6 +30,8 @@ import {
 export type InstitutionSection =
   | "dashboard"
   | "students"
+  | "classes"
+  | "directory"
   | "programs"
   | "readiness"
   | "learning"
@@ -58,6 +60,8 @@ const groups: Array<{ label: string; items: Item[] }> = [
     items: [
       { key: "dashboard", capability: "dashboard", href: "/institution", label: "Dashboard", icon: HomeIcon },
       { key: "students", capability: "students", href: "/institution/students", label: "Students", icon: UsersIcon },
+      { key: "classes", capability: "students", href: "/institution/classes", label: "Classes & Rosters", icon: AcademicCapIcon },
+      { key: "directory", capability: "students", href: "/institution/directory", label: "Institution Directory", icon: UserGroupIcon },
       { key: "programs", capability: "programs", href: "/institution/programs", label: "Programs & Cohorts", icon: RectangleGroupIcon },
     ],
   },

@@ -1244,3 +1244,8 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
 .professional-profile.professional-layout-compact { gap: 10px; }
 .professional-layout-compact > div > .card { padding: 16px; }
 @media (max-width: 640px) { .professional-cover { height: 150px; } .professional-photo { width: 88px; height: 88px; margin-top: -62px; } }
+/* Scoped classes and institution connection views. */
+.class-roster-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+.class-import-preview { max-height:320px; overflow:auto; overflow-wrap:anywhere; }
+.class-import-preview p { margin:6px 0; }
+@media (max-width:600px) { .class-roster-row { align-items:flex-start; } .class-roster-row > * { max-width:100%; overflow-wrap:anywhere; } }

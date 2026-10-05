@@ -26,22 +26,26 @@
     "protocol:usage": "node scripts/txkpro-agent-usage.mjs",
     "placement:qa": "node --test scripts/d10-placement-qa.mjs",
     "authorization:qa": "node --test scripts/sec205-authorization-qa.mjs",
-    "pipeline:qa": "node --experimental-strip-types --test scripts/candidate-pipeline-qa.mjs"
+    "pipeline:qa": "node --experimental-strip-types --test scripts/candidate-pipeline-qa.mjs",
+    "classes:qa": "node --experimental-strip-types --test scripts/classes-roster-qa.mjs"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
+    "dompurify": "^3.2.6",
+    "exceljs": "4.4.0",
     "next": "16.3.3",
+    "qrcode": "1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "twilio": "6.1.1",
     "server-only": "0.0.1",
-    "@heroicons/react": "^2.2.0",
-    "dompurify": "^3.2.6",
-    "tus-js-client": "^4.3.1"
+    "tus-js-client": "^4.3.1",
+    "twilio": "6.1.1"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "@types/qrcode": "1.5.5",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "eslint": "^9.34.0",

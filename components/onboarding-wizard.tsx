@@ -1,6 +1,7 @@
 "use client";
 
 import { ActionModal } from "@/components/design-system/action-modal";
+import { CohortPicker } from "@/components/classes/cohort-picker";
 import { PublicProfileFields } from "@/components/student/public-profile-fields";
 import { useMemo, useState } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -229,8 +230,9 @@ export function OnboardingWizard({
 
 function StudentBasics({ data, setField, institutions }: { data: Data; setField: (n: string, v: unknown) => void; institutions: Institution[] }) {
   return <>
-    <label><span>School / training institution</span><select className="select" value={String(data.schoolId ?? "")} onChange={(e) => setField("schoolId", e.target.value)}><option value="">Select an institution</option>{institutions.map((item) => <option key={item.institution_id} value={item.institution_id}>{item.name}{item.city ? ` — ${item.city}` : ""}</option>)}</select></label>
-    <div className="grid grid-2"><label><span>Program type</span><input className="input" value={String(data.programType ?? "")} onChange={(e) => setField("programType", e.target.value)} placeholder="HVAC, Electrical, Welding…" /></label><label><span>Primary trade</span><input className="input" value={String(data.primaryTrade ?? "")} onChange={(e) => setField("primaryTrade", e.target.value)} placeholder="HVAC" /></label></div>
+    <label><span>School / training institution</span><select className="select" required value={String(data.schoolId ?? "")} onChange={(e) => {setField("schoolId", e.target.value);setField("cohortId", "");setField("programType", "");}}><option value="">Select an institution</option>{institutions.map((item) => <option key={item.institution_id} value={item.institution_id}>{item.name}{item.city ? ` — ${item.city}` : ""}</option>)}</select></label>
+    <CohortPicker key={String(data.schoolId ?? "")} data={data} setField={setField}/>
+    <label><span>Primary trade</span><input className="input" value={String(data.primaryTrade ?? "")} onChange={(e) => setField("primaryTrade", e.target.value)} placeholder="HVAC" /></label>
     <div className="grid grid-3"><label><span>City</span><input className="input" value={String(data.city ?? "")} onChange={(e) => setField("city", e.target.value)} /></label><label><span>State</span><input className="input" value={String(data.state ?? "TX")} onChange={(e) => setField("state", e.target.value)} /></label><label><span>ZIP</span><input className="input" value={String(data.zipCode ?? "")} onChange={(e) => setField("zipCode", e.target.value)} /></label></div>
     <label><span>Expected graduation year</span><input className="input" inputMode="numeric" value={String(data.graduationYear ?? "")} onChange={(e) => setField("graduationYear", e.target.value)} placeholder="2027" /></label>
   </>;

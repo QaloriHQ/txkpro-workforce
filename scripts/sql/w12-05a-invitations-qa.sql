@@ -12,7 +12,7 @@ insert into public.users(user_id,auth_user_id,email,first_name,last_name,status)
 select user_id,auth_id,email,'QA','Fixture','active' from invite_qa_actors a
 where a.name<>'newrecipient' and not exists(select 1 from public.users u where u.auth_user_id=a.auth_id);
 insert into public.wf_institutions(institution_id,name,active) values('QA185-A','QA A',true),('QA185-B','QA B',true);
-insert into public.wf_cohorts(cohort_id,institution_id,name,program_name) values('QA185-CA','QA185-A','QA Cohort A','QA Program A'),('QA185-CB','QA185-B','QA Cohort B','QA Program B');
+insert into public.wf_cohorts(cohort_id,institution_id,name,program_name,status) values('QA185-CA','QA185-A','QA Cohort A','QA Program A','active'),('QA185-CB','QA185-B','QA Cohort B','QA Program B','active');
 insert into public.contractors(contractor_id,business_name) values('QA185-EA','QA Employer A'),('QA185-EB','QA Employer B');
 insert into public.app_role_memberships(membership_key,auth_user_id,user_id,role,scope_type,scope_id,status,source)
 select 'qa185:'||a.name,a.auth_id,a.user_id,v.role,v.scope_type,v.scope_id,'active','qa185'

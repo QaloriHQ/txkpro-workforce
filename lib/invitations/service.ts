@@ -14,6 +14,8 @@ export type UserInvitationCreateInput = {
   idempotencyKey?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  cohortHint?: string | null;
+  programHint?: string | null;
 };
 
 export type UserInvitationCreateResult = {
@@ -202,6 +204,8 @@ export async function createUserInvitation(input: UserInvitationCreateInput) {
     p_metadata: {
       firstName: cleanText(input.firstName, 100) || null,
       lastName: cleanText(input.lastName, 100) || null,
+      cohortHint: cleanText(input.cohortHint, 160) || null,
+      programHint: cleanText(input.programHint, 120) || null,
     },
   });
 

@@ -139,6 +139,7 @@ export function InvitationActivationCard({
             <CheckCircleIcon aria-hidden="true" width={20} height={20} />
             {busy ? "Activating…" : accepted ? "Continue" : "Accept invitation"}
           </button>
+          {active && scopeType === "class" ? <button className="button" type="button" disabled={busy} onClick={async () => { setBusy(true); try { const response = await fetch("/api/classes/join", {method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"decline",invitationId})}); if(!response.ok) throw new Error(); window.location.reload(); } catch {setMessage("Unable to decline. Please try again.");} finally {setBusy(false);} }}>Decline class invitation</button> : null}
         </form>
       ) : (
         <div className="alert" style={{ marginTop: 18 }}>
