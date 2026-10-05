@@ -2,9 +2,8 @@ import { createHash,randomBytes } from "node:crypto";
 import QRCode from "qrcode";
 import { getPublicAppOrigin } from "@/lib/site-url";
 import { classRpc } from "@/lib/classes/server";
-import { jsonError } from "@/lib/http";
-import { boundedRequest } from "@/lib/classes/request";
-export async function GET() { try { return Response.json({data:await classRpc("class_workspace")},{headers:{"Cache-Control":"private, no-store"}}); } catch(e) {return jsonError(e);} }
+import { classError, boundedRequest } from "@/lib/classes/request";
+export async function GET() { try { return Response.json({data:await classRpc("class_workspace")},{headers:{"Cache-Control":"private, no-store"}}); } catch(e) {return classError(e);} }
 export async function POST(request:Request) {
  try {
   if (Number(request.headers.get("content-length") ?? 0)>20000) throw new Response("Request too large",{status:413});
@@ -22,5 +21,5 @@ export async function POST(request:Request) {
    data={...result,url,qr:await QRCode.toDataURL(url,{width:240,margin:2})};
   } else throw new Response("Invalid action",{status:400});
   return Response.json({data},{headers:{"Cache-Control":"private, no-store"}});
- } catch(e) {return jsonError(e);}
+ } catch(e) {return classError(e);}
 }

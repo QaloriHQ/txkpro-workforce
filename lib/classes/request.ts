@@ -1,4 +1,9 @@
 import "server-only";
+import { jsonError } from "@/lib/http";
+export async function classError(error: unknown) {
+  if (error instanceof Response && !error.headers.get("content-type")?.includes("application/json")) return Response.json({error:await error.text()}, {status:error.status});
+  return jsonError(error);
+}
 export async function boundedRequest(request: Request, limit = 20000) {
   if (Number(request.headers.get("content-length") ?? 0) > limit) throw new Response("Request too large", { status: 413 });
   const reader = request.body?.getReader();

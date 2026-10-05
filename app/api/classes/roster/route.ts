@@ -2,8 +2,7 @@ import ExcelJS from "exceljs";
 import { classRpc,type ClassWorkspace } from "@/lib/classes/server";
 import { assertSafeXlsx,csvRows,validateRoster,type RosterRow } from "@/lib/classes/roster";
 import { createAndDeliverUserInvitation } from "@/lib/invitations/service";
-import { jsonError } from "@/lib/http";
-import { boundedRequest } from "@/lib/classes/request";
+import { classError, boundedRequest } from "@/lib/classes/request";
 export const runtime="nodejs";
 export const maxDuration=60;
 export async function POST(request:Request) {
@@ -41,12 +40,12 @@ export async function POST(request:Request) {
    catch {results.push({email:row.email,ok:false,error:"Invitation could not be created. Check membership and class scope."});}
   }
   return Response.json({data:results},{headers:{"Cache-Control":"private, no-store"}});
- } catch(e) {return jsonError(e);}
+ } catch(e) {return classError(e);}
 }
 function checkHints(row:RosterRow,cohorts:{cohortId:string;name:string;program:string|null}[]) {
  if(row.error) return row;
  const matches=cohorts.filter(c=>(!row.program || c.program?.toLowerCase()===row.program.toLowerCase())&&(!row.cohort || c.cohortId===row.cohort || c.name.toLowerCase()===row.cohort.toLowerCase()));
  if((row.program || row.cohort) && !matches.length) return {...row,error:"Program/cohort does not match this class"};
  if(row.cohort && matches.length!==1) return {...row,error:"Ambiguous cohort; use cohort ID"};
- return {...row,cohort:row.cohort?matches[0].cohortId:""};
+ return {...row,cohort:row.cohort?matches[0].cohortId:"",program:row.program||row.cohort?matches[0].program??"":""};
 }

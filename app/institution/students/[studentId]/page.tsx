@@ -683,3 +683,4 @@ export default async function InstitutionStudentProfilePage({
     </>
   );
 }
+import Link from "next/link";

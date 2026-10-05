@@ -103,6 +103,7 @@ begin
 if lower(p_scope_type)='class' then
  perform 1 from public.wf_classes where class_id=p_scope_id and status='open' for update;
  if not found then raise exception 'Class must be open for invitations'; end if;
+ if exists(select 1 from public.wf_class_enrollments e join public.users u using(user_id) where e.class_id=p_scope_id and lower(btrim(u.email))=lower(btrim(p_email))) then raise exception 'Class enrollment already exists'; end if;
 end if;
 v_result:=security.user_invitation_create_before_classes(p_email,p_role,p_scope_type,p_scope_id,p_institution_id,p_employer_id,p_expires_at,p_idempotency_key,p_metadata);
 if lower(p_scope_type)='class' and (v_result->>'created')::boolean then
@@ -127,6 +128,7 @@ if v_inv.scope_type='class' then
  select * into v_class from public.wf_classes where class_id=v_inv.scope_id for update;
  if not found or v_class.status<>'open' then raise exception 'Class is not open'; end if;
  if not exists(select 1 from public.users where auth_user_id=(select auth.uid()) and lower(status)='active') then raise exception 'Active authenticated recipient required'; end if;
+ if v_inv.status<>'accepted' and exists(select 1 from public.wf_class_enrollments where class_id=v_inv.scope_id and user_id=security.current_legacy_user_id() and status<>'active') then raise exception 'Historical enrollment cannot be reactivated by invitation'; end if;
  select * into v_student from public.wf_student_profiles where user_id=security.current_legacy_user_id();
  if found and (v_student.school_id is distinct from v_class.institution_id or not exists(select 1 from public.wf_class_cohorts b where b.class_id=v_class.class_id and b.cohort_id=v_student.cohort_id)) then raise exception 'Your institution or cohort does not match this class. Contact staff'; end if;
 end if;
