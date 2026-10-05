@@ -1,9 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { AcademicCapIcon, HomeIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import {
+  AcademicCapIcon,
+  HomeIcon,
+  UserCircleIcon,
+  BriefcaseIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
 
-type StudentSection = "workspace" | "training" | "profile";
+type StudentSection =
+  | "workspace"
+  | "training"
+  | "opportunities"
+  | "portfolio"
+  | "profile";
 
 export function StudentWorkspaceNav({
   active,
@@ -16,15 +27,27 @@ export function StudentWorkspaceNav({
     {
       key: "workspace" as const,
       href: "/student",
-      label: "Workspace",
+      label: "Home",
       icon: HomeIcon,
     },
     {
       key: "training" as const,
       href: "/student/employer-training",
-      label: "Employer Training",
+      label: "Learn",
       icon: AcademicCapIcon,
       count: trainingCount,
+    },
+    {
+      key: "opportunities" as const,
+      href: "/student/opportunities",
+      label: "Opportunities",
+      icon: BriefcaseIcon,
+    },
+    {
+      key: "portfolio" as const,
+      href: "/student/portfolio",
+      label: "Portfolio",
+      icon: Square3Stack3DIcon,
     },
     {
       key: "profile" as const,
@@ -43,13 +66,19 @@ export function StudentWorkspaceNav({
           <Link
             key={item.key}
             href={item.href}
-            className={"student-workspace-nav-link " + (selected ? "active" : "")}
+            className={
+              "student-workspace-nav-link " + (selected ? "active" : "")
+            }
             aria-current={selected ? "page" : undefined}
           >
             <Icon aria-hidden="true" />
             <span>{item.label}</span>
             {"count" in item && item.count ? (
-              <strong aria-label={String(item.count) + " Employer Training assignments"}>
+              <strong
+                aria-label={
+                  String(item.count) + " Employer Training assignments"
+                }
+              >
                 {item.count}
               </strong>
             ) : null}
