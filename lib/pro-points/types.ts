@@ -14,6 +14,7 @@ export type Progress = {
   }[];
 };
 export type Summary = {
+  shareSystemBadges?: boolean;
   progress: Progress | null;
   badges: { family: string; tier: number; issuer: string; earnedAt: string }[];
 };
