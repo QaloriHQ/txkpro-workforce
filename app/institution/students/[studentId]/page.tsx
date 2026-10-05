@@ -101,6 +101,7 @@ export default async function InstitutionStudentProfilePage({
       </header>
 
       <main className="page-wrap txk-prototype-content">
+        <Link className="button" href="/institution/directory">Institution directory</Link>
         <PageHeader
           eyebrow="Students · Readiness profile"
           title={profile.student.displayName}
@@ -682,3 +683,4 @@ export default async function InstitutionStudentProfilePage({
     </>
   );
 }
+import Link from "next/link";

@@ -128,6 +128,7 @@ export default async function InstitutionStudentsPage({
       </header>
 
       <main className="page-wrap txk-prototype-content">
+        <div className="institution-action-bar"><Link className="button" href="/institution/classes">Classes & rosters</Link><Link className="button" href="/institution/directory">Institution directory</Link></div>
         <PageHeader
           eyebrow="Institution Workspace · Students"
           title="Students"
