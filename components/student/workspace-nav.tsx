@@ -41,6 +41,7 @@ export function StudentWorkspaceNav({
       key: "opportunities" as const,
       href: "/student/opportunities",
       label: "Opportunities",
+      mobileLabel: "Career",
       icon: BriefcaseIcon,
     },
     {
@@ -69,10 +70,11 @@ export function StudentWorkspaceNav({
             className={
               "student-workspace-nav-link " + (selected ? "active" : "")
             }
+            aria-label={item.label}
             aria-current={selected ? "page" : undefined}
           >
             <Icon aria-hidden="true" />
-            <span>{item.label}</span>
+            {"mobileLabel" in item ? <><span className="student-nav-desktop-label">{item.label}</span><span className="student-nav-mobile-label">{item.mobileLabel}</span></> : <span>{item.label}</span>}
             {"count" in item && item.count ? (
               <strong
                 aria-label={

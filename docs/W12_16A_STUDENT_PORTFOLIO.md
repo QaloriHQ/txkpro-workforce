@@ -50,3 +50,5 @@ At https://staging-workforce.txkpro.com:
 10. Rank scope preference Cohort default and other scopes persist; no fake numeric ranks/progress while #224 remains unavailable. No reward purchase/redemption UI enabled.
 
 Expected tracking: Verification after staging technical gates; Done only after owner acceptance.
+
+Staging migration ledger: `20261005003557_workforce_w12_16a_student_portfolio`; applied SQL MD5 `267624299538f1c8935ea089fd7ced2b`. Source filename matches the applied ledger; SQL remains unchanged.

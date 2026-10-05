@@ -7559,3 +7559,6 @@ body:has(.institution-sidebar) .topbar > .brand {
 .student-home-links a {text-decoration:none;color:var(--txk-text-primary);transition:border-color .15s;}
 .student-home-links a:hover {border-color:var(--txk-info);}
 .student-home-links svg {width:32px;height:32px;color:var(--txk-info);}
+
+.student-nav-mobile-label{display:none;}
+@media(max-width:760px){.student-nav-desktop-label{display:none;}.student-nav-mobile-label{display:inline;}}

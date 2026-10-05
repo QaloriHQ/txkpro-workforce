@@ -198,9 +198,11 @@ function FileEditor({
 }
 export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
   const [portfolio, setPortfolio] = useState(initial);
+  const [savedNotice, setSavedNotice] = useState("");
   const [newProjectId, setNewProjectId] = useState(() => crypto.randomUUID());
   const router = useRouter();
   const saved = (data: StudentPortfolio) => {
+    setSavedNotice("Portfolio saved.");
     setPortfolio(data);
     setNewProjectId(crypto.randomUUID());
     router.refresh();
@@ -217,6 +219,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
   const prefs = portfolio.preferences;
   return (
     <section className="card portfolio-editor">
+      {savedNotice ? <p role="status">{savedNotice}</p> : null}
       <div className="card-header">
         <div>
           <p className="eyebrow">Make it yours</p>

@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./theme.css";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
   "https://staging-workforce.txkpro.com";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
