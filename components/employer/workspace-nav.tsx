@@ -106,8 +106,8 @@ const groups: NavGroup[] = [
       },
       {
         key: "team",
-        href: "/employer/team",
-        label: "Team",
+        href: "/employer/directory",
+        label: "Directory",
         icon: UserGroupIcon,
       },
     ],

@@ -145,3 +145,8 @@ export async function requireRole(roles: Role[]) {
 export function hasStaffProfileMembership(account: AccountContext) {
   return account.userStatus.toLowerCase() === "active" && account.memberships.some(m => m.status.toLowerCase() === "active" && m.scope_type.toLowerCase() === "platform" && ["support", "read_only_analyst"].includes(m.role.toLowerCase()));
 }
+
+// Navigation only; employee RPCs check current canonical membership and tenant status.
+export function hasEmployeeMembership(account: AccountContext) {
+  return account.userStatus.toLowerCase() === "active" && account.memberships.some(m => m.role === "employer_employee" && m.status.toLowerCase() === "active" && m.scope_type === "employer" && m.scope_id);
+}

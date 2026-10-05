@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAccountContext, hasStaffProfileMembership } from "@/lib/auth";
+import { getAccountContext, hasStaffProfileMembership, hasEmployeeMembership } from "@/lib/auth";
 import { hasSupabaseServerConfig } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -7,6 +7,7 @@ export default async function DashboardPage() {
 
   const account = await getAccountContext();
   if (!account) redirect("/login");
+  if (!account.role && hasEmployeeMembership(account)) redirect("/employee");
   if (!account.role && hasStaffProfileMembership(account)) redirect("/professional/profile");
   if (!account.role) redirect("/onboarding");
 

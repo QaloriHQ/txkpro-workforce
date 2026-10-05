@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { PlusIcon, MinusIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ActionModal } from "@/components/design-system/action-modal";
 import { directoryGraph, NODE_HEIGHT, NODE_WIDTH, type DirectoryData, type DirectoryNode } from "@/lib/classes/directory-graph";
 export type { DirectoryData } from "@/lib/classes/directory-graph";
@@ -9,7 +11,9 @@ const label = (value: string) => value.replaceAll("_", " ");
 type View = { x: number; y: number; scale: number };
 const clamp = (scale: number) => Math.max(0.03, Math.min(2, scale));
 
-export function InstitutionDirectory({ data }: { data: DirectoryData }) {
+export function InstitutionDirectory({ data, variant = "institution", actions }: { data: DirectoryData; variant?: "institution" | "employer"; actions?: ReactNode }) {
+  const router = useRouter();
+  useEffect(() => { const interval = window.setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 30000); return () => window.clearInterval(interval); }, [router]);
   const [role, setRole] = useState("");
   const [cohort, setCohort] = useState("");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -19,7 +23,7 @@ export function InstitutionDirectory({ data }: { data: DirectoryData }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const selectedButton = useRef<HTMLButtonElement | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const graph = useMemo(() => directoryGraph(data, role, cohort, collapsed), [data, role, cohort, collapsed]);
+  const graph = useMemo(() => directoryGraph(data, role, cohort, collapsed, variant), [data, role, cohort, collapsed, variant]);
   const cohorts = [...new Map([
     ...data.people.map(p => [p.cohortId, p.cohortName] as const),
     ...data.classes.flatMap(c => c.cohorts.map(v => [v.cohortId, v.name] as const)),
@@ -78,12 +82,14 @@ export function InstitutionDirectory({ data }: { data: DirectoryData }) {
 
   return <div className="directory-workspace">
     <div className="directory-toolbar">
-      <div className="directory-scope"><span className="pill">Authorized scope</span><span className="card-sub">{role ? label(role) : "All staff roles"} · {cohort ? cohorts.find(([id]) => id === cohort)?.[1] : "All cohorts"}</span></div>
+      <div className="directory-scope"><span className="pill">Authorized scope</span><span className="card-sub">{role ? label(role) : "All roles"} · {variant === "employer" ? "Employer team" : cohort ? cohorts.find(([id]) => id === cohort)?.[1] : "All cohorts"}</span></div>
       <div className="institution-action-bar">
-        <ActionModal title="Filter institution directory" triggerLabel="Filter by role / cohort">
+        {actions}
+        <button className="button" onClick={() => router.refresh()}>Refresh directory</button>
+        <ActionModal title={`Filter ${variant} directory`} triggerLabel={variant === "employer" ? "Filter by role" : "Filter by role / cohort"}>
           <div className="form-stack">
             <label><span>Role</span><select className="select" value={role} onChange={e => setRole(e.target.value)}><option value="">All roles</option>{[...new Set(data.people.map(p => p.role))].sort().map(v => <option key={v} value={v}>{label(v)}</option>)}</select></label>
-            <label><span>Cohort</span><select className="select" value={cohort} onChange={e => setCohort(e.target.value)}><option value="">All authorized cohorts</option>{cohorts.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+            {variant === "institution" ? <label><span>Cohort</span><select className="select" value={cohort} onChange={e => setCohort(e.target.value)}><option value="">All authorized cohorts</option>{cohorts.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label> : null}
             <button className="button" onClick={() => { setRole(""); setCohort(""); setCollapsed(new Set()); }}>Clear filters</button>
           </div>
         </ActionModal>
@@ -91,15 +97,15 @@ export function InstitutionDirectory({ data }: { data: DirectoryData }) {
         <button className="button button-dark" onClick={fit}>Fit to scope</button>
       </div>
     </div>
-    <p className="directory-note">Connections show authorized scope and cohort affiliations. Shared classes appear under each linked cohort.</p>
+    <p className="directory-note">{variant === "employer" ? "Connections show active role memberships, not inferred reporting lines. Use Add person to view pending invitations." : "Connections show authorized scope and cohort affiliations. Shared classes appear under each linked cohort."}</p>
     <div className="directory-canvas-wrap">
       <div className="directory-zoom" aria-label="Canvas controls">
-        <button className="button" aria-label="Zoom out" onClick={() => zoom(1 / 1.2)}>−</button>
+        <button className="button" aria-label="Zoom out" onClick={() => zoom(1 / 1.2)}><MinusIcon className="txk-icon" aria-hidden="true" /></button>
         <output aria-label="Zoom level">{Math.round(view.scale * 100)}%</output>
-        <button className="button" aria-label="Zoom in" onClick={() => zoom(1.2)}>+</button>
+        <button className="button" aria-label="Zoom in" onClick={() => zoom(1.2)}><PlusIcon className="txk-icon" aria-hidden="true" /></button>
         <button className="button" onClick={fit}>Center</button>
       </div>
-      <div ref={viewport} className="directory-canvas" role="region" aria-label="Interactive institution directory" aria-describedby="directory-canvas-help" tabIndex={0}
+      <div ref={viewport} className="directory-canvas" role="region" aria-label={`Interactive ${variant} directory`} aria-describedby="directory-canvas-help" tabIndex={0}
         onPointerDown={event => {
           if (event.button !== 0 || (event.target as HTMLElement).closest("button")) return;
           event.currentTarget.focus();
@@ -139,7 +145,7 @@ export function InstitutionDirectory({ data }: { data: DirectoryData }) {
               <strong>{node.name}</strong><span>{node.subtitle}</span>
             </button>
             {node.children.length ? <button className="directory-branch" aria-expanded={!collapsed.has(node.id)} aria-label={`${collapsed.has(node.id) ? "Expand" : "Collapse"} ${node.name}`} onClick={() => toggle(node.id)}>
-              <span>{node.children.length} connections</span><b aria-hidden="true">{collapsed.has(node.id) ? "+" : "−"}</b>
+              <span>{node.children.length} connections</span>{collapsed.has(node.id) ? <ChevronRightIcon className="txk-icon" aria-hidden="true" /> : <ChevronDownIcon className="txk-icon" aria-hidden="true" />}
             </button> : null}
           </article>)}
         </div>
@@ -150,7 +156,7 @@ export function InstitutionDirectory({ data }: { data: DirectoryData }) {
       </div>
     </div>
     <dialog ref={dialog} className="txk-action-dialog" aria-labelledby="directory-node-title" onClose={() => selectedButton.current?.focus()}>
-      <header className="txk-action-dialog-header"><h2 id="directory-node-title">{selected?.name ?? "Connection details"}</h2><button className="txk-action-dialog-close" aria-label="Close connection details" onClick={() => dialog.current?.close()}>×</button></header>
+      <header className="txk-action-dialog-header"><h2 id="directory-node-title">{selected?.name ?? "Connection details"}</h2><button className="txk-action-dialog-close" aria-label="Close connection details" onClick={() => dialog.current?.close()}><XMarkIcon aria-hidden="true" /></button></header>
       <div className="txk-action-dialog-body form-stack">
         <p className="pill">{selected?.kind === "staff" ? "Team member" : selected?.kind}</p>
         <p>{selected?.subtitle}</p>

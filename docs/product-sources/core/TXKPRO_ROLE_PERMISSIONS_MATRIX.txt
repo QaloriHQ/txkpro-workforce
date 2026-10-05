@@ -27,6 +27,7 @@ EMPLOYER
 - recruiter: candidate discovery, referrals, interviews, hiring pipeline.
 - hiring_manager: scoped candidate and interview/hire workflows.
 - employer_read_only: permitted candidate/pipeline reporting without mutation.
+- employer_employee: own training resources and explicitly accepted incentive programs only; no candidate, hiring, team administration, course authoring or tenant reporting. Owner-approved staging expansion 2026-10-05 (#76).
 
 STUDENT
 - student: owns student profile, preferences, self-attestations, responses, visibility settings, and consent-controlled communications.
