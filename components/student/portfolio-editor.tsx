@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useState, type ReactNode, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceForm } from "@/components/design-system/action-modal";
@@ -223,7 +224,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
       <div className="card-header">
         <div>
           <p className="eyebrow">Make it yours</p>
-          <h2>Customize your portfolio</h2>
+          <h2>Resume & portfolio</h2>
           <p className="card-sub">
             New uploads and projects start private. You choose what to share.
           </p>
@@ -361,7 +362,10 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
         <div className="portfolio-grid">
           {portfolio.projects.map((p) => (
             <article className="portfolio-item" key={p.id}>
+              {p.imageId ? <div className="portfolio-project-image"><Image src={`/api/student/portfolio/files/${encodeURIComponent(p.imageId)}`} alt={p.title} width={600} height={360} unoptimized /></div> : null}
               <h4>{p.title}</h4>
+              {p.description ? <p className="portfolio-text">{p.description}</p> : null}
+              {p.skills ? <p><strong>Skills demonstrated: </strong>{p.skills}</p> : null}
               <p className="muted">{p.visibility} · Student-entered</p>
               <div className="portfolio-actions">
                 <EditModal
@@ -402,6 +406,7 @@ export function PortfolioEditor({ initial }: { initial: StudentPortfolio }) {
                 <a href={`/api/student/portfolio/files/${f.id}`} download>
                   Download
                 </a>
+                <a href={`/api/student/portfolio/files/${f.id}?view=1`} target="_blank" rel="noopener noreferrer">View</a>
                 <FileEditor file={f} onSaved={saved} />
                 <EditModal
                   title={`Remove ${f.title}`}

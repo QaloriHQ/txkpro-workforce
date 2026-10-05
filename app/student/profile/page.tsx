@@ -1,3 +1,7 @@
+import { PortfolioView } from "@/components/student/portfolio-view";
+import { PortfolioEditor } from "@/components/student/portfolio-editor";
+import { StudentProfileSections } from "@/components/student/profile-sections";
+import { studentPortfolio } from "@/lib/student-portfolio/repository";
 import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import { studentPublicSettings } from "@/lib/student-public-profile/repository";
 import { StudentPublicProfileSettings } from "@/components/student/public-profile-settings";
@@ -16,10 +20,11 @@ function date(value: string) {
 export default async function StudentProfilePage() {
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
-  const [evidence, exposure, publicSettings] = await Promise.all([
+  const [evidence, exposure, publicSettings, portfolio] = await Promise.all([
     getStudentReadinessEvidence(context.studentId),
     getStudentTrainingExposure(),
     studentPublicSettings(),
+    studentPortfolio(),
   ]);
 
   return (
@@ -30,15 +35,14 @@ export default async function StudentProfilePage() {
         <div className="page-heading">
           <div>
             <p className="eyebrow">Student Profile</p>
-            <h1>{[context.firstName, context.lastName].filter(Boolean).join(" ") || "My readiness evidence"}</h1>
-            <p className="card-sub">Your evidence is grouped by its source. No combined readiness or employability score is calculated.</p>
+            <h1>My Profile</h1>
+            <p className="card-sub">Your digital resume, projects, credentials and sharing controls — all in one place.</p>
           </div>
         </div>
 
-        <StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName.slice(0, 1)].filter(Boolean).join(" ")} />
-
-        <section className="card"><h2>Your digital resume & portfolio</h2><p className="card-sub">Manage your photo, cover, projects, documents and public sections.</p><Link className="button button-brand" href="/student/portfolio">Customize portfolio</Link></section>
-
+        <PortfolioView portfolio={portfolio} displayName={publicSettings.displayName || [context.firstName, context.lastName].filter(Boolean).join(" ")} headline={publicSettings.headline} bio={publicSettings.bio} identityOnly />
+        <StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName.slice(0, 1)].filter(Boolean).join(" ")} compact />
+        <StudentProfileSections portfolio={<PortfolioEditor initial={portfolio} />} credentials={<>
         <section className="card">
           <div className="card-header"><div><p className="eyebrow">Technical readiness</p><h2>Instructor Verified Skills</h2><p className="card-sub">Technical competencies verified by an Instructor. Employer Training does not create these records.</p></div></div>
           <div className="grid grid-2">
@@ -66,19 +70,6 @@ export default async function StudentProfilePage() {
             ))}
           </div>
           {!evidence.employerTraining.length ? <div className="empty">No Employer Training assignments yet.</div> : null}
-        </section>
-
-        <section className="card">
-          <div className="card-header"><div><p className="eyebrow">Observed engagement</p><h2>Employer Training activity</h2><p className="card-sub">Previews, starts, and passed completions reflect recorded activity only. They do not indicate employment intent or Instructor Verified Skills.</p></div></div>
-          <div className="grid grid-2">
-            {exposure.map((item) => (
-              <div className="metric-card" key={item.exposureEventId}>
-                <strong>{item.courseTitle ?? "Employer Training"}</strong>
-                <small>{item.employerName} · {item.eventType === "EMPLOYER_TRAINING_PREVIEWED" ? "Previewed" : item.eventType === "EMPLOYER_TRAINING_STARTED" ? "Started" : "Completed"} · {date(item.occurredAt)}</small>
-              </div>
-            ))}
-          </div>
-          {!exposure.length ? <div className="empty">No observed Employer Training activity yet.</div> : null}
         </section>
 
         <section className="card">
@@ -111,6 +102,21 @@ export default async function StudentProfilePage() {
           </div>
           {!evidence.employerCertifications.length ? <div className="empty">No Employer Certifications issued yet.</div> : null}
         </section>
+        </>} activity={<>
+        <section className="card">
+          <div className="card-header"><div><p className="eyebrow">Observed engagement</p><h2>Employer Training activity</h2><p className="card-sub">Previews, starts, and passed completions reflect recorded activity only. They do not indicate employment intent or Instructor Verified Skills.</p></div></div>
+          <div className="grid grid-2">
+            {exposure.map((item) => (
+              <div className="metric-card" key={item.exposureEventId}>
+                <strong>{item.courseTitle ?? "Employer Training"}</strong>
+                <small>{item.employerName} · {item.eventType === "EMPLOYER_TRAINING_PREVIEWED" ? "Previewed" : item.eventType === "EMPLOYER_TRAINING_STARTED" ? "Started" : "Completed"} · {date(item.occurredAt)}</small>
+              </div>
+            ))}
+          </div>
+          {!exposure.length ? <div className="empty">No observed Employer Training activity yet.</div> : null}
+        </section>
+
+        </>} />
       </main>
     </>
   );
