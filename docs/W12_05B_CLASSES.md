@@ -1,5 +1,9 @@
 # W12-05B — institution classes and roster invitations (#235)
 
+Layout follow-up: Classes and Directory now share the canonical institution topbar, sidebar and responsive content spacing. Classes have page-level enrollment/invitation summaries and collapsible rosters. Directory follows the supplied canvas prototype with connected institution/program/cohort/staff/class cards, expandable branches, role/cohort modal filters, node-detail dialogs, pointer pan, touch pinch, zoom controls, keyboard arrows and fit/center. Connections describe canonical affiliations, not inferred reporting lines. Shared classes appear on each linked cohort branch; no peer contact fields are rendered. Class connections reflect the bounded server read model (up to 20 classes). Existing authorization and database are unchanged.
+
+Additional owner UAT: navigate to both pages from the sidebar on desktop/tablet/mobile; pan and pinch the canvas, zoom and fit, expand/collapse a cohort, filter roles/cohorts, open/close node details, navigate cards with Tab and canvas with arrows/+/-/0. Check light/dark styling, mobile scrolling outside the canvas and retained scope boundaries.
+
 Owner approved 2026-10-05. Project-access preflight exception explicitly approved; no automatic Project eligibility PASS claimed. W12-05/W12-06 implementations are closed; W12-05A accepted Verification evidence #5983185019 leaves owner UAT. Target staging only.
 
 Institution classes are separate from Employer Learning courses. Classes span multiple institution cohorts. Assigned instructors manage their own class invitations/imports, not institution-wide rosters or staff permissions. Canonical class enrollment determines the instructor roster; student cohort affiliation is never silently replaced. Staff readers remain constrained by their canonical memberships; students see relevant staff and their own enrollment, never peer contact/private records.
