@@ -34,3 +34,13 @@ Owner browser UAT on staging:
 6. Check mobile/desktop, light/dark, keyboard dialog focus, Escape/close, feedback, empty states and long text. No browser staging tests were run by the agent.
 
 Production remains unchanged. Actual model usage counters are unavailable in this runtime; the run must remain NOT_FULLY_FINALIZED until telemetry is synchronized.
+
+## Owner-requested customization follow-up
+
+Institution members and staff can upload/remove a profile photo and cover through modal buttons, choose comfortable/compact spacing, reorder About/Specialties/Credentials/Reviews/Posts/Activity, and hide individual sections. Identity stays full width with a cover and overlapping portrait, consistent with Student profiles. No editable affiliation or verification controls are added.
+
+The private `professional-profile` bucket accepts JPEG/PNG/WebP up to 4 MB. Uploads authenticate and authorize before streaming the request, enforce actual byte limits and image signatures, register only owned Storage paths, and clean up failed/replaced/removed uploads. New RLS table `wf_professional_customization` is inaccessible directly to anon/authenticated/service_role; bounded private definer functions own access. Image responses are proxied without public signed Storage URLs or caching, with nosniff/sandbox/same-origin headers. Public image reads recheck profile publication and membership; owner images remain available on private profiles. Removal revokes metadata before Storage deletion. `PROFESSIONAL_PROFILE_CUSTOMIZED` audits store operation/presentation controls only, never Storage paths.
+
+Hidden sections are stripped from the public projection, including social history that points to another profile's hidden Posts section. Both owner preview and public rendering use saved order/spacing. UI image endpoints intentionally bypass image optimization so privacy changes cannot leave cached public images. Replaced images receive versioned URLs for immediate refresh; all responses remain no-store.
+
+Additional owner UAT: upload portrait and cover from a phone; check their fit on desktop/mobile and both themes. Replace/remove images, preview, reorder/hide sections, save and reload. Publish, test signed-out images, make private and confirm copied public image URLs return unavailable. Image selection permits JPEG/PNG/WebP, maximum 4 MB; convert unsupported HEIC images before upload. Advisors may flag the deny-all metadata table as RLS with no policy (INFO); this is intentional and verified by role tests.
