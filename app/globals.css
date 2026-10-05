@@ -1235,3 +1235,12 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
  .professional-cover { min-height: 100px; }
  .professional-controls .button { min-height: 44px; }
 }
+
+.professional-profile > .professional-identity.card { padding: 0; }
+.professional-cover { height: 210px; position: relative; }
+.professional-cover-image { width: 100%; height: 100%; object-fit: cover; }
+.professional-photo { width: 112px; height: 112px; border-radius: 50%; border: 4px solid var(--card); background: var(--txk-info-bg); color: var(--ink); margin-top: -78px; margin-bottom: 14px; position: relative; display: grid; place-items: center; overflow: hidden; font-size: 32px; font-weight: 800; }
+.professional-photo img { width: 100%; height: 100%; object-fit: cover; }
+.professional-profile.professional-layout-compact { gap: 10px; }
+.professional-layout-compact > div > .card { padding: 16px; }
+@media (max-width: 640px) { .professional-cover { height: 150px; } .professional-photo { width: 88px; height: 88px; margin-top: -62px; } }

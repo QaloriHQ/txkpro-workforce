@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { WorkspaceForm } from "@/components/design-system/action-modal";
+import { CustomizationEditor } from "./customization-editor";
 import { ProfessionalProfileView } from "./profile-view";
 import type { Preferences, Post, Settings } from "@/lib/professional-profile/types";
 const labels: Record<keyof Preferences, string> = { reviews: "Published reviews", ratings: "Rating summary", posts: "Published posts", activity: "Activity history", likes: "Likes", comments: "Comments", shares: "Shares", reposts: "Reposts" };
@@ -39,6 +40,7 @@ export function ProfessionalProfileEditor({ initial }: { initial: Settings[] }) 
       </WorkspaceForm><button type="button" className="button button-ghost" aria-pressed={preview} onClick={() => setPreview(v => !v)}>{preview ? "Return to editing" : "Preview saved profile"}</button>{profile.visibility === "public" && profile.path ? <Link href={profile.path} className="button button-ghost">View public profile</Link> : null}
     </div>
     {!profile.chosen ? <p className="callout">Create your profile with the edit button. It stays private until you choose Public.</p> : null}
+    {!preview && profile.chosen ? <CustomizationEditor key={selected} kind={selected} value={profile.customization} update={customization => setProfiles(all => all.map(p => p.kind === selected ? { ...p, customization } : p))} /> : null}
     <ProfessionalProfileView profile={{ ...profile, posts: profile.preferences.posts ? profile.posts.filter(p => p.status === "published") : [] }} />
     {!preview && profile.chosen ? <section className="card"><div className="professional-controls"><h2>Manage posts</h2><PostForm key={selected} busy={busy} feedback={feedback} save={save} /></div>{profile.posts.map(p => <div className="professional-item" key={p.id}><h3>{p.title || "Update"}</h3><span className="pill">{p.status}</span><p className="professional-text">{p.body.length > 120 ? `${p.body.slice(0, 120)}…` : p.body}</p><PostForm post={p} busy={busy} feedback={feedback} save={save} /></div>)}</section> : null}
     {preview ? <p className="card-sub">Preview shows saved bio, claims and posts. Published reviews and shared activity appear on the public page according to your settings.</p> : null}
