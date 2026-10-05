@@ -48,7 +48,8 @@ test("Auth delivery is real, deduplicated, and compatible with default and custo
   assert.match(read("supabase/templates/invite.html"), /\.ConfirmationURL/);
 });
 test("all invitation surfaces use the canonical service and accessible feedback", () => {
-  for (const page of ["app/institution/team/page.tsx", "app/employer/team/page.tsx", "app/admin/invitations/page.tsx"]) assert.match(read(page), /listUserInvitations/);
+  for (const page of ["app/institution/team/page.tsx", "app/employer/directory/page.tsx", "app/admin/invitations/page.tsx"]) assert.match(read(page), /listUserInvitations/);
+  assert.match(read("app/employer/team/page.tsx"), /redirect\("\/employer\/directory"\)/);
   assert.match(read("app/api/invitations/route.ts"), /MAX_BULK_INVITATIONS = 100/);
   assert.match(read("components/invitations/invitation-manager.tsx"), /aria-live="polite"/);
   assert.match(read("app/api/invitations/[id]/accept/route.ts"), /getRecipientInvitation/);
