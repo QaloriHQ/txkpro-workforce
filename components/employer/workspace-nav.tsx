@@ -23,6 +23,7 @@ type EmployerSection =
   | "interviews"
   | "pipeline"
   | "placements"
+  | "incentives"
   | "learning"
   | "team";
 
@@ -41,6 +42,7 @@ type NavGroup = {
 };
 
 const groups: NavGroup[] = [
+  {label: "Programs", items: [{key:"incentives",href:"/employer/incentives",label:"Incentives",icon:AcademicCapIcon}]},
   {
     label: "Overview",
     items: [

@@ -6,6 +6,8 @@ import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import { studentPublicSettings } from "@/lib/student-public-profile/repository";
 import { StudentPublicProfileSettings } from "@/components/student/public-profile-settings";
 import Link from "next/link";
+import {ProgressCard} from "@/components/pro-points/progress-card";
+import {pointsSummary} from "@/lib/pro-points/server";
 import { redirect } from "next/navigation";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
 import { getStudentContext } from "@/lib/student/auth";
@@ -20,11 +22,12 @@ function date(value: string) {
 export default async function StudentProfilePage() {
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
-  const [evidence, exposure, publicSettings, portfolio] = await Promise.all([
+  const [evidence, exposure, publicSettings, portfolio, points] = await Promise.all([
     getStudentReadinessEvidence(context.studentId),
     getStudentTrainingExposure(),
     studentPublicSettings(),
     studentPortfolio(),
+    pointsSummary(),
   ]);
 
   return (
@@ -34,6 +37,7 @@ export default async function StudentProfilePage() {
       <main className="student-training-page student-readiness-profile student-profile-page">
         <PortfolioView portfolio={portfolio} displayName={publicSettings.displayName || [context.firstName, context.lastName].filter(Boolean).join(" ")} headline={publicSettings.headline} bio={publicSettings.bio} identityOnly />
         <div className="profile-owner-controls"><StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName].join(" ")} identityOnly /><PortfolioEditor initial={portfolio} section="images" /><Link className="button" href="/student/profile/edit">Profile editor</Link></div>
+        <ProgressCard summary={points} owner/>
         <ProfilePanels preferences={portfolio.preferences} panels={{ projects: <PortfolioEditor initial={portfolio} section="projects" />, files: <PortfolioEditor initial={portfolio} section="files" />, credentials: <>
         <div className="profile-panel-heading"><h2>Skills & credentials</h2><Link className="button" href="/student/profile/edit">Edit sharing</Link></div>
         <section className="card">
