@@ -16,6 +16,8 @@ export type PortfolioProject = {
   imageId: string | null;
 };
 export type PortfolioPreferences = {
+  panelOrder?: ("credentials" | "projects" | "files")[];
+  layout?: "comfortable" | "compact";
   showSkills: boolean;
   showTraining: boolean;
   showBadges: boolean;

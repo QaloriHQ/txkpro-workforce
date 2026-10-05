@@ -21,6 +21,7 @@ export async function PUT(request: Request) {
       JSON.stringify(input).length > 18000 ||
       ![
         "preferences",
+        "layout",
         "project_save",
         "project_delete",
         "file_update",

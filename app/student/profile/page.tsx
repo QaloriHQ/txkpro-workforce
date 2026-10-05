@@ -1,6 +1,6 @@
 import { PortfolioView } from "@/components/student/portfolio-view";
 import { PortfolioEditor } from "@/components/student/portfolio-editor";
-import { StudentProfileSections } from "@/components/student/profile-sections";
+import { ProfilePanels } from "@/components/student/profile-layout";
 import { studentPortfolio } from "@/lib/student-portfolio/repository";
 import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import { studentPublicSettings } from "@/lib/student-public-profile/repository";
@@ -31,18 +31,11 @@ export default async function StudentProfilePage() {
     <>
       <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="profile" trainingCount={evidence.employerTraining.filter((item) => item.status !== "cancelled").length} />
-      <main className="page-wrap student-training-page student-readiness-profile">
-        <div className="page-heading">
-          <div>
-            <p className="eyebrow">Student Profile</p>
-            <h1>My Profile</h1>
-            <p className="card-sub">Your digital resume, projects, credentials and sharing controls — all in one place.</p>
-          </div>
-        </div>
-
+      <main className="student-training-page student-readiness-profile student-profile-page">
         <PortfolioView portfolio={portfolio} displayName={publicSettings.displayName || [context.firstName, context.lastName].filter(Boolean).join(" ")} headline={publicSettings.headline} bio={publicSettings.bio} identityOnly />
-        <StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName.slice(0, 1)].filter(Boolean).join(" ")} compact />
-        <StudentProfileSections portfolio={<PortfolioEditor initial={portfolio} />} credentials={<>
+        <div className="profile-owner-controls"><StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName].join(" ")} identityOnly /><PortfolioEditor initial={portfolio} section="images" /><Link className="button" href="/student/profile/edit">Profile editor</Link></div>
+        <ProfilePanels preferences={portfolio.preferences} panels={{ projects: <PortfolioEditor initial={portfolio} section="projects" />, files: <PortfolioEditor initial={portfolio} section="files" />, credentials: <>
+        <div className="profile-panel-heading"><h2>Skills & credentials</h2><Link className="button" href="/student/profile/edit">Edit sharing</Link></div>
         <section className="card">
           <div className="card-header"><div><p className="eyebrow">Technical readiness</p><h2>Instructor Verified Skills</h2><p className="card-sub">Technical competencies verified by an Instructor. Employer Training does not create these records.</p></div></div>
           <div className="grid grid-2">
@@ -102,7 +95,8 @@ export default async function StudentProfilePage() {
           </div>
           {!evidence.employerCertifications.length ? <div className="empty">No Employer Certifications issued yet.</div> : null}
         </section>
-        </>} activity={<>
+        </> }} />
+        <div className="profile-private-activity">
         <section className="card">
           <div className="card-header"><div><p className="eyebrow">Observed engagement</p><h2>Employer Training activity</h2><p className="card-sub">Previews, starts, and passed completions reflect recorded activity only. They do not indicate employment intent or Instructor Verified Skills.</p></div></div>
           <div className="grid grid-2">
@@ -116,7 +110,7 @@ export default async function StudentProfilePage() {
           {!exposure.length ? <div className="empty">No observed Employer Training activity yet.</div> : null}
         </section>
 
-        </>} />
+        </div>
       </main>
     </>
   );

@@ -52,3 +52,17 @@ At https://staging-workforce.txkpro.com:
 Expected tracking: Verification after staging technical gates; Done only after owner acceptance.
 
 Staging migration ledger: `20261005003557_workforce_w12_16a_student_portfolio`; applied SQL MD5 `267624299538f1c8935ea089fd7ced2b`. Source filename matches the applied ledger; SQL remains unchanged.
+
+## Profile resume/editor follow-up (2026-10-05)
+
+The header avatar links directly to `/student/profile`. The owner page starts with the full-width cover, photo and identity panel, followed by reordered credential, project and file panels. `/student/profile/edit` owns visibility, public URL, category opt-ins, layout spacing, panel order, public-layout preview and sign-out. The Done link returns to the profile. Identity and image editing remain accessible beside the identity panel; per-file access and project visibility remain in item-edit modals. Canonical credentials retain read-only issuer/source/status evidence.
+
+Panel order and spacing persist in canonical portfolio preferences and apply to both owner and public pages. Unknown, duplicate or incomplete panel lists are rejected server-side. Layout edits retain existing sharing preferences and use the existing `STUDENT_PORTFOLIO_CHANGED` audit without private text. Project saves accept at most three comma-separated skills of at most 60 characters each; UI fields exclude commas and display skill pills as Student-entered claims. Description previews show 120 Unicode characters before Read more. No applied migration is modified.
+
+Files use compact image/type previews; selecting a card opens the server-authorized viewer in a new tab. Download, Manage and Remove live inside a keyboard-accessible three-dot disclosure. Project Edit and Remove use the same disclosure. All editing remains in native dialog forms, preserving drafts on cancel and providing explicit deletion confirmation.
+
+Owner UAT: tap the avatar (direct navigation), inspect full-width identity on phone/desktop/light/dark, edit identity/images, save layout and reorder then tap Done, compare public preview and `/students/{slug}`, verify public opt-ins and Private still hide the page, upload raster/PDF/text files and use each three-dot action, confirm access revocation, add/edit three skill pills, expand/collapse a long project description, and test keyboard disclosure/dialog focus including deletion. #223 remains Verification until owner acceptance. Production is outside this follow-up.
+
+The Supabase CLI created the migration file but its analytics request was rejected by automatic approval review. Migration application and ledger verification use the connected staging Supabase tool. Provider token/cost telemetry remains unavailable in this runtime; do not fabricate final counters or claim the run fully finalized.
+
+Staging migration ledger: `20261005031946_workforce_student_profile_layout`, statements MD5 `6ba49348905a22b05b9ab75e99a268f5`. Rollback-only SQL QA passes before and after application; no retained fixtures.

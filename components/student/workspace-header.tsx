@@ -3,7 +3,6 @@ import Link from "next/link";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SignOutButton } from "@/components/sign-out-button";
 import { ActionModal } from "@/components/design-system/action-modal";
 
 export function StudentWorkspaceHeader({ firstName, lastName }: { firstName: string; lastName: string }) {
@@ -13,7 +12,7 @@ export function StudentWorkspaceHeader({ firstName, lastName }: { firstName: str
       <div className="student-prototype-tools student-header-actions">
         <ThemeToggle />
         <ActionModal title="Notifications" triggerLabel="Notifications" triggerContent={<BellIcon aria-hidden="true" />}><p>Coming soon</p><p className="muted">Review your current interview requests in Career and assigned courses in Training.</p><Link className="button" href="/student/opportunities?view=interviews">View career activity</Link></ActionModal>
-        <ActionModal title="My account" triggerLabel="Open profile and account menu" triggerContent={<span className="student-avatar">{initials}</span>}><div className="student-menu-links"><Link href="/student/profile">My profile & portfolio</Link></div><SignOutButton /></ActionModal>
+        <Link className="student-profile-link" href="/student/profile" aria-label="View my profile"><span className="student-avatar">{initials}</span></Link>
       </div>
   </header>;
 }

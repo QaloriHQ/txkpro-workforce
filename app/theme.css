@@ -7685,3 +7685,40 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
  .student-profile-privacy-bar > .txk-modal-action > button { width:100%; }
  .student-unified-profile-sections .portfolio-actions { gap:8px; }
 }
+
+/* Student resume: full-width identity, compact cards and owner controls. */
+.student-profile-page { width: 100%; max-width: 1100px; margin: 0 auto; padding-top: 0; }
+.student-profile-page .portfolio-identity { border-radius: 0 0 20px 20px; }
+.student-profile-page .portfolio-identity h2 { font-size: clamp(1.7rem, 5vw, 2.5rem); }
+.profile-owner-controls, .profile-panels, .profile-private-activity { margin: 18px 14px; }
+.profile-owner-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.profile-owner-controls .portfolio-editor { border: 0; box-shadow: none; background: transparent; padding: 0; margin: 0; }
+.profile-owner-controls .portfolio-actions { margin: 0; }
+.profile-panels { display: grid; gap: 18px; }
+.profile-layout-compact { gap: 10px; }
+.profile-layout-compact .card { padding: 16px; }
+.profile-order-list { padding: 0; list-style: none; display: grid; gap: 10px; }
+.profile-order-list li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.profile-order-list li div { display: flex; gap: 6px; }
+.student-profile-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; }
+.portfolio-skill-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.portfolio-skill-pills .pill { overflow-wrap: anywhere; white-space: normal; }
+.portfolio-read-more { border: 0; background: transparent; color: var(--brand); font: inherit; cursor: pointer; padding: 0; }
+.portfolio-file-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.portfolio-file-gallery .portfolio-item { min-width: 0; padding: 10px; }
+.portfolio-file-card { display: grid; gap: 6px; color: inherit; text-decoration: none; }
+.portfolio-file-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portfolio-file-card small { color: var(--muted); }
+.portfolio-file-preview { position: relative; aspect-ratio: 4 / 3; background: var(--surface-subtle); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.portfolio-file-preview img { object-fit: cover; }
+.portfolio-file-preview svg { width: 36px; height: 36px; }
+.portfolio-item-menu { margin-top: 10px; }
+.portfolio-item-menu summary { list-style: none; cursor: pointer; width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; margin-left: auto; border: 1px solid var(--line); border-radius: 10px; font-weight: 700; letter-spacing: 2px; }
+.portfolio-item-menu summary::-webkit-details-marker { display: none; }
+.portfolio-menu-options { display: grid; gap: 10px; padding: 10px 0; }
+.portfolio-menu-options .txk-modal-action > button { width: 100%; }
+.student-public-portfolio { max-width: 1100px; }
+.student-public-portfolio .profile-panels { margin-inline: 0; }
+@media (max-width: 760px) { .student-profile-page { width: 100%; } .student-profile-page .portfolio-cover { min-height: 150px; } .student-profile-page .portfolio-identity { border-radius: 0; border-left: 0; border-right: 0; } .portfolio-file-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.profile-panel-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.student-profile-page .portfolio-identity h1 { font-size: clamp(1.7rem, 5vw, 2.5rem); }
