@@ -8,6 +8,7 @@ export type StudentPublicSettings = {
   path: string | null;
 };
 export type PublicStudentPage = {
+  portfolio?: import("@/lib/student-portfolio/types").StudentPortfolio;
   found: boolean;
   redirect?: boolean;
   path?: string;

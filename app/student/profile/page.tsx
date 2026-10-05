@@ -42,6 +42,8 @@ export default async function StudentProfilePage() {
 
         <StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName.slice(0, 1)].filter(Boolean).join(" ")} />
 
+        <section className="card"><h2>Your digital resume & portfolio</h2><p className="card-sub">Manage your photo, cover, projects, documents and public sections.</p><Link className="button button-brand" href="/student/portfolio">Customize portfolio</Link></section>
+
         <section className="card">
           <div className="card-header"><div><p className="eyebrow">Technical readiness</p><h2>Instructor Verified Skills</h2><p className="card-sub">Technical competencies verified by an Instructor. Employer Training does not create these records.</p></div></div>
           <div className="grid grid-2">

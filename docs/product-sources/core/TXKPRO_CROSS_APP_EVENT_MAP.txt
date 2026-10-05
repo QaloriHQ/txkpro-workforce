@@ -159,3 +159,6 @@ END
 
 D-10 APPROVED CLARIFICATION — 2026-10-03
 Official placement requires an authorized Employer or permitted workforce operator confirming the Student started employment. Scheduled starts remain pending_start; retention milestones remain separate. Recording a hire alone does not establish started employment. Historical and scoped official counts require explicit confirmation evidence. Existing active/ended status values and PLACEMENT_CREATED / PLACEMENT_STATUS_CHANGED audit vocabulary remain; no retention status is a placement status. Role, evidence, reporting, legacy-history and verification details: docs/D10_OFFICIAL_PLACEMENT.md (#202).
+
+W12-16A OWNER-APPROVED EXPANSION — 2026-10-04 (#223)
+STUDENT_PORTFOLIO_CHANGED is a publication/portfolio audit action, not a competency or hiring event. Source: active Student self membership; target student_portfolio. Payload: operation and record UUID only. Public profile reads curate opt-in canonical evidence and public projects/files; Employer file access reuses existing consent/talent scope. No skill, credential, placement, discoverability or reward state is implied. Contract: docs/W12_16A_STUDENT_PORTFOLIO.md.

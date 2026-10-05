@@ -14,7 +14,7 @@ export async function studentPublicSettings(input: Record<string, unknown> | nul
 }
 // React cache deduplicates only within this request. Publication is checked on every request.
 export const publicStudentPage = cache(async (path: string): Promise<PublicStudentPage> => {
-  const { data, error } = await createAdminClient().rpc("student_public_profile_read", { p_path: path });
+  const { data, error } = await createAdminClient().rpc("student_portfolio_public", { p_path: path });
   if (error) throw new Error("Public profile is temporarily unavailable.");
   return data ?? { found: false };
 });
