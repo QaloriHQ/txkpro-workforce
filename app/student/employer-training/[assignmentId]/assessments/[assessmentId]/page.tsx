@@ -1,11 +1,9 @@
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { Brand } from "@/components/brand";
-import { SignOutButton } from "@/components/sign-out-button";
 import { AssessmentRuntime } from "@/components/student/assessment-runtime";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
   getStudentEmployerTrainingAssessment,
@@ -54,13 +52,7 @@ export default async function StudentEmployerTrainingAssessmentPage({
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="training" trainingCount={activeCount} />
 
       <main className="page-wrap student-training-page student-assessment-page">

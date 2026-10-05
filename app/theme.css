@@ -7570,3 +7570,76 @@ body:has(.institution-sidebar) .topbar > .brand {
 
 .student-nav-mobile-label{display:none;}
 @media(max-width:760px){.student-nav-desktop-label{display:none;}.student-nav-mobile-label{display:inline;}}
+
+/* Student prototype layout: live content and explicit coming-soon destinations. */
+.student-prototype-header { background:var(--txk-bg-panel); border-bottom:1px solid var(--line); }
+.student-prototype-brand { padding:16px max(20px,env(safe-area-inset-left)); background:var(--txk-bg-panel); }
+.student-prototype-brand .brand { width:fit-content; }
+.student-prototype-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px max(20px,env(safe-area-inset-right)); border-top:1px solid var(--line); }
+.student-prototype-tools { display:flex; align-items:center; gap:10px; min-width:0; }
+.student-prototype-tools > .txk-modal-action > button { min-width:44px; min-height:44px; padding:10px 14px; border:1px solid var(--line); border-radius:16px; background:var(--surface-subtle); color:var(--ink); display:flex; align-items:center; gap:8px; }
+.student-prototype-tools > .txk-modal-action > button svg { width:22px; height:22px; }
+.student-header-actions > .txk-modal-action:last-child > button { padding:0; border-radius:50%; background:transparent; }
+.student-avatar { display:grid; place-items:center; width:44px; height:44px; border:2px solid color-mix(in srgb,var(--brand) 40%,var(--line)); border-radius:50%; background:var(--brand); color:white; font-weight:800; }
+.student-connection { display:flex; align-items:center; gap:7px; padding:12px; border:1px solid var(--line); border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); }
+.student-connection i { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+.student-connection i.connected { background:#22a86b; }
+.student-menu-links { display:grid; gap:12px; margin:16px 0 24px; }
+.student-menu-links a { padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--brand); font-weight:700; }
+body:has(.student-prototype-header) .page-heading h1 { font-size:clamp(24px,3vw,34px); }
+body:has(.student-prototype-header) .card { border-radius:20px; }
+.student-prototype-hero { padding:28px; border-radius:24px; color:white; background:radial-gradient(ellipse at top right,rgba(255,255,255,.2),transparent 65%),linear-gradient(135deg,#103652,#0875cf); box-shadow:0 12px 30px rgba(0,104,189,.14); }
+.student-prototype-hero h2 { margin:18px 0 12px; font-size:clamp(24px,3vw,32px); line-height:1.25; }
+.student-prototype-hero p { color:#e0edf7; line-height:1.65; margin-bottom:22px; }
+.student-prototype-hero > .pill,.student-hero-stats span { background:rgba(5,20,36,.65); color:white; border:0; }
+.student-prototype-hero > .button { background:white; color:#105386; border-color:white; font-weight:800; }
+.student-hero-stats { display:flex; flex-wrap:wrap; gap:8px; }
+.student-hero-stats span { padding:9px 14px; border-radius:999px; font-weight:700; font-size:13px; }
+.student-home-section { margin-top:28px; }
+.student-home-section > h2,.student-section-heading h2 { margin:0 0 8px; font-size:22px; }
+.student-home-section > .card-sub { margin-bottom:16px; }
+.student-daily-heading { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.student-daily-heading > svg { width:36px; height:36px; color:var(--brand); flex-shrink:0; }
+.student-daily-heading > div { flex:1; min-width:150px; }
+.student-daily-heading h3 { margin:0 0 4px; }
+.student-daily-card > p,.student-points-placeholder > p { color:var(--muted); line-height:1.6; }
+.student-section-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; }
+.student-workforce-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.student-workforce-metrics .card { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.student-workforce-metrics strong { font-size:30px; }
+.student-workforce-metrics span { color:var(--muted); font-size:13px; line-height:1.5; }
+.student-prototype-tabs { display:flex; gap:10px; overflow-x:auto; padding:4px 0 12px; margin:16px 0 4px; }
+.student-prototype-tabs > button,.student-prototype-tabs > a { display:inline-flex; align-items:center; flex-shrink:0; min-height:44px; border:1px solid var(--line); border-radius:999px; padding:12px 18px; background:var(--surface-subtle); color:var(--muted); font-size:13px; font-weight:800; }
+.student-prototype-tabs > .active { background:var(--brand); color:white; border-color:var(--brand); }
+.student-coming-soon { display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-top:16px; }
+.student-coming-soon h2,.student-coming-soon p { margin:0; }
+.student-training-search { display:grid; grid-template-columns:minmax(0,1fr) minmax(130px,.35fr); gap:10px; margin-top:16px; }
+.student-training-search label { min-width:0; }
+.student-training-search input,.student-training-search select { width:100%; min-height:48px; border-radius:14px; }
+.student-training-library-item { min-width:0; }
+.student-training-library-item > .student-training-card { height:100%; }
+.student-training-card-cover { padding:18px; border-radius:16px; background:linear-gradient(135deg,var(--brand-soft),var(--surface-subtle)); }
+@media(max-width:760px) {
+ .student-prototype-brand { padding:14px; }
+ .student-prototype-brand .brand { max-width:170px; }
+ .student-prototype-toolbar { padding:10px 14px; gap:8px; }
+ .student-prototype-tools { gap:8px; }
+ .student-prototype-tools > .txk-modal-action > button { padding:10px; }
+ .student-connection { padding:10px; font-size:11px; }
+ .student-prototype-hero { padding:22px; }
+ .student-section-heading { align-items:flex-start; flex-wrap:wrap; }
+ .student-workspace-nav-link { font-size:10px; }
+ .student-training-library { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:360px) {
+ .student-connection { padding:8px; }
+ .student-prototype-tools { gap:5px; }
+ .student-prototype-toolbar { padding:8px; }
+ .student-training-search { grid-template-columns:minmax(0,1fr); }
+}
+
+.student-prototype-brand .brand-logo { width:170px; max-width:100%; height:auto; }
+.student-prototype-brand .brand-sub { display:none; }
+.student-training-card-cover { flex-wrap:wrap; }
+.student-training-cover-identity { flex-basis:100%; display:grid; gap:6px; padding-top:12px; }
+.student-training-cover-identity > span { color:var(--muted); font-size:12px; }

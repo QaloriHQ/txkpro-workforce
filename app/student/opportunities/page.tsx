@@ -1,10 +1,9 @@
+import { StudentComingSoon } from "@/components/student/coming-soon";
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Brand } from "@/components/brand";
-import { SignOutButton } from "@/components/sign-out-button";
 import { StudentInterviewResponseForm } from "@/components/student/interview-response-form";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
   listStudentInterviews,
@@ -14,7 +13,9 @@ import { listStudentEmployerTrainingAssignments } from "@/lib/student/learning-r
 
 export const dynamic = "force-dynamic";
 
-export default async function StudentWorkspacePage() {
+export default async function StudentWorkspacePage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view: requestedView } = await searchParams;
+  const view = ["discover", "matches", "referrals", "applications", "interviews", "employment"].includes(requestedView || "") ? requestedView : "discover";
   const context = await getStudentContext();
   if (!context) redirect("/dashboard");
 
@@ -29,53 +30,23 @@ export default async function StudentWorkspacePage() {
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="opportunities" trainingCount={activeTrainingCount} />
       <main className="page-wrap student-training-page">
         <div className="page-heading">
           <div>
-            <p className="eyebrow">Opportunities</p>
-            <h1>Interviews & placements</h1>
+            <p className="eyebrow">Local workforce</p>
+            <h1>Career</h1>
             <p className="card-sub">
-              You control your Interview responses. Employer-private evaluations are never displayed here.
+              Explore career opportunities and manage your path from interview to employment.
             </p>
           </div>
           <span className="pill pill-good">{context.firstName || "Student"}</span>
         </div>
 
-        <section className="card student-workspace-training-summary">
-          <div className="card-header">
-            <div>
-              <p className="eyebrow">Employer Training</p>
-              <h2>Assigned company training</h2>
-              <p className="card-sub">
-                Company-specific readiness training stays separate from Instructor Verified Skills.
-              </p>
-            </div>
-            <span className="pill pill-info">{activeTrainingCount}</span>
-          </div>
-          <div className="student-workspace-training-actions">
-            <Link className="button button-brand" href="/student/employer-training">
-              Open Employer Training
-            </Link>
-            <span className="muted">
-              {trainingAssignments.some((assignment) => assignment.status === "in_progress")
-                ? "You have training in progress."
-                : trainingAssignments.some((assignment) => assignment.status === "assigned")
-                  ? "You have training ready to start."
-                  : activeTrainingCount
-                    ? "Review your completed Employer Training."
-                    : "No Employer Training has been assigned yet."}
-            </span>
-          </div>
-        </section>
-
+        <div className="student-prototype-tabs" aria-label="Career sections">{["discover", "matches", "referrals", "applications", "interviews", "employment"].map(tab => <Link key={tab} className={view === tab ? "active" : ""} aria-current={view === tab ? "page" : undefined} href={`/student/opportunities?view=${tab}`}>{tab.slice(0,1).toUpperCase() + tab.slice(1)}</Link>)}</div>
+        {view !== "interviews" && view !== "employment" ? <StudentComingSoon title={`${view?.slice(0,1).toUpperCase()}${view?.slice(1)}`} description="This career destination is coming soon. Existing interview requests and confirmed or scheduled employment remain available in Interviews and Employment." /> : null}
+        {view === "interviews" ? <>
         <section className="card" style={{ marginTop: 18 }}>
           <div className="card-header">
             <div>
@@ -117,6 +88,8 @@ export default async function StudentWorkspacePage() {
           </div>
         </section>
 
+        </> : null}
+        {view === "employment" ? <>
         <section className="card" style={{ marginTop: 18 }}>
           <div className="card-header">
             <div>
@@ -138,6 +111,7 @@ export default async function StudentWorkspacePage() {
           </div>
           {!placements.length ? <div className="empty">No Placement has been recorded.</div> : null}
         </section>
+        </> : null}
       </main>
     </>
   );

@@ -1,3 +1,4 @@
+import { StudentWorkspaceHeader } from "@/components/student/workspace-header";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -7,12 +8,9 @@ import {
   ClipboardDocumentCheckIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import { Brand } from "@/components/brand";
 import { LearningBlockRenderer } from "@/components/employer/learning/learning-block-renderer";
-import { SignOutButton } from "@/components/sign-out-button";
 import { LessonProgressActions } from "@/components/student/lesson-progress-actions";
 import { StudentWorkspaceNav } from "@/components/student/workspace-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getStudentContext } from "@/lib/student/auth";
 import {
   getStudentEmployerTrainingAssignment,
@@ -90,13 +88,7 @@ export default async function StudentEmployerTrainingLessonPage({
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
+      <StudentWorkspaceHeader firstName={context.firstName} lastName={context.lastName} />
       <StudentWorkspaceNav active="training" trainingCount={activeCount} />
 
       <main className="page-wrap student-training-page student-lesson-page">
