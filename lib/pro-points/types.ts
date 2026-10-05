@@ -57,6 +57,7 @@ export type Program = {
     kind: string;
     status: string;
     acceptedVersion: number | null;
+    points: number;
   } | null;
   participants: {
     id: string;

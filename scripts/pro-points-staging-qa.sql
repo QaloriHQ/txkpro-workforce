@@ -47,6 +47,7 @@ begin
  perform set_config('request.jwt.claims',jsonb_build_object('sub',student_auth,'role','authenticated')::text,true);
  perform set_config('request.jwt.claim.sub',student_auth::text,true);
  begin perform security.pro_action(jsonb_build_object('op','submit','programId',pid,'activityId',aid,'answer',0));raise exception 'Pending participant submitted';exception when insufficient_privilege then null;end;
+ if exists(select 1 from jsonb_array_elements(security.pro_workspace()->'programs') program where program->>'id'=pid::text and jsonb_array_length(program->'activities')<>0) then raise exception 'Pending activity access';end if;
  perform security.pro_action(jsonb_build_object('op','accept','programId',pid,'termsVersion',1));
  sub:=(security.pro_action(jsonb_build_object('op','submit','programId',pid,'activityId',aid,'answer',0))->>'id')::uuid;
  perform security.pro_action(jsonb_build_object('op','submit','programId',pid,'activityId',aid,'answer',0));
@@ -56,6 +57,7 @@ begin
  select id into rid from public.wf_incentive_participants where program_id=pid and user_id=u;
  select sum(points) into n from public.wf_incentive_score_ledger where participant_id=rid;
  if n<>5 then raise exception 'Private trivia award failure';end if;
+ if not exists(select 1 from jsonb_array_elements(security.pro_workspace()->'programs') program where program->>'id'=pid::text and program->'participation'->>'points'='5') then raise exception 'Participant private score missing';end if;
  if exists(select 1 from public.wf_pro_ledger where source_key=sub::text) then raise exception 'Private activity contaminated global score';end if;
  sub:=(security.pro_action(jsonb_build_object('op','submit','programId',pid,'activityId',checkin,'evidence','QA completed'))->>'id')::uuid;
  begin perform security.pro_program_report(pid);raise exception 'Participant report allowed';exception when insufficient_privilege then null;end;
@@ -114,4 +116,4 @@ begin
  if security.pro_public('/students/nonexistent-qa-profile') is not null then raise exception 'Public profile gate bypass';end if;
  if exists(select 1 from public.wf_incentive_pool_ledger) then raise exception 'Funding unexpectedly activated';end if;
 end $$;
-select jsonb_build_object('result','PASS','checks',jsonb_build_array('source_dedup','skill_event_cap','category_daily_cap','training_event_cap','disabled_sources','idempotent_reversal','season_boundary','student_authoring_denied','self_summary','terms_freeze','pending_submit_denied','acceptance','trivia_award','answer_key_private','private_global_separation','table_privileges','helper_privileges','visit_dedup','visit_tier','funding_disabled','checkin_review','private_score_reversal','checkin_badge_revocation','report_scope','report_audit','public_profile_gate','employer_role_scope','cross_owner_mutation','cross_owner_read','no_historical_backfill','skill_source_transition','skill_source_invalidation','training_source_transition','assignment_source_invalidation')) verification;
+select jsonb_build_object('result','PASS','checks',jsonb_build_array('source_dedup','skill_event_cap','category_daily_cap','training_event_cap','disabled_sources','idempotent_reversal','season_boundary','student_authoring_denied','self_summary','terms_freeze','pending_submit_denied','acceptance','trivia_award','answer_key_private','private_global_separation','table_privileges','helper_privileges','visit_dedup','visit_tier','funding_disabled','checkin_review','private_score_reversal','checkin_badge_revocation','report_scope','report_audit','public_profile_gate','employer_role_scope','cross_owner_mutation','cross_owner_read','no_historical_backfill','skill_source_transition','skill_source_invalidation','training_source_transition','assignment_source_invalidation','pending_activity_access','participant_private_score')) verification;

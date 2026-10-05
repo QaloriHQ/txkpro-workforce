@@ -315,7 +315,8 @@ export function IncentiveWorkspace({
             ) : p.participation ? (
               <span className="pill">
                 {p.participation.kind.replace("_", " ")} ·{" "}
-                {p.participation.status}
+                {p.participation.status} · {p.participation.points} private
+                points
               </span>
             ) : null}
             {p.canManage && ["draft", "active"].includes(p.status) ? (
