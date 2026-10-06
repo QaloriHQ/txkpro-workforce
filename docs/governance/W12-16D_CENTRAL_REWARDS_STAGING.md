@@ -78,3 +78,11 @@ Owner reported an unconfirmed payment result and requested a sleek funding modal
 
 ## Confirmation diagnostics — 2026-10-06
 Owner's second attempt ($500 credits + $50 fee) also produced an open/unpaid Stripe Session with no PaymentIntent. Recovery UI is working but the original browser failure remains unproven. Add fixed-category validation/confirmation diagnostics, visible support code and authenticated server warning reference. Classification happens locally; no raw exception message, stack, card data, email, Stripe secret or client secret enters telemetry. Server allowlists stage/category and authorizes funding scope before recording. This endpoint has no payment/ledger/provider side effects. Existing status checks and same-session resume remain in force. No diagnosis or successful payment claimed. Owner UAT must retry the same request and report its support code if it fails. No migration; existing Project exception retained, local PROJECTS_TOKEN/gh telemetry remain unavailable.
+
+
+## Checkout return URL correction — 2026-10-06
+Owner UAT reported `confirmation / return_url`. Read-only Stripe inspection confirms the stored sandbox Sessions remain open/unpaid, with no PaymentIntent and the expected staging return URL. Confirmation now relies on `return_url` configured on the server-created Session, omitting the redundant browser `returnUrl`; `redirect: if_required` remains. The client response/props no longer carry a second return URL. Stripe documents the confirmation URL as required only when absent from Session creation: https://docs.stripe.com/js/custom_checkout/confirm.
+
+Existing Session reuse, status/identity checks, fixed-category diagnostics and signed webhook authority remain in place. No replacement quote/session, charge, migration, permission or production change. Existing scoped Project-access exception and owner UAT gates retained. Owner must refresh staging and resume the same funding request; successful payment, webhook reconciliation and provider backing are not claimed from this change alone.
+
+Validation: all 21 focused rewards tests, typecheck, lint and production build passed. Browser payment confirmation remains owner UAT.

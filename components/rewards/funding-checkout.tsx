@@ -13,12 +13,11 @@ type Props = {
   fundingId: string;
   clientSecret: string;
   publishableKey: string;
-  returnUrl: string;
   onDone: () => void;
   onBusy: (busy: boolean) => void;
   onResume: () => void;
 };
-function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
+function Payment({ fundingId, onDone, onBusy, onResume }: Props) {
   const result = useCheckoutElements();
   const [busy, setBusy] = useState(false),
     [submitted, setSubmitted] = useState(false);
@@ -123,8 +122,8 @@ function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
             return;
           }
           stage = "confirmation";
+          // The Session already owns return_url; do not override it in Stripe.js.
           const r = await result.checkout.confirm({
-            returnUrl,
             redirect: "if_required",
           });
           if (r.type === "error") setMessage(r.error.message);

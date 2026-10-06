@@ -289,7 +289,7 @@ export async function createFundingCheckout(id: string) {
       message:
         "This payment has already been submitted or expired. Check funding history; do not pay again.",
     };
-  return { clientSecret: session.client_secret, publishableKey, returnUrl };
+  return { clientSecret: session.client_secret, publishableKey };
 }
 export async function checkFundingPayment(id: string) {
   await authority({ fundingId: id });

@@ -27,7 +27,6 @@ type Checkout = {
   fundingId: string;
   clientSecret: string;
   publishableKey: string;
-  returnUrl: string;
 };
 export function FundingPanel({
   owner,
