@@ -5,6 +5,7 @@ import {
   rewardService,
   webhookAccount,
 } from "@/lib/rewards/server";
+import { providerFundingWebhook } from "@/lib/rewards/funding-server";
 import { validSignature } from "@/lib/rewards/contracts";
 export const dynamic = "force-dynamic";
 export async function POST(
@@ -47,6 +48,8 @@ export async function POST(
     });
     if (receipt.processed) return Response.json({ ok: true });
     // Never trust payload amounts/status. Re-read canonical provider resources with this account's token.
+    if (/^TOPUPS\./.test(event.event))
+      await providerFundingWebhook(event.payload.resource.id);
     if (receipt.requestId) await dispatchReward(receipt.requestId, false);
     if (/^(FUNDING_SOURCES\.|TOPUPS\.|INVOICES\.)/.test(event.event))
       await refreshBalance(a.ownerType, a.ownerId, false);

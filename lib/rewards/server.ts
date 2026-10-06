@@ -1,5 +1,5 @@
 import "server-only";
-import { createHash, randomBytes } from "node:crypto";
+import { providerBalance } from "./funding-contracts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -7,7 +7,6 @@ import {
   validGiftCard,
   orderPayload,
   reconcileOrder,
-  seal,
   unseal,
   type RewardRequest,
 } from "./contracts";
@@ -15,6 +14,9 @@ export type RewardWorkspace = {
   accounts: {
     ownerType: string;
     ownerId: string;
+    setup: boolean;
+    frozen: boolean;
+    availableCents: number;
     connected: boolean;
     balanceCents: number;
     balanceAt: string | null;
@@ -28,6 +30,9 @@ export type RewardWorkspace = {
     productId: string;
     allocatedCents: number;
     liabilityCents: number;
+    winnerRank: number | null;
+    winnerCredits: number | null;
+    winnersFinalized: boolean;
   }[];
   credits: { participantId: string; programId: string; credits: number }[];
   requests: {
@@ -40,6 +45,20 @@ export type RewardWorkspace = {
     providerStatus: string | null;
     deliveryStatus: string | null;
     own: boolean;
+  }[];
+  canFinance: boolean;
+  funding: {
+    id: string;
+    ownerType: string;
+    ownerId: string;
+    principalCents: number;
+    platformFeeCents: number;
+    thirdPartyFeeCents: number;
+    totalCents: number;
+    method: string;
+    status: string;
+    createdAt: string;
+    invoicePending: boolean;
   }[];
   eligible: boolean;
 };
@@ -103,29 +122,28 @@ type Claim = {
 function context(t: string, i: string) {
   return `tremendous:sandbox:${t}:${i}`;
 }
-function config() {
-  const clientId = process.env.TREMENDOUS_SANDBOX_CLIENT_ID,
-    secret = process.env.TREMENDOUS_SANDBOX_CLIENT_SECRET,
-    key = process.env.REWARDS_ENCRYPTION_KEY;
+export function rewardConfig() {
+  const key = process.env.REWARDS_ENCRYPTION_KEY,
+    token = process.env.TREMENDOUS_SANDBOX_API_KEY;
   const origin = process.env.REWARDS_SANDBOX_APP_ORIGIN;
   if (
-    !clientId ||
-    !secret ||
+    !token ||
     !key ||
     Buffer.from(key, "base64").length !== 32 ||
     origin !== "https://staging-workforce.txkpro.com"
   )
-    throw new Response("Tremendous sandbox credentials are not configured.", {
+    throw new Response("TXKPRO sandbox rewards are not configured.", {
       status: 503,
     });
-  return { clientId, secret, key, origin };
+  return { key, token, origin };
 }
-async function api(path: string, token: string | null, body?: unknown) {
+export async function rewardApi(path: string, body?: unknown) {
+  const c = rewardConfig();
   const response = await fetch(`${SANDBOX_ORIGIN}${path}`, {
     method: body ? "POST" : "GET",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${c.token}`,
     },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
@@ -133,143 +151,36 @@ async function api(path: string, token: string | null, body?: unknown) {
     signal: AbortSignal.timeout(15000),
   });
   if (!response.ok)
-    throw new Error("Provider operation did not confirm success.");
+    throw new Response("TXKPRO reward provider operation was not confirmed.", {
+      status: 503,
+    });
   return response.json();
 }
-async function verifiedUser() {
-  const c = await createServerSupabaseClient();
-  const { data, error } = await c.auth.getUser();
-  if (error || !data.user)
-    throw new Response("Authentication required", { status: 401 });
-  return data.user;
+// Sponsor identifiers come from canonical authority. Provider credentials stay in TXKPRO.
+async function api(path: string, _token: string | null, body?: unknown) {
+  return rewardApi(path, body);
 }
-export async function beginConnect(ownerType: string, ownerId: string) {
-  const c = config();
-  const authority = await rewardAction({ op: "account", ownerType, ownerId });
-  const user = await verifiedUser();
-  const state = randomBytes(32).toString("hex");
-  await rewardService({
-    op: "oauth_begin",
-    ownerType: authority.ownerType,
-    ownerId: authority.ownerId,
-    actor: user.id,
-    stateHash: createHash("sha256").update(state).digest("hex"),
-  });
-  const url = new URL(`${SANDBOX_ORIGIN}/oauth/authorize`);
-  url.search = new URLSearchParams({
-    client_id: c.clientId,
-    redirect_uri: `${c.origin}/api/rewards/callback`,
-    response_type: "code",
-    scope: "default team_management",
-    state,
-  }).toString();
-  return url.toString();
+export async function beginConnect() {
+  throw new Response(
+    "Customer OAuth is retired. Set up TXKPRO reward funding in your workspace.",
+    { status: 410 },
+  );
 }
-export async function completeConnect(code: string, state: string) {
-  const c = config(),
-    user = await verifiedUser();
-  if (!/^[a-f0-9]{64}$/.test(state) || !code || code.length > 2048)
-    throw new Response("OAuth session unavailable", { status: 400 });
-  const owner = await rewardService<{ ownerType: string; ownerId: string }>({
-    op: "oauth_consume",
-    actor: user.id,
-    stateHash: createHash("sha256").update(state).digest("hex"),
-  });
-  await rewardAction({ op: "account", ...owner }); // Recheck current owner permission; revoked authorizations cannot complete linking.
-  const token = await api("/oauth/token", null, {
-    client_id: c.clientId,
-    client_secret: c.secret,
-    redirect_uri: `${c.origin}/api/rewards/callback`,
-    grant_type: "authorization_code",
-    code,
-  });
-  if (
-    typeof token.access_token !== "string" ||
-    typeof token.refresh_token !== "string" ||
-    !Number.isFinite(token.expires_in)
-  )
-    throw new Response("Provider connection unavailable", { status: 503 });
-  const org = await api("/api/v2/organizations", token.access_token);
-  if (
-    !Array.isArray(org.organizations) ||
-    org.organizations.length !== 1 ||
-    !org.organizations[0].id
-  )
-    throw new Response("Select one workspace account", { status: 400 });
-  const tokens: Tokens = {
-    access_token: token.access_token,
-    refresh_token: token.refresh_token,
-    expiresAt: Date.now() + token.expires_in * 1000,
-  };
-  await rewardService({
-    op: "connect",
-    ...owner,
-    organizationId: org.organizations[0].id,
-    sealed: seal(tokens, c.key, context(owner.ownerType, owner.ownerId)),
-  });
-  const claim = await rewardService<Claim>({ op: "claim", ...owner });
-  try {
-    const hooks = await api("/api/v2/webhooks", token.access_token);
-    // Never overwrite an existing receiver belonging to another integration.
-    const expected = `${c.origin}/api/rewards/webhook/${claim.accountId}`;
-    if ((hooks.webhooks || []).some((h: { url: string }) => h.url !== expected))
-      throw new Error("Existing provider webhook needs coordination.");
-    const hook = await api("/api/v2/webhooks", token.access_token, {
-      url: expected,
-    });
-    if (!hook.webhook?.private_key) throw new Error("Webhook unavailable");
-    tokens.webhookSecret = hook.webhook.private_key;
-    await rewardService({
-      op: "token_save",
-      accountId: claim.accountId,
-      lease: claim.lease,
-      sealed: seal(tokens, c.key, context(owner.ownerType, owner.ownerId)),
-    });
-  } finally {
-    await rewardService({
-      op: "release",
-      accountId: claim.accountId,
-      lease: claim.lease,
-    });
-  }
-  return owner.ownerType === "institution"
-    ? "/institution/incentives"
-    : "/employer/incentives";
+export async function completeConnect() {
+  throw new Response("Customer OAuth is retired.", { status: 410 });
 }
 async function tokenFor(claim: Claim) {
-  const c = config();
-  let tokens = unseal<Tokens>(
+  const c = rewardConfig();
+  const marker = unseal<{ mode?: string }>(
     claim.sealed,
     c.key,
     context(claim.ownerType, claim.ownerId),
   );
-  if (tokens.expiresAt < Date.now() + 60000) {
-    const refreshed = await api("/oauth/token", null, {
-      client_id: c.clientId,
-      client_secret: c.secret,
-      grant_type: "refresh_token",
-      refresh_token: tokens.refresh_token,
+  if (marker.mode !== "central")
+    throw new Response("Legacy funding requires explicit migration.", {
+      status: 409,
     });
-    if (
-      !refreshed.access_token ||
-      !refreshed.refresh_token ||
-      !Number.isFinite(refreshed.expires_in)
-    )
-      throw new Error("Token refresh unavailable");
-    tokens = {
-      ...tokens,
-      access_token: refreshed.access_token,
-      refresh_token: refreshed.refresh_token,
-      expiresAt: Date.now() + refreshed.expires_in * 1000,
-    };
-    await rewardService({
-      op: "token_save",
-      accountId: claim.accountId,
-      lease: claim.lease,
-      sealed: seal(tokens, c.key, context(claim.ownerType, claim.ownerId)),
-    });
-  }
-  return tokens.access_token;
+  return c.token;
 }
 export async function refreshBalance(
   ownerType: string,
@@ -277,26 +188,19 @@ export async function refreshBalance(
   checked = true,
 ) {
   if (checked) await rewardAction({ op: "account", ownerType, ownerId });
-  config();
+  rewardConfig();
   const claim = await rewardService<Claim>({ op: "claim", ownerType, ownerId });
   try {
     const token = await tokenFor(claim),
       r = await api("/api/v2/funding_sources/BALANCE", token);
     const f = r.funding_source;
-    if (
-      f?.status !== "active" ||
-      f?.method !== "balance" ||
-      f?.meta?.currency_code !== "USD" ||
-      !Number.isSafeInteger(f?.meta?.available_cents) ||
-      f.meta.available_cents < 0
-    )
-      throw new Error("USD balance unavailable");
+    const cents = providerBalance(f);
     await rewardService({
       op: "balance",
       accountId: claim.accountId,
       lease: claim.lease,
       currency: "USD",
-      cents: f.meta.available_cents,
+      cents,
     });
   } catch {
     await rewardService({
@@ -312,7 +216,7 @@ export async function refreshBalance(
 export async function dispatchReward(id: string, checked = true) {
   if (checked)
     await authenticatedRpc("reward_dispatch_authority", { p_id: id });
-  config();
+  rewardConfig();
   const claim = await rewardService<Claim>({
     op: "claim_issue",
     requestId: id,
@@ -370,7 +274,7 @@ export async function dispatchReward(id: string, checked = true) {
   }
 }
 export async function webhookAccount(id: string) {
-  const c = config();
+  const c = rewardConfig();
   const a = await rewardService<{
     sealed: string;
     ownerType: string;

@@ -126,3 +126,44 @@ test("approval threshold never overrides hard spending cap", () => {
   });
   assert.throws(() => screeningBudget(-1, 0, 1000, 100));
 });
+
+import {
+  fundingQuote,
+  usdCents,
+  providerBalance,
+} from "../lib/rewards/funding-contracts.ts";
+test("funding fees, integer USD conversion and provider balance versions", () => {
+  assert.deepEqual(fundingQuote(1000, 290, 30), {
+    principalCents: 1000,
+    platformFeeCents: 500,
+    thirdPartyFeeCents: 59,
+    totalCents: 1559,
+  });
+  assert.equal(fundingQuote(10000, 0, 0).platformFeeCents, 1000);
+  assert.equal(usdCents("10.01"), 1001);
+  assert.throws(() => usdCents("1.001"));
+  assert.throws(() => fundingQuote(10, 0, 0));
+  assert.equal(
+    providerBalance({
+      status: "active",
+      method: "balance",
+      meta: { currency_code: "USD", available_amount: 10.01 },
+    }),
+    1001,
+  );
+  assert.equal(
+    providerBalance({
+      status: "active",
+      method: "balance",
+      meta: { currency_code: "USD", available_cents: 1001 },
+    }),
+    1001,
+  );
+  assert.throws(() =>
+    providerBalance({
+      status: "active",
+      method: "balance",
+      meta: { currency_code: "CAD", available_cents: 100 },
+    }),
+  );
+});
