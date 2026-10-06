@@ -9,6 +9,9 @@ import {
 import { getAccountContext } from "@/lib/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CheckrPanel } from "@/components/rewards/checkr-panel";
+import { authority } from "@/lib/checkr/server";
+import { sandboxConfigured } from "@/lib/checkr/contracts";
 import { authenticatedRpc } from "@/lib/rewards/server";
 export const dynamic = "force-dynamic";
 export default async function Screening({
@@ -43,6 +46,11 @@ export default async function Screening({
       );
     throw e;
   }
+  const { actor: _actor, ...checkr } = await authority({
+    op: "workspace",
+    employerId,
+  });
+  void _actor;
   return (
     <>
       <header className="topbar employer-topbar">
@@ -61,6 +69,15 @@ export default async function Screening({
       </header>
       <main className="page-wrap txk-prototype-content">
         <h1>Background checks</h1>
+        <CheckrPanel
+          data={checkr}
+          employerId={employerId}
+          configured={sandboxConfigured(process.env)}
+          orderingEnabled={
+            sandboxConfigured(process.env) &&
+            process.env.CHECKR_SANDBOX_ORDERING_ENABLED === "true"
+          }
+        />
         <ScreeningPanel data={data} employerId={employerId} />
       </main>
     </>
