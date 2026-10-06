@@ -316,7 +316,7 @@ declare op text:=input->>'op';f security.wf_reward_funding%rowtype;a security.wf
  select * into f from security.wf_reward_funding where id=(input->>'fundingId')::uuid for update;
  if not found then raise exception 'Funding unavailable';end if;
  select * into a from security.wf_reward_accounts where owner_type=f.owner_type and owner_id=f.owner_id for update;
- if op='read' then return to_jsonb(f);end if;
+ if op='read' then return to_jsonb(f)||jsonb_build_object('customer_email',(select email from public.users where user_id=f.created_by));end if;
  if op='session' then
  if f.status<>'quoted' or (f.stripe_session_id is not null and f.stripe_session_id<>input->>'sessionId') then raise exception 'Funding session state conflict';end if;
  update security.wf_reward_funding set stripe_session_id=input->>'sessionId',status='pending' where id=f.id;

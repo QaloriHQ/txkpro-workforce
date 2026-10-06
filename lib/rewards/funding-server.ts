@@ -18,6 +18,8 @@ type Authority = {
   canFinance: boolean;
 };
 export type Funding = {
+  customer_email?: string;
+  pricing_version: string;
   id: string;
   owner_type: string;
   owner_id: string;
@@ -208,6 +210,15 @@ export async function createFundingCheckout(id: string) {
     });
   const { stripe, publishableKey } = stripeConfig(),
     p = pricing(f.method);
+  if (p.version !== f.pricing_version)
+    throw new Response(
+      "Funding pricing has changed. Create a new quote before paying.",
+      { status: 409 },
+    );
+  if (!f.customer_email)
+    throw new Response("A verified funding contact email is required.", {
+      status: 409,
+    });
   if (!["quoted", "pending"].includes(f.status))
     throw new Response("This funding request no longer accepts payment.", {
       status: 409,
@@ -229,6 +240,7 @@ export async function createFundingCheckout(id: string) {
           return_url: returnUrl,
           payment_method_configuration: p.configuration,
           client_reference_id: f.id,
+          customer_email: f.customer_email,
           metadata: {
             funding_id: f.id,
             integration_identifier: "txkpro_rewards_abcdefgh",
