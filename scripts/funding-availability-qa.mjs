@@ -1,3 +1,7 @@
+import {
+  fundingDiagnostic,
+  validFundingDiagnostic,
+} from "../lib/rewards/funding-diagnostics.ts";
 import { fundingPaymentObservation } from "../lib/rewards/funding-contracts.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -91,4 +95,35 @@ test("payment observation rejects another request, altered price/currency and li
       fundingPaymentObservation(request, { ...session, ...change }),
     );
   }
+});
+
+test("checkout diagnostic is a fixed category and never returns raw errors or credentials", () => {
+  assert.deepEqual(
+    fundingDiagnostic(
+      "confirmation",
+      new TypeError("checkout.confirm is not a function"),
+    ),
+    { stage: "confirmation", category: "sdk_unavailable" },
+  );
+  const diagnostic = fundingDiagnostic("validation", {
+    name: "IntegrationError",
+    message:
+      "customer@example.test sk_test_SECRET cs_test_SECRET card 4242424242424242",
+  });
+  assert.deepEqual(diagnostic, {
+    stage: "validation",
+    category: "integration",
+  });
+  assert.equal(validFundingDiagnostic(diagnostic), true);
+  assert.equal(
+    validFundingDiagnostic({
+      stage: "confirmation",
+      category: "sk_test_SECRET",
+    }),
+    false,
+  );
+  assert.equal(
+    validFundingDiagnostic({ stage: "raw_secret", category: "unexpected" }),
+    false,
+  );
 });

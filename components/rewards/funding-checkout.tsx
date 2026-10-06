@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { fundingDiagnostic } from "@/lib/rewards/funding-diagnostics";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   CheckoutElementsProvider,
@@ -25,6 +26,7 @@ function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
     [canResume, setCanResume] = useState(false);
   const [message, setMessage] = useState("");
   const [checked, setChecked] = useState(false);
+  const [diagnostic, setDiagnostic] = useState("");
   useEffect(() => {
     let active = true;
     void fetch("/api/rewards/funding", {
@@ -113,12 +115,14 @@ function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
         setBusy(true);
         onBusy(true);
         setMessage("");
+        let stage = "validation";
         try {
           const validation = await result.checkout.validateElements();
           if (validation.type === "error") {
             setMessage(validation.error.message);
             return;
           }
+          stage = "confirmation";
           const r = await result.checkout.confirm({
             returnUrl,
             redirect: "if_required",
@@ -132,7 +136,17 @@ function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
             setUncertain(true);
             await checkStatus();
           }
-        } catch {
+        } catch (error) {
+          const details = fundingDiagnostic(stage, error);
+          setDiagnostic(
+            `Checkout stopped during ${details.stage}. Support code: ${details.category}.`,
+          );
+          // The diagnostic request cannot change payment state or retry a charge.
+          void fetch("/api/rewards/funding", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ op: "diagnostic", fundingId, ...details }),
+          }).catch(() => undefined);
           setUncertain(true);
           setMessage(
             "Checking the payment result. Keep this funding request open.",
@@ -171,6 +185,11 @@ function Payment({ fundingId, returnUrl, onDone, onBusy, onResume }: Props) {
       {message ? (
         <p className="funding-notice" role="status" aria-live="polite">
           {message}
+        </p>
+      ) : null}
+      {diagnostic ? (
+        <p className="funding-help" role="status">
+          {diagnostic}
         </p>
       ) : null}
       {uncertain ? (
