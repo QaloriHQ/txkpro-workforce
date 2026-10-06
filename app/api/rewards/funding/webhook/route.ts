@@ -24,8 +24,8 @@ export async function POST(request: Request) {
     );
     return Response.json({ received: true });
   } catch (e) {
-    return new Response("Webhook not confirmed", {
-      status: e instanceof Response ? e.status : 400,
-    });
+    const status = e instanceof Response ? e.status : 503;
+    console.warn(JSON.stringify({ event: "funding_webhook_rejected", status }));
+    return new Response("Webhook not confirmed", { status });
   }
 }

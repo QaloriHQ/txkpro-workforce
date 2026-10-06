@@ -15,6 +15,7 @@ import {
   usdCents,
   fundingPaymentObservation,
 } from "./funding-contracts";
+import { fundingEventMatches, fundingDocuments } from "./funding-documents";
 type Authority = {
   ownerType: string;
   ownerId: string;
@@ -250,6 +251,7 @@ export async function createFundingCheckout(id: string) {
           payment_method_configuration: p.configuration,
           client_reference_id: f.id,
           customer_email: f.customer_email,
+          invoice_creation: { enabled: true },
           metadata: {
             funding_id: f.id,
             integration_identifier: "txkpro_rewards_abcdefgh",
@@ -312,6 +314,43 @@ export async function checkFundingPayment(id: string) {
     );
   }
 }
+// Recovery trusts only Stripe's authenticated Events API, never a browser payment result.
+export async function reconcileFundingPayment(id: string) {
+  await authority({ fundingId: id });
+  const f = await service({ op: "read", fundingId: id });
+  if (!f.stripe_session_id) return checkFundingPayment(id);
+  const { stripe } = stripeConfig();
+  const session = await stripe.checkout.sessions.retrieve(f.stripe_session_id);
+  fundingPaymentObservation(f, session);
+  if (session.payment_status === "paid" && ["pending", "failed", "expired"].includes(f.status)) {
+    for (const type of ["checkout.session.completed", "checkout.session.async_payment_succeeded"] as const) {
+      // A bounded recovery window; old/large histories require finance assistance.
+      const events = stripe.events.list({ type, created: { gte: session.created }, limit: 100 });
+      let inspected = 0;
+      for await (const event of events) {
+        if (fundingEventMatches(f, event)) {
+          await processFundingEvent(event);
+          return checkFundingPayment(id);
+        }
+        if (++inspected >= 300) break;
+      }
+    }
+    return { canResume: false, message: "Stripe received payment; its event still needs reconciliation. Do not pay again." };
+  }
+  return checkFundingPayment(id);
+}
+
+export async function getFundingDocuments(id: string) {
+  await authority({ fundingId: id });
+  const f = await service({ op: "read", fundingId: id });
+  if (!f.stripe_session_id) return { receiptUrl: null, invoiceUrl: null, invoicePdfUrl: null, message: "Payment documents are not available for this request yet." };
+  const { stripe } = stripeConfig();
+  const session = await stripe.checkout.sessions.retrieve(f.stripe_session_id, {
+    expand: ["payment_intent.latest_charge", "invoice"],
+  });
+  return fundingDocuments(f, session);
+}
+
 export async function recordFundingDiagnostic(input: Record<string, unknown>) {
   if (!validFundingDiagnostic(input))
     throw new Response("Invalid checkout diagnostic.", { status: 400 });
@@ -453,7 +492,17 @@ export async function reconcileBacking(id: string) {
 }
 export async function fundingWebhook(raw: string, signature: string) {
   const { stripe, webhook } = stripeConfig();
-  const event = stripe.webhooks.constructEvent(raw, signature, webhook);
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(raw, signature, webhook);
+  } catch {
+    throw new Response("Invalid webhook signature", { status: 400 });
+  }
+  await processFundingEvent(event);
+}
+
+async function processFundingEvent(event: Stripe.Event) {
+  const { stripe } = stripeConfig();
   if (event.livemode)
     throw new Response("Live payments are disabled.", { status: 400 });
   let fundingId: string | undefined, kind: string | undefined;
@@ -503,7 +552,7 @@ export async function fundingWebhook(raw: string, signature: string) {
   if (
     session.metadata?.funding_id !== f.id ||
     session.client_reference_id !== f.id ||
-    (kind === "paid" && session.payment_status !== "paid")
+    (kind === "paid" && (session.payment_status !== "paid" || !fundingEventMatches(f, event)))
   )
     throw new Response("Payment binding mismatch.", { status: 400 });
   await service({

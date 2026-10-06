@@ -6,6 +6,7 @@ import {
   ActionModal,
   WorkspaceForm,
 } from "@/components/design-system/action-modal";
+import { FundingDocuments } from "./funding-documents";
 import type { RewardWorkspace } from "@/lib/rewards/server";
 const FundingCheckout = dynamic(
   () => import("./funding-checkout").then((m) => m.FundingCheckout),
@@ -387,6 +388,16 @@ export function FundingPanel({
                 total {money(f.totalCents)} (fee {money(f.platformFeeCents)},
                 third-party {money(f.thirdPartyFeeCents)})
               </p>
+              {f.method !== "platform" ? (
+                <div className="reward-actions">
+                  <FundingDocuments fundingId={f.id} />
+                  {["pending", "failed", "expired"].includes(f.status) ? (
+                    <button className="button" disabled={busy} onClick={() => void send({ op: "reconcile", fundingId: f.id })}>
+                      Check payment status
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               {["quoted", "pending"].includes(f.status) &&
               f.method !== "platform" ? (
                 <ActionModal
