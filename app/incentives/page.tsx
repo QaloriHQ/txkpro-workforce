@@ -1,3 +1,5 @@
+import { rewardWorkspace } from "@/lib/rewards/server";
+import { RewardsPanel } from "@/components/rewards/panel";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAccountContext } from "@/lib/auth";
@@ -9,7 +11,10 @@ import { IncentiveWorkspace } from "@/components/pro-points/workspace";
 export const dynamic = "force-dynamic";
 export default async function Programs() {
   if (!(await getAccountContext())) redirect("/login");
-  const data = await pointsWorkspace();
+  const [data, rewards] = await Promise.all([
+    pointsWorkspace(),
+    rewardWorkspace(),
+  ]);
   return (
     <>
       <header className="topbar">
@@ -25,6 +30,7 @@ export default async function Programs() {
       <main className="page-wrap">
         <h1>Incentive programs</h1>
         <IncentiveWorkspace data={data} />
+        <RewardsPanel data={rewards} points={data} />
       </main>
     </>
   );

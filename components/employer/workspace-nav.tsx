@@ -11,6 +11,7 @@ import {
   HomeIcon,
   PaperAirplaneIcon,
   QueueListIcon,
+  ShieldCheckIcon,
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -24,6 +25,7 @@ type EmployerSection =
   | "pipeline"
   | "placements"
   | "incentives"
+  | "screening"
   | "learning"
   | "team";
 
@@ -42,7 +44,17 @@ type NavGroup = {
 };
 
 const groups: NavGroup[] = [
-  {label: "Programs", items: [{key:"incentives",href:"/employer/incentives",label:"Incentives",icon:AcademicCapIcon}]},
+  {
+    label: "Programs",
+    items: [
+      {
+        key: "incentives",
+        href: "/employer/incentives",
+        label: "Incentives",
+        icon: AcademicCapIcon,
+      },
+    ],
+  },
   {
     label: "Overview",
     items: [
@@ -57,6 +69,12 @@ const groups: NavGroup[] = [
   {
     label: "Talent & Hiring",
     items: [
+      {
+        key: "screening",
+        href: "/employer/screening",
+        label: "Background checks",
+        icon: ShieldCheckIcon,
+      },
       {
         key: "talent",
         href: "/employer/talent",
@@ -114,11 +132,7 @@ const groups: NavGroup[] = [
   },
 ];
 
-export function EmployerWorkspaceNav({
-  active,
-}: {
-  active?: EmployerSection;
-}) {
+export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
   const [open, setOpen] = useState(false);
 
   return (
