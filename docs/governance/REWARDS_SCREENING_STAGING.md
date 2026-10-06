@@ -1,6 +1,6 @@
 # Workspace-funded rewards and screening controls — staging increment
 
-Related roadmap: #226 W12-16D. Owner approved staging implementation with a scoped Project-access exception on 2026-10-06. Project access remains unavailable to this agent; no Project status is inferred. This increment does not complete the whole funded-rewards issue or authorize production transactions.
+Related roadmap: #226 W12-16D; gated Authenticate lifecycle #244. Owner approved staging implementation with a scoped Project-access exception on 2026-10-06. Project access remains unavailable to this agent; no Project status is inferred. This increment does not complete the whole funded-rewards issue or authorize production transactions.
 
 ## Reward ownership and accounting
 
@@ -37,7 +37,7 @@ Register OAuth callback `https://staging-workforce.txkpro.com/api/rewards/callba
 
 ## Verification and remaining gates
 
-`npm run rewards:qa` tests provider cryptography/contracts and executes the actual additive SQL migration in isolated PGlite Postgres with canonical owner/actor helpers. Tests exercise tenant denial, anonymous/private-table/service-facade denial, frozen policy, minor earning, redemption reservation/idempotency, issued-state preservation, refund credit release, monetary exhaustion/reversal, employee delegation, blocked ordering and budget/retry controls. Local isolated tests do not replace provider end-to-end verification or multi-session staging lock contention tests.
+`npm run rewards:qa` tests provider cryptography/contracts and executes the actual additive SQL migration in isolated PGlite Postgres with canonical owner/actor helpers. Tests exercise tenant denial, anonymous/private-table/service-facade denial, frozen policy, minor earning, redemption reservation/idempotency, issued-state preservation, refund credit release, monetary exhaustion/reversal, employee delegation, blocked ordering and budget/retry controls. The rollback-only staging SQL check is `supabase/staging/tests/reward_screening_controls.sql`. Local isolated tests do not replace provider end-to-end verification or multi-session staging lock contention tests.
 
 Required signed-in UAT owner: QaloriHQ. On mobile and desktop in both themes: create a draft policy, review modal focus/draft preservation, connect separate workspace sandbox accounts, refresh settled funding, reject insufficient allocations, activate/accept current terms, test adult redemption and minor denial, approve/reject as separate users, confirm gift-card receipt through Tremendous, replay webhooks, simulate timeout/refund/delivery failure, confirm account/cross-tenant boundaries. Test screening permission grants/revocation, ordinary employee access, draft bundles and unconditional order blocking. Review provider account revocation/reconnection behavior before funded launch.
 

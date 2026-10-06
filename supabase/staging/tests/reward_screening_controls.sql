@@ -1,0 +1,41 @@
+-- Run only on qwxlgzlkaeaqfzjodtis. All fixtures, claims and audit rows roll back.
+begin;
+do $$
+declare owner_user public.users%rowtype;student_user public.users%rowtype;tenant text;pid uuid:=gen_random_uuid();part uuid:=gen_random_uuid();retry uuid:=gen_random_uuid();first jsonb;result jsonb;denied boolean;
+begin
+ select u.* into owner_user from public.users u join public.app_role_memberships m on m.user_id=u.user_id join public.contractors c on c.contractor_id=m.scope_id where u.status='active' and u.auth_user_id is not null and m.status='active' and m.role='employer_owner' and m.scope_type='employer' and c.approval_status='approved' and c.account_status='active' limit 1;
+ select scope_id into tenant from public.app_role_memberships where user_id=owner_user.user_id and status='active' and role='employer_owner' and scope_type='employer' limit 1;
+ select u.* into student_user from public.users u join public.app_role_memberships m on m.user_id=u.user_id where u.status='active' and u.auth_user_id is not null and m.status='active' and m.role='student' and u.user_id<>owner_user.user_id limit 1;
+ if owner_user.user_id is null or student_user.user_id is null then raise exception 'Existing activated test accounts required';end if;
+ if has_function_privilege('anon','public.reward_workspace()','EXECUTE') or has_function_privilege('authenticated','public.reward_service(jsonb)','EXECUTE') or has_function_privilege('service_role','security.screening_reserve(text,text,text,text,text[],integer,uuid)','EXECUTE') or has_table_privilege('authenticated','public.wf_reward_requests','SELECT') then raise exception 'Privilege boundary failed';end if;
+ perform set_config('request.jwt.claim.sub',owner_user.auth_user_id::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',owner_user.auth_user_id,'role','authenticated')::text,true);
+ insert into public.wf_incentive_programs(id,owner_type,owner_id,name,template,starts_at,ends_at,terms,created_by) values(pid,'employer',tenant,'Rollback-only rewards QA','earn_redeem',now(),now()+interval '1 day','Rollback test terms',owner_user.user_id);
+ perform public.reward_action(jsonb_build_object('op','account','ownerType','employer','ownerId',tenant));
+ perform public.reward_action(jsonb_build_object('op','policy','programId',pid,'centsPerBlock',100,'creditsPerBlock',100,'minimumCredits',100,'approval','admin','productId','fixture-card'));
+ update security.wf_reward_accounts set sealed_tokens='ROLLBACK-ONLY-NOT-A-PROVIDER-TOKEN',balance_cents=100000000,balance_at=now(),lease=null,leased_until=null where owner_type='employer' and owner_id=tenant;
+ perform public.reward_action(jsonb_build_object('op','allocate','programId',pid,'cents',500));
+ update public.wf_incentive_programs set status='active' where id=pid;
+ insert into public.wf_incentive_participants(id,program_id,user_id,kind,status,invited_by,accepted_version,accepted_at,expires_at) values(part,pid,student_user.user_id,'sponsored_student','active',owner_user.user_id,2,now(),now()+interval '1 day');
+ insert into public.wf_reward_credits(participant_id,credits,source_key,reason) values(part,200,'rollback:'||part,'Rollback fixture; never provider funds');
+ perform set_config('request.jwt.claim.sub',student_user.auth_user_id::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',student_user.auth_user_id,'role','authenticated')::text,true);
+ denied:=false;begin perform public.reward_action(jsonb_build_object('op','allocate','programId',pid,'cents',1));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Participant gained owner authority';end if;
+ perform public.reward_action(jsonb_build_object('op','eligibility','country','US','bornOn','2014-01-01'));
+ denied:=false;begin perform public.reward_action(jsonb_build_object('op','redeem','participantId',part,'credits',100,'requestKey',retry));exception when raise_exception then denied:=true;end;if not denied then raise exception 'Minor redemption allowed';end if;
+ if security.reward_credit_balance(part)<>200 then raise exception 'Minor earning changed';end if;
+ perform public.reward_action(jsonb_build_object('op','eligibility','country','US','bornOn','2000-01-01'));
+ first:=public.reward_action(jsonb_build_object('op','redeem','participantId',part,'credits',100,'requestKey',retry));
+ result:=public.reward_action(jsonb_build_object('op','redeem','participantId',part,'credits',100,'requestKey',retry));
+ if first->>'id'<>result->>'id' or security.reward_credit_balance(part)<>100 then raise exception 'Redemption reservation retry failed';end if;
+ perform public.reward_action(jsonb_build_object('op','cancel','requestId',first->>'id'));
+ if security.reward_credit_balance(part)<>200 then raise exception 'Unsubmitted cancellation failed';end if;
+ denied:=false;begin perform public.screening_action(jsonb_build_object('op','order','employerId',tenant));exception when raise_exception then denied:=true;end;if not denied then raise exception 'Provider gate bypassed';end if;
+ perform set_config('request.jwt.claim.sub',owner_user.auth_user_id::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',owner_user.auth_user_id,'role','authenticated')::text,true);
+ result:=public.reward_workspace();
+ if result::text like '%ROLLBACK-ONLY-NOT-A-PROVIDER-TOKEN%' or result::text like '%born_on%' or result::text like '%recipient_email%' then raise exception 'Private provider or recipient data projected';end if;
+ result:=public.screening_workspace(tenant);if (result->>'enabled')::boolean or not (result->>'canManage')::boolean then raise exception 'Screening scope or gate failed';end if;
+end $$;
+select 'PASS: canonical owner/participant scope, adult/minor gate, retry/cancel, private projection, provider gate and grants; fixtures rolled back' as verification;
+rollback;
