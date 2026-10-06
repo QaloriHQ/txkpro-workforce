@@ -1,4 +1,5 @@
 import "server-only";
+import { validFundingDiagnostic } from "./funding-diagnostics";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -310,6 +311,22 @@ export async function checkFundingPayment(id: string) {
       { status: 409 },
     );
   }
+}
+export async function recordFundingDiagnostic(input: Record<string, unknown>) {
+  if (!validFundingDiagnostic(input))
+    throw new Response("Invalid checkout diagnostic.", { status: 400 });
+  const a = await authority({ fundingId: String(input.fundingId) });
+  const reference = crypto.randomUUID();
+  console.warn(
+    JSON.stringify({
+      event: "funding_checkout_diagnostic",
+      reference,
+      fundingId: a.fundingId,
+      stage: input.stage,
+      category: input.category,
+    }),
+  );
+  return { reference };
 }
 export async function reconcileBacking(id: string) {
   const a = await authority({ op: "finance", fundingId: id });
