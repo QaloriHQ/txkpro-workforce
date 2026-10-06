@@ -61,7 +61,7 @@ async function fixture(central = false) {
     await db.exec(
       readFileSync(
         new URL(
-          "../supabase/staging/migrations/20261006180000_workforce_central_reward_funding.sql",
+          "../supabase/staging/migrations/20261006040640_workforce_central_reward_funding.sql",
           import.meta.url,
         ),
         "utf8",

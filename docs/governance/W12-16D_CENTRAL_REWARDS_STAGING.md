@@ -43,3 +43,12 @@ Workspace setup registers one central Tremendous webhook using the provider-retu
 7. Join PRO-Mode and Intra-Mode programs concurrently; filters reveal existing authorized participation and do not grant access. Invite a canonical employee to a PRO program; a nonemployee cannot be designated as an employee.
 
 Automated checks cover cryptography/signatures, integer quotes, actual SQL role/scope/transition/replay/hold invariants and winner ties. Missing credentials prevent signed-in sandbox payment/provider end-to-end verification. No production deployment, real payment, provider order or screening execution is claimed.
+
+## Automated staging evidence (2026-10-06)
+
+- CI #590 passed the full repository suite before applying the database migration. Final merge requires CI on the aligned migration filename as well.
+- Supabase staging `qwxlgzlkaeaqfzjodtis` ledger: version `20261006040640`, name `workforce_central_reward_funding`, SQL MD5 `e1a2b76a93f839621ea52d7181c1a5db`. The repository filename matches this recorded version; SQL contents are unchanged by alignment.
+- `supabase/staging/tests/central_reward_funding.sql` passed against the actual staging database; all claims, funding fixtures, audits and score data rolled back. It verifies canonical employer/student scope, minors, customer-payment/backing separation, replay, holds retaining funds, private projections and closed screening execution.
+- New raw funding and payment-event tables have RLS enabled and no authenticated/anonymous table access; private service and legacy helpers have no authenticated execute grant.
+- Advisor warning categories/counts unchanged: authenticated public security-definer warnings 123, leaked-password protection 1; duplicate-index warnings 3. Informational RLS-with-no-policy increased 82→84 for the intentionally RPC-only tables, and unused indexes 87→91 for new cold indexes. Remediation context: https://supabase.com/docs/guides/database/database-linter and https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+- No real payments, topups, invoices, gift cards, screening orders or production mutations were performed. Provider/Stripe signed-in end-to-end checks remain blocked by configuration. Actual agent token/cost telemetry is unavailable (`gh` runtime absent); counts have not been fabricated.
