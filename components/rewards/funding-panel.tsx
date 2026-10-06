@@ -34,11 +34,13 @@ export function FundingPanel({
   account,
   history,
   canFinance,
+  availability,
 }: {
   owner: { type: string; id: string; name: string };
   account: RewardWorkspace["accounts"][number] | undefined;
   history: RewardWorkspace["funding"];
   canFinance: boolean;
+  availability: RewardWorkspace["fundingAvailability"];
 }) {
   const router = useRouter(),
     key = useRef<string | null>(null);
@@ -46,6 +48,8 @@ export function FundingPanel({
     [message, setMessage] = useState("");
   const [quote, setQuote] = useState<Quote | null>(null),
     [checkout, setCheckout] = useState<Checkout | null>(null);
+  const setupComplete = Boolean(account?.setup && account.connected);
+  const paymentReady = owner.type === "platform" || availability.card || availability.ach;
   async function send(input: Record<string, unknown>) {
     setBusy(true);
     setMessage("");
@@ -57,7 +61,7 @@ export function FundingPanel({
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Funding unavailable.");
-      setMessage(data.message || "Saved. Close this dialog to continue.");
+      setMessage(data.message || (input.op === "quote" ? "Quote prepared. Review the amounts before continuing." : input.op === "checkout" ? "Secure payment is ready below." : "Funding request updated."));
       router.refresh();
       return data;
     } catch (e) {
@@ -94,9 +98,11 @@ export function FundingPanel({
       </p>
       <div className="reward-actions">
         <WorkspaceForm
-          modalTitle="Set up reward funding"
+          modalTitle={setupComplete ? "Reward funding setup" : "Set up reward funding"}
+          triggerLabel={setupComplete ? "Funding setup details" : "Set up reward funding"}
           busy={busy}
           feedback={feedback}
+          onOpen={() => setMessage("")}
           onSubmit={(e) => {
             e.preventDefault();
             void send({
@@ -118,23 +124,25 @@ export function FundingPanel({
             once. Customer payments and provider funding are tracked separately;
             rewards require both to be confirmed.
           </p>
-          <label className="pro-field">
+          {setupComplete ? <p className="funding-notice" role="status">Setup complete. Your workspace reward pool is connected. Close this dialog, then use Add Reward Credits to check payment availability.</p> : <label className="pro-field funding-consent">
             <span>
               <input name="acceptTerms" type="checkbox" required /> I am
               authorized to fund this workspace and accept these funding terms.
             </span>
-          </label>
-          <button className="button" disabled={busy} type="submit">
-            {account?.setup ? "Confirm setup" : "Set up funding"}
-          </button>
+          </label>}
+          {!setupComplete ? <button className="button" disabled={busy} type="submit">
+            {busy ? "Setting up funding…" : "Set up funding"}
+          </button> : null}
         </WorkspaceForm>
         {account?.setup && account.connected && !account.frozen ? (
           <ActionModal
             title="Fund reward pool"
             triggerLabel="Add Reward Credits"
             busy={busy}
+            onOpen={() => setMessage("")}
           >
             {feedback}
+            {!paymentReady ? <p className="funding-notice" role="status">Reward funding setup is complete. Payments are not available yet while TXKPRO finishes payment configuration. No payment has been taken. Contact TXKPRO support for assistance.</p> : null}
             {!quote ? (
               <form
                 onSubmit={(e) => {
@@ -162,14 +170,16 @@ export function FundingPanel({
                     max="100000"
                     step="0.01"
                     required
+                    disabled={!paymentReady}
                   />
                 </label>
                 {owner.type !== "platform" ? (
                   <label className="pro-field">
                     <span>Payment method</span>
-                    <select name="method">
-                      <option value="card">Card</option>
-                      <option value="ach">ACH bank transfer</option>
+                    <select name="method" defaultValue={availability.card ? "card" : "ach"} disabled={!paymentReady}>
+                      {availability.card ? <option value="card">Card</option> : null}
+                      {availability.ach ? <option value="ach">ACH bank transfer</option> : null}
+                      {!paymentReady ? <option value="">Payments unavailable</option> : null}
                     </select>
                   </label>
                 ) : (
@@ -177,8 +187,8 @@ export function FundingPanel({
                     TXKPRO-funded programs use the platform finance workflow.
                   </p>
                 )}
-                <button className="button" disabled={busy} type="submit">
-                  Review funding quote
+                <button className="button" disabled={busy || !paymentReady} type="submit">
+                  {busy ? "Preparing quote…" : paymentReady ? "Review funding quote" : "Payments unavailable"}
                 </button>
               </form>
             ) : (
@@ -296,6 +306,7 @@ export function FundingPanel({
                   title="Resume funding payment"
                   triggerLabel="Resume payment"
                   busy={busy}
+                  onOpen={() => setMessage("")}
                 >
                   {feedback}
                   {checkout?.fundingId === f.id ? (

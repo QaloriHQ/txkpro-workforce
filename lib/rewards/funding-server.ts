@@ -163,7 +163,7 @@ export async function setupFunding(input: Record<string, unknown>) {
       lease: claim.lease,
     });
   }
-  return { ok: true };
+  return { ok: true, message: "Reward funding setup is complete. Close this dialog to return to your reward pool. Payment availability is shown under Add Reward Credits." };
 }
 export async function quoteFunding(input: Record<string, unknown>) {
   const a = await authority(input),
