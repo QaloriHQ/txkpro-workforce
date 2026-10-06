@@ -8,6 +8,7 @@ alter table security.wf_reward_accounts add column setup_at timestamptz;
 alter table security.wf_reward_accounts add column setup_by text references public.users(user_id);
 alter table security.wf_reward_accounts add column terms_version integer;
 alter table security.wf_reward_accounts add column backed_cents bigint not null default 0 check(backed_cents>=0);
+alter table security.wf_reward_accounts add column webhook_ready boolean not null default false;
 alter table security.wf_reward_accounts add column frozen boolean not null default false;
 insert into security.wf_reward_accounts(owner_type,owner_id,account_mode) values('platform','txkpro','central');
 create table security.wf_reward_funding (
@@ -88,7 +89,7 @@ Reward policy: '||(input->>'creditsPerBlock')||' credits = '||(input->>'centsPer
  from security.wf_reward_accounts a where a.owner_type=t and a.owner_id=i and a.account_mode='central' and a.setup_at is not null and not a.frozen;
  if exists(select 1 from security.wf_reward_accounts where leased_until>now()) then raise exception 'Account operation in progress';end if;
  if available is null or available<n then raise exception 'Confirmed sponsor funding is insufficient';end if;
- if not exists(select 1 from security.wf_reward_accounts a where a.owner_type='platform' and a.owner_id='txkpro' and a.balance_at>now()-interval '2 minutes' and a.balance_cents>=n+security.reward_outstanding()) then raise exception 'Refresh confirmed provider funding first';end if;
+ if not exists(select 1 from security.wf_reward_accounts a where a.owner_type='platform' and a.owner_id='txkpro' and a.webhook_ready and a.balance_at>now()-interval '2 minutes' and a.balance_cents>=n+security.reward_outstanding()) then raise exception 'Refresh confirmed provider funding first';end if;
  update public.wf_reward_policies set allocated_cents=allocated_cents+n where program_id=p.id;
  elsif op='release_budget' then
  if not security.pro_owner_access(t,i) or p.status not in ('ended','cancelled') then raise exception 'End or cancel program before releasing unallocated budget';end if;
@@ -156,7 +157,7 @@ Reward policy: '||(input->>'creditsPerBlock')||' credits = '||(input->>'centsPer
 end $$;
 create or replace function security.reward_workspace() returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare actor text;begin actor:=security.pro_actor();return jsonb_build_object(
- 'accounts',coalesce((select jsonb_agg(jsonb_build_object('ownerType',a.owner_type,'ownerId',a.owner_id,'connected',a.sealed_tokens is not null,'balanceCents',a.backed_cents,'balanceAt',a.balance_at,'setup',a.setup_at is not null,'frozen',a.frozen,'availableCents',greatest(0,a.backed_cents-coalesce((select sum(q.allocated_cents) from public.wf_reward_policies q join public.wf_incentive_programs p on p.id=q.program_id where p.owner_type=a.owner_type and p.owner_id=a.owner_id),0)))) from security.wf_reward_accounts a where security.pro_owner_access(a.owner_type,a.owner_id)),'[]'),
+ 'accounts',coalesce((select jsonb_agg(jsonb_build_object('ownerType',a.owner_type,'ownerId',a.owner_id,'connected',a.sealed_tokens is not null and exists(select 1 from security.wf_reward_accounts central where central.owner_type='platform' and central.owner_id='txkpro' and central.webhook_ready),'balanceCents',a.backed_cents,'balanceAt',a.balance_at,'setup',a.setup_at is not null,'frozen',a.frozen,'availableCents',greatest(0,a.backed_cents-coalesce((select sum(q.allocated_cents) from public.wf_reward_policies q join public.wf_incentive_programs p on p.id=q.program_id where p.owner_type=a.owner_type and p.owner_id=a.owner_id),0)))) from security.wf_reward_accounts a where security.pro_owner_access(a.owner_type,a.owner_id)),'[]'),
  'policies',coalesce((select jsonb_agg(jsonb_build_object('programId',q.program_id,'centsPerBlock',q.cents_per_block,'creditsPerBlock',q.credits_per_block,'minimumCredits',q.minimum_credits,'approval',q.approval,'productId',q.product_id,'allocatedCents',q.allocated_cents,'liabilityCents',security.reward_liability(q.program_id),'winnerRank',q.winner_rank,'winnerCredits',q.winner_credits,'winnersFinalized',q.winners_finalized_at is not null)) from public.wf_reward_policies q join public.wf_incentive_programs p on p.id=q.program_id where security.pro_owner_access(p.owner_type,p.owner_id) or exists(select 1 from public.wf_incentive_participants r where r.program_id=p.id and r.user_id=actor and r.status in ('active','cancelled') and r.accepted_version is not null)),'[]'),
  'credits',coalesce((select jsonb_agg(jsonb_build_object('participantId',r.id,'programId',r.program_id,'credits',security.reward_credit_balance(r.id))) from public.wf_incentive_participants r where r.user_id=actor and r.status in ('active','cancelled') and r.accepted_version is not null),'[]'),
  'requests',coalesce((select jsonb_agg(jsonb_build_object('id',x.id,'programId',p.id,'participantId',r.id,'credits',x.credits,'cents',x.cents,'status',x.status,'providerStatus',x.provider_status,'deliveryStatus',x.delivery_status,'own',x.requested_by=actor)) from (select req.* from public.wf_reward_requests req join public.wf_incentive_participants part on part.id=req.participant_id join public.wf_incentive_programs prog on prog.id=part.program_id where req.requested_by=actor or security.pro_owner_access(prog.owner_type,prog.owner_id) order by req.created_at desc limit 500) x join public.wf_incentive_participants r on r.id=x.participant_id join public.wf_incentive_programs p on p.id=r.program_id where x.requested_by=actor or security.pro_owner_access(p.owner_type,p.owner_id)),'[]'),
@@ -239,6 +240,7 @@ create function security.reward_service(p_input jsonb) returns jsonb language pl
 declare op text:=p_input->>'op';a security.wf_reward_accounts%rowtype;c security.wf_reward_accounts%rowtype;res jsonb;begin
  select * into c from security.wf_reward_accounts where owner_type='platform' and owner_id='txkpro' for update;
  if op in ('oauth_begin','oauth_consume','connect') then raise exception 'Customer OAuth is retired';end if;
+ if op='claim_issue' and not c.webhook_ready then raise exception 'Provider webhook setup is incomplete';end if;
  if op='claim_issue' and exists(select 1 from public.wf_reward_requests x join public.wf_incentive_participants r on r.id=x.participant_id join public.wf_incentive_programs p on p.id=r.program_id join security.wf_reward_accounts ac on ac.owner_type=p.owner_type and ac.owner_id=p.owner_id where x.id=(p_input->>'requestId')::uuid and (ac.frozen or ac.account_mode<>'central')) then raise exception 'Sponsor funding is on hold';end if;
  if op in ('claim','claim_issue') then
  if c.leased_until>now() then raise exception 'Account operation in progress';end if;
@@ -299,10 +301,11 @@ declare op text:=input->>'op';f security.wf_reward_funding%rowtype;a security.wf
  if not found then raise exception 'Accept funding terms first';end if;
  return jsonb_build_object('accountId',central.account_id,'hookSealed',central.sealed_tokens);
  elsif op='central_hook' then
- update security.wf_reward_accounts set sealed_tokens=input->>'sealed',organization_id='TXKPRO' where account_id=central.account_id;
+ update security.wf_reward_accounts set sealed_tokens=input->>'sealed',organization_id='TXKPRO',webhook_ready=true where account_id=central.account_id;
  return jsonb_build_object('ok',true);
  elsif op='quote' then
  select * into a from security.wf_reward_accounts where owner_type=input->>'ownerType' and owner_id=input->>'ownerId' for update;
+ if not central.webhook_ready then raise exception 'Provider webhook setup is incomplete';end if;
  if a.setup_at is null or a.account_mode<>'central' or a.frozen then raise exception 'Set up active sponsor funding first';end if;
  select * into f from security.wf_reward_funding where request_key=(input->>'requestKey')::uuid;
  if found then

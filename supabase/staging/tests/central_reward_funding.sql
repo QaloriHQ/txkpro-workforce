@@ -13,7 +13,7 @@ begin
  insert into public.wf_incentive_programs(id,owner_type,owner_id,name,template,starts_at,ends_at,terms,created_by) values(pid,'employer',tenant,'Rollback-only rewards QA','earn_redeem',now(),now()+interval '1 day','Rollback test terms',owner_user.user_id);
  perform public.reward_action(jsonb_build_object('op','account','ownerType','employer','ownerId',tenant));
  perform public.reward_action(jsonb_build_object('op','policy','programId',pid,'centsPerBlock',100,'creditsPerBlock',100,'minimumCredits',100,'approval','admin','productId','fixture-card'));
- update security.wf_reward_accounts set sealed_tokens='ROLLBACK-ONLY-CENTRAL',balance_cents=100000000,balance_at=now(),lease=null,leased_until=null where owner_type='platform' and owner_id='txkpro';
+ update security.wf_reward_accounts set webhook_ready=true,sealed_tokens='ROLLBACK-ONLY-CENTRAL',balance_cents=100000000,balance_at=now(),lease=null,leased_until=null where owner_type='platform' and owner_id='txkpro';
  update security.wf_reward_accounts set account_mode='central',setup_at=now(),backed_cents=500,sealed_tokens='ROLLBACK-ONLY-NOT-A-PROVIDER-TOKEN',balance_cents=100000000,balance_at=now(),lease=null,leased_until=null where owner_type='employer' and owner_id=tenant;
  perform public.reward_action(jsonb_build_object('op','allocate','programId',pid,'cents',500));
  update public.wf_incentive_programs set status='active' where id=pid;

@@ -128,7 +128,7 @@ export function FundingPanel({
             {account?.setup ? "Confirm setup" : "Set up funding"}
           </button>
         </WorkspaceForm>
-        {account?.setup && !account.frozen ? (
+        {account?.setup && account.connected && !account.frozen ? (
           <ActionModal
             title="Fund reward pool"
             triggerLabel="Add Reward Credits"

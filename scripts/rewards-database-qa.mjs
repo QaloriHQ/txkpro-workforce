@@ -96,7 +96,7 @@ async function fixture(central = false) {
   );
   if (central)
     await db.exec(
-      "update security.wf_reward_accounts set account_mode='central',setup_at=now(),backed_cents=case when owner_type='employer' then 500 else 0 end",
+      "update security.wf_reward_accounts set account_mode='central',webhook_ready=true,setup_at=now(),backed_cents=case when owner_type='employer' then 500 else 0 end",
     );
   await actor(owner);
   await action({ op: "allocate", programId: program, cents: 500 });
