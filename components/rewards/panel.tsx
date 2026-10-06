@@ -139,6 +139,7 @@ export function RewardsPanel({
             key={`${o.type}:${o.id}`}
             owner={o}
             account={a}
+            availability={data.fundingAvailability}
             history={data.funding.filter(
               (f) => f.ownerType === o.type && f.ownerId === o.id,
             )}

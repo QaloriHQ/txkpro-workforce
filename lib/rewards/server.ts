@@ -1,4 +1,5 @@
 import "server-only";
+import { fundingAvailability } from "./funding-availability";
 import { providerBalance } from "./funding-contracts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -11,6 +12,7 @@ import {
   type RewardRequest,
 } from "./contracts";
 export type RewardWorkspace = {
+  fundingAvailability: { card: boolean; ach: boolean };
   accounts: {
     ownerType: string;
     ownerId: string;
@@ -82,7 +84,8 @@ export async function authenticatedRpc<T>(
   return data as T;
 }
 export async function rewardWorkspace() {
-  return authenticatedRpc<RewardWorkspace>("reward_workspace");
+  const data = await authenticatedRpc<RewardWorkspace>("reward_workspace");
+  return { ...data, fundingAvailability: fundingAvailability(process.env) };
 }
 export async function rewardAction(input: Record<string, unknown>) {
   return authenticatedRpc<{
