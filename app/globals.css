@@ -1351,3 +1351,29 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 .funding-consent > span { display: flex; align-items: flex-start; gap: .65rem; }
 .funding-consent input { flex: 0 0 auto; margin-top: .2rem; }
 .funding-notice { padding: .85rem 1rem; background: var(--txk-info-bg); border: 1px solid var(--txk-border-strong); border-radius: var(--txk-radius-control); }
+
+/* Reward funding: scoped, compact checkout hierarchy. */
+.funding-flow { display: grid; gap: 18px; }
+.funding-flow form { display: grid; gap: 16px; }
+.funding-feedback:empty { display: none; }
+.funding-feedback { margin: 0; color: var(--txk-text-muted); font-size: 13px; }
+.funding-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px; font-weight: 600; color: var(--txk-text-muted); }
+.funding-steps span { padding: 10px 0; border-bottom: 2px solid var(--txk-border); }
+.funding-steps .is-current { color: var(--txk-text-primary); border-color: var(--txk-action); }
+.funding-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 16px; margin: 0; padding: 20px; background: var(--txk-bg-subtle); border: 1px solid var(--txk-border); border-radius: var(--txk-radius-card); font-size: 14px; }
+.funding-summary dt, .funding-summary dd { margin: 0; }
+.funding-summary dd { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.funding-summary small { display: block; margin-top: 3px; font-size: 11px; color: var(--txk-text-muted); font-weight: 400; }
+.funding-summary .funding-total { border-top: 1px solid var(--txk-border); padding-top: 16px; font-size: 18px; font-weight: 700; }
+.funding-help { font-size: 12px; line-height: 1.55; color: var(--txk-text-muted); margin: 0; }
+.funding-section-title { display: flex; align-items: center; gap: 8px; }
+.funding-section-title svg, .funding-recovery svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.funding-section-title h3 { font-size: 15px; margin: 0; }
+.funding-section-title .pill { margin-left: auto; }
+.funding-payment { display: grid; gap: 16px; }
+.funding-primary { width: 100%; min-height: 44px; }
+.funding-secondary { justify-self: start; }
+.funding-recovery { display: flex; flex-wrap: wrap; gap: 10px; }
+@media(max-width: 480px) { .funding-summary { padding: 14px; gap: 12px; } .funding-recovery .button { width: 100%; } }
+
+.funding-dialog { max-width: 620px; }
