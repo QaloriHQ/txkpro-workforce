@@ -993,6 +993,7 @@ jobs:
       - run: npm run portfolio:qa
       - run: npm run classes:qa
       - run: npm run rewards:qa
+      - run: npm run checkr:qa
       - run: node --experimental-strip-types --test scripts/pro-points-csv-qa.mjs
       - run: npm run typecheck
       - run: npm run wave11:qa

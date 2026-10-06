@@ -71,24 +71,13 @@ export function ScreeningPanel({
   );
   return (
     <section className="screening-workspace">
-      <div className="screening-gate">
-        <strong>
-          Background-check ordering is awaiting provider confirmation
-        </strong>
-        <p>
-          Authenticate must confirm an employment-approved product, support for
-          minors and required consent. No checks or report emails are sent from
-          this page. Reports will remain with Authenticate; TXKPRO will display
-          order and status information.
-        </p>
-      </div>
       {data.canManage ? (
         <article className="card">
           <h2>Ordering permissions and spending controls</h2>
           <p>
             Monthly spending limits include pending reservations. Approval above
-            a price threshold never overrides the monthly limit. Saved
-            permissions do not enable ordering.
+            a price threshold never overrides the monthly limit. Checkr account
+            approval is also required.
           </p>
           <WorkspaceForm
             modalTitle="Set screening permissions"
@@ -161,8 +150,9 @@ export function ScreeningPanel({
       <article className="card">
         <h2>Saved check bundles</h2>
         <p className="card-sub">
-          Draft bundles for applicants or employees. Check names require mapping
-          to provider-approved products before ordering.
+          Draft bundles for applicants or employees. Legacy draft check names
+          are reference-only. Select current Checkr packages in the screening
+          gallery.
         </p>
         {data.canOrder ? (
           <WorkspaceForm
@@ -202,7 +192,7 @@ export function ScreeningPanel({
         )}
       </article>
       <article className="card">
-        <h2>Order status</h2>
+        <h2>Legacy screening orders</h2>
         {data.orders.length ? (
           data.orders.map((o) => (
             <p key={o.id}>
