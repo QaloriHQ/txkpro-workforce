@@ -1,3 +1,5 @@
+import { rewardWorkspace } from "@/lib/rewards/server";
+import { RewardsPanel } from "@/components/rewards/panel";
 import { Brand } from "@/components/brand";
 import { InstitutionWorkspaceNav } from "@/components/institution/workspace-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -15,7 +17,10 @@ export default async function Programs() {
     capability: "students",
   });
   const role = primaryInstitutionRole(context);
-  const data = await pointsWorkspace();
+  const [data, rewards] = await Promise.all([
+    pointsWorkspace(),
+    rewardWorkspace(),
+  ]);
   return (
     <>
       <header className="topbar institution-topbar">
@@ -40,6 +45,7 @@ export default async function Programs() {
           explicitly accept participation.
         </p>
         <IncentiveWorkspace data={data} ownerType="institution" />
+        <RewardsPanel data={rewards} points={data} ownerType="institution" />
       </main>
     </>
   );

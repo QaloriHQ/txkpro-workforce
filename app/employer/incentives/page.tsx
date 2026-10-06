@@ -1,3 +1,5 @@
+import { rewardWorkspace } from "@/lib/rewards/server";
+import { RewardsPanel } from "@/components/rewards/panel";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -8,7 +10,10 @@ import { IncentiveWorkspace } from "@/components/pro-points/workspace";
 export const dynamic = "force-dynamic";
 export default async function Programs() {
   await requireEmployerContext({ approved: true });
-  const data = await pointsWorkspace();
+  const [data, rewards] = await Promise.all([
+    pointsWorkspace(),
+    rewardWorkspace(),
+  ]);
   return (
     <>
       <header className="topbar employer-topbar">
@@ -26,6 +31,7 @@ export default async function Programs() {
           participation.
         </p>
         <IncentiveWorkspace data={data} ownerType="employer" />
+        <RewardsPanel data={rewards} points={data} ownerType="employer" />
       </main>
     </>
   );

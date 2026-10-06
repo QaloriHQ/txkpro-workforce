@@ -1328,3 +1328,6 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
 .directory-zoom .txk-icon, .txk-modal-action .txk-icon { width: 20px; height: 20px; }
 .directory-zoom .button { min-width: 44px; min-height: 44px; }
 .employee-workspace-nav { display: flex; gap: 12px; flex-wrap: wrap; }
+.reward-workspace{display:grid;gap:var(--space-4,1rem);margin-block:1.5rem}.reward-actions{display:flex;flex-wrap:wrap;gap:.65rem;align-items:center}.reward-request{border-block-start:1px solid var(--border);padding-block:1rem}.reward-workspace fieldset,.screening-workspace fieldset{border:0;padding:0;min-width:0;display:grid;gap:1rem}.reward-workspace .card,.screening-workspace .card{min-width:0;overflow-wrap:anywhere}.reward-workspace input,.reward-workspace select,.reward-workspace textarea,.screening-workspace input,.screening-workspace select,.screening-workspace textarea{width:100%;min-width:0}.screening-workspace{display:grid;gap:1rem}.screening-gate{padding:1rem;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface)}
+
+.screening-workspace input[type="checkbox"]{width:auto;min-width:auto}.screening-workspace .pro-field{display:grid;gap:.5rem}
