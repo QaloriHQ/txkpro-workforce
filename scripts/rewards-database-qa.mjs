@@ -454,6 +454,15 @@ test("central funding isolates sponsors, verifies payment/backing, replays once 
       requestKey: key,
     };
     const f = await svc(quote);
+    for (const op of ["documents", "reconcile"]) {
+      await actor(owner);
+      assert.equal((await auth({ op, fundingId: f.id })).ownerId, "tenant");
+      for (const denied of [student, other]) {
+        await actor(denied);
+        await assert.rejects(auth({ op, fundingId: f.id }), /scope denied/);
+      }
+    }
+    await db.exec("reset role;set role service_role");
     assert.equal((await svc(quote)).id, f.id);
     await assert.rejects(
       svc({ ...quote, principalCents: 101 }),

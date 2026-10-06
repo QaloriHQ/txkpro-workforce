@@ -6,6 +6,8 @@ import {
   reconcileBacking,
   checkFundingPayment,
   recordFundingDiagnostic,
+  reconcileFundingPayment,
+  getFundingDocuments,
 } from "@/lib/rewards/funding-server";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
@@ -31,6 +33,12 @@ export async function POST(request: Request) {
         break;
       case "status":
         result = await checkFundingPayment(String(input.fundingId));
+        break;
+      case "reconcile":
+        result = await reconcileFundingPayment(String(input.fundingId));
+        break;
+      case "documents":
+        result = await getFundingDocuments(String(input.fundingId));
         break;
       case "backing":
         result = await reconcileBacking(String(input.fundingId));

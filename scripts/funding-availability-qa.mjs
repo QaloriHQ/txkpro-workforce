@@ -127,3 +127,42 @@ test("checkout diagnostic is a fixed category and never returns raw errors or cr
     false,
   );
 });
+
+test("trusted event recovery rejects unrelated, unpaid, altered and live events", async () => {
+  const { fundingEventMatches } = await import("../lib/rewards/funding-documents.ts");
+  const paid = { ...session, payment_status: "paid", status: "complete" };
+  const event = { type: "checkout.session.completed", livemode: false, data: { object: paid } };
+  assert.equal(fundingEventMatches(request, event), true);
+  assert.equal(fundingEventMatches(request, { ...event, type: "checkout.session.async_payment_succeeded" }), true);
+  for (const change of [{ id: "other" }, { client_reference_id: "other" }, { metadata: { funding_id: "other" } }, { amount_total: 1 }, { currency: "eur" }, { livemode: true }, { payment_status: "unpaid" }])
+    assert.equal(fundingEventMatches(request, { ...event, data: { object: { ...paid, ...change } } }), false);
+  assert.equal(fundingEventMatches(request, { ...event, livemode: true }), false);
+  assert.equal(fundingEventMatches(request, { ...event, type: "payment_intent.succeeded" }), false);
+  assert.equal(fundingEventMatches(request, { ...event, data: { object: null } }), false);
+});
+
+test("payment documents expose only bound paid Stripe URLs, never provider payloads", async () => {
+  const { fundingDocuments } = await import("../lib/rewards/funding-documents.ts");
+  const paid = { ...session, payment_status: "paid", payment_intent: {
+    id: "intent", status: "succeeded", amount: request.total_cents, currency: "usd", livemode: false,
+    client_secret: "must-not-leak", latest_charge: {
+      payment_intent: "intent", amount: request.total_cents, currency: "usd", livemode: false, paid: true,
+      receipt_url: "https://pay.stripe.com/receipts/fixture",
+    },
+  }, invoice: { amount_paid: request.total_cents, currency: "usd", livemode: false, status: "paid", hosted_invoice_url: "https://invoice.stripe.com/i/fixture", invoice_pdf: "https://pay.stripe.com/invoice/fixture/pdf" } };
+  const d = fundingDocuments(request, paid);
+  assert.equal(d.receiptUrl, paid.payment_intent.latest_charge.receipt_url);
+  assert.equal(d.invoiceUrl, paid.invoice.hosted_invoice_url);
+  assert.ok(d.invoicePdfUrl);
+  assert.equal(JSON.stringify(d).includes("must-not-leak"), false);
+  assert.throws(() => fundingDocuments({ ...request, id: "other" }, paid));
+  for (const change of [{ id: "other" }, { amount_total: 1 }, { currency: "eur" }, { livemode: true }])
+    assert.throws(() => fundingDocuments(request, { ...paid, ...change }));
+  assert.equal(fundingDocuments(request, { ...paid, payment_status: "unpaid" }).receiptUrl, null);
+  assert.equal(fundingDocuments(request, { ...paid, invoice: null }).invoiceUrl, null);
+  for (const change of [{ payment_intent: "other" }, { amount: 1 }, { currency: "eur" }, { livemode: true }, { paid: false }])
+    assert.equal(fundingDocuments(request, { ...paid, payment_intent: { ...paid.payment_intent, latest_charge: { ...paid.payment_intent.latest_charge, ...change } } }).receiptUrl, null);
+  for (const url of ["javascript:alert(1)", "https://evil.test/receipt", "https://pay.stripe.com.evil.test/receipt", "https://user:pass@pay.stripe.com/receipt", "http://pay.stripe.com/receipt"])
+    assert.equal(fundingDocuments(request, { ...paid, payment_intent: { ...paid.payment_intent, latest_charge: { ...paid.payment_intent.latest_charge, receipt_url: url } } }).receiptUrl, null);
+  assert.equal(fundingDocuments(request, { ...paid, invoice: { ...paid.invoice, amount_paid: 1 } }).invoiceUrl, null);
+});

@@ -66,7 +66,7 @@ function Payment({ fundingId, onDone, onBusy, onResume }: Props) {
       const r = await fetch("/api/rewards/funding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ op: "status", fundingId }),
+        body: JSON.stringify({ op: "reconcile", fundingId }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error();

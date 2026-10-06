@@ -57,7 +57,7 @@ export function providerBalance(f: {
   return cents!;
 }
 
-// Read-only provider observation. Only signed webhooks mutate payment state.
+// Read-only provider observation; event processing remains a separate server operation.
 export function fundingPaymentObservation(
   f: {
     id: string;
@@ -103,7 +103,13 @@ export function fundingPaymentObservation(
     canResume,
     message:
       session.payment_status === "paid"
-        ? "Stripe confirms payment received. Workspace confirmation and provider backing may still be processing."
+        ? f.status === "backed"
+          ? "Payment confirmed. Reward Credits funding is backed."
+          : f.status === "hold"
+            ? "Payment received. Funding is on hold; contact TXKPRO support."
+            : f.status === "paid"
+              ? "Payment confirmed. Reward Credits await provider backing."
+              : "Stripe confirms payment received. Workspace confirmation and provider backing may still be processing."
         : session.status === "expired"
           ? "This payment session has expired. Refresh funding history before creating a new request."
           : canResume
