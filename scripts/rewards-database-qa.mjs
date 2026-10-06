@@ -26,7 +26,7 @@ const owner = "00000000-0000-4000-8000-000000000001",
 const program = "10000000-0000-4000-8000-000000000001",
   participant = "20000000-0000-4000-8000-000000000001",
   key = "30000000-0000-4000-8000-000000000001";
-async function fixture() {
+async function fixture(central = false) {
   const db = new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role;create schema security;create schema auth;grant usage on schema security,auth to authenticated,service_role,anon;
  create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.auth',true),'')::uuid$$;
@@ -47,6 +47,27 @@ async function fixture() {
  insert into public.wf_incentive_programs values('${program}','employer','tenant','draft','earn_redeem','Fixture terms',1);
  insert into public.wf_incentive_participants values('${participant}','${program}','student','active',2);`);
   await db.exec(migration);
+  if (central) {
+    await db.exec(`create table public.wf_incentive_activities(id uuid,program_id uuid,title text,kind text,audience text,instructions text,points integer,repeat_period text,daily_cap integer,weekly_cap integer,weekdays integer[],options jsonb,version integer,enabled boolean);
+      create table public.wf_incentive_submissions(id uuid,activity_id uuid,participant_id uuid,period_key text,activity_version integer,terms_version integer,evidence text,answer integer,status text,reason text,reviewed_at timestamptz,submitted_at timestamptz);
+      create table public.wf_pro_ledger(id uuid,student_id text,category text,rule_code text,points integer,source_key text);
+      alter table public.wf_incentive_programs add column ends_at timestamptz default now()+interval '30 days';
+      alter table public.wf_incentive_participants add column kind text;
+      alter table public.wf_incentive_participants add column invited_by text;
+      alter table public.wf_incentive_participants add column expires_at timestamptz;
+      alter table public.wf_incentive_participants alter column id set default gen_random_uuid();
+      create table public.wf_student_profiles(student_id text,user_id text,school_id text);
+      create table public.wf_incentive_audit(program_id uuid,actor text,event text,target_id uuid,detail jsonb);`);
+    await db.exec(
+      readFileSync(
+        new URL(
+          "../supabase/staging/migrations/20261006040640_workforce_central_reward_funding.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+  }
   async function actor(id) {
     await db.exec(
       `reset role;select set_config('test.auth','${id}',false);set role authenticated`,
@@ -73,6 +94,10 @@ async function fixture() {
   await db.exec(
     `reset role;update security.wf_reward_accounts set sealed_tokens='local-test-only',organization_id='fixture-org',balance_cents=500,balance_at=now();`,
   );
+  if (central)
+    await db.exec(
+      "update security.wf_reward_accounts set account_mode='central',webhook_ready=true,setup_at=now(),backed_cents=case when owner_type='employer' then 500 else 0 end",
+    );
   await actor(owner);
   await action({ op: "allocate", programId: program, cents: 500 });
   await db.exec(
@@ -360,4 +385,465 @@ test("screening delegation, independent caps, retry binding and unconditional pu
   } finally {
     await db.close();
   }
+});
+
+test("central funding isolates sponsors, verifies payment/backing, replays once and retains held balances", async () => {
+  const { db, actor, action } = await fixture(true);
+  try {
+    const auth = async (input) =>
+      (
+        await db.query(
+          "select public.reward_funding_authority($1::jsonb) result",
+          [JSON.stringify(input)],
+        )
+      ).rows[0].result;
+    const svc = async (input) =>
+      (
+        await db.query(
+          "select public.reward_funding_service($1::jsonb) result",
+          [JSON.stringify(input)],
+        )
+      ).rows[0].result;
+    await actor(student);
+    await assert.rejects(
+      auth({
+        op: "setup",
+        ownerType: "employer",
+        ownerId: "tenant",
+        acceptTerms: true,
+      }),
+      /scope denied/,
+    );
+    await assert.rejects(
+      db.query("select public.reward_funding_service('{}')"),
+      /permission denied/,
+    );
+    await actor(other);
+    await assert.rejects(
+      auth({ ownerType: "employer", ownerId: "tenant" }),
+      /scope denied/,
+    );
+    await actor(owner);
+    await assert.rejects(
+      auth({
+        op: "setup",
+        ownerType: "employer",
+        ownerId: "tenant",
+        acceptTerms: false,
+      }),
+      /Accept funding/,
+    );
+    await auth({
+      op: "setup",
+      ownerType: "employer",
+      ownerId: "tenant",
+      acceptTerms: true,
+    });
+    await db.exec("reset role;set role service_role");
+    const quote = {
+      op: "quote",
+      ownerType: "employer",
+      ownerId: "tenant",
+      actor: "owner",
+      principalCents: 100,
+      platformFeeCents: 500,
+      thirdPartyFeeCents: 25,
+      totalCents: 625,
+      method: "card",
+      pricingVersion: "fixture-v1",
+      requestKey: key,
+    };
+    const f = await svc(quote);
+    assert.equal((await svc(quote)).id, f.id);
+    await assert.rejects(
+      svc({ ...quote, principalCents: 101 }),
+      /retry conflicts/,
+    );
+    await svc({ op: "session", fundingId: f.id, sessionId: "cs_test_fixture" });
+    const paid = {
+      op: "payment_event",
+      fundingId: f.id,
+      sessionId: "cs_test_fixture",
+      totalCents: 625,
+      currency: "usd",
+      live: false,
+      eventId: "evt_fixture",
+      kind: "paid",
+      paymentId: "pi_fixture",
+    };
+    await assert.rejects(svc({ ...paid, totalCents: 100 }), /binding mismatch/);
+    await assert.rejects(svc({ ...paid, live: true }), /binding mismatch/);
+    assert.equal((await svc(paid)).status, "paid");
+    assert.equal((await svc(paid)).status, "paid");
+    const back = {
+      op: "back",
+      fundingId: f.id,
+      invoiceId: "inv_fixture",
+      invoiceStatus: "PAID",
+      currency: "USD",
+      cents: 100,
+    };
+    await assert.rejects(svc(back), /Paid provider invoice/);
+    await svc({ op: "invoice_claim", fundingId: f.id });
+    await assert.rejects(
+      svc({ op: "invoice_claim", fundingId: f.id }),
+      /requires reconciliation/,
+    );
+    await svc({ op: "invoice", fundingId: f.id, invoiceId: "inv_fixture" });
+    await assert.rejects(
+      svc({ ...back, invoiceStatus: "OPEN" }),
+      /Paid provider invoice/,
+    );
+    await assert.rejects(svc(back), /Refresh confirmed/);
+    await db.exec(
+      "reset role;update security.wf_reward_accounts set balance_cents=1000,balance_at=now();set role service_role",
+    );
+    assert.equal((await svc(back)).status, "backed");
+    assert.equal((await svc(back)).status, "backed");
+    await actor(owner);
+    let view = (await db.query("select public.reward_workspace() result"))
+      .rows[0].result;
+    assert.equal(
+      Number(view.accounts.find((a) => a.ownerId === "tenant").balanceCents),
+      600,
+    );
+    assert.equal(
+      Number(view.accounts.find((a) => a.ownerId === "tenant").availableCents),
+      100,
+    );
+    await action({ op: "allocate", programId: program, cents: 100 });
+    await assert.rejects(
+      action({ op: "allocate", programId: program, cents: 1 }),
+      /sponsor funding is insufficient/,
+    );
+    await db.exec("reset role;set role service_role");
+    await svc({ ...paid, eventId: "evt_refund", kind: "hold" });
+    await svc({ ...paid, eventId: "evt_stale_paid", kind: "paid" });
+    assert.equal((await svc({ op: "read", fundingId: f.id })).status, "hold");
+    await actor(owner);
+    view = (await db.query("select public.reward_workspace() result")).rows[0]
+      .result;
+    assert.equal(
+      Number(view.accounts.find((a) => a.ownerId === "tenant").balanceCents),
+      600,
+    );
+    assert.equal(
+      view.accounts.find((a) => a.ownerId === "tenant").frozen,
+      true,
+    );
+    await actor(student);
+    await action({ op: "eligibility", country: "US", bornOn: "2000-01-01" });
+    await assert.rejects(
+      action({
+        op: "redeem",
+        participantId: participant,
+        credits: 100,
+        requestKey: "30000000-0000-4000-8000-000000000010",
+      }),
+      /on hold/,
+    );
+    await actor(other);
+    view = (await db.query("select public.reward_workspace() result")).rows[0]
+      .result;
+    assert.equal(view.funding.length, 0);
+    await db.exec(
+      "reset role;select set_config('test.auth','',false);set role anon",
+    );
+    await assert.rejects(
+      db.query("select public.reward_funding_authority('{}')"),
+      /permission denied/,
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test("winner finalization pays equal tied prizes atomically, keeps score separate and cannot repeat", async () => {
+  const { db, actor, action } = await fixture(true);
+  try {
+    await db.exec(
+      `reset role;update public.wf_incentive_programs set status='draft',template='competition';insert into public.wf_incentive_participants(id,program_id,user_id,status,accepted_version) values('20000000-0000-4000-8000-000000000002','${program}','other','active',2);insert into public.wf_incentive_score_ledger values(gen_random_uuid(),'20000000-0000-4000-8000-000000000002',200,gen_random_uuid(),'award');`,
+    );
+    await actor(owner);
+    await action({
+      op: "policy",
+      programId: program,
+      centsPerBlock: 100,
+      creditsPerBlock: 100,
+      minimumCredits: 100,
+      approval: "admin",
+      productId: "fixture-gift-card",
+      winnerRank: 1,
+      winnerCredits: 200,
+    });
+    await db.exec(
+      `reset role;update public.wf_incentive_programs set status='ended';`,
+    );
+    await actor(owner);
+    await assert.rejects(
+      action({ op: "finalize_winners", programId: program }),
+      /budget insufficient/,
+    );
+    await db.exec(
+      "reset role;update public.wf_reward_policies set allocated_cents=1000;update security.wf_reward_accounts set backed_cents=1000 where owner_id='tenant'",
+    );
+    await actor(owner);
+    await action({ op: "finalize_winners", programId: program });
+    await action({ op: "finalize_winners", programId: program });
+    await assert.rejects(
+      action({
+        op: "award",
+        programId: program,
+        participantId: participant,
+        credits: 1,
+        reason: "extra",
+        requestKey: key,
+      }),
+      /disclosed winner/,
+    );
+    await db.exec("reset role");
+    assert.equal(
+      (
+        await db.query(
+          "select count(*) n from public.wf_reward_credits where source_key like 'final-winner:%'",
+        )
+      ).rows[0].n,
+      2,
+    );
+    assert.equal(
+      Number(
+        (
+          await db.query(
+            "select sum(points) n from public.wf_incentive_score_ledger",
+          )
+        ).rows[0].n,
+      ),
+      400,
+    );
+    assert.equal(
+      Number(
+        (
+          await db.query(
+            "select sum(credits) n from public.wf_reward_credits where source_key like 'final-winner:%'",
+          )
+        ).rows[0].n,
+      ),
+      400,
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test("PRO invites canonical employees only and gives no operational workspace membership", async () => {
+  const { db, actor } = await fixture(true);
+  try {
+    await db.exec(
+      `reset role;create or replace function security.is_admin() returns boolean language sql as $$select auth.uid()='${owner}'::uuid$$;insert into public.wf_incentive_programs(id,owner_type,owner_id,status,template,terms,terms_version) values('10000000-0000-4000-8000-000000000002','platform','txkpro','active','earn_redeem','Terms',1);`,
+    );
+    const invite = async (email) =>
+      db.query("select security.pro_action($1::jsonb)", [
+        JSON.stringify({
+          op: "invite",
+          programId: "10000000-0000-4000-8000-000000000002",
+          kind: "employee",
+          email,
+        }),
+      ]);
+    await actor(other);
+    await assert.rejects(
+      invite("student@example.test"),
+      /management scope denied/,
+    );
+    await actor(owner);
+    await assert.rejects(
+      invite("other@example.test"),
+      /employee membership required/,
+    );
+    await invite("student@example.test");
+    await db.exec("reset role");
+    assert.equal(
+      (
+        await db.query(
+          "select count(*) n from public.app_role_memberships where user_id='student'",
+        )
+      ).rows[0].n,
+      1,
+    );
+    assert.equal(
+      (
+        await db.query(
+          "select kind from public.wf_incentive_participants where program_id='10000000-0000-4000-8000-000000000002'",
+        )
+      ).rows[0].kind,
+      "employee",
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test("topup backing waits for full settlement, is replay safe and cannot reuse aggregate backing", async () => {
+  const { db } = await fixture(true);
+  try {
+    await db.exec("reset role;set role service_role");
+    const svc = async (input) =>
+      (
+        await db.query(
+          "select public.reward_funding_service($1::jsonb) result",
+          [JSON.stringify(input)],
+        )
+      ).rows[0].result;
+    const f = await svc({
+      op: "quote",
+      ownerType: "employer",
+      ownerId: "tenant",
+      actor: "owner",
+      principalCents: 500,
+      platformFeeCents: 500,
+      thirdPartyFeeCents: 0,
+      totalCents: 1000,
+      method: "ach",
+      pricingVersion: "fixture",
+      requestKey: "30000000-0000-4000-8000-000000000011",
+    });
+    await svc({ op: "session", fundingId: f.id, sessionId: "cs_test_topup" });
+    await svc({
+      op: "payment_event",
+      fundingId: f.id,
+      sessionId: "cs_test_topup",
+      totalCents: 1000,
+      currency: "usd",
+      live: false,
+      eventId: "evt_topup",
+      kind: "paid",
+      paymentId: "pi_topup",
+    });
+    await svc({
+      op: "topup_bind",
+      fundingId: f.id,
+      sourceId: "BANK_TEST",
+      topupId: "TOPUP_TEST",
+    });
+    await assert.rejects(
+      svc({
+        op: "topup_bind",
+        fundingId: f.id,
+        sourceId: "OTHER",
+        topupId: "TOPUP_TEST",
+      }),
+      /binding conflict/,
+    );
+    await assert.rejects(
+      svc({ op: "invoice_claim", fundingId: f.id }),
+      /already created/,
+    );
+    const back = {
+      op: "topup_back",
+      fundingId: f.id,
+      topupId: "TOPUP_TEST",
+      topupStatus: "fully_credited",
+      currency: "USD",
+      cents: 500,
+    };
+    await assert.rejects(
+      svc({ ...back, topupStatus: "partially_credited" }),
+      /Fully credited/,
+    );
+    await assert.rejects(svc(back), /Refresh confirmed/);
+    await db.exec(
+      "reset role;update security.wf_reward_accounts set balance_cents=1000,balance_at=now();set role service_role",
+    );
+    assert.equal((await svc(back)).status, "backed");
+    assert.equal((await svc(back)).status, "backed");
+    assert.equal(
+      (await svc({ op: "provider_lookup", resourceId: "TOPUP_TEST" })).id,
+      f.id,
+    );
+    await svc({ op: "provider_hold", fundingId: f.id });
+    await assert.rejects(svc(back), /Fully credited/);
+    await db.exec("reset role");
+    assert.equal(
+      Number(
+        (
+          await db.query(
+            "select backed_cents from security.wf_reward_accounts where owner_id='tenant'",
+          )
+        ).rows[0].backed_cents,
+      ),
+      1000,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test("one central lease serializes provider operations across sponsors", async () => {
+  const { db, actor } = await fixture(true);
+  try {
+    await actor(other);
+    await db.query("select public.reward_funding_authority($1::jsonb)", [
+      JSON.stringify({
+        op: "setup",
+        ownerType: "employer",
+        ownerId: "other-tenant",
+        acceptTerms: true,
+      }),
+    ]);
+    await db.exec(
+      "reset role;update security.wf_reward_accounts set sealed_tokens='fixture-central-marker' where owner_id='other-tenant';set role service_role",
+    );
+    const svc = async (input) =>
+      (
+        await db.query("select public.reward_service($1::jsonb) result", [
+          JSON.stringify(input),
+        ])
+      ).rows[0].result;
+    const claim = await svc({
+      op: "claim",
+      ownerType: "employer",
+      ownerId: "tenant",
+    });
+    await assert.rejects(
+      svc({ op: "claim", ownerType: "employer", ownerId: "other-tenant" }),
+      /in progress/,
+    );
+    await svc({
+      op: "release",
+      accountId: claim.accountId,
+      lease: claim.lease,
+    });
+    const second = await svc({
+      op: "claim",
+      ownerType: "employer",
+      ownerId: "other-tenant",
+    });
+    await assert.rejects(
+      svc({
+        op: "balance",
+        accountId: claim.accountId,
+        lease: claim.lease,
+        currency: "USD",
+        cents: 99999,
+      }),
+      /lease unavailable/,
+    );
+    await svc({
+      op: "release",
+      accountId: second.accountId,
+      lease: second.lease,
+    });
+  } finally {
+    await db.close();
+  }
+});
+
+test("earned balances remain redeemable after cycle end and accepted participation cancellation",async()=>{
+ const {db,actor,action}=await fixture(true);
+ try {
+  await db.exec("reset role;update public.wf_incentive_programs set status='ended',ends_at=now()-interval '5 years';update public.wf_incentive_participants set status='cancelled'");
+  await actor(student);await action({op:"eligibility",country:"US",bornOn:"2000-01-01"});
+  const view=(await db.query("select public.reward_workspace() result")).rows[0].result;
+  assert.equal(view.credits[0].credits,200);
+  assert.equal((await action({op:"redeem",participantId:participant,credits:100,requestKey:key})).status,"pending");
+ }finally{await db.close();}
 });

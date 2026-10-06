@@ -32,6 +32,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@stripe/react-stripe-js": "7.0.0",
+    "@stripe/stripe-js": "10.0.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
     "dompurify": "^3.2.6",
@@ -41,6 +43,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "server-only": "0.0.1",
+    "stripe": "23.0.0",
     "tus-js-client": "^4.3.1",
     "twilio": "6.1.1"
   },

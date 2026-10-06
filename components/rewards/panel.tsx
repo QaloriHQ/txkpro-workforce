@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceForm } from "@/components/design-system/action-modal";
 import type { PointsWorkspace } from "@/lib/pro-points/types";
+import { FundingPanel } from "./funding-panel";
 import type { RewardWorkspace } from "@/lib/rewards/server";
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -29,12 +30,13 @@ export function RewardsPanel({
 }) {
   const router = useRouter(),
     keys = useRef(new WeakMap<HTMLFormElement, string>());
+  const [catalog, setCatalog] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false),
     [feedback, setFeedback] = useState("");
   const owners = points.owners.filter(
     (o) =>
       (!ownerType || o.type === ownerType) &&
-      ["institution", "employer"].includes(o.type),
+      ["platform", "institution", "employer"].includes(o.type),
   );
   async function send(
     input: Record<string, unknown>,
@@ -54,7 +56,7 @@ export function RewardsPanel({
         window.location.assign(r.url);
         return;
       }
-      setFeedback("Saved. Close this dialog to continue.");
+      setFeedback(r.message || "Saved. Close this dialog to continue.");
       return true;
     } catch (e) {
       setFeedback(e instanceof Error ? e.message : "Unable to save.");
@@ -92,62 +94,56 @@ export function RewardsPanel({
     <section className="reward-workspace">
       <h2>Rewards and funding</h2>
       <p className="card-sub">
-        Sandbox rewards · USD. Reward credits are separate from seasonal
-        rankings and lifetime levels. Minors can earn points; direct redemption
-        remains restricted to eligible adults.
+        Sandbox rewards · USD. PRO-Mode and Intra-Mode can be used together.
+        Reward credits are separate from seasonal rankings and lifetime levels.
+        Minors can earn points; direct redemption remains restricted to eligible
+        adults.
       </p>
+      {data.canFinance && !ownerType ? (
+        <article className="card">
+          <h3>TXKPRO finance · pending provider backing</h3>
+          <p className="card-sub">
+            Customer payment and provider funding are separate. Creating an
+            invoice does not transfer funds or release credits.
+          </p>
+          {data.funding
+            .filter((f) => f.status === "paid")
+            .map((f) => (
+              <div className="pro-submission" key={f.id}>
+                <p>
+                  {f.ownerType}:{f.ownerId} · {dollars(f.principalCents)}
+                </p>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() =>
+                    void send(
+                      { op: "backing", fundingId: f.id },
+                      "/api/rewards/funding",
+                    )
+                  }
+                >
+                  Create / reconcile provider invoice
+                </button>
+              </div>
+            ))}
+          {status}
+        </article>
+      ) : null}
       {owners.map((o) => {
         const a = data.accounts.find(
           (a) => a.ownerType === o.type && a.ownerId === o.id,
         );
         return (
-          <article className="card" key={`${o.type}:${o.id}`}>
-            <h3>{o.name} reward pool</h3>
-            <p>
-              {a?.connected
-                ? `${dollars(a.balanceCents)} last confirmed sandbox balance`
-                : "Tremendous account not connected"}
-            </p>
-            <p className="card-sub">
-              Each workspace funds its own provider account. Pending deposits
-              are unavailable until Tremendous confirms them.
-            </p>
-            <div className="reward-actions">
-              <button
-                className="button"
-                disabled={busy}
-                onClick={() =>
-                  void send(
-                    { ownerType: o.type, ownerId: o.id },
-                    "/api/rewards/connect",
-                  )
-                }
-              >
-                Connect Tremendous sandbox
-              </button>
-              <a
-                className="button"
-                href="https://testflight.tremendous.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Set up / fund provider account
-              </a>
-              <button
-                className="button"
-                disabled={busy || !a?.connected}
-                onClick={() =>
-                  void send({
-                    op: "refresh_balance",
-                    ownerType: o.type,
-                    ownerId: o.id,
-                  })
-                }
-              >
-                Refresh confirmed funding
-              </button>
-            </div>
-          </article>
+          <FundingPanel
+            key={`${o.type}:${o.id}`}
+            owner={o}
+            account={a}
+            history={data.funding.filter(
+              (f) => f.ownerType === o.type && f.ownerId === o.id,
+            )}
+            canFinance={data.canFinance}
+          />
         );
       })}
       {points.programs
@@ -218,15 +214,86 @@ export function RewardsPanel({
                         <option value="automatic">Automatic</option>
                       </select>
                     </Field>
-                    <Field label="Tremendous sandbox gift-card product ID">
-                      <input
+                    <button
+                      className="button"
+                      type="button"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        try {
+                          const r = await fetch("/api/rewards/catalog");
+                          const c = await r.json();
+                          if (!r.ok) throw new Error(c.error);
+                          setCatalog(c.products);
+                          setFeedback(
+                            c.products.length
+                              ? "Choose a gift card below."
+                              : "No eligible gift cards are available.",
+                          );
+                        } catch (e) {
+                          setFeedback(
+                            e instanceof Error
+                              ? e.message
+                              : "Catalog unavailable.",
+                          );
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Load available gift cards
+                    </button>
+                    <Field label="Gift card">
+                      <select
                         name="productId"
-                        minLength={4}
-                        maxLength={40}
                         defaultValue={q?.productId || ""}
                         required
-                      />
+                      >
+                        <option value="" disabled>
+                          Select a gift card
+                        </option>
+                        {q?.productId &&
+                        !catalog.some((c) => c.id === q.productId) ? (
+                          <option value={q.productId}>
+                            Current gift-card selection
+                          </option>
+                        ) : null}
+                        {catalog.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </Field>
+                    {["competition", "combined"].includes(p.template) ? (
+                      <>
+                        <Field label="Award positive-score winners through rank">
+                          <input
+                            name="winnerRank"
+                            type="number"
+                            min="1"
+                            max="100"
+                            defaultValue={q?.winnerRank || 1}
+                            required
+                          />
+                        </Field>
+                        <Field label="Reward Credits per winning participant">
+                          <input
+                            name="winnerCredits"
+                            type="number"
+                            min="1"
+                            max="1000000"
+                            defaultValue={q?.winnerCredits || 500}
+                            required
+                          />
+                        </Field>
+                        <p>
+                          Tied scores share a rank. Each tied winner receives
+                          the full prize. All winners must fit the funded budget
+                          before finalization.
+                        </p>
+                      </>
+                    ) : null}
                     <p className="card-sub">
                       Use an approved USD gift-card product. Rules are fixed on
                       activation. Reward credits have no automatic expiry;
@@ -236,7 +303,9 @@ export function RewardsPanel({
                   </fieldset>
                 </WorkspaceForm>
               ) : null}
-              {p.canManage && q && ["draft", "active"].includes(p.status) ? (
+              {p.canManage &&
+              q &&
+              ["draft", "active", "ended"].includes(p.status) ? (
                 <WorkspaceForm
                   modalTitle="Allocate confirmed reward funds"
                   busy={busy}
@@ -277,6 +346,7 @@ export function RewardsPanel({
               ) : null}
               {p.canManage &&
               q &&
+              !q.winnerRank &&
               p.status === "ended" &&
               ["competition", "combined"].includes(p.template) ? (
                 <WorkspaceForm
@@ -319,6 +389,22 @@ export function RewardsPanel({
                     </p>
                     {save}
                   </fieldset>
+                </WorkspaceForm>
+              ) : null}
+              {p.canManage && q?.winnerRank && p.status === "ended" ? (
+                <WorkspaceForm
+                  modalTitle="Finalize winner prizes"
+                  busy={busy}
+                  feedback={status}
+                  onSubmit={submit("finalize_winners", { programId: p.id })}
+                >
+                  <p>
+                    Final positive-score ranks through {q.winnerRank} receive{" "}
+                    {q.winnerCredits} credits each. All tied winners receive the
+                    same full prize. This snapshots final standings and cannot
+                    be repeated.
+                  </p>
+                  {q.winnersFinalized ? <p>Winner prizes finalized.</p> : save}
                 </WorkspaceForm>
               ) : null}
               {credits && q ? (

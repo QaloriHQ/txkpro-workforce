@@ -33,11 +33,17 @@ export function IncentiveWorkspace({
   ownerType?: string;
 }) {
   const router = useRouter();
+  const [mode, setMode] = useState("all");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const owners = data.owners.filter((o) => !ownerType || o.type === ownerType);
   const programs = data.programs.filter(
-    (p) => !ownerType || p.ownerType === ownerType,
+    (p) =>
+      (!ownerType || p.ownerType === ownerType) &&
+      (mode === "all" ||
+        (mode === "pro"
+          ? p.ownerType === "platform"
+          : p.ownerType !== "platform")),
   );
   async function action(input: Record<string, unknown>) {
     setBusy(true);
@@ -101,7 +107,7 @@ export function IncentiveWorkspace({
         </div>
         <p>{a.instructions}</p>
         <p className="card-sub">
-          {a.points} private points · {a.repeat} ·{" "}
+          {a.points} program points · {a.repeat} ·{" "}
           {a.audience.replace("_", " ")} · caps {a.dailyCap}/day, {a.weeklyCap}
           /week
         </p>
@@ -193,8 +199,35 @@ export function IncentiveWorkspace({
   return (
     <div className="pro-workspace">
       {data.summary ? <ProgressCard summary={data.summary} owner /> : null}
+      <p className="card-sub">
+        Participate in PRO-Mode and Intra-Mode together. Each program keeps its
+        own rewards budget and rules. Reward Credits are separate from
+        achievement points and lifetime levels.
+      </p>
       <div className="pro-toolbar">
-        <h2>{ownerType ? "Private programs" : "My incentive programs"}</h2>
+        <h2>{ownerType ? "Intra-Mode programs" : "My incentive programs"}</h2>
+        {!ownerType ? (
+          <div
+            className="reward-actions"
+            role="group"
+            aria-label="Program mode"
+          >
+            {[
+              ["all", "All programs"],
+              ["pro", "PRO-Mode"],
+              ["intra", "Intra-Mode"],
+            ].map(([v, label]) => (
+              <button
+                key={v}
+                className="button"
+                aria-pressed={mode === v}
+                onClick={() => setMode(v)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {owners.length ? (
           <WorkspaceForm
             modalTitle="Create incentive program"
@@ -216,12 +249,10 @@ export function IncentiveWorkspace({
             </Label>
             <Label text="Structure">
               <select name="template">
-                <option value="competition">Competition</option>
-                <option value="earn_redeem">
-                  Earn and redeem (redemption coming later)
-                </option>
+                <option value="competition">Top winners receive prizes</option>
+                <option value="earn_redeem">Earn and redeem</option>
                 <option value="combined">
-                  Combined (redemption coming later)
+                  Both earned credits and winner prizes
                 </option>
               </select>
             </Label>
@@ -240,7 +271,8 @@ export function IncentiveWorkspace({
             </label>
             <p>
               Scores are private to this program and do not add shared PRO
-              Points. Funding and reward redemption are coming later.
+              Points. Configure prize conversion and confirmed funding in
+              Rewards and funding before activation.
             </p>
             {submit}
           </WorkspaceForm>
@@ -261,6 +293,11 @@ export function IncentiveWorkspace({
           <div className="student-section-heading">
             <div>
               <h2>{p.name}</h2>
+              <span className="pill">
+                {p.ownerType === "platform"
+                  ? "PRO-Mode · TXKPRO funded"
+                  : "Intra-Mode · workspace funded"}
+              </span>
               <p className="card-sub">
                 {p.ownerType} · {p.template.replace("_", " ")} ·{" "}
                 {new Date(p.startsAt).toLocaleDateString()}–
@@ -357,13 +394,21 @@ export function IncentiveWorkspace({
                 </Label>
                 <Label text="Participation">
                   <select name="kind">
-                    {p.ownerType === "employer" ? (
+                    {["employer", "platform"].includes(p.ownerType) ? (
                       <>
                         <option value="employee">
                           Employee (program-only affiliation)
                         </option>
-                        <option value="sponsored_student">
-                          Sponsored Student
+                        <option
+                          value={
+                            p.ownerType === "platform"
+                              ? "student"
+                              : "sponsored_student"
+                          }
+                        >
+                          {p.ownerType === "platform"
+                            ? "Student"
+                            : "Sponsored Student"}
                         </option>
                       </>
                     ) : (
@@ -411,11 +456,19 @@ export function IncentiveWorkspace({
                 <Label text="Audience">
                   <select name="audience">
                     <option value="all">All accepted participants</option>
-                    {p.ownerType === "employer" ? (
+                    {["employer", "platform"].includes(p.ownerType) ? (
                       <>
                         <option value="employee">Employees</option>
-                        <option value="sponsored_student">
-                          Sponsored students
+                        <option
+                          value={
+                            p.ownerType === "platform"
+                              ? "student"
+                              : "sponsored_student"
+                          }
+                        >
+                          {p.ownerType === "platform"
+                            ? "Students"
+                            : "Sponsored students"}
                         </option>
                       </>
                     ) : (
@@ -426,7 +479,7 @@ export function IncentiveWorkspace({
                 <Label text="Instructions / required evidence">
                   <textarea name="instructions" required maxLength={4000} />
                 </Label>
-                <Label text="Private points">
+                <Label text="Program points">
                   <input
                     type="number"
                     name="points"
@@ -562,7 +615,7 @@ export function IncentiveWorkspace({
             </details>
           ) : null}
           <p className="card-sub">
-            Funding, prizes and reward redemption: coming later. Scores do not
+            Configure funded prize rules in Rewards and funding. Scores do not
             represent cash or a spendable balance.
           </p>
         </section>
