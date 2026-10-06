@@ -56,3 +56,58 @@ export function providerBalance(f: {
     throw new Error("USD balance unavailable");
   return cents!;
 }
+
+// Read-only provider observation. Only signed webhooks mutate payment state.
+export function fundingPaymentObservation(
+  f: {
+    id: string;
+    total_cents: number;
+    stripe_session_id: string | null;
+    status: string;
+  },
+  session: {
+    id: string;
+    client_reference_id: string | null;
+    metadata: { funding_id?: string } | null;
+    amount_total: number | null;
+    currency: string | null;
+    livemode: boolean;
+    status: string | null;
+    payment_status: string;
+    payment_intent?: string | { status: string } | null;
+  },
+) {
+  if (
+    session.id !== f.stripe_session_id ||
+    session.client_reference_id !== f.id ||
+    session.metadata?.funding_id !== f.id ||
+    session.amount_total !== Number(f.total_cents) ||
+    session.currency !== "usd" ||
+    session.livemode
+  )
+    throw new Error("Payment binding mismatch");
+  const intent =
+    typeof session.payment_intent === "object" ? session.payment_intent : null;
+  const canResume =
+    ["quoted", "pending"].includes(f.status) &&
+    session.status === "open" &&
+    session.payment_status === "unpaid" &&
+    (session.payment_intent == null ||
+      (intent !== null &&
+        [
+          "requires_payment_method",
+          "requires_confirmation",
+          "requires_action",
+        ].includes(intent.status)));
+  return {
+    canResume,
+    message:
+      session.payment_status === "paid"
+        ? "Stripe confirms payment received. Workspace confirmation and provider backing may still be processing."
+        : session.status === "expired"
+          ? "This payment session has expired. Refresh funding history before creating a new request."
+          : canResume
+            ? "Stripe has not confirmed payment. Resume this same funding request to continue."
+            : "Payment is processing. Check this request again; do not submit another payment.",
+  };
+}

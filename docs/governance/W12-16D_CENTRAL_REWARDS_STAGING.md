@@ -60,3 +60,17 @@ Owner screenshots establish successful setup with ambiguous feedback, an attempt
 No new migrations, statuses, fees, access grants or payment bypass. Existing scoped Project-access exception retained: task-context/preflight still fail for missing local PROJECTS_TOKEN. Telemetry start still fails with gh ENOENT; no fabricated usage. Test account webhook is saved, but Stripe test keys, method configurations and approved pricing remain absent from Vercel metadata. No sandbox payment or funding activation is claimed.
 
 Owner UAT: on Employer and Institution Incentives, open funding setup details and confirm completed state; Add Reward Credits must explain unavailable payments without accepting a quote; opening another dialog must clear earlier feedback. Inspect text, number, date/time, file, select and textarea fields in both themes and on mobile; checkbox labels align inline and keyboard focus remains visible. After finance configuration and redeployment, only configured card/ACH methods should appear; run the existing signed-payment/backing checklist above.
+
+
+## Funding modal and ambiguous payment recovery — 2026-10-06
+
+Owner reported an unconfirmed payment result and requested a sleek funding modal. Stripe read-only inspection found the matching $16,500 test Checkout Session open/unpaid with no PaymentIntent; this is evidence of no confirmed payment at inspection, not a diagnosis of the browser exception.
+
+- Compact 620px dialog, Amount/Review/Payment steps, aligned fee summary, prominent total, shared tokens and theme-aware Stripe fields; no card-saving prompt.
+- Mount a payment provider only in the open funding dialog, preventing the current request and hidden history dialog from mounting the same session simultaneously.
+- `POST /api/rewards/funding` `op: status` reuses existing funding authority and reads the stored Stripe Session with expanded PaymentIntent. Validate session/request identity, reference, amount, USD and test mode before returning only safe feedback and resume eligibility. No database mutation, no browser-based fulfillment, no provider backing, no new quote/session/payment created by a status check.
+- Confirmation validates fields, checks status after success/exception, locks another Pay submission after an ambiguous result and offers Check payment status / Resume payment. Reload uses the existing stored Session; submitted/expired sessions do not reload payment fields. Reopening checks status before enabling Pay.
+- Signed webhooks remain the canonical payment transition path. ACH processing and provider backing remain separate gates.
+- Prior approved scoped Project-access exception retained; local preflight/task context still fail for absent PROJECTS_TOKEN. Usage script cannot access gh; actual token/cost telemetry unavailable.
+- Manual owner UAT: card happy path and decline, ambiguous response/check/resume, close/reopen current request, history resume, ACH pending, mobile/narrow layout, both themes, keyboard/focus. Verify same funding/session identity and no duplicate credit before provider backing.
+- No migrations or authorization changes; issue #226 remains open and Project status is not manually advanced.

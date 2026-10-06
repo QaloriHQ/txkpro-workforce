@@ -4,6 +4,7 @@ import {
   quoteFunding,
   createFundingCheckout,
   reconcileBacking,
+  checkFundingPayment,
 } from "@/lib/rewards/funding-server";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
@@ -23,6 +24,9 @@ export async function POST(request: Request) {
         break;
       case "checkout":
         result = await createFundingCheckout(String(input.fundingId));
+        break;
+      case "status":
+        result = await checkFundingPayment(String(input.fundingId));
         break;
       case "backing":
         result = await reconcileBacking(String(input.fundingId));

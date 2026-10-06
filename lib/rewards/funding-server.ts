@@ -9,7 +9,11 @@ import {
   refreshBalance,
 } from "./server";
 import { seal, unseal } from "./contracts";
-import { fundingQuote, usdCents } from "./funding-contracts";
+import {
+  fundingQuote,
+  usdCents,
+  fundingPaymentObservation,
+} from "./funding-contracts";
 type Authority = {
   ownerType: string;
   ownerId: string;
@@ -163,7 +167,11 @@ export async function setupFunding(input: Record<string, unknown>) {
       lease: claim.lease,
     });
   }
-  return { ok: true, message: "Reward funding setup is complete. Close this dialog to return to your reward pool. Payment availability is shown under Add Reward Credits." };
+  return {
+    ok: true,
+    message:
+      "Reward funding setup is complete. Close this dialog to return to your reward pool. Payment availability is shown under Add Reward Credits.",
+  };
 }
 export async function quoteFunding(input: Record<string, unknown>) {
   const a = await authority(input),
@@ -275,7 +283,33 @@ export async function createFundingCheckout(id: string) {
     });
   if (!f.stripe_session_id)
     await service({ op: "session", fundingId: f.id, sessionId: session.id });
+  if (session.status !== "open" || session.payment_status !== "unpaid")
+    return {
+      message:
+        "This payment has already been submitted or expired. Check funding history; do not pay again.",
+    };
   return { clientSecret: session.client_secret, publishableKey, returnUrl };
+}
+export async function checkFundingPayment(id: string) {
+  await authority({ fundingId: id });
+  const f = await service({ op: "read", fundingId: id });
+  if (!f.stripe_session_id)
+    return {
+      canResume: false,
+      message: "No payment session exists. Refresh funding history.",
+    };
+  const { stripe } = stripeConfig();
+  const session = await stripe.checkout.sessions.retrieve(f.stripe_session_id, {
+    expand: ["payment_intent"],
+  });
+  try {
+    return fundingPaymentObservation(f, session);
+  } catch {
+    throw new Response(
+      "Payment details could not be verified. Contact TXKPRO support.",
+      { status: 409 },
+    );
+  }
 }
 export async function reconcileBacking(id: string) {
   const a = await authority({ op: "finance", fundingId: id });
