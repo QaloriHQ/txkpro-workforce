@@ -24,7 +24,9 @@ export type OrderView = {
         status: string;
     }[];
 };
+export type ScreeningPolicy = {state: "required" | "accepted" | "superseded" | "revoked"; canAccept: boolean; policyId: string; version: number; hash: string; title: string; body: string; history: {id: string; version: number; hash: string; actor: string; acceptedAt: string; revokedAt: string | null; body: string}[]};
 export type Workspace = {
+    policy?: ScreeningPolicy;
     canManage: boolean;
     canOrder: boolean;
     canReview: boolean;
@@ -99,13 +101,17 @@ export async function authority(input: Record<string, unknown>) { return authent
 async function service<T = Order>(input: Record<string, unknown>): Promise<T> {
     const { data, error } = await createAdminClient().rpc("auth_screening_service", { p_input: input });
     if (error)
-        throw new Response(error.code === "42501" ? "Screening permission or approval changed." : /^(Monthly screening limit exceeded|Independent approver required|Quote expired; cancel and create a new request|Payment setup in progress|Payment requires administrator reconciliation|Provider result unconfirmed; administrator reconciliation required|Order cannot be cancelled|Request binding mismatch)$/.test(error.message) ? error.message : "Screening request could not be confirmed. Resume the same request.", { status: error.code === "42501" ? 403 : 409 });
+        throw new Response(error.code === "42501" ? "Screening permission, approval or current Employer policy acceptance changed." : /^(Monthly screening limit exceeded|Independent approver required|Quote expired; cancel and create a new request|Payment setup in progress|Payment requires administrator reconciliation|Provider result unconfirmed; administrator reconciliation required|Order cannot be cancelled|Request binding mismatch)$/.test(error.message) ? error.message : "Screening request could not be confirmed. Resume the same request.", { status: error.code === "42501" ? 403 : 409 });
     return data as T;
 }
 export async function workspace(input: Record<string, unknown>) {
     const { actor: _actor, ...view } = await authority({ ...input, op: "workspace" }); void _actor;
     const cards = await authenticatedRpc<Record<string, NonNullable<OrderView['card']>>>("authcard_order_status", {p_input: input});
-    return {...view, orders:view.orders.map(o=>({...o,card:cards[o.id]}))};
+    const policy = input.ownerType === "employer" ? await policyAction({...input,op:"policy"}) : undefined;
+    return {...view, policy, orders:view.orders.map(o=>({...o,card:cards[o.id]}))};
+}
+export async function policyAction(input: Record<string, unknown>) {
+    return authenticatedRpc<ScreeningPolicy>("screening_policy", {p_input: input});
 }
 export async function action(input: Record<string, unknown>) {
     const a = await authority(input);

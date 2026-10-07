@@ -1407,3 +1407,4 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 .screening-consent input { flex:none; margin-top:.3rem; }
 .screening-permission label { display:block; margin-block:.75rem; }
 .screening-field textarea { width:100%; min-height:6rem; }
+.policy-document { overflow-wrap:anywhere; line-height:1.6; }

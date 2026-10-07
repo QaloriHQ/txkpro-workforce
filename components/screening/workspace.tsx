@@ -2,6 +2,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { ActionModal } from "@/components/design-system/action-modal";
+import { ScreeningPolicyPanel } from "./policy";
 import { PURPOSES } from "@/lib/authcard/contracts";
 import { PRODUCTS, PACKAGES, matchingPackage, quoteProducts, type ProductId } from "@/lib/authenticate/contracts";
 import type { Workspace, OrderView } from "@/lib/authenticate/server";
@@ -59,14 +60,15 @@ export function ScreeningWorkspace({ initial, ownerType, ownerId, configured }: 
     finally {
         setBusy(false);
     } }
+    const policyReady = ownerType !== "employer" || data.policy?.state === "accepted";
     const current = data.orders.find(o => o.id === orderId), base = products.reduce((total, id) => total + PRODUCTS.find(p => p.id === id)!.cents, 0);
     function orderControls(o: OrderView) {
         return <><Breakdown o={o}/><p className="card-sub">Context: {o.name} · {o.audience}. Authenticate uses its fixed adult test identity. This does not screen this workspace member.</p>
  <p className="funding-notice">AuthCard: {o.card?.status || "Not requested"} · {o.card?.verified ? "TXKPRO KYU verified (sandbox)" : "Not shared or not verified"} · {o.card?.authorized ? "Order authorized" : "Candidate authorization required before checkout"}. Platform identity status is not background clearance.</p>
  <div className="screening-actions">
- {o.status === "pending_approval" && data.canReview && !o.own ? <button className="button button-dark" disabled={busy} onClick={() => void run("approve", { orderId: o.id })}>Approve test order</button> : null}
- {o.status === "reserved" && o.own && data.canOrder && !['paid', 'hold', 'failed', 'expired'].includes(o.payment) ? <button className="button button-dark" disabled={busy || !configured || !o.card?.authorized} onClick={() => void pay(o.id)}>Open / resume test checkout</button> : null}
- {o.own && data.canOrder && o.payment === "paid" && ['reserved', 'processing'].includes(o.status) ? <button className="button button-dark" disabled={busy || !configured || !o.card?.authorized} onClick={() => void run("dispatch", { orderId: o.id })}>Run synthetic checks</button> : null}
+ {o.status === "pending_approval" && data.canReview && !o.own ? <button className="button button-dark" disabled={busy || !policyReady} onClick={() => void run("approve", { orderId: o.id })}>Approve test order</button> : null}
+ {o.status === "reserved" && o.own && data.canOrder && !['paid', 'hold', 'failed', 'expired'].includes(o.payment) ? <button className="button button-dark" disabled={busy || !configured || !policyReady || !o.card?.authorized} onClick={() => void pay(o.id)}>Open / resume test checkout</button> : null}
+ {o.own && data.canOrder && o.payment === "paid" && ['reserved', 'processing'].includes(o.status) ? <button className="button button-dark" disabled={busy || !configured || !policyReady || !o.card?.authorized} onClick={() => void run("dispatch", { orderId: o.id })}>Run synthetic checks</button> : null}
  <button className="button" disabled={busy} onClick={() => void run("status", { orderId: o.id })}>Refresh payment</button>
  <button className="button" disabled={busy} onClick={async () => { setBusy(true); setDocs(null); try {
             setDocs(await api("documents", { orderId: o.id }));
@@ -90,8 +92,9 @@ export function ScreeningWorkspace({ initial, ownerType, ownerId, configured }: 
  <p className="card-sub">Results must not be used by TXKPRO or workspaces to determine employment eligibility. Package names describe included checks, not clearance or suitability.</p>
  {!configured ? <p role="status">Authenticate sandbox configuration is unavailable.</p> : null}
  {data.costs ? <div className="screening-costs">{[["Workspace test charges", data.costs.totalCents], ["Provider base costs", data.costs.providerCents], ["TXKPRO fees", data.costs.platformCents], ["Third-party payment fees", data.costs.thirdPartyCents]].map(([label, value]) => <div className="card" key={label}><span className="card-sub">{label}</span><strong>{money(Number(value))}</strong></div>)}</div> : null}
+ {data.policy ? <ScreeningPolicyPanel policy={data.policy} busy={busy} onAction={async(op,extra)=>{return Boolean(await run(op,extra));}}/> : null}
  <div className="screening-actions">
- {data.canOrder ? <ActionModal title="Choose a screening package" triggerLabel="Choose package / checks" busy={busy} onOpen={() => { setPurpose(""); setTransaction(false); setNonEligibility(false); setDescription(""); setProducts([]); setSubject(""); setRequestKey(crypto.randomUUID()); setLocked(false); setOrderId(""); setSession(null); setDocs(null); setMessage(""); }}>
+ {data.canOrder && policyReady ? <ActionModal title="Choose a screening package" triggerLabel="Choose package / checks" busy={busy} onOpen={() => { setPurpose(""); setTransaction(false); setNonEligibility(false); setDescription(""); setProducts([]); setSubject(""); setRequestKey(crypto.randomUUID()); setLocked(false); setOrderId(""); setSession(null); setDocs(null); setMessage(""); }}>
  {!current ? <><p className="card-sub">Choose a package, then customize the included checks if needed. Your administrator sets spending limits and independent approval requirements.</p><fieldset className="screening-package-picker"><legend>Screening packages</legend><div className="screening-packages">{PACKAGES.map(p => <label key={p.id} className={`screening-product ${matchingPackage(products)?.id === p.id ? "is-selected" : ""}`}><input type="radio" name="screening-package" checked={matchingPackage(products)?.id === p.id} disabled={busy || locked} onChange={() => setProducts([...p.products])}/><span><strong>{p.name}</strong><small>{p.description}</small><ul>{p.products.map(id => <li key={id}>{PRODUCTS.find(product => product.id === id)?.name}</li>)}</ul><b>{money(quoteProducts([...p.products], 0, 0).totalCents)} estimated</b><small>Includes TXKPRO fee; payment fees additional.</small></span></label>)}</div></fieldset><p className="card-sub" role="status">{matchingPackage(products)?.name || (products.length ? "Custom selection" : "No package selected")}. Sandbox estimates; extra provider charges simulated at $0.</p><h3>Customize checks</h3><div className="screening-gallery">{PRODUCTS.map(p => <label key={p.id} className={`screening-product ${products.includes(p.id) ? "is-selected" : ""}`}><input type="checkbox" checked={products.includes(p.id)} disabled={busy || locked} onChange={e => setProducts(e.target.checked ? [...products, p.id] : products.filter(id => id !== p.id))}/><span><strong>{p.name}</strong><small>{p.description}</small><b>{money(p.cents)}</b></span></label>)}</div>
  {data.bundles.length ? <label className="screening-field">Use a saved bundle<select disabled={locked || busy} defaultValue="" onChange={e => { const b = data.bundles.find(b => b.id === e.target.value); if (b)
                 setProducts(b.products); }}><option value="">Choose bundle</option>{data.bundles.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label> : null}

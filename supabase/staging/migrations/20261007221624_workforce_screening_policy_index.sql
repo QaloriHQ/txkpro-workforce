@@ -1,0 +1,1 @@
+create index wf_screening_policy_current_version on security.wf_screening_policy_current(policy_id,version);
