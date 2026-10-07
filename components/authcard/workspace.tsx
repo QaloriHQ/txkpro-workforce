@@ -6,6 +6,10 @@ import {ShieldCheckIcon} from "@heroicons/react/24/outline";
 import {ActionModal} from "@/components/design-system/action-modal";
 import {PURPOSES,consentAccepted,type CardWorkspace,type CardRequest,type PrivateDetails} from "@/lib/authcard/contracts";
 const Checkout=dynamic(()=>import("@/components/screening/checkout").then(m=>m.ScreeningCheckout),{ssr:false});
+const CANDIDATE_POLICY_URL="https://workforce.txkpro.com/CANDIDATE-BACKGROUND-SCREENING-POLICY";
+function CandidatePolicyLink() {
+  return <p className="card-sub"><a href={CANDIDATE_POLICY_URL} target="_blank" rel="noopener noreferrer">Candidate Background Screening Policy</a> (opens in a new tab)</p>;
+}
 type Session={clientSecret:string;publishableKey:string};
 type Documents={message:string;invoiceUrl?:string;invoicePdfUrl?:string;receiptUrl?:string};
 export function AuthCardWorkspace({initial,configured}:{initial:CardWorkspace;configured:boolean}) {
@@ -19,6 +23,7 @@ export function AuthCardWorkspace({initial,configured}:{initial:CardWorkspace;co
   return <div className="screening-workspace">
     <section className="card screening-overview"><div><p className="eyebrow">Your identity. Your access.</p><h1>My AuthCard</h1><p>Prepare your information once, share selectively and authorize each order.</p></div><ShieldCheckIcon width={40} aria-hidden="true"/></section>
     <p className="funding-notice">Sandbox only. Use test details and Stripe test documents. No real person is screened. The $5 one-time KYU platform fee is a test payment. US minors cannot use identity verification. Points, training and career workflows remain available.</p>
+    <CandidatePolicyLink/>
     {!configured?<p role="status">KYU sandbox configuration is unavailable. No payment has been taken.</p>:null}
     <article className="card"><h2>{data.name || 'Your AuthCard'}</h2><p><span className="pill">{verified?'TXKPRO identity verified (sandbox)':data.status.replaceAll('_',' ')}</span></p><p className="card-sub">Verified means the account meets TXKPRO platform identity requirements. Sandbox verification is simulated. It does not establish background clearance, skill verification or employment eligibility.</p><p>Private details: {data.ready?'Prepared':'Not prepared'} · One-time test fee: {data.paid?'Paid':'Not confirmed'}</p>
     <div className="screening-actions">
@@ -51,9 +56,10 @@ function RequestCard({request:r,verified,busy,message,run}:{request:CardRequest;
   const [accepted,setAccepted]=useState<string[]>([]);
   return <article className="card"><h3>{r.name}</h3><p>{PURPOSES.find(p=>p.id===r.purpose)?.label}</p>{r.description?<p>{r.description}</p>:null}<p>{r.products.join(' · ')} · {(r.totalCents/100).toLocaleString('en-US',{style:'currency',currency:'USD'})} test total</p><p><span className="pill">Access: {r.status}</span> <span className="pill">Order: {r.consent}</span></p>
     <div className="screening-actions">
-    {r.status==='pending'?<ActionModal title={`Share AuthCard with ${r.name}`} triggerLabel="Review sharing request" busy={busy}><p>Only your TXKPRO platform verification status is shared. Private details and Stripe data remain hidden. Sharing does not authorize a check.</p><button className="button button-dark" disabled={busy || !verified} onClick={()=>void run('share',{requestId:r.id})}>Share my AuthCard</button><button className="button" disabled={busy} onClick={()=>void run('decline',{requestId:r.id})}>Decline</button>{!verified?<p>Complete KYU verification and prepare your information first.</p>:null}{message?<p role="status">{message}</p>:null}</ActionModal>:null}
+    {r.status==='pending'?<ActionModal title={`Share AuthCard with ${r.name}`} triggerLabel="Review sharing request" busy={busy}><p>Only your TXKPRO platform verification status is shared. Private details and Stripe data remain hidden. Sharing does not authorize a check.</p><CandidatePolicyLink/><button className="button button-dark" disabled={busy || !verified} onClick={()=>void run('share',{requestId:r.id})}>Share my AuthCard</button><button className="button" disabled={busy} onClick={()=>void run('decline',{requestId:r.id})}>Decline</button>{!verified?<p>Complete KYU verification and prepare your information first.</p>:null}{message?<p role="status">{message}</p>:null}</ActionModal>:null}
     {r.status==='shared'&&r.consent==='pending'?<ActionModal title="Authorize this order" triggerLabel="Review disclosures & authorize" busy={busy} onOpen={()=>setAccepted([])}>
       <p>{r.name} requests: {r.products.join(', ')}. Purpose: {PURPOSES.find(p=>p.id===r.purpose)?.label}. The authorization applies only to this order. No real check will run in sandbox.</p>
+      <CandidatePolicyLink/>
       <div className="screening-actions"><button type="button" className="button" disabled={busy} onClick={()=>setAccepted(r.parties.map(p=>p.id))}>Check all</button><button type="button" className="button" disabled={busy} onClick={()=>setAccepted([])}>Uncheck all</button></div>
       {r.parties.map(p=><label key={p.id} className="card screening-consent"><input type="checkbox" checked={accepted.includes(p.id)} disabled={busy} onChange={e=>setAccepted(e.target.checked?[...accepted,p.id]:accepted.filter(id=>id!==p.id))}/><span><strong>{p.name}</strong><p>{p.text}</p>{p.url?<a href={p.url} target="_blank" rel="noopener noreferrer">Read provider disclosure</a>:null}</span></label>)}
       <button className="button button-dark" disabled={busy || !verified || !consentAccepted(accepted,r.parties)} onClick={()=>void run('authorize',{requestId:r.id,version:r.version,accepted})}>Authorize & continue</button>{message?<p role="status">{message}</p>:null}
