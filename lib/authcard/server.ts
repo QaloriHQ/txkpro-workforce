@@ -32,7 +32,7 @@ export async function editDetails() {
 export async function saveDetails(input: Record<string, unknown>) {
   if (!configured()) throw new Response("Private storage is unavailable.",{status:503});
   let details: PrivateDetails;
-  try { details = privateDetails(input.details); } catch {throw new Response("Enter complete US adult details. Use test data in sandbox.",{status:400});}
+  try { details = privateDetails(input.details); } catch(e) {throw new Response(e instanceof Error ? e.message : "Enter complete US adult test details.",{status:400});}
   const actor = await own(), c = await service({op:"read",actor});
   if (!details.ssn && c.details_encrypted) details.ssn = unseal<PrivateDetails>(c.details_encrypted,process.env.REWARDS_ENCRYPTION_KEY!,`authcard:${actor}`).ssn;
   await service({op:"details",actor,encrypted:seal(details,process.env.REWARDS_ENCRYPTION_KEY!,`authcard:${actor}`),name:`${details.firstName} ${details.lastName}`});
@@ -42,7 +42,11 @@ function matchesPayment(s: Stripe.Checkout.Session,c: Card) {
   return !s.livemode && s.id === c.payment_session && s.client_reference_id === c.id && s.metadata?.kyu_id === c.id && s.amount_total === KYU_FEE_CENTS && s.currency === 'usd';
 }
 export async function payment() {
-  const actor=await own(), stripe=stripeClient(), c=await service({op:"payment_claim",actor});
+  const actor=await own(), stripe=stripeClient();
+  const prepared=await service({op:"read",actor});
+  if (!prepared.details_encrypted) throw new Response("Save your private test information before paying the KYU fee.",{status:400});
+  if (prepared.status==='revoked') throw new Response("AuthCard is deactivated. Contact support before continuing.",{status:409});
+  const c=await service({op:"payment_claim",actor});
   if (c.payment_status==='paid') return {message:"Your one-time test fee is already paid. Continue verification."};
   // Detect missing Identity capability before taking the $5 test fee.
   try {await stripe.identity.verificationSessions.list({limit:1});}
@@ -69,10 +73,13 @@ async function observeIdentity(c: Card,stripe: Stripe) {
   await service({op:"identity_observe",actor:c.user_id,sessionId:s.id,status:s.status==='canceled'?'cancelled':s.status,adult:s.status==='verified'&&adult});
 }
 export async function identity(input: Record<string, unknown>) {
-  const actor=await own(),stripe=stripeClient(),c=await service({op:"identity_claim",actor});
+  const actor=await own(),stripe=stripeClient();
   if (input.adultConfirmed!==true) throw new Response("Adult confirmation required. US minors cannot use KYU.",{status:400});
+  const c=await service({op:"read",actor});
+  if (c.payment_status!=='paid' || !c.details_encrypted || c.status==='revoked') throw new Response("Save private details and confirm the one-time fee before verification.",{status:409});
   const details=unseal<PrivateDetails>(c.details_encrypted!,process.env.REWARDS_ENCRYPTION_KEY!,`authcard:${actor}`);
   if (!adultDate(details.dob)) throw new Response("Adult account required.",{status:403});
+  await service({op:"identity_claim",actor}).then(claim=>Object.assign(c,claim));
   const s=c.identity_session ? await stripe.identity.verificationSessions.retrieve(c.identity_session) : await stripe.identity.verificationSessions.create({type:"document",client_reference_id:c.id,metadata:{kyu_id:c.id},options:{document:{require_matching_selfie:true}},return_url:`${APP_ORIGIN}/account/authcard`},{idempotencyKey:`txkpro-kyu-identity-${c.id}`});
   if (s.livemode || s.client_reference_id!==c.id || s.metadata.kyu_id!==c.id) throw new Response("Verification binding mismatch.",{status:409});
   if (!c.identity_session) await service({op:"identity_bind",actor,sessionId:s.id,lease:c.identity_lease});

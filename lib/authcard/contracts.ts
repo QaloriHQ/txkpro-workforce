@@ -22,6 +22,11 @@ export type PrivateDetails = {
   firstName: string; lastName: string; dob: string; address: string; city: string; state: string; postalCode: string;
   ssn?: string; phone?: string; education?: string; employment?: string; licenses?: string;
 };
+// Fictional adult fixture for preparing the sandbox card, never provider identity proof.
+export const SANDBOX_DETAILS: PrivateDetails = {
+  firstName: "Sandbox", lastName: "Student", dob: "1990-01-01",
+  address: "123 Test Street", city: "Austin", state: "TX", postalCode: "78701",
+};
 export function privateDetails(value: unknown): PrivateDetails {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Private details required");
   const v = value as Record<string, unknown>;
@@ -31,7 +36,13 @@ export function privateDetails(value: unknown): PrivateDetails {
     if (typeof v[field] !== "string" || v[field].length > (['education','employment','licenses'].includes(field) ? 2000 : 200)) throw new Error("Invalid private details");
     out[field] = v[field].trim();
   }
-  if (!["firstName", "lastName", "dob", "address", "city", "state", "postalCode"].every(f => out[f]) || !adultDate(out.dob) || !/^[A-Z]{2}$/.test(out.state) || !/^\d{5}(-\d{4})?$/.test(out.postalCode) || out.ssn && !/^\d{9}$/.test(out.ssn)) throw new Error("US adult details and valid address required");
+  for (const [field, label] of Object.entries({firstName:"First name",lastName:"Last name",dob:"Date of birth",address:"Street address",city:"City",state:"State",postalCode:"ZIP code"})) {
+    if (!out[field]) throw new Error(`${label} is required.`);
+  }
+  if (!adultDate(out.dob)) throw new Error("Enter a valid date of birth for an adult aged 18 or older.");
+  if (!/^[A-Z]{2}$/.test(out.state)) throw new Error("Enter a two-letter US state code, such as TX.");
+  if (!/^\d{5}(-\d{4})?$/.test(out.postalCode)) throw new Error("Enter a valid ZIP code, such as 78701 or 78701-1234.");
+  if (out.ssn && !/^\d{9}$/.test(out.ssn)) throw new Error("SSN must contain all 9 digits. Leave this optional field blank for sandbox testing; the last 4 digits alone cannot be saved.");
   return out as PrivateDetails;
 }
 export function consentAccepted(ids: unknown, parties: { id: string }[]) {
