@@ -995,6 +995,7 @@ jobs:
       - run: npm run rewards:qa
       - run: npm run checkr:qa
       - run: npm run authenticate:qa
+      - run: npm run authcard:qa
       - run: node --experimental-strip-types --test scripts/pro-points-csv-qa.mjs
       - run: npm run typecheck
       - run: npm run wave11:qa

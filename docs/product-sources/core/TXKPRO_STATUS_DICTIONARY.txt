@@ -181,3 +181,5 @@ Official placement requires an authorized Employer or permitted workforce operat
 
 W12-16A OWNER-APPROVED EXPANSION — 2026-10-04 (#223)
 Portfolio project visibility: private/public; file access: private/public/employer. These are sharing controls, not Student discoverability or credential lifecycle statuses. Public files additionally require an active published public profile. Employer file access requires canonical approved talent scope and Student consent. New audit action: STUDENT_PORTFOLIO_CHANGED. No competency/hiring lifecycle changes. Contract: docs/W12_16A_STUDENT_PORTFOLIO.md.
+
+KYU/AuthCard sandbox (owner approved 2026-10-07, #257): separate KYU identity, KYU payment, AuthCard share and immutable per-order consent contracts are defined in docs/governance/AUTHCARD_STAGING.md. These never change competency, hiring, placement or retention states.

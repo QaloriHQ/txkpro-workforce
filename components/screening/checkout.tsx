@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckoutElementsProvider, PaymentElement, useCheckoutElements } from "@stripe/react-stripe-js/checkout";
 type Props = {
+    apiPath?: "/api/screening" | "/api/authcard";
     orderId: string;
     ownerType: string;
     ownerId: string;
@@ -15,7 +16,7 @@ type Props = {
 function Payment(p: Props) {
     const result = useCheckoutElements();
     const [busy, setBusy] = useState(false), [checked, setChecked] = useState(false), [uncertain, setUncertain] = useState(false), [resume, setResume] = useState(false), [message, setMessage] = useState("");
-    useEffect(() => { let active = true; void fetch("/api/screening", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "status", orderId: p.orderId, ownerType: p.ownerType, ownerId: p.ownerId }) }).then(async (r) => { if (!r.ok)
+    useEffect(() => { let active = true; void fetch(p.apiPath || "/api/screening", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "status", orderId: p.orderId, ownerType: p.ownerType, ownerId: p.ownerId }) }).then(async (r) => { if (!r.ok)
         throw Error(); return r.json(); }).then(d => { if (active) {
         setChecked(true);
         if (!d.canResume) {
@@ -26,9 +27,9 @@ function Payment(p: Props) {
         setChecked(true);
         setUncertain(true);
         setMessage("Check this same payment before retrying.");
-    } }); return () => { active = false; }; }, [p.orderId, p.ownerType, p.ownerId]);
+    } }); return () => { active = false; }; }, [p.orderId, p.ownerType, p.ownerId, p.apiPath]);
     async function check() { try {
-        const r = await fetch("/api/screening", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "status", orderId: p.orderId, ownerType: p.ownerType, ownerId: p.ownerId }) });
+        const r = await fetch(p.apiPath || "/api/screening", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "status", orderId: p.orderId, ownerType: p.ownerType, ownerId: p.ownerId }) });
         const d = await r.json();
         if (!r.ok)
             throw Error();
