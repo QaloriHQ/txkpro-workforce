@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import ts from 'typescript';import {readFileSync} from 'node:fs';
+import * as cardContracts from '../lib/authcard/contracts.ts';
 import * as contracts from '../lib/authenticate/contracts.ts';import {fundingDocuments} from '../lib/rewards/funding-documents.ts';
 function fixture({badPayment=false,providerError=false,deny=false,orderPaid=true}={}){
  const calls=[],services=[],attempted=new Set(),completed=new Set();
@@ -10,7 +11,7 @@ function fixture({badPayment=false,providerError=false,deny=false,orderPaid=true
  const env={AUTHENTICATE_SANDBOX_API_KEY:'fixture-only',REWARDS_SANDBOX_APP_ORIGIN:'https://staging-workforce.txkpro.com',STRIPE_SANDBOX_SECRET_KEY:'sk_test_fixture',STRIPE_SANDBOX_PUBLISHABLE_KEY:'pk_test_fixture',REWARDS_CARD_PAYMENT_METHOD_CONFIGURATION:'pmc_fixture',REWARDS_CARD_THIRD_PARTY_BPS:'0',REWARDS_CARD_THIRD_PARTY_FIXED_CENTS:'0',REWARDS_PRICING_VERSION:'test'};
  const fetch=async(url,options)=>{calls.push({url,options});let data;if(url.endsWith('/create'))data={userAccessCode:contracts.FIXTURE_CODE};else if(url.endsWith('/consent'))data={success:true};else if(url.endsWith('/employment/v2/verify'))data=providerError?{errorCode:'ERR'}:{status:true,employment:[{status:'COMPLETE',privateReport:'must-discard'}]};else if(url.endsWith('/mvr'))data={returned_date:'2026-01-01',current_license:{privateReport:'discard'},is_clear:false};else throw Error('unexpected path');return Response.json(data);};
  const mod={exports:{}};
- const require=name=>name==='server-only'?{}:name==='stripe'?Stripe:name==='./contracts'?contracts:name==='@/lib/rewards/funding-documents'?{fundingDocuments}:name==='@/lib/rewards/server'?{authenticatedRpc:async()=>{if(deny)throw Error('denied');return {actor:'canonical-owner'};}}:name==='@/lib/supabase/admin'?{createAdminClient:()=>({rpc:async(_,{p_input})=>({data:await service(p_input)})})}:(()=>{throw Error(name);})();
+ const require=name=>name==='server-only'?{}:name==='stripe'?Stripe:name==='./contracts'?contracts:name==='@/lib/authcard/contracts'?cardContracts:name==='@/lib/rewards/funding-documents'?{fundingDocuments}:name==='@/lib/rewards/server'?{authenticatedRpc:async()=>{if(deny)throw Error('denied');return {actor:'canonical-owner'};}}:name==='@/lib/supabase/admin'?{createAdminClient:()=>({rpc:async(_,{p_input})=>({data:await service(p_input)})})}:(()=>{throw Error(name);})();
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../lib/authenticate/server.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,{module:mod,exports:mod.exports,require,fetch,process:{env},Response,AbortSignal,Buffer,URL,console});
  return {api:mod.exports,calls,services,stripe,session,o};
 }

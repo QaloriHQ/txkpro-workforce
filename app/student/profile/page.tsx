@@ -36,7 +36,7 @@ export default async function StudentProfilePage() {
       <StudentWorkspaceNav active="profile" trainingCount={evidence.employerTraining.filter((item) => item.status !== "cancelled").length} />
       <main className="student-training-page student-readiness-profile student-profile-page">
         <PortfolioView portfolio={portfolio} displayName={publicSettings.displayName || [context.firstName, context.lastName].filter(Boolean).join(" ")} headline={publicSettings.headline} bio={publicSettings.bio} identityOnly />
-        <div className="profile-owner-controls"><StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName].join(" ")} identityOnly /><PortfolioEditor initial={portfolio} section="images" /><Link className="button" href="/student/profile/edit">Profile editor</Link></div>
+        <div className="profile-owner-controls"><StudentPublicProfileSettings initial={publicSettings} suggestedName={[context.firstName, context.lastName].join(" ")} identityOnly /><PortfolioEditor initial={portfolio} section="images" /><Link className="button" href="/student/profile/edit">Profile editor</Link><Link className="button" href="/account/authcard">My AuthCard</Link></div>
         <ProgressCard summary={points} owner/>
         <ProfilePanels preferences={portfolio.preferences} panels={{ projects: <PortfolioEditor initial={portfolio} section="projects" />, files: <PortfolioEditor initial={portfolio} section="files" />, credentials: <>
         <div className="profile-panel-heading"><h2>Skills & credentials</h2><Link className="button" href="/student/profile/edit">Edit sharing</Link></div>

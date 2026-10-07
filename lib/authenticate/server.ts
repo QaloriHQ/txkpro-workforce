@@ -4,6 +4,7 @@ import { authenticatedRpc } from "@/lib/rewards/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fundingDocuments } from "@/lib/rewards/funding-documents";
 import { ORIGIN, FIXTURE_CODE, PRODUCTS, quoteProducts, mockRequest, mockComplete, sessionMatches, type ProductId } from "./contracts";
+import { validPurpose, fixtureOnly } from "@/lib/authcard/contracts";
 export type OrderView = {
     id: string;
     name: string;
@@ -17,6 +18,7 @@ export type OrderView = {
     payment: string;
     own: boolean;
     createdAt: string;
+    card?: {status: string; authorized: boolean; verified: boolean; purpose: string};
     items: {
         product: ProductId;
         status: string;
@@ -100,12 +102,17 @@ async function service<T = Order>(input: Record<string, unknown>): Promise<T> {
         throw new Response(error.code === "42501" ? "Screening permission or approval changed." : /^(Monthly screening limit exceeded|Independent approver required|Quote expired; cancel and create a new request|Payment setup in progress|Payment requires administrator reconciliation|Provider result unconfirmed; administrator reconciliation required|Order cannot be cancelled|Request binding mismatch)$/.test(error.message) ? error.message : "Screening request could not be confirmed. Resume the same request.", { status: error.code === "42501" ? 403 : 409 });
     return data as T;
 }
-export async function workspace(input: Record<string, unknown>) { const { actor: _actor, ...view } = await authority({ ...input, op: "workspace" }); void _actor; return view; }
+export async function workspace(input: Record<string, unknown>) {
+    const { actor: _actor, ...view } = await authority({ ...input, op: "workspace" }); void _actor;
+    const cards = await authenticatedRpc<Record<string, NonNullable<OrderView['card']>>>("authcard_order_status", {p_input: input});
+    return {...view, orders:view.orders.map(o=>({...o,card:cards[o.id]}))};
+}
 export async function action(input: Record<string, unknown>) {
     const a = await authority(input);
     return service({ ...input, actor: a.actor });
 }
 export async function quote(input: Record<string, unknown>) {
+    if (!validPurpose(input)) throw new Response("Select the intended transaction use and certify both requirements.", {status:400});
     const a = await authority({ ...input, op: "quote" });
     config();
     paymentConfig();
@@ -214,7 +221,9 @@ export async function processPaymentEvent(event: Stripe.Event, stripe: Stripe) {
 async function mockApi(path: string, body: unknown) {
     if (!path.startsWith("/mock/") || !["/mock/user/create", "/mock/user/consent", ...PRODUCTS.map(p => mockRequest(p.id).path)].includes(path))
         throw new Error("Sandbox path denied");
-    const r = await fetch(`${ORIGIN}${path}`, { method: "POST", headers: { Authorization: `Bearer ${config()}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
+    const expected = path === '/mock/user/create' ? { firstName: "Jonathan", lastName: "Doe", dob: "22-05-1990", email: "sandbox@example.invalid" } : path === '/mock/user/consent' ? { userAccessCode: FIXTURE_CODE, isBackgroundDisclosureAccepted: true, GLBPurposeAndDPPAPurpose: true, FCRAPurpose: true, fullName: "Jonathan Doe" } : PRODUCTS.map(p=>mockRequest(p.id)).find(r=>r.path===path)?.body;
+    const safe = fixtureOnly(body,expected);
+    const r = await fetch(`${ORIGIN}${path}`, { method: "POST", headers: { Authorization: `Bearer ${config()}`, "Content-Type": "application/json" }, body: JSON.stringify(safe), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
     if (!r.ok)
         throw new Response("Authenticate test response unconfirmed. Keep this order for administrator reconciliation.", { status: 503 });
     const data = await r.json();

@@ -30,7 +30,8 @@
     "classes:qa": "node --experimental-strip-types --test scripts/classes-roster-qa.mjs",
     "rewards:qa": "node --experimental-strip-types --test scripts/rewards-contract-qa.mjs scripts/rewards-database-qa.mjs scripts/funding-availability-qa.mjs",
     "checkr:qa": "node --experimental-strip-types --test scripts/checkr-contract-qa.mjs scripts/checkr-database-qa.mjs scripts/checkr-provider-qa.mjs",
-    "authenticate:qa": "node --experimental-strip-types --test scripts/authenticate-contract-qa.mjs scripts/authenticate-database-qa.mjs scripts/authenticate-provider-qa.mjs"
+    "authenticate:qa": "node --experimental-strip-types --test scripts/authenticate-contract-qa.mjs scripts/authenticate-database-qa.mjs scripts/authenticate-provider-qa.mjs",
+    "authcard:qa": "node --experimental-strip-types --test scripts/authcard-contract-qa.mjs scripts/authcard-database-qa.mjs scripts/authcard-provider-qa.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
