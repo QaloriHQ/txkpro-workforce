@@ -2,7 +2,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { ActionModal } from "@/components/design-system/action-modal";
-import { PRODUCTS, type ProductId } from "@/lib/authenticate/contracts";
+import { PRODUCTS, PACKAGES, matchingPackage, quoteProducts, type ProductId } from "@/lib/authenticate/contracts";
 import type { Workspace, OrderView } from "@/lib/authenticate/server";
 const Checkout = dynamic(() => import("./checkout").then(m => m.ScreeningCheckout), { ssr: false });
 const money = (c: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(c / 100);
@@ -57,7 +57,7 @@ export function ScreeningWorkspace({ initial, ownerType, ownerId, configured }: 
     finally {
         setBusy(false);
     } }
-    const current = data.orders.find(o => o.id === orderId), base = products.length * 500;
+    const current = data.orders.find(o => o.id === orderId), base = products.reduce((total, id) => total + PRODUCTS.find(p => p.id === id)!.cents, 0);
     function orderControls(o: OrderView) {
         return <><Breakdown o={o}/><p className="card-sub">Context: {o.name} · {o.audience}. Authenticate uses its fixed adult test identity. This does not screen this workspace member.</p>
  <div className="screening-actions">
@@ -82,13 +82,14 @@ export function ScreeningWorkspace({ initial, ownerType, ownerId, configured }: 
  </>;
     }
     return <div className="screening-workspace">
- <section className="screening-overview card"><div><span className="eyebrow">TXKPRO managed account</span><h2>Background checks</h2><p>Choose checks, save bundles and track costs in your workspace.</p></div><span className="pill">Sandbox only</span></section>
+ <section className="screening-overview card"><div><span className="eyebrow">TXKPRO managed account</span><h2>Background checks</h2><p>Choose a package or individual checks, save bundles and track costs in your workspace.</p></div><span className="pill">Sandbox only</span></section>
  <p className="funding-notice">Synthetic checks and Stripe test payments. No real student, employee or applicant is screened. Public provider base prices are used for this test catalog; additional provider charges are simulated at $0. Real checks and minor screening remain unavailable.</p>
+ <p className="card-sub">Results must not be used by TXKPRO or workspaces to determine employment eligibility. Package names describe included checks, not clearance or suitability.</p>
  {!configured ? <p role="status">Authenticate sandbox configuration is unavailable.</p> : null}
  {data.costs ? <div className="screening-costs">{[["Workspace test charges", data.costs.totalCents], ["Provider base costs", data.costs.providerCents], ["TXKPRO fees", data.costs.platformCents], ["Third-party payment fees", data.costs.thirdPartyCents]].map(([label, value]) => <div className="card" key={label}><span className="card-sub">{label}</span><strong>{money(Number(value))}</strong></div>)}</div> : null}
  <div className="screening-actions">
- {data.canOrder ? <ActionModal title="Build a check bundle" triggerLabel="Browse checks" busy={busy} onOpen={() => { setProducts([]); setSubject(""); setRequestKey(crypto.randomUUID()); setLocked(false); setOrderId(""); setSession(null); setDocs(null); setMessage(""); }}>
- {!current ? <><p className="card-sub">Select one or more checks. Your administrator sets spending limits and independent approval requirements.</p><div className="screening-gallery">{PRODUCTS.map(p => <label key={p.id} className={`screening-product ${products.includes(p.id) ? "is-selected" : ""}`}><input type="checkbox" checked={products.includes(p.id)} disabled={busy || locked} onChange={e => setProducts(e.target.checked ? [...products, p.id] : products.filter(id => id !== p.id))}/><span><strong>{p.name}</strong><small>{p.description}</small><b>{money(p.cents)}</b></span></label>)}</div>
+ {data.canOrder ? <ActionModal title="Choose a screening package" triggerLabel="Choose package / checks" busy={busy} onOpen={() => { setProducts([]); setSubject(""); setRequestKey(crypto.randomUUID()); setLocked(false); setOrderId(""); setSession(null); setDocs(null); setMessage(""); }}>
+ {!current ? <><p className="card-sub">Choose a package, then customize the included checks if needed. Your administrator sets spending limits and independent approval requirements.</p><fieldset className="screening-package-picker"><legend>Screening packages</legend><div className="screening-packages">{PACKAGES.map(p => <label key={p.id} className={`screening-product ${matchingPackage(products)?.id === p.id ? "is-selected" : ""}`}><input type="radio" name="screening-package" checked={matchingPackage(products)?.id === p.id} disabled={busy || locked} onChange={() => setProducts([...p.products])}/><span><strong>{p.name}</strong><small>{p.description}</small><ul>{p.products.map(id => <li key={id}>{PRODUCTS.find(product => product.id === id)?.name}</li>)}</ul><b>{money(quoteProducts([...p.products], 0, 0).totalCents)} estimated</b><small>Includes TXKPRO fee; payment fees additional.</small></span></label>)}</div></fieldset><p className="card-sub" role="status">{matchingPackage(products)?.name || (products.length ? "Custom selection" : "No package selected")}. Sandbox estimates; extra provider charges simulated at $0.</p><h3>Customize checks</h3><div className="screening-gallery">{PRODUCTS.map(p => <label key={p.id} className={`screening-product ${products.includes(p.id) ? "is-selected" : ""}`}><input type="checkbox" checked={products.includes(p.id)} disabled={busy || locked} onChange={e => setProducts(e.target.checked ? [...products, p.id] : products.filter(id => id !== p.id))}/><span><strong>{p.name}</strong><small>{p.description}</small><b>{money(p.cents)}</b></span></label>)}</div>
  {data.bundles.length ? <label className="screening-field">Use a saved bundle<select disabled={locked || busy} defaultValue="" onChange={e => { const b = data.bundles.find(b => b.id === e.target.value); if (b)
                 setProducts(b.products); }}><option value="">Choose bundle</option>{data.bundles.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label> : null}
  <label className="screening-field">Workspace member (context only)<select required value={subject} disabled={busy || locked} onChange={e => setSubject(e.target.value)}><option value="">Select member</option>{data.subjects.map(s => <option key={`${s.id}:${s.audience}`} value={`${s.id}:${s.audience}`}>{s.name} · {s.audience}</option>)}</select></label>

@@ -9,6 +9,15 @@ export const PRODUCTS = [
     { id: "mvr", name: "Motor vehicle record", description: "Synthetic driver record; additional DMV fees simulated at $0", cents: 500 },
 ] as const;
 export type ProductId = typeof PRODUCTS[number]["id"];
+// TXKPRO presets use supported Authenticate products; these are not Checkr packages.
+export const PACKAGES = [
+    { id: "basic", name: "Basic", description: "Criminal history", products: ["criminal-seven"] },
+    { id: "standard", name: "Standard", description: "History, employment and education", products: ["criminal-seven", "employment", "education"] },
+    { id: "complete", name: "Complete", description: "All five available checks", products: ["criminal-seven", "employment", "education", "license", "mvr"] },
+] as const satisfies readonly { id: string; name: string; description: string; products: readonly ProductId[] }[];
+export function matchingPackage(products: readonly ProductId[]) {
+    return PACKAGES.find(p => p.products.length === products.length && p.products.every(id => products.includes(id)));
+}
 export function selectedProducts(input: unknown): ProductId[] {
     if (!Array.isArray(input) || !input.length || input.length > PRODUCTS.length || new Set(input).size !== input.length || input.some(id => !PRODUCTS.some(p => p.id === id)))
         throw new Error("Select available checks");
