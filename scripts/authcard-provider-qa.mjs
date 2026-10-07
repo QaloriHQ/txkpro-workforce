@@ -7,7 +7,7 @@ function fixture({minor=false,live=false,badBinding=false,identityUnavailable=fa
  const identity={id:'vs_test',client_reference_id:badBinding?'foreign-card':'card',livemode:live,type:'document',metadata:{kyu_id:'card'},status:'verified',verified_outputs:{dob:{year:minor?2014:1990,month:1,day:1},first_name:'Private Stripe',id_number:'stripe-sensitive'},client_secret:'identity-test'};
  const stripe={identity:{verificationSessions:{list:async()=>{calls.push('identity-capability');if(identityUnavailable)throw Error('unsupported');return{};},retrieve:async()=>{calls.push('identity-retrieve');return identity;},create:async(body,options)=>{calls.push({identity:body,options});return identity;}}},checkout:{sessions:{retrieve:async()=>session,create:async(body,options)=>{calls.push({payment:body,options});return session;}}},paymentIntents:{retrieve:async()=>({})}};
  function Stripe(){return stripe;}
- const service=async i=>{services.push(i);if(['read','provider_read','payment_claim','identity_claim'].includes(i.op))return {...c};if(i.op==='payment_bind')c.payment_session=i.sessionId;if(i.op==='identity_bind')c.identity_session=i.sessionId;if(i.op==='payment_observe')c.payment_status=i.status;if(i.op==='identity_observe'){c.status=i.status;c.adult_verified=i.adult;}return{};};
+ const service=async i=>{services.push(i);if(['read','provider_read','payment_claim','identity_claim'].includes(i.op))return {...c};if(i.op==='details')c.details_encrypted=i.encrypted;if(i.op==='payment_bind')c.payment_session=i.sessionId;if(i.op==='identity_bind')c.identity_session=i.sessionId;if(i.op==='payment_observe')c.payment_status=i.status;if(i.op==='identity_observe'){c.status=i.status;c.adult_verified=i.adult;}return{};};
  const require=name=>name==='server-only'?{}:name==='stripe'?Stripe:name==='./contracts'?contracts:name==='@/lib/rewards/contracts'?{seal,unseal}:name==='@/lib/rewards/funding-documents'?{fundingDocuments}:name==='@/lib/rewards/server'?{authenticatedRpc:async()=>({actor:'student'})}:name==='@/lib/supabase/admin'?{createAdminClient:()=>({rpc:async(_,{p_input})=>({data:await service(p_input)})})}:(()=>{throw Error(name);})();
  const mod={exports:{}};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../lib/authcard/server.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,{module:mod,exports:mod.exports,require,process:{env:{STRIPE_SANDBOX_SECRET_KEY:'sk_test_fixture',STRIPE_SANDBOX_PUBLISHABLE_KEY:'pk_test_fixture',REWARDS_SANDBOX_APP_ORIGIN:contracts.APP_ORIGIN,REWARDS_ENCRYPTION_KEY:key}},Buffer,Response,Date,console});
  return {api:mod.exports,services,calls,c,stripe,identity,session};
@@ -31,4 +31,25 @@ test('KYU signed-event routing binds exact sessions and never trusts stale event
 });
 test('owner editor masks saved SSN and no Stripe data is part of candidate-entered claims',async()=>{
  const f=fixture();const d=await f.api.editDetails();assert.equal(d.hasSSN,true);assert.equal(d.details.ssn,undefined);assert.equal(d.details.firstName,'Candidate');assert.ok(!JSON.stringify(d).includes('stripe-sensitive'));
+});
+test('incomplete details and unchecked adult confirmation never acquire a provider lease or charge',async()=>{
+ const invalid=fixture();await assert.rejects(invalid.api.saveDetails({details:{...contracts.SANDBOX_DETAILS,ssn:'1234'}}),e=>e.status===400);assert.equal(invalid.services.length,0);
+ const f=fixture({paid:false});f.c.details_encrypted=null;
+ await assert.rejects(f.api.payment(),e=>e.status===400);
+ assert.equal(f.services.some(s=>s.op==='payment_claim'),false);assert.equal(f.calls.length,0);
+ const g=fixture();await assert.rejects(g.api.identity({adultConfirmed:false}));assert.equal(g.services.some(s=>s.op==='identity_claim'),false);assert.equal(g.calls.length,0);
+ const h=fixture({paid:false});await assert.rejects(h.api.identity({adultConfirmed:true}));assert.equal(h.services.some(s=>s.op==='identity_claim'),false);assert.equal(h.calls.length,0);
+});
+test('candidate can prepare sample details, pay once, complete test verification and reconcile independently',async()=>{
+ const f=fixture({paid:false});f.identity.status='requires_input';
+ await f.api.saveDetails({details:contracts.SANDBOX_DETAILS});
+ assert.equal(f.services.filter(s=>s.op==='details').length,1);
+ const pay=await f.api.payment();assert.equal(pay.clientSecret,'test-secret');
+ f.session.payment_status='paid';await f.api.refresh();assert.equal(f.c.payment_status,'paid');
+ const verification=await f.api.identity({adultConfirmed:true});assert.equal(verification.identitySecret,'identity-test');
+ const created=f.calls.find(c=>c.identity);assert.equal(created.identity.options.document.require_matching_selfie,true);
+ assert.deepEqual(Object.keys(created.identity.metadata),['kyu_id']);
+ f.identity.status='verified';await f.api.refresh();assert.equal(f.c.status,'verified');assert.equal(f.c.adult_verified,true);
+ await f.api.payment();assert.equal(f.calls.filter(c=>c.payment).length,1);
+ assert.ok(!JSON.stringify(f.calls).includes('123456789'));
 });

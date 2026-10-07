@@ -2,6 +2,7 @@
 
 import {
   useId,
+  useEffect,
   useRef,
   type ComponentPropsWithRef,
   type ReactNode,
@@ -15,6 +16,7 @@ export function ActionModal({
   triggerContent,
   description,
   busy = false,
+  suspended = false,
   onOpen,
   onClose,
   className,
@@ -25,6 +27,7 @@ export function ActionModal({
   triggerContent?: ReactNode;
   description?: string;
   busy?: boolean;
+  suspended?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
   className?: string;
@@ -33,6 +36,16 @@ export function ActionModal({
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const resumeDialog = useRef(false);
+  useEffect(() => {
+    if (suspended && dialog.current?.open) {
+      resumeDialog.current = true;
+      dialog.current.close();
+    } else if (!suspended && resumeDialog.current) {
+      resumeDialog.current = false;
+      dialog.current?.showModal();
+    }
+  }, [suspended]);
   const isPending = () =>
     busy ||
     Boolean(dialog.current?.querySelector('[data-form-pending="true"]'));
@@ -68,6 +81,7 @@ export function ActionModal({
           if (isPending()) event.preventDefault();
         }}
         onClose={() => {
+          if (resumeDialog.current) return;
           onClose?.();
           trigger.current?.focus();
         }}
