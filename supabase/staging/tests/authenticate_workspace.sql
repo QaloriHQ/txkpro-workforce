@@ -25,6 +25,7 @@ begin
  base:=jsonb_build_object('ownerType','institution','ownerId',current_setting('txkpro.qa.scope'),'actor',current_setting('txkpro.qa.actor'));
  perform public.auth_screening_service(base||jsonb_build_object('op','permission','userId',current_setting('txkpro.qa.actor'),'canOrder',true,'canReview',true,'limit',1000000,'threshold',0));
  q:=base||jsonb_build_object('op','quote','subject',current_setting('txkpro.qa.actor'),'audience','staff','products',jsonb_build_array('employment'),'providerCents',500,'platformCents',500,'thirdPartyCents',0,'totalCents',1000,'pricingVersion','authenticate-public-usd-mock-2026-10-06-v1','paymentConfiguration','pmc_ROLLBACK_ONLY','requestKey',gen_random_uuid());
+ q:=q||jsonb_build_object('purpose','fraud_prevention','transactionCertified',true,'nonEligibilityCertified',true);
  q2:=public.auth_screening_service(q);
  if q2->>'status'<>'pending_approval' or q2->>'id'<>(public.auth_screening_service(q)->>'id') then raise exception 'Reservation retry/approval state failed';end if;
  denied:=false;begin perform public.auth_screening_service(base||jsonb_build_object('op','approve','orderId',q2->>'id'));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Self approval allowed';end if;
