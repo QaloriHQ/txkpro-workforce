@@ -28,7 +28,7 @@ async function fixture(){
  insert into wf_student_profiles values('stu','student','school');insert into wf_screening_permissions values('tenant','owner',true,true,10000,5000),('tenant','reviewer',true,true,10000,5000);
  `);await db.exec(sql);
  await db.exec(readFileSync(new URL('../supabase/staging/migrations/20261007011500_workforce_authenticate_indexes.sql',import.meta.url),'utf8'));
- await db.exec(readFileSync(new URL('../supabase/staging/migrations/20261007210024_workforce_authcard.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../supabase/staging/migrations/20261007212241_workforce_authcard.sql',import.meta.url),'utf8'));
  const svc=async input=>{await db.exec('reset role;set role service_role');return (await db.query('select public.auth_screening_service($1::jsonb) result',[JSON.stringify(input)])).rows[0].result;};
  const auth=async(input,id=owner)=>{await db.exec(`reset role;select set_config('test.auth','${id}',false);set role authenticated`);return (await db.query('select public.auth_screening_authority($1::jsonb) result',[JSON.stringify(input)])).rows[0].result;};
  const card=async(input,id=student)=>{await db.exec(`reset role;select set_config('test.auth','${id}',false);set role authenticated`);return (await db.query('select public.authcard_self($1::jsonb) result',[JSON.stringify(input)])).rows[0].result;};
