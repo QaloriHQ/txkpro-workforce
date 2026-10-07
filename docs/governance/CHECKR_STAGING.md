@@ -1,5 +1,7 @@
 # Checkr staging integration — #244
 
+**Historical increment:** Owner reverted to Authenticate before Checkr API activation. Current workspace flow is documented in [AUTHENTICATE_STAGING.md](AUTHENTICATE_STAGING.md). Checkr records and gates are retained; this setup is no longer shown in active screening pages.
+
 ## Scope and confirmations
 
 User authorized Checkr implementation, staging only. Branch `feat/checkr-sandbox` targets `staging`; Supabase `qwxlgzlkaeaqfzjodtis`; Vercel TXKPRO Workforce staging alias. Production remains untouched. Project context/preflight scripts could not run because PROJECTS_TOKEN is unavailable in this execution environment. Continue the existing approved Project-access exception; do not claim an automated Ready pass, change Project status, or declare Done. Other verification gates remain. Agent usage telemetry start failed because `gh` is unavailable; usage was not fabricated.

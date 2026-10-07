@@ -31,6 +31,7 @@ export type InstitutionSection =
   | "dashboard"
   | "students"
   | "incentives"
+  | "screening"
   | "classes"
   | "directory"
   | "programs"
@@ -61,6 +62,7 @@ const groups: Array<{ label: string; items: Item[] }> = [
     items: [
       { key: "dashboard", capability: "dashboard", href: "/institution", label: "Dashboard", icon: HomeIcon },
       { key: "students", capability: "students", href: "/institution/students", label: "Students", icon: UsersIcon },
+      { key: "screening", capability: "students", href: "/institution/screening", label: "Background Checks", icon: CheckBadgeIcon },
       { key: "incentives", capability: "students", href: "/institution/incentives", label: "Incentives", icon: ChartBarIcon },
       { key: "classes", capability: "students", href: "/institution/classes", label: "Classes & Rosters", icon: AcademicCapIcon },
       { key: "directory", capability: "students", href: "/institution/directory", label: "Institution Directory", icon: UserGroupIcon },

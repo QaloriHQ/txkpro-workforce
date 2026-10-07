@@ -1,6 +1,7 @@
 import "server-only";
 import { validFundingDiagnostic } from "./funding-diagnostics";
 import Stripe from "stripe";
+import { processPaymentEvent } from "@/lib/authenticate/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   authenticatedRpc,
@@ -498,6 +499,7 @@ export async function fundingWebhook(raw: string, signature: string) {
   } catch {
     throw new Response("Invalid webhook signature", { status: 400 });
   }
+  if (await processPaymentEvent(event, stripe)) return;
   await processFundingEvent(event);
 }
 
