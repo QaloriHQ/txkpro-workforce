@@ -1,0 +1,19 @@
+"use client";
+import {useState} from "react";
+import {ActionModal} from "@/components/design-system/action-modal";
+import type {ScreeningPolicy} from "@/lib/authenticate/server";
+export function ScreeningPolicyPanel({policy,busy,onAction}:{policy:ScreeningPolicy;busy:boolean;onAction:(op:string,extra:Record<string,unknown>)=>Promise<boolean>}) {
+ const [affirmative,setAffirmative]=useState(false),[feedback,setFeedback]=useState('');
+ const latest=policy.history[0];
+ return <section className="card"><h3>Employer screening policy</h3><p><span className="pill">{policy.state}</span> · Current version {policy.version}</p>
+ <p className="card-sub">An authorized Employer owner or administrator accepts for this workspace. Candidate sharing, order authorization and screening permissions remain separate requirements.</p>
+ {policy.state!=="accepted"?<p role="status">New screening requests, checkout and submissions are paused until the current policy is accepted.{!policy.canAccept?" Ask your workspace owner or administrator to review it.":""}</p>:null}
+ <div className="screening-actions"><ActionModal title="Employer screening policy" triggerLabel="Review policy" busy={busy} onOpen={()=>{setAffirmative(false);setFeedback('');}}>
+ <h3>{policy.title}</h3><p className="card-sub">Version {policy.version} · Scope: this Employer workspace</p>
+ <div className="policy-document">{policy.body.split('\n\n').map((paragraph,n)=><p key={n}>{paragraph}</p>)}</div>
+ {policy.canAccept && policy.state!=="accepted"?<form onSubmit={async e=>{e.preventDefault();const ok=await onAction('policy_accept',{policyId:policy.policyId,version:policy.version,hash:policy.hash,affirmative,correlationId:crypto.randomUUID()});setFeedback(ok?'Acceptance recorded. Close to return to your workspace.':'Acceptance unconfirmed. Refresh and review the current policy.');setAffirmative(false);}}><label className="screening-consent"><input type="checkbox" required checked={affirmative} disabled={busy} onChange={e=>setAffirmative(e.target.checked)}/><span>I am authorized to represent this Employer workspace and affirmatively accept this policy, version {policy.version}.</span></label><button className="button button-dark" disabled={busy||!affirmative}>Accept policy</button></form>:<p role="status">{policy.state==='accepted'?'Current policy accepted. Ordering and Candidate authorization requirements still apply.':'Only an authorized workspace administrator can accept.'}</p>}
+ {feedback?<p role="status">{feedback}</p>:null}</ActionModal>
+ <ActionModal title="Policy acceptance history" triggerLabel="Acceptance history" busy={busy}>{policy.history.length?policy.history.map(h=><article className="card" key={h.id}><h4>Version {h.version}</h4><p>Accepted by {h.actor} · {new Date(h.acceptedAt).toLocaleString()}</p><p>{h.revokedAt?`Revoked ${new Date(h.revokedAt).toLocaleString()}`:h.version!==policy.version?'Superseded by current version':'Recorded acceptance'}</p><details><summary>Accepted policy text</summary><div className="policy-document">{h.body.split('\n\n').map((p,n)=><p key={n}>{p}</p>)}</div></details></article>):<p>No acceptance recorded.</p>}</ActionModal>
+ {policy.canAccept&&latest&&!latest.revokedAt?<ActionModal title="Revoke policy acceptance" triggerLabel="Revoke acceptance" busy={busy} onOpen={()=>setFeedback('')}><p>Future screening requests, checkout and submissions will pause. Submitted checks, invoices and historical evidence remain recorded.</p><button className="button" disabled={busy} onClick={async()=>{const ok=await onAction('policy_revoke',{acceptanceId:latest.id,correlationId:crypto.randomUUID()});setFeedback(ok?'Revocation recorded. Future screening is paused.':'Revocation unconfirmed. Refresh this workspace.');}}>Confirm revocation</button>{feedback?<p role="status">{feedback}</p>:null}</ActionModal>:null}
+ </div></section>;
+}

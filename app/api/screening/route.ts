@@ -1,5 +1,5 @@
 import { boundedRequest, classError } from "@/lib/classes/request";
-import { workspace, quote, checkout, status, documents, dispatch, action } from "@/lib/authenticate/server";
+import { workspace, quote, checkout, status, documents, dispatch, action, policyAction } from "@/lib/authenticate/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 export async function POST(request: Request) {
@@ -11,6 +11,11 @@ export async function POST(request: Request) {
             throw new Response("Workspace required", { status: 400 });
         let result;
         switch (input.op) {
+            case "policy":
+            case "policy_accept":
+            case "policy_revoke":
+                result = await policyAction(input);
+                break;
             case "workspace":
                 result = await workspace(input);
                 break;

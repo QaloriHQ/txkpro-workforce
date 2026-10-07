@@ -162,3 +162,6 @@ Official placement requires an authorized Employer or permitted workforce operat
 
 W12-16A OWNER-APPROVED EXPANSION — 2026-10-04 (#223)
 STUDENT_PORTFOLIO_CHANGED is a publication/portfolio audit action, not a competency or hiring event. Source: active Student self membership; target student_portfolio. Payload: operation and record UUID only. Public profile reads curate opt-in canonical evidence and public projects/files; Employer file access reuses existing consent/talent scope. No skill, credential, placement, discoverability or reward state is implied. Contract: docs/W12_16A_STUDENT_PORTFOLIO.md.
+
+APPENDIX C — OWNER APPROVED 2026-10-07
+EMPLOYER_SCREENING_POLICY_ACCEPTED / EMPLOYER_SCREENING_POLICY_REVOKED: server-only Employer-scoped policy audit; acceptance payload includes actor_user_id, employer_id, policy_id, policy_version, accepted_at, scope, result and correlation_id. Separate from Candidate authorization.
