@@ -1,22 +1,22 @@
 -- Additive staging-only synthetic Authenticate workflow. Real checks have no application execution path.
 create table security.wf_auth_permissions(
- owner_type text not null check(owner_type in ('institution','employer')),owner_id text not null,user_id text not null references public.users,
+ owner_type text not null check(owner_type in ('institution','employer')),owner_id text not null,user_id text not null references public.users(user_id),
  can_order boolean not null default false,can_review boolean not null default false,
  monthly_limit_cents integer not null check(monthly_limit_cents between 0 and 1000000),approval_above_cents integer not null check(approval_above_cents between 0 and 1000000),
  primary key(owner_type,owner_id,user_id)
 );
 -- Preserve explicit employer grants. Subsequent grants are managed by this workflow.
 insert into security.wf_auth_permissions select 'employer',employer_id,user_id,can_order,can_review,monthly_limit_cents,approval_above_cents from public.wf_screening_permissions;
-create table security.wf_auth_bundles(id uuid primary key default gen_random_uuid(),owner_type text not null,owner_id text not null,name text not null check(length(name) between 1 and 80),products jsonb not null,created_by text not null references public.users);
+create table security.wf_auth_bundles(id uuid primary key default gen_random_uuid(),owner_type text not null,owner_id text not null,name text not null check(length(name) between 1 and 80),products jsonb not null,created_by text not null references public.users(user_id));
 create table security.wf_auth_orders(
  id uuid primary key default gen_random_uuid(),owner_type text not null check(owner_type in ('employer','institution')),owner_id text not null,
- actor text not null references public.users,subject text not null references public.users,audience text not null check(audience in ('applicant','employee','student','staff')),
+ actor text not null references public.users(user_id),subject text not null references public.users(user_id),audience text not null check(audience in ('applicant','employee','student','staff')),
  products jsonb not null,provider_cents integer not null check(provider_cents>0),platform_cents integer not null check(platform_cents=greatest(500,ceil(provider_cents::numeric/10)::integer)),
  third_party_cents integer not null check(third_party_cents>=0),total_cents integer not null check(total_cents=provider_cents+platform_cents+third_party_cents),pricing_version text not null,payment_configuration text not null,
  status text not null check(status in ('pending_approval','reserved','processing','complete','cancelled')),
  payment_status text not null default 'quoted' check(payment_status in ('quoted','pending','paid','failed','expired','hold')),
  request_key uuid not null unique,created_at timestamptz not null default now(),expires_at timestamptz not null default now()+interval '30 minutes',
- reserved_month date not null default date_trunc('month',now())::date,reviewer text references public.users,
+ reserved_month date not null default date_trunc('month',now())::date,reviewer text references public.users(user_id),
  stripe_session text unique,checkout_attempted_at timestamptz,checkout_lease uuid,checkout_lease_until timestamptz
 );
 create table security.wf_auth_items(order_id uuid not null references security.wf_auth_orders,product text not null,attempted_at timestamptz,complete_at timestamptz,lease uuid,primary key(order_id,product));

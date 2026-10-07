@@ -9,7 +9,8 @@ const owner='00000000-0000-4000-8000-000000000001',reviewer='00000000-0000-4000-
 async function fixture(){
  const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role;create schema security;create schema auth;
  create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.auth',true),'')::uuid$$;
- create table users(user_id text primary key,auth_user_id uuid,email text,first_name text,last_name text,status text);
+ create table users(user_id text unique not null,auth_user_id uuid,email text,first_name text,last_name text,status text);
+ alter table users add column id uuid primary key default gen_random_uuid();
  create table contractors(contractor_id text primary key,approval_status text,account_status text);
  create table wf_institutions(institution_id text primary key,active boolean);
  create table app_role_memberships(user_id text,auth_user_id uuid,scope_type text,scope_id text,status text,role text);
@@ -21,7 +22,7 @@ async function fixture(){
  create function security.pro_actor() returns text language sql as $$select user_id from public.users where auth_user_id=auth.uid() and status='active'$$;
  create function security.student_referral_consent_status(s text,i text) returns jsonb language sql as $$select jsonb_build_object('allowed',current_setting('test.consent',true)<>'no')$$;
  ${subject}
- insert into users values('owner','${owner}','owner@example.test','Owner','One','active'),('reviewer','${reviewer}','r@example.test','Reviewer','One','active'),('other','${other}','o@example.test','Other','One','active'),('student','${student}','s@example.test','Student','One','active');
+ insert into users(user_id,auth_user_id,email,first_name,last_name,status) values('owner','${owner}','owner@example.test','Owner','One','active'),('reviewer','${reviewer}','r@example.test','Reviewer','One','active'),('other','${other}','o@example.test','Other','One','active'),('student','${student}','s@example.test','Student','One','active');
  insert into contractors values('tenant','approved','active'),('other','approved','active');insert into wf_institutions values('school',true),('other-school',true);
  insert into app_role_memberships values('owner','${owner}','employer','tenant','active','employer_owner'),('reviewer','${reviewer}','employer','tenant','active','recruiter'),('other','${other}','employer','other','active','employer_owner'),('student','${student}','employer','tenant','active','employer_employee'),('owner','${owner}','institution','school','active','institution_admin'),('reviewer','${reviewer}','institution','school','active','instructor'),('other','${other}','institution','other-school','active','institution_admin');
  insert into wf_student_profiles values('stu','student','school');insert into wf_screening_permissions values('tenant','owner',true,true,10000,5000),('tenant','reviewer',true,true,10000,5000);
