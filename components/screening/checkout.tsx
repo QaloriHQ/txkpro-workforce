@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { CheckoutElementsProvider, PaymentElement, useCheckoutElements } from "@stripe/react-stripe-js/checkout";
+import { CheckoutElementsProvider, ContactDetailsElement, PaymentElement, useCheckoutElements } from "@stripe/react-stripe-js/checkout";
 type Props = {
     apiPath?: "/api/screening" | "/api/authcard";
     orderId: string;
@@ -45,7 +45,7 @@ function Payment(p: Props) {
         return <p role="status">Loading secure test payment…</p>;
     if (result.type === "error")
         return <button className="button" onClick={p.onResume}>Reload this payment</button>;
-    return <form onSubmit={async (e) => { e.preventDefault(); if (busy || uncertain || !checked || !result.checkout.canConfirm)
+    return <form onSubmit={async (e) => { e.preventDefault(); if (busy || uncertain || !checked)
         return; setBusy(true); p.onBusy(true); try {
         const v = await result.checkout.validateElements();
         if (v.type === "error") {
@@ -68,7 +68,7 @@ function Payment(p: Props) {
         setBusy(false);
         p.onBusy(false);
     } }}>
- {!uncertain ? <><PaymentElement /><p className="card-sub">Sandbox payment only. No real charge or real background check.</p><button type="submit" className="button button-dark" disabled={!checked || busy || !result.checkout.canConfirm}>{busy ? "Confirming…" : `Pay ${result.checkout.total.total.amount} (test)`}</button></> : <><button type="button" className="button" disabled={busy} onClick={async () => { setBusy(true); p.onBusy(true); try {
+ {!uncertain ? <><ContactDetailsElement /><PaymentElement /><p className="card-sub">Sandbox payment only. No real charge or real background check.</p>{!result.checkout.canConfirm?<p className="card-sub" role="status">Complete the receipt email and payment fields, then select Pay to validate them.</p>:null}<button type="submit" className="button button-dark" disabled={!checked || busy}>{!checked ? "Checking payment status…" : busy ? "Confirming…" : `Pay ${result.checkout.total.total.amount} (test)`}</button></> : <><button type="button" className="button" disabled={busy} onClick={async () => { setBusy(true); p.onBusy(true); try {
         await check();
     }
     finally {

@@ -61,3 +61,18 @@ export type CardRequest = {
 export type CardWorkspace = {
   status: string; paid: boolean; ready: boolean; name: string; requests: CardRequest[];
 };
+
+export type ProgressStep = {id:string;label:string;complete:boolean;detail:string};
+export function setupProgress(card: CardWorkspace): ProgressStep[] {
+  return [
+    {id:'details',label:'Private information',complete:card.ready,detail:card.ready?'Prepared':'Save your test information'},
+    {id:'payment',label:'One-time fee',complete:card.paid,detail:card.paid?'Payment confirmed':'Pay or resume the $5 test fee'},
+    {id:'identity',label:'Identity verification',complete:card.status==='verified'&&card.paid&&card.ready,detail:card.status==='verified'&&card.paid&&card.ready?'Verified (sandbox)':card.status==='processing'?'Stripe is processing':card.status==='revoked'?'Card deactivated':card.status==='cancelled'?'Verification cancelled':card.paid?'Complete Stripe test verification':'Available after payment'},
+  ];
+}
+export function requestProgress(request: CardRequest): ProgressStep[] {
+  return [
+    {id:'sharing',label:'Share AuthCard',complete:request.status==='shared',detail:request.status==='shared'?'Access shared':request.status==='revoked'?'Access revoked':request.status==='declined'?'Request declined':'Review sharing request'},
+    {id:'authorization',label:'Authorize order',complete:request.status==='shared'&&request.consent==='authorized',detail:request.status==='shared'&&request.consent==='authorized'?'Order authorized':request.consent==='changed'?'Disclosures changed':'Review and accept all disclosures'},
+  ];
+}
