@@ -17,6 +17,7 @@ export function ActionModal({
   description,
   busy = false,
   suspended = false,
+  openSignal = 0,
   onOpen,
   onClose,
   className,
@@ -28,6 +29,7 @@ export function ActionModal({
   description?: string;
   busy?: boolean;
   suspended?: boolean;
+  openSignal?: number;
   onOpen?: () => void;
   onClose?: () => void;
   className?: string;
@@ -37,6 +39,7 @@ export function ActionModal({
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const resumeDialog = useRef(false);
+  const signalTrigger = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (suspended && dialog.current?.open) {
       resumeDialog.current = true;
@@ -46,6 +49,16 @@ export function ActionModal({
       dialog.current?.showModal();
     }
   }, [suspended]);
+  const lastOpenSignal=useRef(openSignal);
+  useEffect(() => {
+    if (openSignal!==lastOpenSignal.current) {
+      lastOpenSignal.current=openSignal;
+      if(!busy&&!suspended&&!dialog.current?.open) {
+        signalTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        onOpen?.();dialog.current?.showModal();
+      }
+    }
+  },[openSignal,busy,suspended,onOpen]);
   const isPending = () =>
     busy ||
     Boolean(dialog.current?.querySelector('[data-form-pending="true"]'));
@@ -65,6 +78,7 @@ export function ActionModal({
         aria-controls={id}
         disabled={busy}
         onClick={() => {
+          signalTrigger.current = null;
           onOpen?.();
           dialog.current?.showModal();
         }}
@@ -83,7 +97,9 @@ export function ActionModal({
         onClose={() => {
           if (resumeDialog.current) return;
           onClose?.();
-          trigger.current?.focus();
+          if (signalTrigger.current?.isConnected) signalTrigger.current.focus();
+          else trigger.current?.focus();
+          signalTrigger.current = null;
         }}
       >
         <header className="txk-action-dialog-header">

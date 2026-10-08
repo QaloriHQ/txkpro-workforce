@@ -44,3 +44,24 @@ test('progress uses confirmed prerequisites and clears current completion after 
  for(const r of [{...request,status:'revoked'},{...request,status:'declined'}])assert.equal(requestProgress(r).some(s=>s.complete),false);
  assert.equal(requestProgress({...request,consent:'changed'}).find(s=>s.id==='authorization').complete,false);
 });
+function authCardFixture({status='requires_input',ready=true,paid=true,fail=false}={}) {
+ const state=[],effects=[],calls=[],timers=[];let cursor=0;
+ const ActionModal=()=>null;
+ const react={useState:initial=>{const i=cursor++;if(!(i in state))state[i]=initial;return [state[i],value=>{state[i]=typeof value==='function'?value(state[i]):value;}];},useEffect:fn=>effects.push(fn)};
+ const initial={status,ready,paid,name:'Fixture',requests:[]};
+ const mod={exports:{}};const code=ts.transpileModule(readFileSync(new URL('../components/authcard/workspace.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
+ new Function('require','module','exports','fetch','setTimeout','clearTimeout',code)(name=>name==='react'?react:name==='next/dynamic'?()=>()=>null:name==='@stripe/stripe-js'?{loadStripe:async()=>null}:name==='@/components/design-system/action-modal'?{ActionModal}:name==='@/lib/authcard/contracts'?{setupProgress,requestProgress,PURPOSES:[]}:require(name),mod,mod.exports,async(_,{body})=>{const {op}=JSON.parse(body);calls.push(op);return {ok:!fail,json:async()=>fail?{error:'Results access needs support.'}:op==='workspace'?{...initial,status:'verified'}:{message:'Synchronized'}};},fn=>{timers.push(fn);return timers.length;},()=>{});
+ function render(){cursor=0;effects.length=0;return mod.exports.AuthCardWorkspace({initial,configured:true});}
+ return {render,effects,calls,timers,state,ActionModal};
+}
+test('progress actions open the corresponding existing form and respect prerequisites',()=>{
+ const f=authCardFixture({ready:false,paid:false});let nodes=flatten(f.render());const progress=nodes.find(n=>n.props.label==='AuthCard setup progress');
+ assert.equal(progress.props.actions.payment.props.disabled,true);assert.equal(flatten(progress.props.actions.identity).find(n=>n.type==='button').props.disabled,true);
+ progress.props.actions.details.props.onClick();nodes=flatten(f.render());assert.equal(nodes.find(n=>n.type===f.ActionModal&&n.props.title==='Private screening information').props.openSignal,1);
+ const paid=authCardFixture();const p=flatten(paid.render()).find(n=>n.props.label==='AuthCard setup progress');p.props.actions.payment.props.onClick();assert.equal(flatten(paid.render()).find(n=>n.type===paid.ActionModal&&n.props.title==='KYU invoice & receipt').props.openSignal,1);
+ flatten(p.props.actions.identity).find(n=>n.type==='button').props.onClick();assert.equal(flatten(paid.render()).find(n=>n.type===paid.ActionModal&&n.props.title==='KYU identity verification').props.openSignal,1);
+});
+test('returning to pending AuthCard reconciles provider then reloads verified progress automatically',async()=>{
+ const f=authCardFixture();f.render();f.effects.forEach(fn=>fn());await new Promise(r=>setImmediate(r));assert.deepEqual(f.calls,['refresh','workspace']);assert.equal(f.state[0].status,'verified');assert.equal(f.timers.length,0);
+ const failed=authCardFixture({fail:true});failed.render();failed.effects.forEach(fn=>fn());await new Promise(r=>setImmediate(r));assert.equal(failed.state[0].status,'requires_input');assert.equal(failed.state[2],'Results access needs support.');assert.equal(failed.timers.length,0);
+});

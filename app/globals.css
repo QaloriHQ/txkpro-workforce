@@ -1422,3 +1422,6 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 .authcard-progress-steps li div > span { display:block; color:var(--txk-text-muted); font-size:12px; margin-top:3px; overflow-wrap:anywhere; }
 @media (max-width:560px) { .authcard-progress-steps { grid-template-columns:1fr; } }
 @media (prefers-reduced-motion:reduce) { .authcard-progress-track > span { transition:none; } }
+
+.authcard-progress-steps .button {margin-top:10px;min-height:44px;font-size:12px;padding:10px 12px;}
+.authcard-progress-steps .screening-actions {gap:8px;}
