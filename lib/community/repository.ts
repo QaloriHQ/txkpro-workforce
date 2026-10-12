@@ -1,6 +1,6 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { CommunityFeedResult, CommunityFilter, FeedCursor } from "@/lib/community/types";
+import type { CommunityComment, CommunityFeedResult, CommunityFilter, FeedCursor } from "@/lib/community/types";
 
 function message(error: { message?: string } | null, fallback: string) {
   if (!error) return fallback;
@@ -35,6 +35,31 @@ export async function communityToggle(name: "community_like_toggle" | "community
   const { data, error } = await supabase.rpc(name, { p_post_id: postId });
   if (error) throw new Response(message(error, "The action could not be completed."), { status: 400 });
   return data as { active: boolean; count?: number };
+}
+
+export async function communityComments(postId: string) {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("community_comments", { p_post_id: postId, p_limit: 50 });
+  if (error) throw new Response(message(error, "Comments could not be loaded."), { status: 400 });
+  return (data ?? []) as CommunityComment[];
+}
+
+export async function createCommunityComment(postId: string, body: string, parentId: string | null) {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("community_comment_create", {
+    p_post_id: postId, p_body: body, p_parent_comment_id: parentId,
+  });
+  if (error) throw new Response(message(error, "The comment could not be published."), { status: 400 });
+  return data as { id: string; parentId: string | null; body: string; createdAt: string };
+}
+
+export async function toggleCommunityShare(postId: string, shareType: "share" | "repost", commentary?: string) {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("community_share_toggle", {
+    p_post_id: postId, p_share_type: shareType, p_commentary: commentary || null,
+  });
+  if (error) throw new Response(message(error, "The share action could not be completed."), { status: 400 });
+  return data as { active: boolean; shareType: "share" | "repost"; count: number };
 }
 
 export async function followCommunityAuthor(userId: string) {
