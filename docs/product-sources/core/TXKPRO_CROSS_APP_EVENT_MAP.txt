@@ -165,3 +165,7 @@ STUDENT_PORTFOLIO_CHANGED is a publication/portfolio audit action, not a compete
 
 APPENDIX C — OWNER APPROVED 2026-10-07
 EMPLOYER_SCREENING_POLICY_ACCEPTED / EMPLOYER_SCREENING_POLICY_REVOKED: server-only Employer-scoped policy audit; acceptance payload includes actor_user_id, employer_id, policy_id, policy_version, accepted_at, scope, result and correlation_id. Separate from Candidate authorization.
+
+APPENDIX D — COMM-02 OWNER APPROVED 2026-10-12 (#266)
+COMMUNITY_POST_PUBLISHED: Source is an active authenticated Workforce member. Target is the canonical community_post/profile_post ID. Audit payload contains visibility and topic only; it never contains title, body or media. Consumers may refresh the signed-in feed. Search rendering/indexing is owned by COMM-03.
+COMMUNITY_POST_REPORTED: Source is an active authenticated Workforce member. Target is the canonical community_post/profile_post ID. Metadata contains report ID and bounded reason. Consumers may enqueue moderation review; no automatic removal, reward, notification or hiring-state consequence is implied.
