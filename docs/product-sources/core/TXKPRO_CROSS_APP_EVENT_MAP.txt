@@ -169,3 +169,9 @@ EMPLOYER_SCREENING_POLICY_ACCEPTED / EMPLOYER_SCREENING_POLICY_REVOKED: server-o
 APPENDIX D — COMM-02 OWNER APPROVED 2026-10-12 (#266)
 COMMUNITY_POST_PUBLISHED: Source is an active authenticated Workforce member. Target is the canonical community_post/profile_post ID. Audit payload contains visibility and topic only; it never contains title, body or media. Consumers may refresh the signed-in feed. Search rendering/indexing is owned by COMM-03.
 COMMUNITY_POST_REPORTED: Source is an active authenticated Workforce member. Target is the canonical community_post/profile_post ID. Metadata contains report ID and bounded reason. Consumers may enqueue moderation review; no automatic removal, reward, notification or hiring-state consequence is implied.
+
+APPENDIX E — W12-20 OWNER APPROVED 2026-10-12 (#59)
+COMMUNITY_COMMENT_PUBLISHED: Source is an active authenticated Workforce member. Target is the canonical comment ID; metadata contains the post ID and optional parent comment ID, never comment text. Consumers may refresh comment and profile-activity projections.
+COMMUNITY_REACTION_SET / COMMUNITY_REACTION_WITHDRAWN: Source is an active authenticated Workforce member. Target is the canonical post ID; metadata contains reaction type only.
+COMMUNITY_SHARE_CONFIRMED / COMMUNITY_SHARE_WITHDRAWN: Source is an active authenticated Workforce member. Target is the canonical post ID; metadata contains share or repost type only. W12-20 records internal confirmed activity; copying or opening an external target alone is not a confirmed external publication.
+These events update community/profile read models only. They do not change private Workforce state, send notifications, or award PRO Points in W12-20. Delayed/replayed consumers must derive current state from the unique canonical interaction records.

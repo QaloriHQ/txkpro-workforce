@@ -2,6 +2,7 @@ export type CommunityFilter = "recent" | "following" | "nearby" | "topic";
 
 export type CommunityPost = {
   id: string;
+  postType: "post" | "article" | "update";
   authorUserId: string;
   authorName: string;
   authorImageUrl: string | null;
@@ -17,8 +18,21 @@ export type CommunityPost = {
   commentCount: number;
   shareCount: number;
   viewerLiked: boolean;
+  viewerShared: boolean;
+  viewerReposted: boolean;
   viewerSaved: boolean;
   viewerFollowsAuthor: boolean;
+  isOwn: boolean;
+};
+
+export type CommunityComment = {
+  id: string;
+  parentId: string | null;
+  body: string;
+  createdAt: string;
+  authorName: string;
+  authorImageUrl: string | null;
+  authorProfilePath: string | null;
   isOwn: boolean;
 };
 

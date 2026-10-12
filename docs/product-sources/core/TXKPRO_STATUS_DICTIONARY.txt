@@ -192,3 +192,9 @@ COMMUNITY_POST_STATUS: draft, published, hidden, removed (existing canonical pro
 COMMUNITY_POST_VISIBILITY: public, private, unlisted. COMM-02 creates public posts only; group audience is deferred.
 COMMUNITY_REPORT_STATUS: submitted, reviewing, resolved, dismissed.
 Community preferences, follows and saves are not workflow statuses. Likes/follows/saves do not create PRO Point ledger entries in COMM-02.
+
+APPENDIX E — W12-20 OWNER APPROVED 2026-10-12 (#59)
+PROFILE_POST_TYPE: post, article, update.
+PROFILE_COMMENT_STATUS: published, hidden, removed.
+PROFILE_INTERACTION_TYPE: like, comment, share, repost. A withdrawn like/share/repost removes the current canonical interaction record while immutable audit evidence remains. Hiding public activity history changes presentation only and never deletes canonical interaction records.
+Only published public posts from active Workforce authors are interactable. Interaction records do not expose private Workforce events and do not award PRO Points in W12-20.

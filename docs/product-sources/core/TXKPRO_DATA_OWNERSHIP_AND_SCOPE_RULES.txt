@@ -161,3 +161,7 @@ KYU/AuthCard sandbox (owner approved 2026-10-07, #257): active users own encrypt
 
 APPENDIX C — OWNER APPROVED 2026-10-07
 Employer screening policy: platform owns immutable policy versions; Employer-scoped acceptance is written by the server for an active authorized owner/admin. Private evidence has no direct API-role table grants; Candidate authorization remains separate. Contract: docs/governance/AUTHCARD_STAGING.md.
+
+APPENDIX D — W12-20 OWNER APPROVED 2026-10-12 (#59)
+Profile/community posts are owned by their natural-person Workforce author in the canonical wf_profile_posts store. Comments, reactions, shares and reposts are owned by their acting user and attributable to that active account. Direct table mutation remains denied; server RPCs derive actor identity from Auth plus an active Workforce membership.
+Public feeds read only published/public post records and curated public bylines. Private profile status suppresses the profile link and headline but does not erase the minimum display-name/avatar byline approved for a public post. Profile activity controls are presentation preferences; hiding all activity or an individual category never deletes canonical interaction or audit records. Private Workforce workflow events, application data, readiness, interviews, retention/cases, notes and Employer-private data are never social-content sources.
