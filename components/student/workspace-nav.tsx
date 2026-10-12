@@ -4,12 +4,12 @@ import Link from "next/link";
 import {
   PlayCircleIcon,
   ChatBubbleLeftRightIcon,
-  ChatBubbleOvalLeftEllipsisIcon,
   HomeIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
 
 type StudentSection =
+  | "home"
   | "workspace"
   | "training"
   | "opportunities"
@@ -27,16 +27,16 @@ export function StudentWorkspaceNav({
 }) {
   const items = [
     {
-      key: "workspace" as const,
-      href: "/student",
+      key: "home" as const,
+      href: "/community",
       label: "Home",
       icon: HomeIcon,
     },
     {
-      key: "feed" as const,
-      href: "/student/feed",
-      label: "Feed",
-      icon: ChatBubbleOvalLeftEllipsisIcon,
+      key: "workspace" as const,
+      href: "/student",
+      label: "Workspace",
+      icon: HomeIcon,
     },
     {
       key: "training" as const,

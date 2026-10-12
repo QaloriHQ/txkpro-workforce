@@ -186,3 +186,9 @@ KYU/AuthCard sandbox (owner approved 2026-10-07, #257): separate KYU identity, K
 
 APPENDIX C — OWNER APPROVED 2026-10-07
 EMPLOYER_SCREENING_POLICY effective states: required, accepted, superseded, revoked. Derived from immutable policy versions, append-only acceptance and revocation evidence; historical records never rewritten.
+
+APPENDIX D — COMM-02 OWNER APPROVED 2026-10-12 (#266)
+COMMUNITY_POST_STATUS: draft, published, hidden, removed (existing canonical profile-post states; no competing post store).
+COMMUNITY_POST_VISIBILITY: public, private, unlisted. COMM-02 creates public posts only; group audience is deferred.
+COMMUNITY_REPORT_STATUS: submitted, reviewing, resolved, dismissed.
+Community preferences, follows and saves are not workflow statuses. Likes/follows/saves do not create PRO Point ledger entries in COMM-02.

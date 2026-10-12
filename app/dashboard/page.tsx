@@ -7,8 +7,8 @@ export default async function DashboardPage() {
 
   const account = await getAccountContext();
   if (!account) redirect("/login");
-  if (!account.role && hasEmployeeMembership(account)) redirect("/employee");
-  if (!account.role && hasStaffProfileMembership(account)) redirect("/professional/profile");
+  if (!account.role && hasEmployeeMembership(account)) redirect("/community");
+  if (!account.role && hasStaffProfileMembership(account)) redirect("/community");
   if (!account.role) redirect("/onboarding");
 
   if (
@@ -23,10 +23,7 @@ export default async function DashboardPage() {
     redirect("/onboarding?pending=1");
   }
 
-  if (account.role === "admin") redirect("/admin");
-  if (account.role === "employer") redirect("/employer");
-  if (account.role === "student") redirect("/student");
-  if (account.role === "educator") redirect("/institution");
+  if (["admin", "employer", "student", "educator"].includes(account.role)) redirect("/community");
 
   redirect("/onboarding");
 }
