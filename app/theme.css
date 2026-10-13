@@ -7803,3 +7803,54 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
 .community-load-more { width:100%; padding:13px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--text); font-weight:800; cursor:pointer; }
 @media(max-width:1000px) { .community-layout { grid-template-columns:minmax(0,680px) minmax(180px,240px); } .community-layout > .community-rail:first-child { display:none; } }
 @media(max-width:760px) { .community-header { min-height:60px; padding-block:8px; } .community-header .brand-logo { width:122px; } .community-workspace-link { font-size:12px; padding:7px; } .community-header .community-icon-button { display:none; } .community-page { padding:18px 0 74px; } .community-heading { padding:0 14px; } .community-layout { display:block; } .community-main { gap:10px; } .community-guidelines { display:none; } .community-composer,.community-post,.community-filter-bar,.community-empty,.community-error,.community-loading { border-radius:0; border-left:0; border-right:0; box-shadow:none; } .community-field-row { grid-template-columns:1fr; } .community-post > footer > button { font-size:10px; padding-inline:3px; } .community-post > footer > button svg { width:16px; } .community-comment-reply { margin-left:20px; } .community-comment-form { grid-template-columns:1fr; } }
+.txk-organization-public,
+.txk-organization-editor {
+  display: grid;
+  gap: 20px;
+}
+.txk-organization-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+.txk-organization-hero > img,
+.txk-organization-hero > svg {
+  width: 112px;
+  height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  object-fit: contain;
+  padding: 12px;
+  background: var(--surface);
+}
+.txk-organization-facts {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.txk-organization-facts > svg {
+  width: 24px;
+  flex: 0 0 24px;
+}
+.txk-organization-facts h2,
+.txk-organization-facts p { margin: 0 0 6px; }
+.txk-organization-actions,
+.txk-form-actions,
+.txk-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.txk-organization-actions svg,
+.txk-form-actions svg { width: 18px; }
+.txk-form-grid { display: grid; gap: 16px; }
+.txk-checkbox-row { display: flex; gap: 10px; align-items: flex-start; }
+.professional-review-report { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.professional-review-report small { color: var(--muted); }
+@media (max-width: 680px) {
+  .txk-organization-hero { grid-template-columns: 1fr; }
+  .txk-organization-hero > img,
+  .txk-organization-hero > svg { width: 88px; height: 88px; }
+}

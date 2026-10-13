@@ -107,3 +107,9 @@ AuthCard sandbox (#257): active users manage only their own private details, nam
 W12-20 COMMUNITY PERMISSIONS — OWNER APPROVED 2026-10-12 (#59)
 Any active natural-person Workforce account with an active role membership may publish a public post/article/update and may like, comment/reply, share or repost published public content. Advertiser-only and inactive accounts are denied. Actor identity is server-derived; no role selector or user metadata grants access.
 Authors manage only their own profile posts through the existing owner RPC. Published, hidden and removed moderation states are preserved. Public activity-history preferences are owner-only and control the full history plus like/comment/share/repost categories independently without deleting canonical records. Anonymous visitors do not receive community mutation access, and no social permission grants tenant, candidate, institution, Employer-private or other Workforce-record access.
+
+W12-18 / W12-19 / W12-21 PUBLIC TRUST — OWNER APPROVED 2026-10-13 (#57, #58, #60)
+Employer public-profile management: employer_owner and employer_admin in the matching approved, active Employer scope.
+Institution public-profile management: institution_super_admin and institution_admin in the matching active Institution scope.
+Educator review eligibility: active Students; other active Educators; and Institution leadership only when its active scope matches the Educator's current Institution. Self-review is denied. Client-selected role labels never grant access.
+Review moderation: TXKPRO platform administration only. Educator profile owners may hide public review/rating presentation but may not publish, edit or remove another user's review.

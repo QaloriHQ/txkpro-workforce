@@ -2,6 +2,7 @@ import { professionalSitemap } from "@/lib/professional-profile/repository";
 import { studentPublicSitemap } from "@/lib/student-public-profile/repository";
 import type { MetadataRoute } from "next";
 import { getPublicLearningSitemap } from "@/lib/public/employer-learning";
+import { credentialSitemap, organizationSitemap } from "@/lib/public/organization-profile";
 export const dynamic = "force-dynamic";
 
 const siteUrl =
@@ -10,7 +11,13 @@ const siteUrl =
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const [learning, students, professionals] = await Promise.all([getPublicLearningSitemap(), studentPublicSitemap(), professionalSitemap()]);
+  const [learning, students, professionals, organizations, credentials] = await Promise.all([
+    getPublicLearningSitemap(),
+    studentPublicSitemap(),
+    professionalSitemap(),
+    organizationSitemap(),
+    credentialSitemap(),
+  ]);
 
   return [
     { url: siteUrl, lastModified: now, changeFrequency: "weekly", priority: 1 },
@@ -21,6 +28,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/students`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/platform`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/credentials`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    ...[...learning, ...students, ...professionals].map(page => ({ url: `${siteUrl}${page.path}`, lastModified: page.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
+    ...[...learning, ...students, ...professionals, ...organizations, ...credentials].map(page => ({ url: `${siteUrl}${page.path}`, lastModified: page.updatedAt, changeFrequency: "weekly" as const, priority: 0.6 })),
   ];
 }

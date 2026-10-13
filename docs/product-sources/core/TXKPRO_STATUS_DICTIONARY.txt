@@ -198,3 +198,8 @@ PROFILE_POST_TYPE: post, article, update.
 PROFILE_COMMENT_STATUS: published, hidden, removed.
 PROFILE_INTERACTION_TYPE: like, comment, share, repost. A withdrawn like/share/repost removes the current canonical interaction record while immutable audit evidence remains. Hiding public activity history changes presentation only and never deletes canonical interaction records.
 Only published public posts from active Workforce authors are interactable. Interaction records do not expose private Workforce events and do not award PRO Points in W12-20.
+
+APPENDIX F — W12-18 / W12-19 / W12-21 OWNER APPROVED 2026-10-13 (#57, #58, #60)
+ORGANIZATION_PUBLICATION_VISIBILITY: public, private. The canonical wf_public_pages publication status remains draft, published, unpublished; organization editors derive published from public and unpublished from private.
+PROFILE_REVIEW_STATUS: pending, published, hidden, removed. New and revised reviews enter pending. Only published reviews appear publicly or contribute to rating summaries. Hidden and removed records remain auditable; removed reviews cannot be restored by the reviewer.
+PROFILE_REVIEW_REPORT_STATUS: open, reviewing, resolved, dismissed. Report state is private moderation data and never appears in the public review projection.
