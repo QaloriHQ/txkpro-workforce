@@ -16,13 +16,20 @@ export function publicPageMetadata(input: {
   title: string;
   description?: string | null;
   path: string;
+  baseUrl?: string;
   index?: boolean;
   follow?: boolean;
   image?: string | null;
   type?: "website" | "profile";
 }): Metadata {
-  const canonical = absolutePublicUrl(input.path);
-  const image = input.image ? absolutePublicUrl(input.image) : undefined;
+  const canonical = input.baseUrl
+    ? new URL(input.path, `${input.baseUrl.replace(/\/+$/, "")}/`).toString()
+    : absolutePublicUrl(input.path);
+  const image = input.image
+    ? input.baseUrl
+      ? new URL(input.image, `${input.baseUrl.replace(/\/+$/, "")}/`).toString()
+      : absolutePublicUrl(input.image)
+    : undefined;
   return {
     title: input.title,
     description: input.description || undefined,

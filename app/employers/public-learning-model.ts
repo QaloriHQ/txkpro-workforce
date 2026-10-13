@@ -11,11 +11,11 @@ export type PublicLearningPage = {
 
 import { publicPageMetadata, serializeJsonLd } from "@/lib/public/seo";
 
-export function publicLearningMetadata(page: PublicLearningPage) {
+export function publicLearningMetadata(page: PublicLearningPage, siteUrl?: string) {
   if (!page.found || page.redirectPath || !page.canonicalPath) return { title: "Page unavailable", robots: { index: false, follow: false } };
   const title = page.seoTitle || page.title || "Employer Learning";
   const description = page.metaDescription || page.description || page.learningObjective || undefined;
-  return publicPageMetadata({ title, description, path: page.canonicalPath, index: page.robotsIndex, follow: page.robotsFollow });
+  return publicPageMetadata({ title, description, path: page.canonicalPath, baseUrl: siteUrl, index: page.robotsIndex, follow: page.robotsFollow });
 }
 
 export function publicLearningStructuredData(page: PublicLearningPage, siteUrl: string) {

@@ -7,7 +7,11 @@ import ts from 'typescript';
 const source = readFileSync(new URL('../app/employers/public-learning-model.ts', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 const testModule = { exports: {} };
-new Function('exports', 'module', compiled)(testModule.exports, testModule);
+const seoSource = readFileSync(new URL('../lib/public/seo.ts', import.meta.url), 'utf8');
+const seoCompiled = ts.transpileModule(seoSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const seoModule = { exports: {} };
+new Function('exports', 'module', 'process', 'URL', seoCompiled)(seoModule.exports, seoModule, process, URL);
+new Function('exports', 'module', 'require', compiled)(testModule.exports, testModule, name => name === '@/lib/public/seo' ? seoModule.exports : null);
 const { publicLearningMetadata: metadata, publicLearningStructuredData: structured, serializePublicJsonLd: serialize } = testModule.exports;
 const page = { found: true, kind: 'course', title: 'Safe Training', description: 'Published description', canonicalPath: '/employers/acme/courses/safety', robotsIndex: true, employer: { name: 'Acme', canonicalPath: '/employers/acme' } };
 test('metadata and structured data use canonical public URLs and publishable facts', () => {
