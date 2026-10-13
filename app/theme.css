@@ -7604,6 +7604,33 @@ body:has(.student-prototype-header) .card { border-radius:20px; }
 .student-workforce-metrics .card { display:flex; flex-direction:column; gap:10px; min-width:0; }
 .student-workforce-metrics strong { font-size:30px; }
 .student-workforce-metrics span { color:var(--muted); font-size:13px; line-height:1.5; }
+
+/* COMM-04 platform moderation */
+.moderation-workspace { max-width: 1500px; }
+.moderation-metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0; }
+.moderation-metrics > div { border:1px solid var(--line);border-radius:18px;background:var(--card);padding:18px;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow-sm); }
+.moderation-metrics span,.moderation-metrics small { color:var(--muted);font-size:12px; }
+.moderation-metrics strong { font-size:30px;line-height:1;color:var(--ink); }
+.moderation-toolbar { display:flex;gap:8px;margin:0 0 16px;padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--card);width:max-content;max-width:100%; }
+.moderation-toolbar button { border:0;background:transparent;color:var(--muted);border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer; }
+.moderation-toolbar button.active { background:var(--ink);color:var(--card); }
+.moderation-case-list table small,.moderation-case-list td strong { display:block; }
+.moderation-case-list td small { color:var(--muted);margin-top:6px; }
+.moderation-evidence { max-width:360px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0;line-height:1.45; }
+.moderation-severity { display:inline-flex;padding:5px 9px;border-radius:999px;text-transform:uppercase;font-size:10px;font-weight:800;letter-spacing:.06em; }
+.severity-low { background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted); }
+.severity-medium { background:#fff2cc;color:#795b00; }.severity-high { background:#ffe2c2;color:#873d00; }.severity-critical { background:#ffe0e0;color:#a01818; }
+.moderation-modal-backdrop { position:fixed;inset:0;z-index:80;background:rgba(8,15,28,.7);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px; }
+.moderation-modal { width:min(680px,100%);max-height:calc(100vh - 40px);overflow:auto;border:1px solid var(--line);border-radius:22px;background:var(--card);padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.35); }
+.moderation-modal label { display:grid;gap:7px;margin-top:16px;font-weight:700; }.moderation-modal :is(select,textarea) { width:100%; }
+.moderation-case-summary { margin-top:12px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface); }.moderation-case-summary strong { margin-left:10px; }
+.community-member-actions { margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end; }
+.community-member-actions > button:not(.community-follow) { border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;padding:6px; }
+.community-report-modal .header-actions { margin-top:18px; }.community-report-modal label { display:grid;gap:7px;margin-top:16px;font-weight:700; }
+.moderation-self-list { display:grid;gap:12px; }.moderation-self-list article { border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:grid;gap:10px; }
+.moderation-self-list article > div { display:flex;align-items:center;gap:10px; }.moderation-self-list article p { margin:0; }.moderation-self-list article small { color:var(--muted); }
+@media (max-width:900px){.moderation-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}.moderation-case-list .table-wrap{overflow:auto;}.moderation-case-list table{min-width:850px;}}
+@media (max-width:560px){.moderation-metrics{grid-template-columns:1fr 1fr;gap:8px}.moderation-metrics>div{padding:14px}.moderation-toolbar{width:100%;overflow:auto}.moderation-toolbar button{white-space:nowrap}.moderation-modal{padding:16px;border-radius:18px}}
 .student-prototype-tabs { display:flex; gap:10px; overflow-x:auto; padding:4px 0 12px; margin:16px 0 4px; }
 .student-prototype-tabs > button,.student-prototype-tabs > a { display:inline-flex; align-items:center; flex-shrink:0; min-height:44px; border:1px solid var(--line); border-radius:999px; padding:12px 18px; background:var(--surface-subtle); color:var(--muted); font-size:13px; font-weight:800; }
 .student-prototype-tabs > .active { background:var(--brand); color:white; border-color:var(--brand); }

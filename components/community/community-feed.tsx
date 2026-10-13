@@ -29,7 +29,7 @@ function relativeTime(value: string) {
   return `${Math.floor(hours / 24)}d`;
 }
 
-function PostComments({ post, onCount }: { post: CommunityPost; onCount: (count: number) => void }) {
+function PostComments({ post, onCount, onReport }: { post: CommunityPost; onCount: (count: number) => void; onReport: (target: ReportTarget) => void }) {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,7 +63,7 @@ function PostComments({ post, onCount }: { post: CommunityPost; onCount: (count:
       {!loading && comments.length === 0 ? <p className="card-sub">No comments yet. Start the conversation.</p> : null}
       {comments.map(comment => <article className={comment.parentId ? "community-comment community-comment-reply" : "community-comment"} key={comment.id}>
         <span className="community-avatar">{comment.authorImageUrl ? <img src={comment.authorImageUrl} alt="" /> : comment.authorName.slice(0,2).toUpperCase()}</span>
-        <div><strong>{comment.authorName}</strong><p>{comment.body}</p><small>{relativeTime(comment.createdAt)}</small> <button type="button" onClick={() => setReplyTo(comment)}>Reply</button></div>
+        <div><strong>{comment.authorName}</strong><p>{comment.body}</p><small>{relativeTime(comment.createdAt)}</small> <button type="button" onClick={() => setReplyTo(comment)}>Reply</button>{!comment.isOwn ? <button type="button" onClick={() => onReport({ type: "comment", id: comment.id, userId: comment.authorUserId, label: `Comment by ${comment.authorName}` })}>Report</button> : null}</div>
       </article>)}
       <form className="community-comment-form" onSubmit={submit}>
         {replyTo ? <p>Replying to <strong>{replyTo.authorName}</strong> <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p> : null}
@@ -75,6 +75,13 @@ function PostComments({ post, onCount }: { post: CommunityPost; onCount: (count:
   </>;
 }
 
+type ReportTarget = { type: "post" | "comment" | "user"; id: string; userId: string; label: string };
+const reportReasons = [
+  ["spam","Spam"],["scam","Scam or fraud"],["harassment","Harassment"],["hate","Hate or abuse"],
+  ["threat","Threat of harm"],["privacy","Private information"],["impersonation","Impersonation"],
+  ["misinformation","Misinformation"],["unsafe","Unsafe content"],["illegal","Illegal activity"],["other","Other"],
+] as const;
+
 export function CommunityFeed({ viewerName }: { viewerName: string }) {
   const [filter, setFilter] = useState<CommunityFilter>("recent");
   const [topic, setTopic] = useState("");
@@ -85,6 +92,8 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
   const [error, setError] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [reporting, setReporting] = useState(false);
 
   const load = useCallback(async (append = false, next?: string | null) => {
     setLoading(true); setError("");
@@ -146,10 +155,23 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "The share action could not be completed."); }
   }
 
-  async function report(post: CommunityPost) {
-    if (!window.confirm("Report this post for review?")) return;
-    try { await json(`/api/community/posts/${post.id}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: "other" }) }); setFeedback("Report submitted for review."); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "The report could not be submitted."); }
+  async function report(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!reportTarget) return; setReporting(true); setError("");
+    const data = new FormData(event.currentTarget);
+    try {
+      await json("/api/community/moderation/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        targetType: reportTarget.type, targetId: reportTarget.id, reason: String(data.get("reason") || "other"), details: String(data.get("details") || ""),
+      }) });
+      setFeedback("Report received. Policy automation is evaluating it now."); setReportTarget(null);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "The report could not be submitted."); }
+    finally { setReporting(false); }
+  }
+
+  async function memberPreference(userId: string, mode: "mute" | "block") {
+    if (!window.confirm(`${mode === "block" ? "Block" : "Mute"} this member? Their content will be removed from your feed.`)) return;
+    try { await json(`/api/community/moderation/blocks/${encodeURIComponent(userId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+      setPosts(items => items.filter(item => item.authorUserId !== userId)); setFeedback(`Member ${mode === "block" ? "blocked" : "muted"}.`);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "The member preference could not be updated."); }
   }
 
   async function saveLocation(event: FormEvent<HTMLFormElement>) {
@@ -186,14 +208,21 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
       {loading && posts.length === 0 ? <div className="community-loading" aria-label="Loading community posts"><span /><span /><span /></div> : null}
       {!loading && !error && posts.length === 0 && (filter !== "nearby" || nearbyConfigured) ? <div className="community-empty"><h2>No posts here yet</h2><p>{filter === "following" ? "Follow people from the Recent feed to build this view." : "Start the conversation with a public post."}</p></div> : null}
       <div className="community-post-list">{posts.map((post) => <article className="community-post" key={post.id}>
-        <header><span className="community-avatar">{post.authorImageUrl ? <img src={post.authorImageUrl} alt="" /> : post.authorName.slice(0, 2).toUpperCase()}</span><div><strong>{post.authorName}</strong>{post.authorHeadline ? <small>{post.authorHeadline}</small> : null}<small>{relativeTime(post.publishedAt)}{post.location ? ` · ${post.location}` : ""}</small></div>{!post.isOwn ? <button className="community-follow" onClick={() => void follow(post)}><UserPlusIcon aria-hidden="true" />{post.viewerFollowsAuthor ? "Following" : "Follow"}</button> : null}</header>
+        <header><span className="community-avatar">{post.authorImageUrl ? <img src={post.authorImageUrl} alt="" /> : post.authorName.slice(0, 2).toUpperCase()}</span><div><strong>{post.authorName}</strong>{post.authorHeadline ? <small>{post.authorHeadline}</small> : null}<small>{relativeTime(post.publishedAt)}{post.location ? ` · ${post.location}` : ""}</small></div>{!post.isOwn ? <div className="community-member-actions"><button className="community-follow" onClick={() => void follow(post)}><UserPlusIcon aria-hidden="true" />{post.viewerFollowsAuthor ? "Following" : "Follow"}</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"mute")}>Mute</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"block")}>Block</button></div> : null}</header>
         <span className="community-content-type">{post.postType}</span>{post.topic ? <span className="community-topic">{post.topic}</span> : null}{post.title ? <h2>{post.title}</h2> : null}<p className="community-post-body">{post.body}</p>
         {post.media[0] ? <img className="community-post-media" src={post.media[0]} alt="Post attachment" /> : null}
         <div className="community-counts"><span>{post.likeCount} likes</span><span>{post.commentCount} comments · {post.shareCount} shares</span></div>
-        <footer><button type="button" className={post.viewerLiked ? "active" : ""} onClick={() => void toggle(post, "like")}><HandThumbUpIcon aria-hidden="true" /> Like</button><PostComments post={post} onCount={count => setPosts(items => items.map(item => item.id === post.id ? { ...item, commentCount: count } : item))} /><button type="button" className={post.viewerShared ? "active" : ""} onClick={() => void share(post, "share")}><ShareIcon aria-hidden="true" /> Share</button><button type="button" className={post.viewerReposted ? "active" : ""} onClick={() => void share(post, "repost")}><ArrowPathRoundedSquareIcon aria-hidden="true" /> Repost</button><button type="button" className={post.viewerSaved ? "active" : ""} onClick={() => void toggle(post, "save")}><BookmarkIcon aria-hidden="true" /> Save</button><button type="button" aria-label="Report post" onClick={() => void report(post)}><FlagIcon aria-hidden="true" /></button></footer>
+        <footer><button type="button" className={post.viewerLiked ? "active" : ""} onClick={() => void toggle(post, "like")}><HandThumbUpIcon aria-hidden="true" /> Like</button><PostComments post={post} onCount={count => setPosts(items => items.map(item => item.id === post.id ? { ...item, commentCount: count } : item))} onReport={setReportTarget} /><button type="button" className={post.viewerShared ? "active" : ""} onClick={() => void share(post, "share")}><ShareIcon aria-hidden="true" /> Share</button><button type="button" className={post.viewerReposted ? "active" : ""} onClick={() => void share(post, "repost")}><ArrowPathRoundedSquareIcon aria-hidden="true" /> Repost</button><button type="button" className={post.viewerSaved ? "active" : ""} onClick={() => void toggle(post, "save")}><BookmarkIcon aria-hidden="true" /> Save</button><button type="button" aria-label="Report post" onClick={() => setReportTarget({ type: "post", id: post.id, userId: post.authorUserId, label: post.title || `Post by ${post.authorName}` })}><FlagIcon aria-hidden="true" /></button></footer>
       </article>)}</div>
       {cursor ? <button className="community-load-more" disabled={loading} onClick={() => void load(true, cursor)}>{loading ? "Loading…" : "Load more"}</button> : null}
     </section>
     <aside className="community-rail community-guidelines"><h2>Community standards</h2><p>Be useful, respectful, and mindful that public posts may appear in search engines.</p><strong>Private messaging, groups, polls, and events are coming in later community releases.</strong></aside>
+    {reportTarget ? <div className="moderation-modal-backdrop" role="presentation"><form className="moderation-modal community-report-modal" role="dialog" aria-modal="true" aria-labelledby="community-report-title" onSubmit={report}>
+      <div className="card-header"><div><p className="eyebrow">Community safety</p><h2 id="community-report-title">Report {reportTarget.type}</h2><p className="card-sub">{reportTarget.label}</p></div><button className="button button-ghost button-small" type="button" onClick={() => setReportTarget(null)}>Close</button></div>
+      <label>What happened?<select name="reason" defaultValue="spam">{reportReasons.map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+      <label>Additional context <textarea name="details" rows={4} maxLength={2000} placeholder="Share only details relevant to this report…" /></label>
+      <p className="card-sub">Reports are confidential. Automated policy handles clear cases; critical or uncertain cases go to an authorized moderator.</p>
+      <div className="header-actions"><button className="button button-brand" disabled={reporting}>{reporting ? "Submitting…" : "Submit report"}</button>{reportTarget.type !== "user" ? <button className="button button-ghost" type="button" onClick={() => setReportTarget({ type: "user", id: reportTarget.userId, userId: reportTarget.userId, label: "Member account" })}>Report account instead</button> : null}</div>
+    </form></div> : null}
   </div>;
 }
