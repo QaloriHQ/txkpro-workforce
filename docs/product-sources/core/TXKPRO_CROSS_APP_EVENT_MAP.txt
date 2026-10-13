@@ -175,3 +175,10 @@ COMMUNITY_COMMENT_PUBLISHED: Source is an active authenticated Workforce member.
 COMMUNITY_REACTION_SET / COMMUNITY_REACTION_WITHDRAWN: Source is an active authenticated Workforce member. Target is the canonical post ID; metadata contains reaction type only.
 COMMUNITY_SHARE_CONFIRMED / COMMUNITY_SHARE_WITHDRAWN: Source is an active authenticated Workforce member. Target is the canonical post ID; metadata contains share or repost type only. W12-20 records internal confirmed activity; copying or opening an external target alone is not a confirmed external publication.
 These events update community/profile read models only. They do not change private Workforce state, send notifications, or award PRO Points in W12-20. Delayed/replayed consumers must derive current state from the unique canonical interaction records.
+
+APPENDIX F — W12-18 / W12-19 / W12-21 OWNER APPROVED 2026-10-13 (#57, #58, #60)
+ORGANIZATION_PUBLIC_PROFILE_CHANGED: Source is an authorized Employer Owner/Admin or Institution Super Admin/Admin. Target is the canonical Employer or Institution ID. Audit payload contains visibility, canonical path and robots-index state only. It never contains private contact, Student, hiring, referral, placement, retention or screening data.
+PROFESSIONAL_REVIEW_SUBMITTED: Source is an eligibility-checked Student, Educator or same-Institution leadership reviewer. Target is the canonical profile review ID. Audit payload contains status, numeric rating and verified-relationship boolean, never review text.
+PROFESSIONAL_REVIEW_REPORTED: Source is an active authenticated Workforce member other than the review author. Target is the canonical profile review ID. Audit payload contains bounded reason and report ID; reporter identity stays in the private canonical report record.
+PROFESSIONAL_REVIEW_MODERATED: Source is an authorized TXKPRO platform administrator. Target is the canonical profile review ID. Audit payload contains before/after moderation status only. Moderation never rewrites reviewer identity or review history.
+SEO and sitemap rendering are projections of canonical publication state and do not create a domain event.

@@ -5,6 +5,8 @@ import { PortfolioView } from "@/components/student/portfolio-view";
 import {ProgressCard} from "@/components/pro-points/progress-card";
 import {publicPoints} from "@/lib/pro-points/server";
 import { Brand } from "@/components/brand";
+import Link from "next/link";
+import { absolutePublicUrl, publicPageMetadata, serializeJsonLd } from "@/lib/public/seo";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 type Props = { params: Promise<{ slug: string }> };
@@ -16,15 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: "Profile unavailable",
       robots: { index: false, follow: false },
     };
-  return {
-    title: `${page.displayName} | TXKPRO`,
-    description: page.headline || "TXKPRO Student public profile",
-    alternates: { canonical: page.path },
-    robots: {
-      index: page.robotsIndex ?? false,
-      follow: page.robotsFollow ?? false,
-    },
-  };
+  return publicPageMetadata({ title: `${page.displayName} | TXKPRO`, description: page.headline || "TXKPRO Student public profile", path: page.path || `/students/${slug}`, index: page.robotsIndex, follow: page.robotsFollow, type: "profile" });
 }
 export default async function PublicStudentProfile({ params }: Props) {
   const { slug } = await params;
@@ -32,12 +26,14 @@ export default async function PublicStudentProfile({ params }: Props) {
   if (!page.found) notFound();
   if (page.redirect && page.path) permanentRedirect(page.path);
   const points = await publicPoints(`/students/${slug}`);
+  const schema = { "@context": "https://schema.org", "@type": "ProfilePage", url: absolutePublicUrl(page.path || `/students/${slug}`), mainEntity: { "@type": "Person", name: page.displayName, description: page.headline || undefined } };
   return (
     <>
       <header className="topbar">
         <Brand />
       </header>
       <main className="page-wrap student-public-portfolio">
+        <nav className="txk-public-learning-breadcrumb" aria-label="Breadcrumb"><Link href="/students">Students</Link><span aria-current="page">{page.displayName}</span></nav>
         {page.portfolio ? (
           <PortfolioView
             portfolio={page.portfolio}
@@ -53,6 +49,7 @@ export default async function PublicStudentProfile({ params }: Props) {
           </article>
         )}
         <ProgressCard summary={points}/>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }} />
       </main>
     </>
   );

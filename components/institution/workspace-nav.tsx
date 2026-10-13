@@ -19,6 +19,7 @@ import {
   UserGroupIcon,
   UsersIcon,
   WrenchScrewdriverIcon,
+  GlobeAltIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -46,7 +47,8 @@ export type InstitutionSection =
   | "reports"
   | "team"
   | "audit"
-  | "settings";
+  | "settings"
+  | "public-profile";
 
 type Item = {
   key: InstitutionSection;
@@ -99,6 +101,7 @@ const groups: Array<{ label: string; items: Item[] }> = [
       { key: "team", capability: "team", href: "/institution/team", label: "Team", icon: UserGroupIcon },
       { key: "audit", capability: "audit", href: "/institution/audit", label: "Audit", icon: ClipboardDocumentListIcon },
       { key: "settings", capability: "settings", href: "/institution/settings", label: "Settings", icon: Cog6ToothIcon },
+      { key: "public-profile", capability: "settings", href: "/institution/public-profile", label: "Public profile", icon: GlobeAltIcon },
     ],
   },
 ];

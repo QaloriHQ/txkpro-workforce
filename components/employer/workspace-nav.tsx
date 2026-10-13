@@ -13,6 +13,7 @@ import {
   QueueListIcon,
   ShieldCheckIcon,
   UserGroupIcon,
+  GlobeAltIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
@@ -27,7 +28,8 @@ type EmployerSection =
   | "incentives"
   | "screening"
   | "learning"
-  | "team";
+  | "team"
+  | "public-profile";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -127,6 +129,12 @@ const groups: NavGroup[] = [
         href: "/employer/directory",
         label: "Directory",
         icon: UserGroupIcon,
+      },
+      {
+        key: "public-profile",
+        href: "/employer/public-profile",
+        label: "Public profile",
+        icon: GlobeAltIcon,
       },
     ],
   },

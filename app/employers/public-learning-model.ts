@@ -9,17 +9,13 @@ export type PublicLearningPage = {
   blocks?: Array<{ type: string; title: string | null; text: string | null }>;
 };
 
-export function publicLearningMetadata(page: PublicLearningPage, siteUrl: string) {
+import { publicPageMetadata, serializeJsonLd } from "@/lib/public/seo";
+
+export function publicLearningMetadata(page: PublicLearningPage, siteUrl?: string) {
   if (!page.found || page.redirectPath || !page.canonicalPath) return { title: "Page unavailable", robots: { index: false, follow: false } };
-  const url = `${siteUrl}${page.canonicalPath}`;
   const title = page.seoTitle || page.title || "Employer Learning";
   const description = page.metaDescription || page.description || page.learningObjective || undefined;
-  return {
-    title, description, alternates: { canonical: url },
-    robots: { index: Boolean(page.robotsIndex), follow: page.robotsFollow !== false },
-    openGraph: { type: "website" as const, title, description, url, siteName: "TXKPRO Workforce" },
-    twitter: { card: "summary" as const, title, description },
-  };
+  return publicPageMetadata({ title, description, path: page.canonicalPath, baseUrl: siteUrl, index: page.robotsIndex, follow: page.robotsFollow });
 }
 
 export function publicLearningStructuredData(page: PublicLearningPage, siteUrl: string) {
@@ -34,5 +30,5 @@ export function publicLearningStructuredData(page: PublicLearningPage, siteUrl: 
 }
 
 export function serializePublicJsonLd(value: unknown) {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
+  return serializeJsonLd(value);
 }

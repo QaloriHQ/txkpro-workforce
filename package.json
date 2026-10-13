@@ -33,7 +33,8 @@
     "authenticate:qa": "node --experimental-strip-types --test scripts/authenticate-contract-qa.mjs scripts/authenticate-database-qa.mjs scripts/authenticate-provider-qa.mjs",
     "authcard:qa": "node --experimental-strip-types --test scripts/authcard-contract-qa.mjs scripts/authcard-database-qa.mjs scripts/authcard-provider-qa.mjs scripts/authcard-checkout-qa.mjs",
     "screening-policy:qa": "node --test scripts/screening-policy-qa.mjs",
-    "community:qa": "node --test scripts/community-feed-contract-qa.mjs scripts/w12-20-profile-social-qa.mjs scripts/w12-20-profile-social-database-qa.mjs"
+    "community:qa": "node --test scripts/community-feed-contract-qa.mjs scripts/w12-20-profile-social-qa.mjs scripts/w12-20-profile-social-database-qa.mjs",
+    "public-trust:qa": "node --test scripts/w12-18-organization-public-profile-qa.mjs scripts/w12-19-professional-reviews-qa.mjs scripts/w12-21-cross-app-seo-qa.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
