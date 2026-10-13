@@ -45,6 +45,14 @@ Initial shared awards activate only new canonical institution-verified skills wi
 
 Lifetime levels: L1 0, L2 250, L3 750, L4 1,500, L5 3,000, L6 5,000, L7 8,000, L8 12,000, L9 18,000, L10 25,000. Same points feed Cohort, Institution and TXKPRO rankings; competition ranks preserve ties (1,1,3). Default preferred ranking is Cohort using the existing profile editor; selecting the rank opens all three.
 
+## Season finalization and level versions
+
+Calendar-quarter seasons finalize after the quarter ends. The authenticated PRO Points workspace and Student summary lazily finalize any due season; platform administrators can also run the idempotent finalization action. Each finalized record freezes the scoring-rule snapshot, level version, Student population, current Cohort and Institution membership identifiers, seasonal and lifetime totals, and competition ranks. Only active Student accounts participate. Employees and other non-Student accounts can retain totals/levels through their canonical Student history but do not enter rankings in v1.
+
+Finalized standings are append-only. Later source corrections remain ordinary positive or negative ledger records and create a separate immutable correction record and audit event; they never rewrite the closed table. A Student can inspect up to eight finalized seasons in the progress card. Public progress continues to honor the existing opt-in and exposes aggregate history only.
+
+Version 1 seeds the approved L1–L10 thresholds above and is effective for the 2026 Q4 scoring launch. Platform administrators alone may schedule an exact ten-threshold version for a future quarter. The first threshold must be zero and each following value strictly higher. Versions and their thresholds are immutable, cannot overlap an effective quarter, and never recalculate a finalized season.
+
 ## Program lifecycle
 
 Program: `draft → active → ended|cancelled`; draft may cancel directly. Activities and terms freeze on activation; changed definitions require a new program/cycle. The templates Competition / Earn and redeem / Combined are supported structurally; no template activates payment or redemption.
@@ -67,7 +75,7 @@ Visit collection requires a visible, focused signed-in Student workspace interac
 
 Student Home/profile and `/student/points`; `/institution/incentives`, `/employer/incentives`; generic activated-account `/incentives`; private `GET/POST /api/pro-points`; curated public profile aggregates. Forms are button-opened native modals with focus containment, pending state, retained drafts and accessible feedback. Compact layouts preserve mobile bottom navigation.
 
-Run `scripts/pro-points-staging-qa.sql` together with the migration inside BEGIN/ROLLBACK before deployment. It exercises caps, duplicate awards, source separation, source reversal, next-season history, student denied authoring, pending/accepted participation, rule freeze, trivia, answer-key exclusion, direct privileges, visit deduplication and the exact 3-day tier. No fixture award or program survives. Required app gates: typecheck, lint, build, CI. After deployment confirm migration ledger, exact Vercel staging SHA, anonymous API denial and advisors against baseline.
+Run `scripts/pro-points-staging-qa.sql` together with the original migration inside BEGIN/ROLLBACK, then run the #224 season-finalization contract checks before deployment. Verification covers caps, duplicate awards, source reversal, immutable standings, membership/rank snapshots, correction evidence, future-only threshold versions, direct privileges, and the exact seeded thresholds. No fixture award, program, or finalization survives. Required app gates: typecheck, lint, build, CI. After deployment confirm migration ledger, exact Vercel staging SHA, anonymous API denial and advisors against baseline.
 
 Owner UAT: create a draft, add custom activities (including trivia), activate, invite both supported employer audiences/institution Student, accept/decline with a separate account, submit correct/incorrect trivia, review non-trivia evidence as a different administrator, reverse an award, end the cycle, test private leaderboard disclosure; verify mobile modals and ranking modal; change profile sharing and inspect public/private outcomes. Rewards must remain unavailable. New-account invitations, #76 affiliation integration, team/location reviewer delegation, funded governance/payroll payout reports and source-unbuilt badges are follow-ups; the original broader #77–79/#239 acceptance must not be marked Done on this evidence alone.
 

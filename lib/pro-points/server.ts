@@ -13,11 +13,15 @@ export async function pointsWorkspace(): Promise<PointsWorkspace> {
 }
 export async function pointsAction(input: Record<string, unknown>) {
   const client = await createServerSupabaseClient();
-  const { data, error } = await client.rpc("pro_action", { p_input: input });
+  const seasonOps = new Set(["create_level_version", "finalize_due_seasons"]);
+  const rpc = seasonOps.has(String(input.op))
+    ? "pro_season_admin"
+    : "pro_action";
+  const { data, error } = await client.rpc(rpc, { p_input: input });
   if (error) {
     // Only actionable contract errors are returned. Constraint/SQL details stay private.
     const safe =
-      /^(Owner scope denied|Active authentication required|Program unavailable|Invitation unavailable|Review current terms|Active accepted participation required|Activity audience denied|Activity is not scheduled today|Select a valid answer|Completion evidence required|Program management scope denied|Invalid program transition|Program end must be in the future|Recipient needs an activated TXKPRO account before program invitation|Active program required|Participation type unavailable|Eligible Student affiliation required|Participant transition unavailable|Activities are fixed at activation; create a new program for changed rules|Invalid audience|Submission scope denied|Self approval denied|Review reason required \(maximum 1000 characters\)|Only approved evidence can be reversed|Pending submission and active participant required|Unsupported action)$/;
+      /^(Owner scope denied|Active authentication required|Program unavailable|Invitation unavailable|Review current terms|Active accepted participation required|Activity audience denied|Activity is not scheduled today|Select a valid answer|Completion evidence required|Program management scope denied|Invalid program transition|Program end must be in the future|Recipient needs an activated TXKPRO account before program invitation|Active program required|Participation type unavailable|Eligible Student affiliation required|Participant transition unavailable|Activities are fixed at activation; create a new program for changed rules|Invalid audience|Submission scope denied|Self approval denied|Review reason required \(maximum 1000 characters\)|Only approved evidence can be reversed|Pending submission and active participant required|Platform administrator scope required|Only ended calendar-quarter seasons can be finalized|Level version must start on a future quarter|Provide exactly ten level thresholds|Level thresholds must start at zero and strictly increase|Level version reason required|Unsupported season action|Unsupported action)$/;
     throw Response.json(
       {
         error: safe.test(error.message)

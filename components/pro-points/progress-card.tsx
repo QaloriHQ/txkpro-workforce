@@ -56,7 +56,12 @@ export function ProgressCard({
           </div>
           <p className="card-sub">
             Season: {p.season} to {p.seasonEnds} · America/Chicago. Lifetime
-            levels persist between seasons.
+            levels persist between seasons · threshold version {p.levelVersion}.
+          </p>
+          <p className="card-sub">
+            {p.nextLevel && p.nextLevelPoints !== null
+              ? `${Math.max(0, p.nextLevelPoints - p.lifetime).toLocaleString()} points to Level ${p.nextLevel}`
+              : "Highest configured lifetime level reached"}
           </p>
           <div className="pro-streaks">
             {p.streaks.map((s) => (
@@ -70,6 +75,25 @@ export function ProgressCard({
               </div>
             ))}
           </div>
+          {p.pastSeasons.length ? (
+            <details className="pro-season-history">
+              <summary>Finalized seasons ({p.pastSeasons.length})</summary>
+              {p.pastSeasons.map((season) => (
+                <div key={season.season}>
+                  <strong>{season.season}</strong>
+                  <span>
+                    {season.points.toLocaleString()} points · Level {season.level}
+                    {" · "}TXKPRO rank {season.rankings.txkpro}
+                  </span>
+                </div>
+              ))}
+              <p className="card-sub">
+                Finalized standings preserve the scores, affiliations, ranks,
+                and level rules used at close. Later corrections are audited
+                separately.
+              </p>
+            </details>
+          ) : null}
         </>
       ) : null}
       {summary.badges.length ? (

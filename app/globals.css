@@ -1320,6 +1320,9 @@ body:has(.txk-action-dialog[open]) { overflow: hidden; }
 .pro-participant-list>div,.pro-ledger>div {display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--border)}
 .pro-ledger>div>span:last-child {flex-basis:100%}
 .pro-progress-card {margin-block:1rem}
+.pro-season-history,.pro-level-versions {margin-top:1rem}
+.pro-season-history>div,.pro-level-versions>div {display:grid;gap:.25rem;padding:.75rem 0;border-bottom:1px solid var(--border)}
+.pro-season-history span,.pro-level-versions span {color:var(--muted);overflow-wrap:anywhere}
 @media(max-width:600px){.pro-streaks{grid-template-columns:1fr}.pro-toolbar{align-items:stretch}.pro-toolbar h2{flex-basis:100%}.pro-metrics .txk-modal-action{flex-basis:100%}.pro-activity,.pro-program{padding:1rem}.pro-participant-list>div>strong{flex-basis:100%}}
 
 .invitation-fields { border: 0; padding: 0; margin: 0; display: contents; }
