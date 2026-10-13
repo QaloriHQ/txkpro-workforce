@@ -11,7 +11,8 @@ const compiledModule = { exports: {} };
 const typesModule = { exports: {} };
 const typesCode = ts.transpileModule(readFileSync(new URL('../lib/professional-profile/types.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
 new Function('require', 'module', 'exports', typesCode)(require, typesModule, typesModule.exports);
-new Function('require', 'module', 'exports', compiled)(name => name === '@/lib/professional-profile/types' ? typesModule.exports : require(name), compiledModule, compiledModule.exports);
+const reviewComposerModule = { ReviewReportButton: () => null };
+new Function('require', 'module', 'exports', compiled)(name => name === '@/lib/professional-profile/types' ? typesModule.exports : name === '@/components/professional/review-composer' ? reviewComposerModule : require(name), compiledModule, compiledModule.exports);
 const { ProfessionalProfileView } = compiledModule.exports;
 const profile = { kind: 'educator', displayName: '</script><script>alert(1)</script>', headline: 'Instructor', bio: '<img src=x onerror=alert(1)>', specialties: 'Welding\nFabrication', credentials: 'Owner-entered <license>', affiliations: [{ name: 'Texarkana College', programs: ['Welding'], verified: true }], posts: [] };
 test('SSR escapes user claims, distinguishes membership verification, and excludes editing controls', () => {
