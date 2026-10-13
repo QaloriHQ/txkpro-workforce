@@ -85,6 +85,12 @@ export function IncentiveWorkspace({
           .filter(Boolean);
         values.weekdays = f.getAll("weekday").map(Number);
       }
+      if (op === "create_level_version") {
+        values.thresholds = String(f.get("thresholds") || "")
+          .split(/[\s,]+/)
+          .filter(Boolean)
+          .map(Number);
+      }
       void action({ ...values, ...extra, op });
     };
   }
@@ -204,6 +210,78 @@ export function IncentiveWorkspace({
         own rewards budget and rules. Reward Credits are separate from
         achievement points and lifetime levels.
       </p>
+      {data.canManageLevels ? (
+        <section className="card">
+          <div className="student-section-heading">
+            <div>
+              <h2>Season and level administration</h2>
+              <p className="card-sub">
+                Ended quarters finalize automatically when this workspace is
+                loaded. Standings cannot be rewritten after finalization.
+              </p>
+            </div>
+            <div className="reward-actions">
+              <ActionModal
+                title="Finalize ended seasons"
+                triggerLabel="Check finalization"
+              >
+                <p>
+                  Finalize any eligible quarter that has not yet closed. This
+                  action is idempotent and preserves the scoring configuration
+                  and Student scope memberships used at close.
+                </p>
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={() => void action({ op: "finalize_due_seasons" })}
+                  type="button"
+                >
+                  {busy ? "Checking…" : "Finalize due seasons"}
+                </button>
+                {status}
+              </ActionModal>
+              <WorkspaceForm
+                modalTitle="Schedule lifetime level thresholds"
+                triggerLabel="Schedule thresholds"
+                busy={busy}
+                feedback={status}
+                onSubmit={form("create_level_version")}
+              >
+                <Label text="Effective quarter">
+                  <input name="effectiveSeason" type="date" required />
+                </Label>
+                <Label text="Levels 1–10 minimum points">
+                  <textarea
+                    name="thresholds"
+                    required
+                    defaultValue="0, 250, 750, 1500, 3000, 5000, 8000, 12000, 18000, 25000"
+                  />
+                </Label>
+                <Label text="Reason">
+                  <textarea name="reason" required maxLength={1000} />
+                </Label>
+                <p className="card-sub">
+                  Use a future quarter start. Versions are immutable and never
+                  recalculate finalized standings.
+                </p>
+                {submit}
+              </WorkspaceForm>
+            </div>
+          </div>
+          <div className="pro-level-versions">
+            {data.levelVersions.map((version) => (
+              <div key={version.version}>
+                <strong>Version {version.version}</strong>
+                <span>
+                  Effective {version.effectiveSeason} ·{" "}
+                  {version.thresholds.join(", ")}
+                </span>
+                <span>{version.reason}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <div className="pro-toolbar">
         <h2>{ownerType ? "Intra-Mode programs" : "My incentive programs"}</h2>
         {!ownerType ? (

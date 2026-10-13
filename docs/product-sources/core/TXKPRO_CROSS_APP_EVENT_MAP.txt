@@ -182,3 +182,8 @@ PROFESSIONAL_REVIEW_SUBMITTED: Source is an eligibility-checked Student, Educato
 PROFESSIONAL_REVIEW_REPORTED: Source is an active authenticated Workforce member other than the review author. Target is the canonical profile review ID. Audit payload contains bounded reason and report ID; reporter identity stays in the private canonical report record.
 PROFESSIONAL_REVIEW_MODERATED: Source is an authorized TXKPRO platform administrator. Target is the canonical profile review ID. Audit payload contains before/after moderation status only. Moderation never rewrites reviewer identity or review history.
 SEO and sitemap rendering are projections of canonical publication state and do not create a domain event.
+
+APPENDIX G — W12-16B OWNER APPROVED 2026-10-13 (#224)
+PRO_SEASON_FINALIZED: Source is the TXKPRO season finalizer, triggered lazily by an authenticated points read or explicitly by a platform administrator. Target is the calendar-quarter start. Metadata contains Student count, level version, and scoring-snapshot presence. Consumers read immutable canonical standings; replay is idempotent and never recalculates an existing finalization.
+PRO_SEASON_CORRECTION_RECORDED: Source is a new ledger award or reversal whose scoring season is already finalized. Target is the ledger entry ID. Metadata contains season, points delta, and entry type, never private source evidence. Consumers may show correction history but never mutate the finalized standing.
+PRO_LEVEL_VERSION_CREATED: Source is a platform administrator. Target is the immutable level-version number. Metadata contains the future effective quarter and threshold count. It changes only future/effective level calculation and never rewrites a finalized season.

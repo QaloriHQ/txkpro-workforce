@@ -4,6 +4,10 @@ export type Progress = {
   points: number;
   lifetime: number;
   level: number;
+  levelVersion: number;
+  levelMinimum: number;
+  nextLevel: number | null;
+  nextLevelPoints: number | null;
   preferredScope: "cohort" | "institution" | "txkpro";
   rankings: Record<"cohort" | "institution" | "txkpro", number | null>;
   streaks: {
@@ -11,6 +15,16 @@ export type Progress = {
     current: number;
     longest: number;
     available: boolean;
+  }[];
+  pastSeasons: {
+    season: string;
+    seasonEnds: string;
+    points: number;
+    lifetime: number;
+    level: number;
+    levelVersion: number;
+    finalizedAt: string;
+    rankings: Record<"cohort" | "institution" | "txkpro", number | null>;
   }[];
 };
 export type Summary = {
@@ -82,5 +96,13 @@ export type PointsWorkspace = {
     requested: number;
     reason: string;
     occurredAt: string;
+  }[];
+  canManageLevels: boolean;
+  levelVersions: {
+    version: number;
+    effectiveSeason: string;
+    reason: string;
+    createdAt: string;
+    thresholds: number[];
   }[];
 };

@@ -203,3 +203,7 @@ APPENDIX F — W12-18 / W12-19 / W12-21 OWNER APPROVED 2026-10-13 (#57, #58, #60
 ORGANIZATION_PUBLICATION_VISIBILITY: public, private. The canonical wf_public_pages publication status remains draft, published, unpublished; organization editors derive published from public and unpublished from private.
 PROFILE_REVIEW_STATUS: pending, published, hidden, removed. New and revised reviews enter pending. Only published reviews appear publicly or contribute to rating summaries. Hidden and removed records remain auditable; removed reviews cannot be restored by the reviewer.
 PROFILE_REVIEW_REPORT_STATUS: open, reviewing, resolved, dismissed. Report state is private moderation data and never appears in the public review projection.
+
+APPENDIX G — W12-16B OWNER APPROVED 2026-10-13 (#224)
+PRO_POINTS_SEASON_STATUS: open, finalized. Open is the derived state before an ended calendar quarter is finalized; finalized is represented by the immutable canonical finalization record. A finalized season never reopens. Later ledger corrections are append-only evidence and do not rewrite the season status or standings.
+PRO_POINTS_LEVEL_VERSION: scheduled, effective. These are date-derived display states, not mutable database statuses. A version is scheduled before its future quarter and effective from that quarter until the next version. Threshold versions are immutable and do not retroactively change finalized seasons.
