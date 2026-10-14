@@ -1,6 +1,6 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DirectMessage, MessagePerson, MessagingInbox, UploadedMessageAttachment } from "@/lib/community/messaging-types";
+import type { ConversationSummary, DirectMessage, MessagePerson, MessagingInbox, UploadedMessageAttachment } from "@/lib/community/messaging-types";
 
 const fail = (error:{message?:string}|null,fallback:string) => {
   const value=error?.message||"";
@@ -21,6 +21,9 @@ async function rpc<T>(name:string,args?:Record<string,unknown>,fallback="Messagi
 }
 
 export const messagingInbox=()=>rpc<MessagingInbox>("community_messaging_inbox");
+export const groupConversations=()=>rpc<ConversationSummary[]>("community_group_conversations");
+export const openGroupConversation=(groupId:string)=>rpc<{conversationId:string;name:string}>("community_group_conversation",{p_group_id:groupId});
+export const muteGroupConversation=(conversationId:string,muted:boolean)=>rpc<{muted:boolean}>("community_group_conversation_mute",{p_conversation_id:conversationId,p_muted:muted});
 export const messagePeople=(query:string)=>rpc<MessagePerson[]>("community_message_people",{p_query:query||null});
 export const createMessageRequest=(input:{recipientUserId:string;body:string;attachments:UploadedMessageAttachment[];clientKey:string})=>rpc<{requestId:string;status:string}>("community_message_request_create",{p_recipient_user_id:input.recipientUserId,p_body:input.body,p_attachments:input.attachments,p_client_key:input.clientKey},"The message request could not be sent.");
 export const resolveMessageRequest=(requestId:string,decision:"accept"|"decline"|"block"|"report")=>rpc<{requestId:string;status:string;conversationId?:string}>("community_message_request_resolve",{p_request_id:requestId,p_decision:decision},"The message request could not be updated.");
