@@ -1,0 +1,2 @@
+export type CommunityGroup = { id:string; slug:string; name:string; description:string; visibility:"public"|"private"; joinPolicy:"open"|"approval"|"invite_only"; status:string; memberCount?:number; viewerRole:"admin"|"moderator"|"member"|null; viewerStatus:string|null };
+export type CommunityGroupDetail = CommunityGroup & { members:{userId:string;name:string;role:string;status:string}[]; requests:{requestId:string;userId:string;name:string}[]; posts:{id:string;authorName:string;body:string;publishedAt:string;isOwn:boolean}[] };

@@ -1,0 +1,1 @@
+import {joinGroup} from "@/lib/community/group-repository";export async function POST(_:Request,{params}:{params:Promise<{groupId:string}>}){try{return Response.json(await joinGroup((await params).groupId));}catch(e){return Response.json({error:e instanceof Response?await e.text():"Unable to join."},{status:e instanceof Response?e.status:503});}}
