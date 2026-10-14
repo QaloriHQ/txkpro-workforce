@@ -27,6 +27,7 @@ export type CommunityPost = {
 
 export type CommunityComment = {
   id: string;
+  authorUserId: string;
   parentId: string | null;
   body: string;
   createdAt: string;

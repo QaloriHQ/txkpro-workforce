@@ -7,6 +7,8 @@ export default async function DashboardPage() {
 
   const account = await getAccountContext();
   if (!account) redirect("/login");
+  if (account.userStatus.toLowerCase() === "suspended") redirect("/account/restricted");
+  if (account.userStatus.toLowerCase() !== "active") redirect("/login?account=inactive");
   if (!account.role && hasEmployeeMembership(account)) redirect("/community");
   if (!account.role && hasStaffProfileMembership(account)) redirect("/community");
   if (!account.role) redirect("/onboarding");

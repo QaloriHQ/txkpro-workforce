@@ -125,7 +125,7 @@ export async function getAccountContext(): Promise<AccountContext | null> {
 
 export async function getAuthContext(): Promise<AuthContext | null> {
   const account = await getAccountContext();
-  if (!account || !account.role || account.userStatus === "disabled") return null;
+  if (!account || !account.role || account.userStatus.toLowerCase() !== "active") return null;
   return {
     ...account,
     role: account.role,

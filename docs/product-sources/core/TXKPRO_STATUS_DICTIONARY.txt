@@ -207,3 +207,11 @@ PROFILE_REVIEW_REPORT_STATUS: open, reviewing, resolved, dismissed. Report state
 APPENDIX G — W12-16B OWNER APPROVED 2026-10-13 (#224)
 PRO_POINTS_SEASON_STATUS: open, finalized. Open is the derived state before an ended calendar quarter is finalized; finalized is represented by the immutable canonical finalization record. A finalized season never reopens. Later ledger corrections are append-only evidence and do not rewrite the season status or standings.
 PRO_POINTS_LEVEL_VERSION: scheduled, effective. These are date-derived display states, not mutable database statuses. A version is scheduled before its future quarter and effective from that quarter until the next version. Threshold versions are immutable and do not retroactively change finalized seasons.
+
+APPENDIX H — COMM-04 OWNER APPROVED 2026-10-13 (#268)
+COMMUNITY_REPORT_STATUS remains: submitted, reviewing, resolved, dismissed. Automation state, severity and outcome are separate fields and never replace the canonical report lifecycle.
+COMMUNITY_MODERATION_SEVERITY: low, medium, high, critical.
+COMMUNITY_MODERATION_AUTOMATION_STATE: pending, monitoring, actioned, needs_review, failed, overridden.
+COMMUNITY_MODERATION_APPEAL_STATUS: submitted, reviewing, upheld, reversed.
+COMMUNITY_RESTRICTION_STATUS: active, expired, revoked. Expiration is time-derived and an expired restriction grants no authority to deny access.
+COMMUNITY_BLOCK_MODE: mute, block. Mute removes the selected member's content from the viewer's signed-in feed. Block also denies direct community interaction in both directions and clears follows; it never deletes canonical content or audit history.
