@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/students",
           "/platform",
           "/credentials",
+          "/community/posts/",
         ],
         disallow: [
           "/api/",

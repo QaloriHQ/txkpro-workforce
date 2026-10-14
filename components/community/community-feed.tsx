@@ -2,6 +2,7 @@
 /* Community media uses user-supplied HTTPS sources and remains unoptimized to avoid durable image caching. */
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
   BookmarkIcon, ChatBubbleOvalLeftIcon, HandThumbUpIcon, MapPinIcon,
   PaperAirplaneIcon, ShareIcon, UserPlusIcon, FlagIcon, ArrowPathRoundedSquareIcon,
@@ -150,7 +151,7 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
       setPosts(items => items.map(item => item.id === post.id ? { ...item, shareCount: result.count,
         ...(shareType === "share" ? { viewerShared: result.active } : { viewerReposted: result.active }),
       } : item));
-      if (shareType === "share" && result.active) await navigator.clipboard.writeText(`${window.location.origin}/community?post=${encodeURIComponent(post.id)}`).catch(() => undefined);
+      if (shareType === "share" && result.active) await navigator.clipboard.writeText(`${window.location.origin}/community/posts/${encodeURIComponent(post.id)}`).catch(() => undefined);
       setFeedback(result.active ? (shareType === "repost" ? "Repost added to your activity." : "Shared to your activity. The link was copied when permitted.") : `${shareType === "repost" ? "Repost" : "Share"} withdrawn.`);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "The share action could not be completed."); }
   }
@@ -209,7 +210,7 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
       {!loading && !error && posts.length === 0 && (filter !== "nearby" || nearbyConfigured) ? <div className="community-empty"><h2>No posts here yet</h2><p>{filter === "following" ? "Follow people from the Recent feed to build this view." : "Start the conversation with a public post."}</p></div> : null}
       <div className="community-post-list">{posts.map((post) => <article className="community-post" key={post.id}>
         <header><span className="community-avatar">{post.authorImageUrl ? <img src={post.authorImageUrl} alt="" /> : post.authorName.slice(0, 2).toUpperCase()}</span><div><strong>{post.authorName}</strong>{post.authorHeadline ? <small>{post.authorHeadline}</small> : null}<small>{relativeTime(post.publishedAt)}{post.location ? ` · ${post.location}` : ""}</small></div>{!post.isOwn ? <div className="community-member-actions"><button className="community-follow" onClick={() => void follow(post)}><UserPlusIcon aria-hidden="true" />{post.viewerFollowsAuthor ? "Following" : "Follow"}</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"mute")}>Mute</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"block")}>Block</button></div> : null}</header>
-        <span className="community-content-type">{post.postType}</span>{post.topic ? <span className="community-topic">{post.topic}</span> : null}{post.title ? <h2>{post.title}</h2> : null}<p className="community-post-body">{post.body}</p>
+        <span className="community-content-type">{post.postType}</span>{post.topic ? <span className="community-topic">{post.topic}</span> : null}{post.title ? <h2><Link href={`/community/posts/${post.id}`}>{post.title}</Link></h2> : null}<p className="community-post-body">{post.body}</p><p><Link href={`/community/posts/${post.id}`}>Read and share</Link></p>
         {post.media[0] ? <img className="community-post-media" src={post.media[0]} alt="Post attachment" /> : null}
         <div className="community-counts"><span>{post.likeCount} likes</span><span>{post.commentCount} comments · {post.shareCount} shares</span></div>
         <footer><button type="button" className={post.viewerLiked ? "active" : ""} onClick={() => void toggle(post, "like")}><HandThumbUpIcon aria-hidden="true" /> Like</button><PostComments post={post} onCount={count => setPosts(items => items.map(item => item.id === post.id ? { ...item, commentCount: count } : item))} onReport={setReportTarget} /><button type="button" className={post.viewerShared ? "active" : ""} onClick={() => void share(post, "share")}><ShareIcon aria-hidden="true" /> Share</button><button type="button" className={post.viewerReposted ? "active" : ""} onClick={() => void share(post, "repost")}><ArrowPathRoundedSquareIcon aria-hidden="true" /> Repost</button><button type="button" className={post.viewerSaved ? "active" : ""} onClick={() => void toggle(post, "save")}><BookmarkIcon aria-hidden="true" /> Save</button><button type="button" aria-label="Report post" onClick={() => setReportTarget({ type: "post", id: post.id, userId: post.authorUserId, label: post.title || `Post by ${post.authorName}` })}><FlagIcon aria-hidden="true" /></button></footer>
