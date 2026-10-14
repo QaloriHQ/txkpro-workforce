@@ -1,0 +1,3 @@
+import { reportDirectMessage } from "@/lib/community/messaging-repository";
+export const dynamic="force-dynamic";const headers={"Cache-Control":"private, no-store"};
+export async function POST(request:Request,{params}:{params:Promise<{messageId:string}>}){try{const body=await request.json().catch(()=>null);if(!body||typeof body.reason!=="string")return Response.json({error:"Choose a report reason."},{status:400,headers});return Response.json(await reportDirectMessage((await params).messageId,body.reason,typeof body.details==="string"?body.details:undefined),{headers});}catch(error){return error instanceof Response?error:Response.json({error:"The report could not be submitted."},{status:503,headers});}}

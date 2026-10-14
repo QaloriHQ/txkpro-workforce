@@ -1,0 +1,3 @@
+import { createMessageRequest } from "@/lib/community/messaging-repository";
+export const dynamic="force-dynamic";const headers={"Cache-Control":"private, no-store"};
+export async function POST(request:Request){try{const body=await request.json().catch(()=>null);if(!body||JSON.stringify(body).length>20000||typeof body.recipientUserId!=="string"||typeof body.body!=="string"||typeof body.clientKey!=="string"||!Array.isArray(body.attachments))return Response.json({error:"Invalid message request."},{status:400,headers});return Response.json(await createMessageRequest(body),{status:201,headers});}catch(error){return error instanceof Response?error:Response.json({error:"The message request could not be sent."},{status:503,headers});}}

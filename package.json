@@ -36,6 +36,7 @@
     "community:qa": "node --test scripts/community-feed-contract-qa.mjs scripts/w12-20-profile-social-qa.mjs scripts/w12-20-profile-social-database-qa.mjs",
     "community-moderation:qa": "node --test scripts/community-moderation-contract-qa.mjs scripts/community-moderation-database-qa.mjs",
     "community-public:qa": "node --test scripts/community-public-contract-qa.mjs scripts/community-public-database-qa.mjs",
+    "community-messaging:qa": "node --test scripts/community-messaging-contract-qa.mjs scripts/community-messaging-database-qa.mjs",
     "public-trust:qa": "node --test scripts/w12-18-organization-public-profile-qa.mjs scripts/w12-19-professional-reviews-qa.mjs scripts/w12-21-cross-app-seo-qa.mjs",
     "pro-points-finalization:qa": "node --test scripts/w12-16b-season-finalization-qa.mjs scripts/w12-16b-season-finalization-database-qa.mjs"
   },

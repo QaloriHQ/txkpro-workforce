@@ -1,0 +1,3 @@
+import { resolveMessageRequest } from "@/lib/community/messaging-repository";
+export const dynamic="force-dynamic";const headers={"Cache-Control":"private, no-store"};
+export async function PUT(request:Request,{params}:{params:Promise<{requestId:string}>}){try{const body=await request.json().catch(()=>null);if(!body||!["accept","decline","block","report"].includes(body.decision))return Response.json({error:"Invalid request decision."},{status:400,headers});return Response.json(await resolveMessageRequest((await params).requestId,body.decision),{headers});}catch(error){return error instanceof Response?error:Response.json({error:"The message request could not be updated."},{status:503,headers});}}
