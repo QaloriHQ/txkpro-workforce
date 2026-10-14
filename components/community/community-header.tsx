@@ -9,6 +9,7 @@ export function CommunityHeader({ name, workspaceHref }: { name: string; workspa
   return <header className="community-header">
     <Brand />
     <nav aria-label="Community tools">
+      <Link href="/messages" className="community-workspace-link">Messages</Link>
       <Link href="/community/safety" className="community-workspace-link">Safety</Link>
       <Link href={workspaceHref} className="community-workspace-link">My workspace</Link>
       <ThemeToggle />

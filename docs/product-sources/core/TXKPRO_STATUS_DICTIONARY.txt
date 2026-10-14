@@ -215,3 +215,9 @@ COMMUNITY_MODERATION_AUTOMATION_STATE: pending, monitoring, actioned, needs_revi
 COMMUNITY_MODERATION_APPEAL_STATUS: submitted, reviewing, upheld, reversed.
 COMMUNITY_RESTRICTION_STATUS: active, expired, revoked. Expiration is time-derived and an expired restriction grants no authority to deny access.
 COMMUNITY_BLOCK_MODE: mute, block. Mute removes the selected member's content from the viewer's signed-in feed. Block also denies direct community interaction in both directions and clears follows; it never deletes canonical content or audit history.
+
+APPENDIX I — COMM-05 OWNER APPROVED 2026-10-14 (#269)
+MESSAGE_REQUEST_STATUS: pending, accepted, declined, blocked, expired. Pending requests expire after seven days. Declined requests cannot be retried by the same sender for 30 days; block prevents retry until removed.
+CONVERSATION_STATUS: active, archived, closed. COMM-05 direct conversations contain exactly two active natural-person Workforce members.
+MESSAGE_STATUS: sent, redacted, removed. Messages are immutable in V1: a sender may redact their message to a tombstone, and moderation may remove or restore specifically reported content while retaining restricted evidence.
+Conversation membership, mute and read timestamps are access/presentation state, not message lifecycle statuses. V1 has no automatic content purge; account deletion and legal/moderation evidence follow the approved tombstone and hold policy.
