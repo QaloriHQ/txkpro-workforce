@@ -1,0 +1,1 @@
+export type CommunityPoll={id:string;question:string;selectionMode:"single"|"multiple";maxSelections:number;status:"open"|"closed"|"cancelled";closesAt:string;viewerVoted:boolean;totalBallots:number;isOwn:boolean;options:{id:string;label:string;votes:number|null}[]};
