@@ -221,3 +221,6 @@ MESSAGE_REQUEST_STATUS: pending, accepted, declined, blocked, expired. Pending r
 CONVERSATION_STATUS: active, archived, closed. COMM-05 direct conversations contain exactly two active natural-person Workforce members.
 MESSAGE_STATUS: sent, redacted, removed. Messages are immutable in V1: a sender may redact their message to a tombstone, and moderation may remove or restore specifically reported content while retaining restricted evidence.
 Conversation membership, mute and read timestamps are access/presentation state, not message lifecycle statuses. V1 has no automatic content purge; account deletion and legal/moderation evidence follow the approved tombstone and hold policy.
+COMMUNITY EVENT (COMM-09)
+draft | published | cancelled | completed
+RSVP: interested | going | not_going

@@ -1,0 +1,3 @@
+export type EventRsvp="interested"|"going"|"not_going";
+export type CommunityEvent={id:string;title:string;description:string;coverUrl:string|null;startsAt:string;endsAt:string;timezone:string;locationType:"physical"|"online";venueName:string|null;address:string|null;onlineUrl:string|null;organizerName:string;status:"draft"|"published"|"cancelled"|"completed";viewerRsvp:EventRsvp|null;isOwn:boolean;counts:{interested:number;going:number}};
+export type PublicCommunityEvent=Omit<CommunityEvent,"viewerRsvp"|"isOwn"|"onlineUrl">&{found:boolean;canonicalPath:string;robotsIndex:boolean;robotsFollow:boolean;authorName:string;authorImageUrl:string|null;authorProfilePath:string|null};

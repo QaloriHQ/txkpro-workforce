@@ -2,7 +2,7 @@ export type CommunityFilter = "recent" | "following" | "nearby" | "topic";
 
 export type CommunityPost = {
   id: string;
-  postType: "post" | "article" | "update";
+  postType: "post" | "article" | "update" | "poll" | "event";
   authorUserId: string;
   authorName: string;
   authorImageUrl: string | null;
