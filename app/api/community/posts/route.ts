@@ -1,4 +1,5 @@
 import { communityFeed, createCommunityPost } from "@/lib/community/repository";
+import { publishStudentPost } from "@/lib/community/student-composer-repository";
 import type { CommunityFilter, FeedCursor } from "@/lib/community/types";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store" };
@@ -27,6 +28,13 @@ export async function POST(request: Request) {
   try {
     const input = await request.json().catch(() => null);
     if (!input || typeof input !== "object" || Array.isArray(input) || JSON.stringify(input).length > 20000) return Response.json({ error: "Invalid post input." }, { status: 400, headers });
+    if (input.studentComposer === true) {
+      const post = { ...input } as Record<string, unknown> & { draftId?: string; assetIds?: string[] };
+      const { draftId, assetIds } = post;
+      delete post.draftId; delete post.assetIds; delete post.studentComposer;
+      if (typeof draftId !== "string" || !Array.isArray(assetIds) || assetIds.length > 10) return Response.json({ error: "Invalid Student post draft." }, { status: 400, headers });
+      return Response.json(await publishStudentPost(post, draftId, assetIds), { status: 201, headers });
+    }
     return Response.json(await createCommunityPost(input), { status: 201, headers });
   } catch (error) { return failure(error); }
 }
