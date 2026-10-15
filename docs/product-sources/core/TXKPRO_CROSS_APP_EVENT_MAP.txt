@@ -204,3 +204,8 @@ Private message content and attachment metadata are excluded from analytics, adv
 COMM-09 domain events
 - EVENT_RSVP_CHANGED — one member's canonical RSVP state changed; consumers must be replay-safe and must not infer attendee identity from aggregate projections.
 - EVENT_CANCELLED — an event was cancelled; downstream engagement awards use an audited reversal rather than destructive deletion.
+
+APPENDIX J — COMM-10 IMPLEMENTATION 2026-10-15 (#274)
+PRO_ENGAGEMENT_AWARDED: Source is the active member performing the qualifying action. Target is the stable engagement-award ID. Metadata contains recipient user ID, canonical post/content IDs, action type and points delta; it never contains post, comment, poll, event or message content. Replay for the same recipient, actor, canonical content and action type does not create a second award.
+PRO_ENGAGEMENT_REVERSED: Source is the member whose withdrawal changed the source or the canonical moderation/event transition that made the source ineligible. Target remains the same engagement-award ID. Metadata contains the negative points delta and canonical identifiers only. Restoration reactivates that award ID and emits a new PRO_ENGAGEMENT_AWARDED event.
+Engagement awards are uncapped and separate from security.pro_award. Private messages, private/unlisted standalone content, private groups, sponsored content and organization-branded content never qualify.

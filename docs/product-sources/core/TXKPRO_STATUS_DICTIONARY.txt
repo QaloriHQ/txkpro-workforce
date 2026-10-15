@@ -224,3 +224,7 @@ Conversation membership, mute and read timestamps are access/presentation state,
 COMMUNITY EVENT (COMM-09)
 draft | published | cancelled | completed
 RSVP: interested | going | not_going
+
+PRO ENGAGEMENT AWARD (COMM-10)
+active | reversed
+Active is represented by wf_pro_engagement_awards.active=true. Reversed keeps the same immutable logical award identity with active=false. A later valid restoration reactivates that identity; it does not create another award. These states do not reopen finalized seasons, and student ranking eligibility remains separate from points/level eligibility.

@@ -55,3 +55,23 @@ export async function pointsSummary(): Promise<Summary> {
     });
   return data as Summary;
 }
+
+export type EngagementPointsSummary = {
+  season: string;
+  seasonPoints: number;
+  lifetimePoints: number;
+  seasonalEngagementPoints: number;
+  lifetimeEngagementPoints: number;
+  lifetimeLevel: number;
+  rankEligible: boolean;
+};
+
+export async function engagementPointsSummary(): Promise<EngagementPointsSummary> {
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("pro_engagement_self");
+  if (error)
+    throw new Response("Engagement progress unavailable.", {
+      status: error.code === "42501" ? 403 : 503,
+    });
+  return data as EngagementPointsSummary;
+}
