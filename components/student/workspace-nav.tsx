@@ -6,6 +6,7 @@ import {
   ChatBubbleLeftRightIcon,
   HomeIcon,
   BriefcaseIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 type StudentSection =
@@ -28,9 +29,9 @@ export function StudentWorkspaceNav({
   const items = [
     {
       key: "home" as const,
-      href: "/community",
-      label: "Home",
-      icon: HomeIcon,
+      href: "/student/community",
+      label: "Community",
+      icon: UserGroupIcon,
     },
     {
       key: "workspace" as const,

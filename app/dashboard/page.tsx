@@ -25,7 +25,10 @@ export default async function DashboardPage() {
     redirect("/onboarding?pending=1");
   }
 
-  if (["admin", "employer", "student", "educator"].includes(account.role)) redirect("/community");
+  if (account.role === "employer") redirect("/employer/community");
+  if (account.role === "student") redirect("/student/community");
+  if (account.role === "educator") redirect("/institution/community");
+  if (account.role === "admin") redirect("/community");
 
   redirect("/onboarding");
 }

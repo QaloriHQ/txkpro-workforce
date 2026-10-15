@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const migration = await readFile(new URL("../supabase/staging/migrations/20261012120000_workforce_comm_02_home_feed.sql", import.meta.url), "utf8");
 const feed = await readFile(new URL("../components/community/community-feed.tsx", import.meta.url), "utf8");
+const createMenu = await readFile(new URL("../components/community/community-create-menu.tsx", import.meta.url), "utf8");
 const dashboard = await readFile(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
 
 test("community tables retain RLS and deny direct client access", () => {
@@ -31,10 +32,10 @@ test("public acknowledgement and bounded content are enforced in the database", 
   assert.match(migration, /PUBLIC_ACKNOWLEDGEMENT_REQUIRED/);
   assert.match(migration, /jsonb_array_length\(v_media\)>4/);
   assert.match(migration, /char_length\(v_body\) not between 1 and 8000/);
-  assert.match(feed, /visible on TXKPRO and search engines/);
+  assert.match(createMenu, /visible on TXKPRO and search engines/);
 });
 
 test("Home routes to community and the UI exposes required states and actions", () => {
-  assert.match(dashboard, /redirect\("\/community"\)/);
+  for (const path of ["/student/community", "/institution/community", "/employer/community", "/community"]) assert.match(dashboard, new RegExp(path));
   for (const value of ["Loading community posts", "No posts here yet", "Try again", "Load more", "Follow", "Like", "Save", "Share", "Report post"]) assert.match(feed, new RegExp(value));
 });

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   BookmarkIcon, ChatBubbleOvalLeftIcon, HandThumbUpIcon, MapPinIcon,
-  PaperAirplaneIcon, ShareIcon, UserPlusIcon, FlagIcon, ArrowPathRoundedSquareIcon,
+  ShareIcon, UserPlusIcon, FlagIcon, ArrowPathRoundedSquareIcon,
 } from "@heroicons/react/24/outline";
 import type { CommunityComment, CommunityFeedResult, CommunityFilter, CommunityPost } from "@/lib/community/types";
 
@@ -83,7 +83,7 @@ const reportReasons = [
   ["misinformation","Misinformation"],["unsafe","Unsafe content"],["illegal","Illegal activity"],["other","Other"],
 ] as const;
 
-export function CommunityFeed({ viewerName }: { viewerName: string }) {
+export function CommunityFeed() {
   const [filter, setFilter] = useState<CommunityFilter>("recent");
   const [topic, setTopic] = useState("");
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -91,7 +91,6 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
   const [nearbyConfigured, setNearbyConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [publishing, setPublishing] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [reporting, setReporting] = useState(false);
@@ -113,20 +112,6 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
     const scheduled = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(scheduled);
   }, [load]);
-
-  async function publish(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setPublishing(true); setFeedback("");
-    const form = event.currentTarget; const data = new FormData(form);
-    const mediaUrl = String(data.get("media") || "").trim();
-    try {
-      await json("/api/community/posts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        postType: String(data.get("postType") || "post"), title: String(data.get("title") || ""), body: String(data.get("body") || ""), topic: String(data.get("topic") || ""),
-        location: String(data.get("location") || ""), media: mediaUrl ? [mediaUrl] : [], publicAcknowledged: data.get("publicAcknowledged") === "on",
-      }) });
-      form.reset(); setFeedback("Your post is live."); setFilter("recent"); await load();
-    } catch (reason) { setFeedback(reason instanceof Error ? reason.message : "Your post could not be published."); }
-    finally { setPublishing(false); }
-  }
 
   async function toggle(post: CommunityPost, action: "like" | "save") {
     try {
@@ -185,26 +170,16 @@ export function CommunityFeed({ viewerName }: { viewerName: string }) {
     <aside className="community-rail" aria-label="Community navigation">
       <h2>Community</h2>
       <p>Connect with the TXKPRO workforce network.</p>
-      <a href="#composer">Create a post</a><a href="#feed">Your feed</a>
+      <a href="#feed">Your feed</a><Link href="/groups">Groups</Link><Link href="/events">Events</Link>
     </aside>
     <section className="community-main">
-      <form id="composer" className="community-composer" onSubmit={publish}>
-        <div className="community-composer-lead"><span className="student-avatar">{viewerName.slice(0, 1) || "M"}</span><strong>Share with the workforce community</strong></div>
-        <label>Format<select name="postType" defaultValue="post"><option value="post">Post</option><option value="update">Update</option><option value="article">Article</option></select></label>
-        <label>Post title <input name="title" maxLength={160} placeholder="Add a helpful headline" /></label>
-        <label>Your update <textarea name="body" maxLength={8000} required rows={4} placeholder="Ask a question, share progress, or offer advice…" /></label>
-        <div className="community-field-row"><label>Topic <input name="topic" maxLength={64} placeholder="e.g. Electrical" /></label><label>Location <input name="location" maxLength={120} placeholder="e.g. Texarkana, TX" /></label></div>
-        <label>Image URL <input name="media" type="url" placeholder="https://… (optional)" /></label>
-        <label className="community-public-check"><input name="publicAcknowledged" type="checkbox" required /> <span><strong>Public</strong> — visible on TXKPRO and search engines.</span></label>
-        <div className="community-composer-actions"><span role="status">{feedback}</span><button className="button" disabled={publishing}>{publishing ? "Publishing…" : <><PaperAirplaneIcon aria-hidden="true" /> Publish</>}</button></div>
-      </form>
-
       <div id="feed" className="community-filter-bar">
         <div role="tablist" aria-label="Filter community feed">{filters.map((item) => <button role="tab" aria-selected={filter === item.key} key={item.key} onClick={() => setFilter(item.key)}>{item.label}</button>)}</div>
         {filter === "topic" ? <label className="community-topic-filter">Topic <input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Type a topic" /></label> : null}
       </div>
 
       {filter === "nearby" && !nearbyConfigured ? <form className="community-empty" onSubmit={saveLocation}><MapPinIcon aria-hidden="true" /><h2>Set your nearby location</h2><p>Use a city or service area to see relevant public posts.</p><input name="location" required maxLength={120} placeholder="Texarkana, TX" /><button className="button">Save location</button></form> : null}
+      {feedback ? <p className="community-feed-feedback" role="status">{feedback}</p> : null}
       {error ? <div className="community-error" role="alert"><p>{error}</p><button onClick={() => void load()}>Try again</button></div> : null}
       {loading && posts.length === 0 ? <div className="community-loading" aria-label="Loading community posts"><span /><span /><span /></div> : null}
       {!loading && !error && posts.length === 0 && (filter !== "nearby" || nearbyConfigured) ? <div className="community-empty"><h2>No posts here yet</h2><p>{filter === "following" ? "Follow people from the Recent feed to build this view." : "Start the conversation with a public post."}</p></div> : null}

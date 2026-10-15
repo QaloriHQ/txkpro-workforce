@@ -34,6 +34,7 @@
     "authcard:qa": "node --experimental-strip-types --test scripts/authcard-contract-qa.mjs scripts/authcard-database-qa.mjs scripts/authcard-provider-qa.mjs scripts/authcard-checkout-qa.mjs",
     "screening-policy:qa": "node --test scripts/screening-policy-qa.mjs",
     "community:qa": "node --test scripts/community-feed-contract-qa.mjs scripts/w12-20-profile-social-qa.mjs scripts/w12-20-profile-social-database-qa.mjs",
+    "community-shell:qa": "node --test scripts/community-shell-qa.mjs",
     "community-moderation:qa": "node --test scripts/community-moderation-contract-qa.mjs scripts/community-moderation-database-qa.mjs",
     "community-public:qa": "node --test scripts/community-public-contract-qa.mjs scripts/community-public-database-qa.mjs",
     "community-messaging:qa": "node --test scripts/community-messaging-contract-qa.mjs scripts/community-messaging-database-qa.mjs",
