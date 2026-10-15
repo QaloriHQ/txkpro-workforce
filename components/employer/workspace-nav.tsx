@@ -172,6 +172,10 @@ export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
         </div>
 
         <div className="employer-sidebar-links">
+          <Link className="employer-sidebar-link employer-community-switch" href="/employer/community" onClick={() => setOpen(false)}>
+            <UserGroupIcon className="employer-sidebar-icon" aria-hidden="true" />
+            <span>Switch to Community</span>
+          </Link>
           {groups.map((group) => (
             <div className="employer-nav-group" key={group.label}>
               <span className="employer-nav-label">{group.label}</span>

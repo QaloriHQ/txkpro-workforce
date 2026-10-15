@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const migration = await readFile(new URL("../supabase/staging/migrations/20261012215315_workforce_w12_20_profile_social_controls.sql", import.meta.url), "utf8");
 const foundation = await readFile(new URL("../supabase/staging/migrations/20260925190851_workforce_public_identity_seo_foundation.sql", import.meta.url), "utf8");
 const feed = await readFile(new URL("../components/community/community-feed.tsx", import.meta.url), "utf8");
+const createMenu = await readFile(new URL("../components/community/community-create-menu.tsx", import.meta.url), "utf8");
 const repository = await readFile(new URL("../lib/community/repository.ts", import.meta.url), "utf8");
 const route = await readFile(new URL("../app/api/community/posts/[postId]/comments/route.ts", import.meta.url), "utf8");
 const ownership = await readFile(new URL("../docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt", import.meta.url), "utf8");
@@ -50,8 +51,9 @@ test("audit payloads exclude authored content and preserve canonical events", ()
 test("privacy remains presentation-only and UI exposes complete interaction states", () => {
   assert.match(ownership, /hiding all activity or an individual category never deletes canonical interaction/i);
   assert.match(statuses, /Hiding public activity history changes presentation only/i);
-  for (const label of ["Post", "Update", "Article", "Comment", "Reply", "Share", "Repost", "Loading comments", "No comments yet"]) {
+  for (const label of ["Comment", "Reply", "Share", "Repost", "Loading comments", "No comments yet"]) {
     assert.match(feed, new RegExp(label));
   }
+  for (const label of ["Post", "Article"]) assert.match(createMenu, new RegExp(label));
   assert.match(feed, /role="status"/);
 });

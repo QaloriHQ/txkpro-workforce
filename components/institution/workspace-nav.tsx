@@ -181,6 +181,10 @@ export function InstitutionWorkspaceNav({
         </div>
 
         <div className="institution-sidebar-links">
+          <Link className="institution-sidebar-link institution-community-switch" href="/institution/community" onClick={() => setOpen(false)}>
+            <UserGroupIcon className="institution-sidebar-icon" aria-hidden="true" />
+            <span>Switch to Community</span>
+          </Link>
           {groups.map((group) => {
             const items = group.items.filter((item) =>
               institutionCanView(policyContext, item.capability),
