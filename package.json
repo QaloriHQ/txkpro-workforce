@@ -40,6 +40,7 @@
     "community-groups:qa": "node --test scripts/community-groups-contract-qa.mjs scripts/community-groups-database-qa.mjs",
     "community-group-messaging:qa": "node --test scripts/community-group-messaging-qa.mjs",
     "community-polls:qa": "node --test scripts/community-polls-qa.mjs",
+    "community-events:qa": "node --test scripts/community-events-qa.mjs",
     "public-trust:qa": "node --test scripts/w12-18-organization-public-profile-qa.mjs scripts/w12-19-professional-reviews-qa.mjs scripts/w12-21-cross-app-seo-qa.mjs",
     "pro-points-finalization:qa": "node --test scripts/w12-16b-season-finalization-qa.mjs scripts/w12-16b-season-finalization-database-qa.mjs"
   },

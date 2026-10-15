@@ -201,3 +201,6 @@ MESSAGE_REQUEST_RESOLVED: Source is the recipient. Target is the request ID. Met
 MESSAGE_SENT: Source is an active conversation participant. Target is the message ID. Metadata contains conversation ID and attachment count only. Consumers may update unread/notification state but must fetch participant-authorized content separately.
 MESSAGE_REDACTED: Source is the message sender. Target is the message ID. The participant projection becomes a tombstone; the audit payload contains no message content.
 Private message content and attachment metadata are excluded from analytics, advertising, search and notification payloads. A report captures only the specifically reported item in restricted moderation evidence; it never grants unrestricted inbox access.
+COMM-09 domain events
+- EVENT_RSVP_CHANGED — one member's canonical RSVP state changed; consumers must be replay-safe and must not infer attendee identity from aggregate projections.
+- EVENT_CANCELLED — an event was cancelled; downstream engagement awards use an audited reversal rather than destructive deletion.
