@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ActionModal } from "@/components/design-system/action-modal";
+import { StudentCommunityComposer } from "@/components/community/student-community-composer";
 import {
   CalendarDaysIcon,
   ChartBarSquareIcon,
@@ -111,6 +112,8 @@ export function CommunityCreateMenu({
   }
 
   const formTitle = type === "post" ? "Create a post" : type === "article" ? "Write an article" : type === "event" ? "Create an event" : "Create a poll";
+
+  if (studentCompact) return <StudentCommunityComposer viewerName={viewerName} triggerText={triggerText} />;
 
   if (!studentCompact) return <ActionModal
     title="Create in Community"
