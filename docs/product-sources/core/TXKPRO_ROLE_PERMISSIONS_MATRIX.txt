@@ -113,3 +113,10 @@ Employer public-profile management: employer_owner and employer_admin in the mat
 Institution public-profile management: institution_super_admin and institution_admin in the matching active Institution scope.
 Educator review eligibility: active Students; other active Educators; and Institution leadership only when its active scope matches the Educator's current Institution. Self-review is denied. Client-selected role labels never grant access.
 Review moderation: TXKPRO platform administration only. Educator profile owners may hide public review/rating presentation but may not publish, edit or remove another user's review.
+
+ADS-01 NATIVE DELIVERY PERMISSIONS — OWNER APPROVED 2026-10-16 (#265, #275)
+- Public and signed-in visitors may receive only eligible, approved sponsored presentation through the server selector. They receive no direct advertising-table access.
+- Signed-in active Workforce members may report a served ad. The server derives reporter identity and preserves a bounded creative snapshot as restricted moderation evidence.
+- Viewable/clicked measurement and ad selection are service-role-only functions; request parameters never grant authority or access to campaign records.
+- Platform administrators may open the presentation-only four-placement preview. Previewing does not serve inventory, spend budget or activate an external provider.
+- Advertiser self-service, campaign/creative review and funding controls are deferred to ADS-02. No Student, Institution or Employer role receives those permissions in ADS-01.

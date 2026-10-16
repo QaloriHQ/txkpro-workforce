@@ -37,6 +37,7 @@ export default async function AdminPage() {
         <Link className="button button-ghost" href="/admin/retention">Retention cases</Link>
         <Link className="button button-ghost" href="/admin/audit">Audit &amp; events</Link>
         <Link className="button button-ghost" href="/admin/moderation">Reports &amp; moderation</Link>
+        <Link className="button button-ghost" href="/admin/ads/preview">Ad placement preview</Link>
         <div className="page-heading">
           <div>
             <p className="eyebrow">TXKPRO operations</p>
