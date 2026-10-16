@@ -12,5 +12,5 @@ export default async function AdvertiserOnboardingPage() {
   const account = await getAccountContext();
   if (!account) redirect("/login?next=/advertiser/onboarding");
   if (account.advertiser) redirect("/advertiser");
-  return <><header className="topbar"><Brand/><ThemeToggle/></header><main className="page-wrap advertiser-narrow"><div className="page-heading"><div><p className="eyebrow">Advertiser application</p><h1>Tell us about your business</h1><p className="card-sub">TXKPRO reviews every advertiser before campaign submission is enabled.</p></div></div><AdvertiserOnboardingForm email={account.email??""}/></main></>;
+  return <><header className="topbar"><Brand/><ThemeToggle/></header><main className="page-wrap advertiser-narrow"><div className="page-heading"><div><p className="eyebrow">Ads Manager setup</p><h1>Tell us about your business</h1><p className="card-sub">Your advertiser workspace opens immediately after setup.</p></div></div><AdvertiserOnboardingForm email={account.email??""}/></main></>;
 }
