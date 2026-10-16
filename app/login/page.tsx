@@ -181,6 +181,9 @@ function LoginContent() {
             <strong>Request access</strong>
           </Link>.
         </p>
+        <p className="footer-note">
+          Running ad campaigns? <Link href="/advertiser/register"><strong>Create an advertiser account</strong></Link>.
+        </p>
       </section>
     </main>
   );

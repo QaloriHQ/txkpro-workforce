@@ -17,6 +17,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   // Platform administrators are provisioned server-side and never complete
   // public workforce onboarding.
   if (account.role === "admin") redirect("/admin");
+  if (account.role === "advertiser") redirect("/advertiser");
 
   if (account.onboarding?.status === "complete" && account.role) {
     if (account.role === "employer") redirect("/employer");

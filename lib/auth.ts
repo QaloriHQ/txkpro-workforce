@@ -36,7 +36,13 @@ export type AccountContext = VerifiedIdentity & {
   phone: string | null;
   userStatus: string;
   memberships: Membership[];
-  role: Role | null;
+  role: Role | "advertiser" | null;
+  advertiser: {
+    advertiserId: string;
+    displayName: string;
+    status: "pending_review" | "active" | "rejected" | "suspended";
+    role: "advertiser_owner" | "advertiser_admin" | "advertiser_creative" | "advertiser_analyst";
+  } | null;
   onboarding: {
     selected_role: Role | null;
     status: "not_started" | "in_progress" | "pending_review" | "complete" | "blocked" | "cancelled";
@@ -89,7 +95,7 @@ export async function getAccountContext(): Promise<AccountContext | null> {
 
   if (userError || !user?.user_id) return null;
 
-  const [{ data: memberships }, { data: onboarding }] = await Promise.all([
+  const [{ data: memberships }, { data: onboarding }, { data: advertiser }] = await Promise.all([
     supabase
       .from("app_role_memberships")
       .select("role, status, scope_type, scope_id")
@@ -99,6 +105,7 @@ export async function getAccountContext(): Promise<AccountContext | null> {
       .select("selected_role, status, current_step, profile_data")
       .eq("auth_user_id", identity.authUserId)
       .maybeSingle(),
+    supabase.rpc("advertiser_account_context"),
   ]);
 
   const normalizedMemberships = (memberships ?? []) as Membership[];
@@ -111,7 +118,15 @@ export async function getAccountContext(): Promise<AccountContext | null> {
     phone: user.phone ?? null,
     userStatus: user.status ?? "active",
     memberships: normalizedMemberships,
-    role: normalizeRole(normalizedMemberships),
+    role: normalizeRole(normalizedMemberships) ?? (advertiser ? "advertiser" : null),
+    advertiser: advertiser
+      ? {
+          advertiserId: advertiser.advertiserId as string,
+          displayName: advertiser.displayName as string,
+          status: advertiser.status as NonNullable<AccountContext["advertiser"]>["status"],
+          role: advertiser.role as NonNullable<AccountContext["advertiser"]>["role"],
+        }
+      : null,
     onboarding: onboarding
       ? {
           selected_role: (onboarding.selected_role as Role | null) ?? null,
@@ -125,7 +140,7 @@ export async function getAccountContext(): Promise<AccountContext | null> {
 
 export async function getAuthContext(): Promise<AuthContext | null> {
   const account = await getAccountContext();
-  if (!account || !account.role || account.userStatus.toLowerCase() !== "active") return null;
+  if (!account || !account.role || account.role === "advertiser" || account.userStatus.toLowerCase() !== "active") return null;
   return {
     ...account,
     role: account.role,
