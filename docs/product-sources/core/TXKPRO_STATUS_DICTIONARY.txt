@@ -228,3 +228,10 @@ RSVP: interested | going | not_going
 PRO ENGAGEMENT AWARD (COMM-10)
 active | reversed
 Active is represented by wf_pro_engagement_awards.active=true. Reversed keeps the same immutable logical award identity with active=false. A later valid restoration reactivates that identity; it does not create another award. These states do not reopen finalized seasons, and student ranking eligibility remains separate from points/level eligibility.
+
+APPENDIX J — ADS-01 OWNER APPROVED 2026-10-16 (#265, #275)
+ADVERTISER_STATUS: pending_review, active, rejected, suspended.
+AD_CAMPAIGN_STATUS: draft, submitted, in_review, approved, scheduled, active, paused, completed, rejected, cancelled.
+AD_CREATIVE_STATUS: draft, submitted, approved, rejected, archived.
+AD_DELIVERY_EVENT_TYPE: served, viewable, clicked, invalidated, provider_reconciled. Asset load is not viewability. Delivery evidence is append-only; corrections use invalidated or provider_reconciled rather than rewriting prior events.
+Only an active advertiser, active in-window campaign, approved creative, enabled placement and non-revoked manual funding authorization are eligible for ADS-01 delivery. Sponsored engagement never creates PRO Points.

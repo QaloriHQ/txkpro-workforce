@@ -1,7 +1,7 @@
 "use client";
 /* Community media uses user-supplied HTTPS sources and remains unoptimized to avoid durable image caching. */
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   BookmarkIcon, ChatBubbleOvalLeftIcon, HandThumbUpIcon, MapPinIcon,
@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import type { CommunityComment, CommunityFeedResult, CommunityFilter, CommunityPost } from "@/lib/community/types";
 import { plainCommunityText } from "@/components/community/community-rich-content";
+import { SponsoredPlacement } from "@/components/ads/sponsored-placement";
 
 type ApiFeed = Omit<CommunityFeedResult, "nextCursor"> & { nextCursor: string | null };
 const filters: { key: CommunityFilter; label: string }[] = [
@@ -67,6 +68,7 @@ function PostComments({ post, onCount, onReport }: { post: CommunityPost; onCoun
         <span className="community-avatar">{comment.authorImageUrl ? <img src={comment.authorImageUrl} alt="" /> : comment.authorName.slice(0,2).toUpperCase()}</span>
         <div><strong>{comment.authorName}</strong><p>{comment.body}</p><small>{relativeTime(comment.createdAt)}</small> <button type="button" onClick={() => setReplyTo(comment)}>Reply</button>{!comment.isOwn ? <button type="button" onClick={() => onReport({ type: "comment", id: comment.id, userId: comment.authorUserId, label: `Comment by ${comment.authorName}` })}>Report</button> : null}</div>
       </article>)}
+      {comments.length >= 2 ? <SponsoredPlacement placement="in_comments" contentId={post.id} /> : null}
       <form className="community-comment-form" onSubmit={submit}>
         {replyTo ? <p>Replying to <strong>{replyTo.authorName}</strong> <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p> : null}
         <label><span className="sr-only">{replyTo ? "Write a reply" : "Write a comment"}</span><textarea name="body" required maxLength={2000} rows={2} placeholder={replyTo ? "Write a reply…" : "Write a comment…"} /></label>
@@ -184,16 +186,16 @@ export function CommunityFeed() {
       {error ? <div className="community-error" role="alert"><p>{error}</p><button onClick={() => void load()}>Try again</button></div> : null}
       {loading && posts.length === 0 ? <div className="community-loading" aria-label="Loading community posts"><span /><span /><span /></div> : null}
       {!loading && !error && posts.length === 0 && (filter !== "nearby" || nearbyConfigured) ? <div className="community-empty"><h2>No posts here yet</h2><p>{filter === "following" ? "Follow people from the Recent feed to build this view." : "Start the conversation with a public post."}</p></div> : null}
-      <div className="community-post-list">{posts.map((post) => <article className="community-post" key={post.id}>
+      <div className="community-post-list">{posts.map((post,index) => <Fragment key={post.id}><article className="community-post">
         <header><span className="community-avatar">{post.authorImageUrl ? <img src={post.authorImageUrl} alt="" /> : post.authorName.slice(0, 2).toUpperCase()}</span><div><strong>{post.authorName}</strong>{post.authorHeadline ? <small>{post.authorHeadline}</small> : null}<small>{relativeTime(post.publishedAt)}{post.location ? ` · ${post.location}` : ""}</small></div>{!post.isOwn ? <div className="community-member-actions"><button className="community-follow" onClick={() => void follow(post)}><UserPlusIcon aria-hidden="true" />{post.viewerFollowsAuthor ? "Following" : "Follow"}</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"mute")}>Mute</button><button type="button" onClick={() => void memberPreference(post.authorUserId,"block")}>Block</button></div> : null}</header>
         <span className="community-content-type">{post.postType}</span>{post.topic ? <span className="community-topic">{post.topic}</span> : null}{post.title ? <h2><Link href={post.postType==="event"?`/events/${post.id}`:post.postType==="poll"?`/polls/${post.id}`:`/community/posts/${post.id}`}>{post.title}</Link></h2> : null}<p className="community-post-body">{post.postType==="article"?plainCommunityText(post.body):post.body}</p><p><Link href={post.postType==="event"?`/events/${post.id}`:post.postType==="poll"?`/polls/${post.id}`:`/community/posts/${post.id}`}>Read and share</Link></p>
         {post.media.length ? <div className={`community-media-gallery community-media-${Math.min(post.media.length,4)}`}>{post.media.slice(0,4).map((url,index)=><figure key={url}><img className="community-post-media" src={url} alt={`Post attachment ${index+1}`} />{index===3&&post.media.length>4?<span>+{post.media.length-4}</span>:null}</figure>)}</div> : null}
         <div className="community-counts"><span>{post.likeCount} likes</span><span>{post.commentCount} comments · {post.shareCount} shares</span></div>
         <footer><button type="button" className={post.viewerLiked ? "active" : ""} onClick={() => void toggle(post, "like")}><HandThumbUpIcon aria-hidden="true" /> Like</button><PostComments post={post} onCount={count => setPosts(items => items.map(item => item.id === post.id ? { ...item, commentCount: count } : item))} onReport={setReportTarget} /><button type="button" className={post.viewerShared ? "active" : ""} onClick={() => void share(post, "share")}><ShareIcon aria-hidden="true" /> Share</button><button type="button" className={post.viewerReposted ? "active" : ""} onClick={() => void share(post, "repost")}><ArrowPathRoundedSquareIcon aria-hidden="true" /> Repost</button><button type="button" className={post.viewerSaved ? "active" : ""} onClick={() => void toggle(post, "save")}><BookmarkIcon aria-hidden="true" /> Save</button><button type="button" aria-label="Report post" onClick={() => setReportTarget({ type: "post", id: post.id, userId: post.authorUserId, label: post.title || `Post by ${post.authorName}` })}><FlagIcon aria-hidden="true" /></button></footer>
-      </article>)}</div>
+      </article>{index === 3 ? <SponsoredPlacement placement="in_feed" /> : null}</Fragment>)}</div>
       {cursor ? <button className="community-load-more" disabled={loading} onClick={() => void load(true, cursor)}>{loading ? "Loading…" : "Load more"}</button> : null}
     </section>
-    <aside className="community-rail community-guidelines"><h2>Community standards</h2><p>Be useful, respectful, and mindful that public posts may appear in search engines.</p><p><Link href="/polls">Create a poll</Link></p><p><Link href="/events">Create an event</Link></p></aside>
+    <aside className="community-rail community-guidelines"><h2>Community standards</h2><p>Be useful, respectful, and mindful that public posts may appear in search engines.</p><p><Link href="/polls">Create a poll</Link></p><p><Link href="/events">Create an event</Link></p><SponsoredPlacement placement="multiplex" /></aside>
     {reportTarget ? <div className="moderation-modal-backdrop" role="presentation"><form className="moderation-modal community-report-modal" role="dialog" aria-modal="true" aria-labelledby="community-report-title" onSubmit={report}>
       <div className="card-header"><div><p className="eyebrow">Community safety</p><h2 id="community-report-title">Report {reportTarget.type}</h2><p className="card-sub">{reportTarget.label}</p></div><button className="button button-ghost button-small" type="button" onClick={() => setReportTarget(null)}>Close</button></div>
       <label>What happened?<select name="reason" defaultValue="spam">{reportReasons.map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select></label>
