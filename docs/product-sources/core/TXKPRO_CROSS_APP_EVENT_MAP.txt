@@ -214,3 +214,9 @@ APPENDIX K — ADS-01 OWNER APPROVED 2026-10-16 (#265, #275)
 AD_DELIVERY_RECORDED: Source is the server-only native-delivery selector or measurement endpoint. Target is the immutable delivery-group UUID. Metadata contains campaign ID, creative ID, placement and event type only; it never contains creative copy, private member data or inferred traits. Served, viewable and clicked are distinct idempotent events. Consumers may aggregate delivery telemetry but may not create PRO Points or change hiring, credential, placement or retention state.
 AD_DELIVERY_INVALIDATED and AD_PROVIDER_RECONCILED are reserved append-only correction events for the ADS-03 billing/reconciliation tranche. They never mutate the original evidence.
 Advertiser, campaign and creative lifecycle events defined in #265 are emitted by the ADS-02 management workflow, not by ADS-01 delivery.
+
+APPENDIX L — ADS-02 OWNER APPROVED 2026-10-16 (#264, #276)
+ADVERTISER_STATUS_CHANGED: Source is open registration or an authorized TXKPRO administrator. Target is the canonical advertiser ID. Payload contains before/after status and bounded review context, never credentials or private Workforce data.
+AD_CAMPAIGN_STATUS_CHANGED: Source is an authorized advertiser Owner/Admin or TXKPRO administrator. Target is the canonical campaign ID. Payload contains lifecycle state and bounded review decision. Draft saves and creative draft saves are separately auditable; creative copy remains in the restricted canonical creative record.
+AD_CREATIVE_STATUS_CHANGED: Source is an authorized advertiser Owner/Admin/Creative or TXKPRO review. Target is the canonical creative ID. Approval follows its campaign review and never activates delivery without manual funding authorization.
+Advertiser team invitations and acceptance are audited membership events. No ADS-02 event grants Workforce tenant access, publishes community content, creates PRO Points, or initiates live payment.

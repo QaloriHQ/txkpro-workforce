@@ -57,7 +57,12 @@ export async function POST(request: Request) {
 
     if (membershipError) throw membershipError;
 
-    const role = normalizeRole((memberships ?? []) as Membership[]);
+    const workforceRole = normalizeRole((memberships ?? []) as Membership[]);
+    const [{ data: advertiser }, { data: pendingAdvertiserInvite }] = await Promise.all([
+      supabase.rpc("advertiser_account_context"),
+      supabase.rpc("advertiser_pending_invitation"),
+    ]);
+    const role = workforceRole ?? (advertiser ? "advertiser" : null);
     const requestedRole = authResult.data.user.user_metadata?.requested_role;
     const onboardingRole =
       requestedRole === "student" ||
@@ -68,11 +73,17 @@ export async function POST(request: Request) {
     const destination =
       role === "admin"
         ? "/admin"
+        : role === "advertiser"
+          ? "/advertiser"
         : role
           ? "/dashboard"
           : onboardingRole
             ? `/onboarding?role=${onboardingRole}`
-            : "/onboarding";
+            : pendingAdvertiserInvite
+              ? "/advertiser/invitation"
+            : requestedRole === "advertiser"
+              ? "/advertiser/onboarding"
+              : "/onboarding";
 
     return Response.json({
       ok: true,

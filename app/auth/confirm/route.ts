@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
           resolvedNext = `/onboarding?role=${requestedRole}`;
         }
       }
+      if (flow === "confirmation" && data.user?.user_metadata?.requested_role === "advertiser") {
+        resolvedNext = "/advertiser/onboarding";
+      }
       return NextResponse.redirect(new URL(resolvedNext, request.url), 303);
     }
     const errorCode =

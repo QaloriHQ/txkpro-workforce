@@ -235,3 +235,8 @@ AD_CAMPAIGN_STATUS: draft, submitted, in_review, approved, scheduled, active, pa
 AD_CREATIVE_STATUS: draft, submitted, approved, rejected, archived.
 AD_DELIVERY_EVENT_TYPE: served, viewable, clicked, invalidated, provider_reconciled. Asset load is not viewability. Delivery evidence is append-only; corrections use invalidated or provider_reconciled rather than rewriting prior events.
 Only an active advertiser, active in-window campaign, approved creative, enabled placement and non-revoked manual funding authorization are eligible for ADS-01 delivery. Sponsored engagement never creates PRO Points.
+
+APPENDIX K — ADS-02 OWNER APPROVED 2026-10-16 (#264, #276)
+ADVERTISER_MEMBERSHIP_ROLE: advertiser_owner, advertiser_admin, advertiser_creative, advertiser_analyst.
+ADVERTISER_MEMBERSHIP_STATUS: invited, active, suspended, revoked.
+Open advertiser registration creates a pending_review advertiser and an active advertiser_owner membership. Advertiser approval never creates a Workforce app_role_membership. Campaign activation additionally requires an approved creative, valid schedule and placements, and a non-revoked manual allocation; ADS-02 performs no live charging.
