@@ -36,6 +36,7 @@
     "community:qa": "node --test scripts/community-feed-contract-qa.mjs scripts/w12-20-profile-social-qa.mjs scripts/w12-20-profile-social-database-qa.mjs",
     "community-shell:qa": "node --test scripts/community-shell-qa.mjs",
     "community-student-composer:qa": "node scripts/community-student-composer-qa.mjs && node scripts/community-student-composer-database-qa.mjs",
+    "community-student-discovery:qa": "node --test scripts/community-student-discovery-qa.mjs scripts/community-student-discovery-database-qa.mjs",
     "community-moderation:qa": "node --test scripts/community-moderation-contract-qa.mjs scripts/community-moderation-database-qa.mjs",
     "community-public:qa": "node --test scripts/community-public-contract-qa.mjs scripts/community-public-database-qa.mjs",
     "community-messaging:qa": "node --test scripts/community-messaging-contract-qa.mjs scripts/community-messaging-database-qa.mjs",
