@@ -234,12 +234,15 @@ ADVERTISER_STATUS: pending_review, active, rejected, suspended.
 AD_CAMPAIGN_STATUS: draft, submitted, in_review, approved, scheduled, active, paused, completed, rejected, cancelled.
 AD_CREATIVE_STATUS: draft, submitted, approved, rejected, archived.
 AD_DELIVERY_EVENT_TYPE: served, viewable, clicked, invalidated, provider_reconciled. Asset load is not viewability. Delivery evidence is append-only; corrections use invalidated or provider_reconciled rather than rewriting prior events.
-Only an active advertiser, active in-window campaign, approved creative, enabled placement and non-revoked manual funding authorization are eligible for ADS-01 delivery. Sponsored engagement never creates PRO Points.
+Only an active advertiser, active in-window Admin-approved campaign, approved creative, enabled placement and fully funded non-revoked authorization are eligible for ADS-01 delivery. Sponsored engagement never creates PRO Points.
 
 APPENDIX K — ADS-02 OWNER APPROVED 2026-10-16 (#264, #276)
 ADVERTISER_MEMBERSHIP_ROLE: advertiser_owner, advertiser_admin, advertiser_creative, advertiser_analyst.
 ADVERTISER_MEMBERSHIP_STATUS: invited, active, suspended, revoked.
-Open advertiser registration creates a pending_review advertiser and an active advertiser_owner membership. Advertiser approval never creates a Workforce app_role_membership. Campaign activation additionally requires an approved creative, valid schedule and placements, and a non-revoked manual allocation; ADS-02 performs no live charging.
+Open advertiser registration creates an active advertiser and active advertiser_owner membership immediately. It never creates a Workforce app_role_membership. Campaign submission requires a positive budget, creative and enough paid advertiser account credit to reserve the complete budget. Platform Admin approval additionally requires a valid schedule, approved creative, enabled placements and a fully funded non-revoked authorization before activation.
+
+ADVERTISER_FUNDING_ORDER_STATUS: pending, paid, failed, expired.
+ADVERTISER_CREDIT_ENTRY_TYPE: stripe_funding, campaign_allocation, campaign_release, adjustment. Amounts are signed: funding/release is positive and allocation is negative. Rejected or changes-requested campaigns return reserved funds to account credit rather than initiating an automatic Stripe refund.
 
 APPENDIX L — ADS-03 OWNER APPROVED 2026-10-16 (#265, #277)
 ADS-03 introduces no new canonical lifecycle status. Invalidated and provider_reconciled remain append-only AD_DELIVERY_EVENT_TYPE values. Pacing labels are derived reporting language only and are never stored as campaign state. Actual spend is recognized only from provider reconciliation evidence.

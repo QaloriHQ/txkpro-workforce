@@ -122,11 +122,11 @@ ADS-01 NATIVE DELIVERY PERMISSIONS — OWNER APPROVED 2026-10-16 (#265, #275)
 - Advertiser self-service, campaign/creative review and funding controls are deferred to ADS-02. No Student, Institution or Employer role receives those permissions in ADS-01.
 
 ADS-02 ADVERTISER WORKSPACE PERMISSIONS — OWNER APPROVED 2026-10-16 (#264, #276)
-- Advertiser Owner: full advertiser-scoped team, campaign, creative, submission, pause/resume, allocation-history and aggregate analytics access.
-- Advertiser Admin: advertiser-scoped team administration and full campaign operations except transferring/removing the Owner.
+- Advertiser Owner: full advertiser-scoped team, campaign, creative, Stripe sandbox funding, submission, pause/resume, credit/allocation history and aggregate analytics access.
+- Advertiser Admin: advertiser-scoped team administration, Stripe sandbox funding and full campaign operations except transferring/removing the Owner.
 - Advertiser Creative: advertiser-scoped campaign and creative draft editing plus previews; no team, approval, funding or lifecycle-finalization authority.
 - Advertiser Analyst: advertiser-scoped read-only campaign, allocation-versus-spend and aggregate delivery analytics.
-- TXKPRO platform Admin: advertiser approval/suspension, campaign/creative review feedback and manual allocation authorization. Live charging is not permitted in ADS-02.
+- TXKPRO platform Admin: advertiser suspension/reactivation and campaign/creative review decisions. Admin does not approve self-service advertiser registration or manually create campaign allocation; approval fails closed unless the advertiser has already funded and reserved the full campaign budget.
 - Advertiser-only membership is stored outside app_role_memberships. It grants no Student, Institution, Employer, private Workforce, community-authoring or cross-advertiser permission.
 
 ADS-03 ANALYTICS AND RECONCILIATION PERMISSIONS — OWNER APPROVED 2026-10-16 (#265, #277)
