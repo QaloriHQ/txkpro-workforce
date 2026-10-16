@@ -240,3 +240,6 @@ APPENDIX K — ADS-02 OWNER APPROVED 2026-10-16 (#264, #276)
 ADVERTISER_MEMBERSHIP_ROLE: advertiser_owner, advertiser_admin, advertiser_creative, advertiser_analyst.
 ADVERTISER_MEMBERSHIP_STATUS: invited, active, suspended, revoked.
 Open advertiser registration creates a pending_review advertiser and an active advertiser_owner membership. Advertiser approval never creates a Workforce app_role_membership. Campaign activation additionally requires an approved creative, valid schedule and placements, and a non-revoked manual allocation; ADS-02 performs no live charging.
+
+APPENDIX L — ADS-03 OWNER APPROVED 2026-10-16 (#265, #277)
+ADS-03 introduces no new canonical lifecycle status. Invalidated and provider_reconciled remain append-only AD_DELIVERY_EVENT_TYPE values. Pacing labels are derived reporting language only and are never stored as campaign state. Actual spend is recognized only from provider reconciliation evidence.
