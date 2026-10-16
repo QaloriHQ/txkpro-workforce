@@ -47,6 +47,7 @@
     "community-engagement:qa": "node --test scripts/community-engagement-points-qa.mjs",
     "ads-native-delivery:qa": "node --test scripts/ads-native-delivery-qa.mjs scripts/ads-native-delivery-database-qa.mjs",
     "ads-dashboard:qa": "node --test scripts/ads-dashboard-qa.mjs scripts/ads-dashboard-database-qa.mjs",
+    "ads-analytics:qa": "node --test scripts/ads-analytics-qa.mjs scripts/ads-analytics-database-qa.mjs",
     "public-trust:qa": "node --test scripts/w12-18-organization-public-profile-qa.mjs scripts/w12-19-professional-reviews-qa.mjs scripts/w12-21-cross-app-seo-qa.mjs",
     "pro-points-finalization:qa": "node --test scripts/w12-16b-season-finalization-qa.mjs scripts/w12-16b-season-finalization-database-qa.mjs"
   },

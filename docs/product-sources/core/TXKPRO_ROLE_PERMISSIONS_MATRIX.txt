@@ -128,3 +128,8 @@ ADS-02 ADVERTISER WORKSPACE PERMISSIONS — OWNER APPROVED 2026-10-16 (#264, #27
 - Advertiser Analyst: advertiser-scoped read-only campaign, allocation-versus-spend and aggregate delivery analytics.
 - TXKPRO platform Admin: advertiser approval/suspension, campaign/creative review feedback and manual allocation authorization. Live charging is not permitted in ADS-02.
 - Advertiser-only membership is stored outside app_role_memberships. It grants no Student, Institution, Employer, private Workforce, community-authoring or cross-advertiser permission.
+
+ADS-03 ANALYTICS AND RECONCILIATION PERMISSIONS — OWNER APPROVED 2026-10-16 (#265, #277)
+- Advertiser Owner, Admin, Creative and Analyst may read/export only aggregate analytics for their advertiser scope. Exports are audited.
+- TXKPRO platform Admin may append invalid-traffic and provider-reconciliation evidence. Advertisers cannot invalidate delivery or record spend.
+- No role receives viewer identities, private Workforce data or direct advertising-table access through analytics.
