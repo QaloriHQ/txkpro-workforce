@@ -1540,9 +1540,9 @@ const objectives = [
 ];
 // Editing an attached audience creates a separate contextual audience rather than
 // mutating a reusable audience shared with other campaigns. Names are unique per advertiser.
-function nextCampaignAudienceName(name: string, audiences: SavedAudience[]) {
+function nextCampaignAudienceName(name: string, existingNames: string[]) {
   const base = `${name.trim().slice(0, 100)} audience`;
-  const used = new Set(audiences.map((audience) => audience.name.toLowerCase()));
+  const used = new Set(existingNames.map((value) => value.toLowerCase()));
   for (let number = 1; number <= 10000; number += 1) {
     const suffix = number === 1 ? "" : ` (${number})`;
     const candidate = `${base.slice(0, 120 - suffix.length)}${suffix}`;
@@ -1713,8 +1713,8 @@ function CampaignWizard({
       let audienceId = draft.audienceId;
       if (!audienceId) {
         const name = nextCampaignAudienceName(draft.name, [
-          ...data.manager.audiences,
-          ...(localAudience ? [{ ...localAudience, type: "contextual" as const, status: "draft", roleFamily: null, topic: null, broadGeography: null, mapboxPlaceId: null, neighborhood: null, longitude: null, latitude: null, radiusM: null }] : []),
+          ...data.manager.audiences.map((audience) => audience.name),
+          ...(localAudience ? [localAudience.name] : []),
         ]);
         const audience = await saveAudience({
           advertiserId: data.account.advertiserId,
