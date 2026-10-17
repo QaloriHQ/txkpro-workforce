@@ -18,7 +18,11 @@ export async function GET(request: Request) {
     ? await supabase.rpc("advertiser_enterprise_context", { p_advertiser_id: resolvedAdvertiserId })
     : { data: null, error: null };
   if (enterprise.error) return Response.json({ error: enterprise.error.message }, { status: statusFor(enterprise.error.message) });
-  return Response.json({ ...data, enterprise: enterprise.data }, { headers: { "cache-control": "private, no-store" } });
+  const manager = resolvedAdvertiserId
+    ? await supabase.rpc("advertiser_manager_context", { p_advertiser_id: resolvedAdvertiserId })
+    : { data: null, error: null };
+  if (manager.error) return Response.json({ error: manager.error.message }, { status: statusFor(manager.error.message) });
+  return Response.json({ ...data, enterprise: enterprise.data, manager: manager.data }, { headers: { "cache-control": "private, no-store" } });
 }
 
 export async function POST(request: Request) {
@@ -92,6 +96,55 @@ export async function POST(request: Request) {
       p_timezone: body.timezone || "UTC",
       p_dayparting: body.dayparting || [],
       p_placements: body.placements,
+    });
+  } else if (operation === "save-audience") {
+    result = await supabase.rpc("advertiser_audience_save", {
+      p_advertiser_id: body.advertiserId,
+      p_audience_id: body.audienceId || null,
+      p_name: body.name,
+      p_role_family: body.roleFamily || null,
+      p_topic: body.topic || null,
+      p_broad_geography: body.broadGeography || null,
+      p_mapbox_place_id: body.mapboxPlaceId || null,
+      p_neighborhood: body.neighborhood || null,
+      p_longitude: body.longitude ?? null,
+      p_latitude: body.latitude ?? null,
+      p_radius_m: body.radiusM ?? null,
+    });
+  } else if (operation === "save-creative-set") {
+    result = await supabase.rpc("advertiser_creative_set_save", {
+      p_advertiser_id: body.advertiserId,
+      p_creative_set_id: body.creativeSetId || null,
+      p_name: body.name,
+      p_variations: body.variations,
+    });
+  } else if (operation === "register-asset") {
+    result = await supabase.rpc("advertiser_asset_register", {
+      p_advertiser_id: body.advertiserId,
+      p_name: body.name,
+      p_media_type: body.mediaType,
+      p_storage_path: body.storagePath,
+      p_mime_type: body.mimeType,
+      p_byte_size: body.byteSize,
+      p_alt_text: body.altText || null,
+    });
+  } else if (operation === "attach-variation") {
+    result = await supabase.rpc("advertiser_group_variation_attach", {
+      p_advertiser_id: body.advertiserId,
+      p_ad_group_id: body.adGroupId,
+      p_variation_id: body.variationId,
+    });
+  } else if (operation === "set-ad-group-audience") {
+    result = await supabase.rpc("advertiser_ad_group_audience_set", {
+      p_advertiser_id: body.advertiserId,
+      p_ad_group_id: body.adGroupId,
+      p_audience_id: body.audienceId || null,
+    });
+  } else if (operation === "save-campaign-budget") {
+    result = await supabase.rpc("advertiser_campaign_budget_save", {
+      p_advertiser_id: body.advertiserId,
+      p_campaign_id: body.campaignId,
+      p_daily_spend_cap_minor: body.dailySpendCapMinor,
     });
   } else if (operation === "link-business-manager-account") {
     result = await supabase.rpc("advertiser_business_manager_link", {
