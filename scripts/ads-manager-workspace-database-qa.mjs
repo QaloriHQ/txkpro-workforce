@@ -10,6 +10,7 @@ const migrationFiles = [
   "../supabase/migrations/20261016220738_ads_06_enterprise_indexes.sql",
   "../supabase/migrations/20261017052219_ads_06_review_indexes.sql",
   "../supabase/migrations/20261017123136_ads_07_10_manager_workspace.sql",
+  "../supabase/migrations/20261017205500_ads_draft_audience_identity.sql",
 ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
 const OWNER = "00000000-0000-4000-8000-000000000010",
   OTHER = "00000000-0000-4000-8000-000000000020";
@@ -109,6 +110,63 @@ test("daily caps and audience attachments update only editable drafts", async ()
         campaign.campaignId,
       ]),
       /INVALID_DAILY_SPEND_CAP/,
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test("campaign draft reload preserves the linked audience identity", async () => {
+  const db = await fixture();
+  try {
+    await actor(db, OWNER, "owner@example.com");
+    const advertiser = (
+      await db.query(
+        "select public.advertiser_register('Identity Co',null,null,'owner@example.com') result",
+      )
+    ).rows[0].result;
+    const campaign = (
+      await db.query(
+        "select public.advertiser_campaign_save_v2($1,null,'Identity campaign','traffic',50000,now(),now()+interval '5 days',3,array['in_feed'],'{}') result",
+        [advertiser.advertiserId],
+      )
+    ).rows[0].result;
+    const audience = (
+      await db.query(
+        "select public.advertiser_audience_save($1,null,'Identity campaign audience','student','Electrical','Texarkana',null,null,null,null,null) result",
+        [advertiser.advertiserId],
+      )
+    ).rows[0].result;
+    const group = (
+      await db.query(
+        "select public.advertiser_ad_group_save($1,$2,null,'Primary audience','fixed_cpm',1000,'even',3,'student','Electrical','Texarkana','UTC','[]'::jsonb,array['in_feed']) result",
+        [advertiser.advertiserId, campaign.campaignId],
+      )
+    ).rows[0].result;
+    await db.query(
+      "select public.advertiser_ad_group_audience_set($1,$2,$3)",
+      [advertiser.advertiserId, group.adGroupId, audience.audienceId],
+    );
+
+    const context = (
+      await db.query("select public.advertiser_enterprise_context($1) result", [
+        advertiser.advertiserId,
+      ])
+    ).rows[0].result;
+    assert.equal(context.adGroups[0].audienceId, audience.audienceId);
+
+    await db.query(
+      "select public.advertiser_audience_save($1,$2,'Identity campaign audience','student','Electrical','Texarkana',null,null,null,null,null)",
+      [advertiser.advertiserId, context.adGroups[0].audienceId],
+    );
+    assert.equal(
+      (
+        await db.query(
+          "select count(*)::int value from public.wf_ad_audiences where advertiser_id=$1 and name='Identity campaign audience'",
+          [advertiser.advertiserId],
+        )
+      ).rows[0].value,
+      1,
     );
   } finally {
     await db.close();
