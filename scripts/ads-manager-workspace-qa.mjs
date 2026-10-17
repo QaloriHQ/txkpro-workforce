@@ -26,6 +26,15 @@ test("campaign wizard follows the approved six-step sequence", () => {
   assert.match(api, /p_campaign_id: body\.campaignId \|\| null/);
   assert.match(ui, /a\.id === existingGroup\?\.audienceId/);
 });
+test("draft audience edits safely fork unique names and reuse saved identity", () => {
+  assert.match(ui, /function nextCampaignAudienceName\(/);
+  assert.match(ui, /existingNames\.map\(\(value\) => value\.toLowerCase\(\)\)/);
+  assert.match(ui, /const suffix = number === 1 \? "" :/);
+  assert.match(ui, /nextCampaignAudienceName\(draft\.name,/);
+  assert.match(ui, /setLocalAudience\(\{ id: audienceId, name \}\)/);
+  assert.match(ui, /update\(\{ audienceId \}\)/);
+  assert.match(ui, /audienceId: ""/); // Manual targeting edits detach the shared source.
+});
 test("standalone managers and reusable selections are present", () => {
   for (const label of ["Ad groups", "Audiences", "Creative library"])
     assert.match(ui, new RegExp(label));
