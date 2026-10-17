@@ -168,6 +168,36 @@ test("campaign draft reload preserves the linked audience identity", async () =>
       ).rows[0].value,
       1,
     );
+    // Editing targeting should fork the reusable audience with a distinct name.
+    const forked = (
+      await db.query(
+        "select public.advertiser_audience_save($1,null,'Identity campaign audience (2)','student','Plumbing','Texarkana',null,null,null,null,null) result",
+        [advertiser.advertiserId],
+      )
+    ).rows[0].result;
+    await db.query(
+      "select public.advertiser_ad_group_audience_set($1,$2,$3)",
+      [advertiser.advertiserId, group.adGroupId, forked.audienceId],
+    );
+    const afterEdit = (
+      await db.query("select public.advertiser_enterprise_context($1) result", [
+        advertiser.advertiserId,
+      ])
+    ).rows[0].result;
+    assert.equal(afterEdit.adGroups[0].audienceId, forked.audienceId);
+    assert.notEqual(forked.audienceId, audience.audienceId);
+    assert.deepEqual(
+      (
+        await db.query(
+          "select name,topic from public.wf_ad_audiences where advertiser_id=$1 order by name",
+          [advertiser.advertiserId],
+        )
+      ).rows,
+      [
+        { name: "Identity campaign audience", topic: "Electrical" },
+        { name: "Identity campaign audience (2)", topic: "Plumbing" },
+      ],
+    );
   } finally {
     await db.close();
   }
