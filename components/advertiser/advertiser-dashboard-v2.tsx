@@ -1538,6 +1538,19 @@ const objectives = [
     tip: "Use when conversion measurement is ready.",
   },
 ];
+// Editing an attached audience creates a separate contextual audience rather than
+// mutating a reusable audience shared with other campaigns. Names are unique per advertiser.
+function nextCampaignAudienceName(name: string, existingNames: string[]) {
+  const base = `${name.trim().slice(0, 100)} audience`;
+  const used = new Set(existingNames.map((value) => value.toLowerCase()));
+  for (let number = 1; number <= 10000; number += 1) {
+    const suffix = number === 1 ? "" : ` (${number})`;
+    const candidate = `${base.slice(0, 120 - suffix.length)}${suffix}`;
+    if (!used.has(candidate.toLowerCase())) return candidate;
+  }
+  throw new Error("Too many audiences have the same campaign name");
+}
+
 function CampaignWizard({
   data,
   campaign,
@@ -1567,6 +1580,7 @@ function CampaignWizard({
   const [start, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localAudience, setLocalAudience] = useState<{ id: string; name: string } | null>(null);
   const [draft, setDraft] = useState({
     name: campaign?.name ?? "",
     objective: meta?.objective ?? "brand_awareness",
@@ -1698,9 +1712,13 @@ function CampaignWizard({
     try {
       let audienceId = draft.audienceId;
       if (!audienceId) {
+        const name = nextCampaignAudienceName(draft.name, [
+          ...data.manager.audiences.map((audience) => audience.name),
+          ...(localAudience ? [localAudience.name] : []),
+        ]);
         const audience = await saveAudience({
           advertiserId: data.account.advertiserId,
-          name: `${draft.name} audience`,
+          name,
           roleFamily: draft.roleFamily,
           topic: draft.topic,
           broadGeography: draft.broadGeography,
@@ -1712,6 +1730,8 @@ function CampaignWizard({
           mapError: "",
         });
         audienceId = audience.audienceId;
+        setLocalAudience({ id: audienceId, name });
+        update({ audienceId }); // Reuse the new row if a later draft-save step fails.
       }
       const savedCampaign = await mutate({
         operation: "save-campaign",
@@ -1894,6 +1914,9 @@ function CampaignWizard({
                 onChange={(e) => chooseAudience(e.target.value)}
               >
                 <option value="">Build a new audience</option>
+                {localAudience && !data.manager.audiences.some((a) => a.id === localAudience.id) && (
+                  <option value={localAudience.id}>{localAudience.name}</option>
+                )}
                 {data.manager.audiences.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
