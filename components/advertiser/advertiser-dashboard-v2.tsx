@@ -1557,6 +1557,8 @@ function CampaignWizard({
     : undefined;
   const existingCreative = campaign?.creatives[0];
   const defaultAudience = data.manager.audiences.find(
+    (a) => a.id === existingGroup?.audienceId,
+  ) ?? data.manager.audiences.find(
     (a) =>
       a.roleFamily === existingGroup?.roleFamily &&
       a.topic === existingGroup?.topic &&

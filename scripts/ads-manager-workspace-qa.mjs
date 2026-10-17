@@ -24,6 +24,7 @@ test("campaign wizard follows the approved six-step sequence", () => {
   assert.match(ui, /role="tooltip"/);
   assert.match(ui, /Update draft/);
   assert.match(api, /p_campaign_id: body\.campaignId \|\| null/);
+  assert.match(ui, /a\.id === existingGroup\?\.audienceId/);
 });
 test("standalone managers and reusable selections are present", () => {
   for (const label of ["Ad groups", "Audiences", "Creative library"])
