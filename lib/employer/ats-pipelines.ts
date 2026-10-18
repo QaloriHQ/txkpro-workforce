@@ -11,7 +11,7 @@ export type PipelineField = { id: string; label: string; type: "text" | "textare
 export type PipelineNode = {
   id: string; kind: ATSNodeKind; label: string; x: number; y: number;
   required: boolean; candidateVisible: boolean;
-  config: { instructions?: string; url?: string; fields?: PipelineField[]; disclosure?: string; expectedMinutes?: number };
+  config: { instructions?: string; url?: string; fields?: PipelineField[]; disclosure?: string; expectedMinutes?: number; ownerRole?: "candidate" | "recruiter" | "hiring_manager" | "employer_admin"; targetHours?: number };
 };
 export type PipelineEdge = { id: string; source: string; target: string; outcome?: "yes" | "no" };
 export type PipelineGraph = { schemaVersion: 1; entryNodeId: string; nodes: PipelineNode[]; edges: PipelineEdge[] };
@@ -87,12 +87,17 @@ function fields(input: unknown): PipelineField[] {
 }
 function config(raw: unknown, kind: ATSNodeKind, publish: boolean): PipelineNode["config"] {
   const v = obj(raw ?? {}, "component config");
-  const allowed = ["instructions", "url", "fields", "disclosure", "expectedMinutes"];
+  const allowed = ["instructions", "url", "fields", "disclosure", "expectedMinutes", "ownerRole", "targetHours"];
   if (Object.keys(v).some((key) => !allowed.includes(key))) throw new Error("Unsupported or secret-bearing component setting");
   const result: PipelineNode["config"] = {};
   if (v.instructions !== undefined) result.instructions = text(v.instructions, "instructions", 3000);
   if (v.disclosure !== undefined) result.disclosure = text(v.disclosure, "disclosure", 2500);
   if (v.expectedMinutes !== undefined) result.expectedMinutes = number(v.expectedMinutes, "duration", 1, 1440);
+  if (v.targetHours !== undefined) result.targetHours = number(v.targetHours, "target hours", 1, 2160);
+  if (v.ownerRole !== undefined) {
+    if (!["candidate", "recruiter", "hiring_manager", "employer_admin"].includes(String(v.ownerRole))) throw new Error("Invalid step owner role");
+    result.ownerRole = v.ownerRole as NonNullable<PipelineNode["config"]["ownerRole"]>;
+  }
   if (v.url !== undefined) {
     const url = text(v.url, "media URL", 2048);
     if (url) {
