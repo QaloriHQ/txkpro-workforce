@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeftOnRectangleIcon, EyeIcon } from "@heroicons/react/24/outline";
 
 /**
@@ -11,6 +12,7 @@ export function ImpersonationBanner({ targetName, targetScope }: {
   targetName: string;
   targetScope: string;
 }) {
+  const router = useRouter();
   const [exiting, setExiting] = useState(false);
   const [failure, setFailure] = useState(false);
 
@@ -25,7 +27,8 @@ export function ImpersonationBanner({ targetName, targetScope }: {
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Unable to end session");
-      window.location.assign("/admin");
+      router.replace("/admin");
+      router.refresh();
     } catch {
       setFailure(true);
       setExiting(false);

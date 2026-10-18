@@ -72,22 +72,23 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   // Display a global Exit banner only after the full target authorization
   // bridge is independently certified. A registry entry alone is insufficient.
-  let impersonationBanner: React.ReactNode = null;
+  let impersonation: Awaited<ReturnType<typeof getImpersonationRegistrySession>> = null;
   if (impersonationEnabled()) {
-    try {
-      const impersonation = await getImpersonationRegistrySession();
-      if (impersonation) impersonationBanner = (
-        <ImpersonationBanner targetName={impersonation.target.name}
-          targetScope={impersonation.session.target_membership_key} />
-      );
-    } catch { /* Auth expiry/revocation must not leak another user context. */ }
+    try { impersonation = await getImpersonationRegistrySession(); }
+    catch { /* Auth expiry/revocation must not expose impersonation context. */ }
   }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{impersonationBanner}{children}</body>
+      <body>
+        {impersonation ? (
+          <ImpersonationBanner targetName={impersonation.target.name}
+            targetScope={impersonation.session.target_membership_key} />
+        ) : null}
+        {children}
+      </body>
     </html>
   );
 }
