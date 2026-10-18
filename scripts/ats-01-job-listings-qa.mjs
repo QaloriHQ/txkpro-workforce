@@ -58,6 +58,9 @@ test("draft defaults and returned values are stable for wizard/advanced modes", 
 });
 
 test("migration isolates tenants and audit, fails closed until ATS-02", () => {
+  const dollarPair = String.fromCharCode(36, 36);
+  assert.equal(migration.split("as " + dollarPair).length - 1, 2);
+  assert.equal(migration.split(dollarPair + ";").length - 1, 2);
   assert.match(migration, /references public\.contractors\(contractor_id\)/);
   assert.match(migration, /alter table public\.wf_ats_job_listings enable row level security/i);
   assert.match(migration, /security\.member_of_employer\(employer_id\)/);
@@ -87,11 +90,15 @@ test("repository enforces exact tenant, ownership and compare-and-swap revisions
 });
 
 test("editor serializes unsaved revisions when switching records", () => {
-  assert.match(editor, /revisionRef\\.current = payload\\.job\\.revision/);
-  assert.match(editor, /editGeneration\\.current === generation/);
-  assert.match(editor, /for \\(let attempt = 0; attempt < 5;/);
-  assert.match(editor, /inFlight\\.current && !\\(await inFlight\\.current\\)/);
-  assert.match(editor, /beforeunload/);
-  assert.match(editor, /Guided wizard/);
-  assert.match(editor, /Advanced editor/);
+  for (const evidence of [
+    "revisionRef.current = payload.job.revision",
+    "editGeneration.current === generation",
+    "for (let attempt = 0; attempt < 5;",
+    "inFlight.current && !(await inFlight.current)",
+    "beforeunload",
+    "Guided wizard",
+    "Advanced editor",
+  ]) {
+    assert.ok(editor.includes(evidence), "Missing editor invariant: " + evidence);
+  }
 });
