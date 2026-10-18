@@ -15,7 +15,13 @@ export type MgidConnectionOutcome =
   | "unexpected_response"
   | "timed_out";
 
+export type MgidAdvertiserProbe = {
+  outcome: MgidConnectionOutcome;
+  upstreamStatus?: number;
+};
+
 export type MgidConnectionResult = {
+  advertiserProbe?: MgidAdvertiserProbe;
   ok: boolean;
   provider: "mgid";
   capability: "publisher_rest_reporting";
@@ -112,4 +118,82 @@ export async function checkMgidPublisherRestApi(input: {
     }
     return result("upstream_unavailable");
   }
+}
+
+/**
+ * The MGID Ads (advertiser) API is distinct from MGID publisher reporting.
+ * A successful advertiser check confirms credentials for only that API.
+ * Always discard the account's wallet and other response fields.
+ */
+export async function checkMgidAdvertiserRestApi(input: {
+  clientId: string | undefined;
+  token: string | undefined;
+  fetcher?: typeof fetch;
+  timeoutMs?: number;
+}): Promise<MgidAdvertiserProbe> {
+  const clientId = input.clientId?.trim();
+  const token = input.token?.trim();
+  if (!clientId || !token) return { outcome: "missing_configuration" };
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(clientId) || /\s/.test(token)) {
+    return { outcome: "invalid_configuration" };
+  }
+
+  // Only a fixed, documented, read-only MGID Ads account route is permitted.
+  const url = "https://api.mgid.com/v1/clients/" + encodeURIComponent(clientId);
+  const signal = AbortSignal.timeout(Math.min(Math.max(input.timeoutMs ?? 4_000, 1), 10_000));
+  try {
+    const response = await (input.fetcher ?? fetch)(url, {
+      method: "GET",
+      headers: { Authorization: "Bearer " + token, Accept: "application/json" },
+      cache: "no-store",
+      redirect: "error",
+      signal,
+    });
+    const status = response.status;
+    if (status === 401) return { outcome: "authentication_rejected", upstreamStatus: status };
+    if (status === 403) return { outcome: "permission_denied", upstreamStatus: status };
+    if (status === 429) return { outcome: "rate_limited", upstreamStatus: status };
+    if (!response.ok) return { outcome: "upstream_unavailable", upstreamStatus: status };
+    const mediaType = (response.headers.get("content-type") ?? "").toLowerCase();
+    const size = Number(response.headers.get("content-length") ?? 0);
+    if (!mediaType.includes("application/json") || size > MAX_RESPONSE_CHARS) {
+      return { outcome: "unexpected_response", upstreamStatus: status };
+    }
+    const raw = await response.text();
+    if (raw.length > MAX_RESPONSE_CHARS) return { outcome: "unexpected_response", upstreamStatus: status };
+    let data: unknown;
+    try { data = JSON.parse(raw); } catch {
+      return { outcome: "unexpected_response", upstreamStatus: status };
+    }
+    // The authenticated advertiser account endpoint has an id property.
+    // Never return data, which may include advertiser account finances.
+    if (!data || Array.isArray(data) || typeof data !== "object" ||
+      !("id" in data) || String(data.id) !== clientId) {
+      return { outcome: "unexpected_response", upstreamStatus: status };
+    }
+    return { outcome: "authenticated", upstreamStatus: status };
+  } catch (error) {
+    if (signal.aborted || (error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name))) {
+      return { outcome: "timed_out" };
+    }
+    return { outcome: "upstream_unavailable" };
+  }
+}
+
+/**
+ * Only check advertiser credentials if the publisher endpoint denies
+ * authentication/authorization; no probing after a successful publisher check.
+ */
+export async function diagnoseMgidApiAccess(input: {
+  clientId: string | undefined;
+  token: string | undefined;
+  fetcher?: typeof fetch;
+  timeoutMs?: number;
+}): Promise<MgidConnectionResult> {
+  const publisher = await checkMgidPublisherRestApi(input);
+  if (publisher.outcome !== "authentication_rejected" && publisher.outcome !== "permission_denied") {
+    return publisher;
+  }
+  const advertiserProbe = await checkMgidAdvertiserRestApi(input);
+  return { ...publisher, advertiserProbe };
 }
