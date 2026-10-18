@@ -66,6 +66,8 @@ export function JobListingEditor({
 
   function updateField<K extends InputKey>(key: K, value: JobEditableFields[K]) {
     if (!canWrite) return;
+    draftRef.current = { ...draftRef.current, [key]: value };
+    dirtyRef.current = true;
     setDraft((prev) => ({ ...prev, [key]: value }));
     setDirty(true);
     setMessage("");
@@ -73,6 +75,11 @@ export function JobListingEditor({
   }
 
   function selectJob(job: JobListing) {
+    jobIdRef.current = job.id;
+    draftRef.current = editable(job);
+    revisionRef.current = job.revision;
+    dirtyRef.current = false;
+    conflictRef.current = false;
     setSelectedId(job.id);
     setDraft(editable(job));
     setRevision(job.revision);
@@ -100,14 +107,18 @@ export function JobListingEditor({
           body: JSON.stringify({ revision: expectedRevision, fields: snapshot }),
         });
         if (!response.ok) {
-          if (response.status === 409) setConflict(true);
+          if (response.status === 409) { conflictRef.current = true; setConflict(true); }
           throw new Error(await errorText(response));
         }
         const payload = await response.json() as { job: JobListing };
         setJobs((previous) => previous.map((item) => item.id === jobId ? payload.job : item));
         if (jobIdRef.current === jobId) {
+          revisionRef.current = payload.job.revision;
           setRevision(payload.job.revision);
-          if (editGeneration.current === generation) setDirty(false);
+          if (editGeneration.current === generation) {
+            dirtyRef.current = false;
+            setDirty(false);
+          }
         }
         setMessage("Saved as revision " + payload.job.revision);
         return true;
@@ -132,17 +143,17 @@ export function JobListingEditor({
   }, [selectedId, dirty, draft, revision, conflict]);
 
   async function beforeNavigate(): Promise<boolean> {
-    if (inFlight.current) await inFlight.current;
-    if (dirtyRef.current) {
-      const ok = await persist();
-      if (!ok || dirtyRef.current) {
-        // React state is asynchronous; the generation indicates if a new edit
-        // happened during the save. In that case preserve the form.
-        if (!ok) return false;
-        if (inFlight.current) await inFlight.current;
-      }
+    // Flush each edit generation in order. Edits made during a network save
+    // need their own revision; navigating early would silently discard them.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      if (inFlight.current && !(await inFlight.current)) return false;
+      if (!dirtyRef.current) return !conflictRef.current;
+      const generation = editGeneration.current;
+      if (!(await persist())) return false;
+      if (editGeneration.current === generation) return !conflictRef.current;
     }
-    return !conflictRef.current;
+    setMessage("Edits are still arriving; wait for autosave before opening another listing.");
+    return false;
   }
 
   async function reloadSelected() {
