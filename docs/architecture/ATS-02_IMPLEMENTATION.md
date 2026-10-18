@@ -1,48 +1,40 @@
-# ATS-02 · Hiring Pipeline Composer implementation record
+# ATS-02 · Visual Hiring Pipeline Builder & guarded Job publication
 
-**Task:** ATS-02 / [#329](https://github.com/QaloriHQ/txkpro-workforce/issues/329)  
-**PR:** [#338](https://github.com/QaloriHQ/txkpro-workforce/pull/338)  
-**Base:** staging · **Stage:** IN REVIEW (not production released; staging migration not applied)
+**Task:** [ATS-02 / #329](https://github.com/QaloriHQ/txkpro-workforce/issues/329) · [PR #338](https://github.com/QaloriHQ/txkpro-workforce/pull/338)  
+**Target:** `staging` only. Owner approved ATS-02 and the reviewed staging migration/UAT step. No production authorization.  
+**Release:** Staging schema installed; app release pending final CI and merge; owner browser UAT pending.
 
-## Scope delivered in the review branch
+## Implemented
 
-- Employer-only pipeline draft records distinct from both `wf_hiring_needs` and the existing derived referral/interview/placement Hiring Pipeline.
-- A bounded DAG workflow schema: Start, End, form templates, assessments, videos, consent, electronic signatures, in-person/online interviews, screening/fingerprinting/drug-test steps, manual review, branching decisions, and notifications. Provider-specific steps are *configuration placeholders only*.
-- Canvas with drag/drop creation, keyboard movement, zoom, explicit edges/Yes-No decisions, undo/redo, node inspector, candidate-safe preview, save/revision concurrency, duplication, and reusable versions.
-- Owner/Admin-only publication into immutable version snapshots, secured by `security.wf_ats_has_employer_role`, a SQL graph validity gate, revision locking and a unique source-revision invariant.
-- Restricted metadata audit, composite (employer_id, template_id) FK, RLS. No raw reports, assessment answer keys, provider secrets or applicant records.
+1. **Reusable versioned pipeline editor:** Employer-owned drafts, full graph/component validation, keyboard-accessible drag/drop canvas, zoom, edge and decision paths, undo/redo, inspect, preview and duplicate. Provider-dependent components are *configuration placeholders*, not active integrations.
+2. **Immutable publication:** Owner/Admin-only version publishing with same-tenant checks, exact source revision uniqueness and audit. A published graph snapshot is never overwritten; ATS-03 applications must persist their originally assigned version.
+3. **Job publication:** Assign an existing published version while publishing a complete non-template draft. The guarded transaction validates employer ownership, role, revision, job status, title/description/location and same-employer published version. Duplicate jobs do not inherit a binding.
+4. **Curated public projection:** Only published jobs appear on `/jobs`; pause, close and archive remove them. Anonymous users cannot read private jobs or pipeline versions, and neither anon nor authenticated clients can directly write the projection. Candidate apply remains unavailable until ATS-03.
+5. **Canonical jobs statuses:** `draft`, `published`, `paused`, `closed`, `archived` per Status Dictionary Appendix M. No silent modifications to legacy Hiring Need, Referral, Interview or Placement statuses, and no automatic hiring/rejection.
+6. **Security:** Scoped employer memberships, active approved employer required, employer Owner/Admin-only publication, RLS, private audit metadata. External providers, screening data and applicant submission are not activated here.
 
-## Authorization
+## Migration ledger and release record
 
-| Role | Draft read | Draft edit/duplicate | Publish version |
-|---|---|---|---|
-| Employer Owner/Admin, same employer, active | yes | yes | yes |
-| Recruiter, same employer, active | yes | yes | no |
-| Employer Read Only, same employer, active | yes | no | no |
-| Hiring Manager | no by default | no | no |
-| Student, Institution, anonymous, other employer | no | no | no |
+Supabase target: **TXKPRO Workforce Staging** (`qwxlgzlkaeaqfzjodtis`). Existing baseline `20261018193301_ats_01_job_listings` was preserved. Applied successfully (2026-10-18):
 
-All API handlers re-resolve `requireEmployerContext({approved:true})`; RLS independently verifies an active, approved employer and exact canonical role/scope. Platform role without employer membership is not an ATS override.
+| Staging ledger version | Migration | Purpose |
+| --- | --- | --- |
+| `20261018213605` | `ats_02_pipeline_templates` | Tenant-owned drafts, immutable versions, SQL graph checks, audit and RLS |
+| `20261018213618` | `ats_02_job_publication` | Same-tenant job/version FK, authorized status transitions and curated public projection |
+| `20261018213747` | `ats_02_fk_indexes` | Cover foreign-key lookup indexes required by staging advisor |
 
-## Migration and verification
+New RPC privilege hardening migration `20261018213810_ats_02_rpc_invoker.sql` is pending staging application until its isolated Postgres QA passes. Public wrappers will run with caller privileges, while their private security-schema functions retain guarded execution.
 
-Source migration: `supabase/migrations/20261018213605_ats_02_pipeline_templates.sql`. Never edit or reapply the ATS-01 migration. Validate with:
+The first three migration filenames were aligned to the live Supabase migration ledger; never replay them. Source migrations are additive; do not rewrite `20261018193301_ats_01_job_listings.sql`.
 
-- `npm run ats-pipelines:qa` (pure graph validation and actual isolated Postgres/RLS exercises)
-- `npm run typecheck`
-- `npm run lint`
-- `npm run build`
-- Full CI plus staging-only schema review and Supabase advisors before any staging migration.
+## Verification and non-negotiable boundaries
 
-**Important:** The draft PR does not yet remove ATS-01's publication guard. A separate reviewed ATS-02 migration must enforce an atomic, same-employer job/version binding, status transitions and curated public projection. This must be tested against direct SQL/PostgREST attempts to forge other-tenant versions, bypass state transitions, alter applicant-pinned versions or expose private fields. Until that work is complete, the UI must continue to show publication blocked. ATS-03 owns actual applicant submissions and progress projections.
+- `npm run ats-pipelines:qa`: graph and role QA; PGlite installs ATS-01 plus ATS-02 migrations, checks successful/failed publication, distinct roles/tenants, RLS, immutable bindings and version snapshots, curated public metadata, pause/resume/close.
+- `npm run ats-jobs:qa`: ATS-01 editing, tenant and regression contracts.
+- Typecheck, lint, Next.js build and repository GitHub CI.
+- Staging advisors: no new unindexed ATS FKs after index migration. Information-only notices for unused indexes on empty/new ATS tables and two private audit tables intentionally RLS with no public policies. The invoker-wrapper migration addresses the earlier two authenticated security-definer RPC WARN findings.
+- **ATS-03** still owns student/external applicant submission, consent/evaluation evidence, applicant pipeline pinning, and candidate tracker updates. No applicant data or provider calls in ATS-02.
+- **UAT** remains owner-controlled: employer pipeline draft and version publication, mobile/desktop canvas, workflow validation, switch to job builder, assign version, publish, public read, archive/paused visibility, role denial and conflict/reload.
+- `PROJECTS_TOKEN` Project #1 access exception is scoped only to ATS-02/#329; this is not proof that Project preflight passed. Reconcile Project #1 when access becomes available. CI, source, security and owner-UAT gates cannot be bypassed.
 
-## Remaining gates
-
-1. Complete focused PostgreSQL migration/RLS QA and full CI on final branch tip.
-2. Review pipeline schema and canonical workflow/event consequences; preserve the existing hiring/referral/placement states.
-3. Implement and verify *separately* Job→published version assignment and public publication; do not claim ATS-02 Done while job publication remains blocked.
-4. Reviewed staging migration, compare migration ledger and RLS grants, check advisors.
-5. Owner mobile/desktop visual UAT: DnD, keyboard fallback, graph connections/validation, save/reload/revision conflicts, template duplication and immutable version publication.
-6. GitHub Project #1 reconciliation remains excepted **only for missing PROJECTS_TOKEN** by owner approval for #329, never a Project PASS. Production change requires separate authorization.
-
-No provider calls or candidate migrations occur in this change.
+**Production database and deployment remain untouched.** Do not mark Issue #329 Done until the staging app is READY, verification evidence recorded and owner UAT signed off.
