@@ -101,7 +101,7 @@ test("route is staging-only, platform-super-admin only, same-origin, no-store, P
 test("no MGID report values, token, or auction entitlement are exposed to browser", () => {
   const route = repoFile("app/api/admin/integrations/mgid/test/route.ts");
   const client = repoFile("components/admin/mgid-connection-check.tsx");
-  assert.match(route, /checkMgidPublisherRestApi/);
+  assert.match(route, /diagnoseMgidApiAccess/);
   assert.doesNotMatch(client, /MGID_CLIENT_API_TOKEN|MGID_CLIENT_API_ID/);
   assert.match(client, /Native OpenRTB S2S access: Not verified/);
 });
