@@ -4,9 +4,7 @@
 
 A platform-scoped, active Super Admin may select an existing user in All Users and
 enter that user's **fully functional** account experience, without target consent,
-manually entered reason, or notifications. Every route, feature and normal or
-**high-risk** mutation must behave according to the selected user's currently active
-role and organization scope. A non-dismissible banner must identify the target and
+manually entered reason, or notifications. Every ordinary user route, view and permitted non-high-risk mutation must behave according to the selected user's currently active role and organization scope. All high-risk actions remain blocked. A non-dismissible banner must identify the target and
 show **Exit**; Exit immediately restores the authenticated Super Admin workspace.
 
 **Owner amendment — 2026-10-18: HIGH-RISK ACTIONS ARE EXCLUDED.** The final product must DENY payments, refunds, account deletion/suspension, credential or security changes, MFA, role/permission grants, invitation approvals/revocations, identity verification, financial transfers and irreversible operations during impersonation. Ordinary interactions such as normal profile edits, community posts and messaging may remain available, subject to target permissions. No user permission, user notification or manual reason for View as.
@@ -49,7 +47,7 @@ is indistinguishable from a regular target login, and its refresh token could be
 reused outside the actor-bound context. For the final production-grade bridge,
 implement a verified issuer/auth-hook or locked-down server proxy with actor+target
 claims across browser and server, RLS and RPC checks, session revocation, and
-downstream financial and security action provenance. Decide bridge mechanics with
+denial of financial and security operations at their actual data-plane boundaries. Decide bridge mechanics with
 tests; do not invent a JWT signing key or forward service role to browsers.
 
 ## Updated enforcement requirement
@@ -62,7 +60,7 @@ The `lib/impersonation/action-policy.ts` classifier is a preliminary, **fail-clo
 - Node-only registry functions can issue/revoke session capabilities and write
   platform audit events; there is no target-session credential in these records.
 - Endpoints are **hard-disabled by a compile-time constant** until the native
-  browser+server+database bridge and all high-risk deny enforcement have passed.
+  browser+server+database bridge and all high-risk deny enforcement has passed.
 - The existing `View as` read-only preview is unchanged in this wave.
 - No new credentials, no notification, no unauthorized user access.
 
