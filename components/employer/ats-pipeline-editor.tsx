@@ -461,10 +461,30 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           </div>
         </div> : <>
           <div className="ats-pipeline-canvas-area">
-            <div className="ats-pipeline-canvas-wrap">
+            <div className="ats-pipeline-canvas-wrap" ref={viewportRef}
+              onScroll={e=>setScrollPosition({left:e.currentTarget.scrollLeft,top:e.currentTarget.scrollTop})}>
               <div className="ats-pipeline-canvas" ref={canvasRef}
+                style={{width:3000*zoom,height:2400*zoom}}
+                onPointerDown={e=>{
+                  if (e.button!==0 || linking || (e.target as HTMLElement).closest("[data-pipeline-node]") ||
+                      (e.target as HTMLElement).closest(".ats-pipeline-canvas-hint")) return;
+                  const view=viewportRef.current;
+                  if (!view) return;
+                  panRef.current={clientX:e.clientX,clientY:e.clientY,left:view.scrollLeft,top:view.scrollTop};
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerUp={e=>{
+                  if (!panRef.current) return;
+                  panRef.current=null;
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+                }}
+                onPointerCancel={()=>{panRef.current=null;}}
                 onDragOver={(e) => e.preventDefault()} onDrop={onCanvasDrop}
                 onPointerMove={(e) => {
+                  if (panRef.current && viewportRef.current) {
+                    viewportRef.current.scrollLeft=panRef.current.left-(e.clientX-panRef.current.clientX);
+                    viewportRef.current.scrollTop=panRef.current.top-(e.clientY-panRef.current.clientY);
+                  }
                   if (!linking) return;
                   const rect = canvasRef.current?.getBoundingClientRect();
                   if (rect) setPointer({ x: (e.clientX-rect.left)/zoom, y:(e.clientY-rect.top)/zoom });
@@ -473,8 +493,8 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   if (e.key === "Escape" && linking) { setLinking(null); setPointer(null); }
                 }}
                 role="region" aria-label="Interactive hiring workflow canvas" tabIndex={0}>
-                <div className="ats-pipeline-canvas-content" style={{ transform: `scale(${zoom})` }}>
-                  <svg viewBox="0 0 1800 1100" width="1800" height="1100" aria-hidden="true" className="ats-pipeline-wires">
+                <div className="ats-pipeline-canvas-content" style={{ width:3000,height:2400,transform: `scale(${zoom})` }}>
+                  <svg viewBox="0 0 3000 2400" width="3000" height="2400" aria-hidden="true" className="ats-pipeline-wires">
                     <defs><marker id="ats-pipeline-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor" /></marker></defs>
                     {graph.edges.map((edge) => {
                       const a=graph.nodes.find((n) => n.id===edge.source), b=graph.nodes.find((n) => n.id===edge.target);
@@ -494,6 +514,10 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   {graph.nodes.map((node) => <div key={node.id} data-pipeline-node={node.id}
                     className={"ats-pipeline-node " + (node.id === selectedNodeId ? "is-selected " : "") + (linking ? "is-linking" : "")}
                     style={{ left:node.x,top:node.y }}>
+                    {diagnostics.some(issue=>issue.nodeId===node.id) ? <span className="ats-pipeline-node-issue" role="status"
+                      title={diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}>
+                      <ExclamationTriangleIcon aria-hidden="true"/><span className="sr-only">{diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}</span>
+                    </span> : null}
                     {node.kind !== "start" ? <button type="button"
                       className="ats-pipeline-port ats-pipeline-port-input"
                       title={linking ? "Connect to "+node.label : "Incoming connections to "+node.label}
@@ -542,7 +566,27 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               <output aria-label="Canvas zoom level">{Math.round(zoom*100)}%</output>
               <button type="button" disabled={zoom >= 1.6} onClick={() => setZoom((v) => Math.min(1.6,+(v+.1).toFixed(2)))} title="Zoom in" aria-label="Zoom in"><MagnifyingGlassPlusIcon aria-hidden="true"/></button>
               <button type="button" onClick={() => setZoom(1)} title="Reset zoom to 100%" aria-label="Reset zoom"><ArrowsPointingOutIcon aria-hidden="true"/></button>
+              <span className="ats-pipeline-canvas-divider" aria-hidden="true"/>
+              <button type="button" disabled={!editor} title="Automatically arrange workflow nodes" aria-label="Auto-layout pipeline"
+                onClick={() => change(autoLayoutPipeline(graph))}><ArrowsPointingInIcon aria-hidden="true"/></button>
+              <button type="button" disabled={!selectedNode} title="Center selected component" aria-label="Center selected component"
+                onClick={() => {if(selectedNode) centerOnNode(selectedNode);}}><MagnifyingGlassPlusIcon aria-hidden="true"/></button>
             </div>
+            <button type="button" className="ats-pipeline-minimap" aria-label="Minimap: click to pan across workflow" title="Click to move the canvas"
+              onClick={panToMapPoint}>
+              <svg viewBox="0 0 3000 2400" width="190" height="152" aria-hidden="true">
+                <rect x={scrollPosition.left/zoom} y={scrollPosition.top/zoom}
+                  width={(viewportRef.current?.clientWidth??950)/zoom} height={(viewportRef.current?.clientHeight??500)/zoom}
+                  fill="none" stroke="currentColor" strokeWidth="24" rx="22"/>
+                {graph.edges.map(edge=>{
+                  const a=graph.nodes.find(n=>n.id===edge.source), b=graph.nodes.find(n=>n.id===edge.target);
+                  return a&&b ? <line key={edge.id} x1={a.x+100} y1={a.y+40} x2={b.x+100} y2={b.y+40} stroke="currentColor" strokeWidth="12" opacity=".55"/> : null;
+                })}
+                {graph.nodes.map(node=><rect key={node.id} x={node.x} y={node.y} width="210" height="80" rx="12"
+                  fill={node.id===selectedNodeId?"var(--txk-info)":"var(--txk-text-muted)"}/>)}
+              </svg>
+              <span>Minimap · pan</span>
+            </button>
           </div>
           {settingsOpen && selectedNode ? <div className="ats-pipeline-modal-backdrop" onMouseDown={(e) => { if (e.target===e.currentTarget) setSettingsOpen(false); }}>
             <div className="card ats-pipeline-inspector ats-pipeline-modal" ref={modalRef}
