@@ -8,6 +8,8 @@ const files = [
   "../supabase/migrations/20261018193301_ats_01_job_listings.sql",
   "../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",
   "../supabase/migrations/20261018213618_ats_02_job_publication.sql",
+  "../supabase/migrations/20261018213747_ats_02_fk_indexes.sql",
+  "../supabase/migrations/20261018213810_ats_02_rpc_invoker.sql",
 ].map(path => readFileSync(new URL(path, import.meta.url),"utf8"));
 const ids = {
   owner:"aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
@@ -37,6 +39,8 @@ test("ATS-02 publication: RLS, same-employer version, state and curated projecti
       ('owner-b','${ids.other}','active','employer','employer-b','employer_owner');`,
     ].join("\n"));
     for (const migration of files) await db.exec(migration);
+    const wrapperSecurity = await db.query("select proname, prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname in ('wf_ats_publish_job','wf_ats_publish_pipeline') order by proname");
+    assert.deepEqual(wrapperSecurity.rows.map(row=>row.prosecdef), [false,false]);
     await db.exec(`set role authenticated; set app.actor_auth='${ids.owner}';set app.actor_user='owner-a';set app.employer='employer-a';`);
     const graph = sqlLiteral(STARTER_PIPELINE);
     const t1 = await db.query(`insert into public.wf_ats_pipeline_templates(employer_id,name,graph_json,created_by_user_id)
