@@ -50,7 +50,7 @@ create table if not exists public.wf_ats_job_listings (
     status not in ('published','paused','closed') or
     (nullif(btrim(title),'') is not null and pipeline_version_id is not null and published_at is not null)
   ),
-  constraint wf_ats_job_templates_draft check (not is_template or status = 'draft')
+  constraint wf_ats_job_templates_draft check (not is_template or status in ('draft','archived'))
 );
 
 comment on table public.wf_ats_job_listings is
