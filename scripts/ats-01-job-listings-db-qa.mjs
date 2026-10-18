@@ -23,9 +23,9 @@ test("ATS-01 migration installs and enforces private draft boundaries in Postgre
       "create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.actor_auth', true),'')::uuid $$;",
       "create function security.current_legacy_user_id() returns text language sql stable security definer as $$ select current_setting('app.actor_user', true) $$;",
       "create function security.member_of_employer(p text) returns boolean language sql stable security definer as $$ select p = current_setting('app.employer', true) $$;",
-      "insert into public.users values ('user-a','aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'),('user-b','bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb');",
+      "insert into public.users values ('user-a','aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'),('user-b','bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb'),('user-c','cccccccc-cccc-4ccc-8ccc-cccccccccccc');",
       "insert into public.contractors values ('employer-a',null,'approved','active'),('employer-b',null,'approved','active');",
-      "insert into public.app_role_memberships values ('user-a','aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa','active','employer','employer-a','recruiter'),('user-b','bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb','active','employer','employer-a','employer_read_only');",
+      "insert into public.app_role_memberships values ('user-a','aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa','active','employer','employer-a','recruiter'),('user-b','bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb','active','employer','employer-a','employer_read_only'),('user-c','cccccccc-cccc-4ccc-8ccc-cccccccccccc','active','employer','employer-a','employer_admin');",
     ].join("\n"));
     await db.exec(migration);
     await db.exec([
@@ -58,6 +58,21 @@ test("ATS-01 migration installs and enforces private draft boundaries in Postgre
     await assert.rejects(
       db.query("insert into public.wf_ats_job_listings(employer_id,created_by_user_id,title,source_job_listing_id) values ('employer-a','user-a','Forged', '00000000-0000-4000-8000-000000000001')"),
     );
+    await db.exec([
+      "set app.actor_auth = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';",
+      "set app.actor_user = 'user-c';",
+    ].join("\n"));
+    const archived = await db.query(
+      "update public.wf_ats_job_listings set status='archived' where employer_id='employer-a' returning status,revision",
+    );
+    assert.equal(archived.rows[0].status, "archived");
+    assert.equal(archived.rows[0].revision, 3);
+    await assert.rejects(
+      db.query("update public.wf_ats_job_listings set status='draft' where employer_id='employer-a'"),
+      /ATS-01 only permits draft to archived/,
+    );
+    const stillArchived = await db.query("select status from public.wf_ats_job_listings where employer_id='employer-a'");
+    assert.equal(stillArchived.rows[0].status, "archived");
     await db.exec([
       "set app.actor_auth = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';",
       "set app.actor_user = 'user-b';",
