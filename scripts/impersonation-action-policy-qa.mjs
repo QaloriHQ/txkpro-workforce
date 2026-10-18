@@ -56,7 +56,7 @@ test("finance, identity, access control and irreversible operations are denied",
 });
 test("encoded paths and unreviewed verbs must not bypass exclusions", () => {
   assert.equal(candidate("POST", "/api/%61dmin/users"), "deny_high_risk");
-  assert.equal(candidate("POST", "/api/community/posts/%2e%2e/%2e%2e/admin"), "deny_unreviewed");
+  assert.equal(candidate("POST", "/api/community/posts/%2e%2e/%2e%2e/admin"), "deny_high_risk");
   assert.equal(candidate("TRACE", "/api/community/posts"), "deny_unreviewed");
   assert.equal(candidate("POST", "/api/community/posts/revoke"), "deny_high_risk");
 });
