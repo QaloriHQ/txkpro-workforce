@@ -24,6 +24,7 @@ type EmployerSection =
   | "referrals"
   | "interviews"
   | "pipeline"
+  | "jobs"
   | "placements"
   | "incentives"
   | "screening"
@@ -71,6 +72,7 @@ const groups: NavGroup[] = [
   {
     label: "Talent & Hiring",
     items: [
+      { key: "jobs", href: "/employer/jobs", label: "Job listings", icon: BriefcaseIcon },
       {
         key: "screening",
         href: "/employer/screening",
