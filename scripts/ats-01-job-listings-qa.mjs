@@ -60,7 +60,11 @@ test("migration isolates tenants and audit, fails closed until ATS-02", () => {
   assert.match(migration, /references public\.contractors\(contractor_id\)/);
   assert.match(migration, /alter table public\.wf_ats_job_listings enable row level security/i);
   assert.match(migration, /security\.member_of_employer\(employer_id\)/);
-  assert.match(migration, /security\.has_employer_role\(employer_id/i);
+  assert.match(migration, /security\.wf_ats_has_employer_role\(employer_id/i);
+  assert.match(migration, /Hiring Need must belong to the same employer/);
+  assert.match(migration, /Job source must belong to the same employer/);
+  assert.match(migration, /Assigned manager requires an active scoped employer membership/);
+  assert.match(migration, /new\\.revision := 1/);
   assert.match(migration, /created_by_user_id = security\.current_legacy_user_id\(\)/);
   assert.match(migration, /on public\.wf_ats_job_listings\(employer_id, status,/);
   assert.match(migration, /security\.wf_ats_job_audit/);
