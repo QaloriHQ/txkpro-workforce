@@ -9,7 +9,7 @@ const files = [
   "../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",
   "../supabase/migrations/20261018213618_ats_02_job_publication.sql",
   "../supabase/migrations/20261018213747_ats_02_fk_indexes.sql",
-  "../supabase/migrations/20261018213810_ats_02_rpc_invoker.sql",
+  "../supabase/migrations/20261018214455_ats_02_rpc_invoker.sql",
 ].map(path => readFileSync(new URL(path, import.meta.url),"utf8"));
 const ids = {
   owner:"aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
