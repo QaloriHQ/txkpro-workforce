@@ -79,9 +79,11 @@ create policy wf_ats_jobs_read_employer on public.wf_ats_job_listings
   using (
     security.member_of_employer(employer_id)
     and (
-      not security.has_employer_role(employer_id, array['hiring_manager'])
-      or security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter','employer_read_only'])
-      or assigned_hiring_manager_user_id = security.current_legacy_user_id()
+      security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter','employer_read_only'])
+      or (
+        security.has_employer_role(employer_id, array['hiring_manager'])
+        and assigned_hiring_manager_user_id = security.current_legacy_user_id()
+      )
     )
   );
 
@@ -146,7 +148,42 @@ declare
 begin
   v_actor := security.current_legacy_user_id();
   v_owner_admin := security.has_employer_role(new.employer_id, array['employer_owner','employer_admin']);
+  -- Optional links are private tenant-owned relationships, never arbitrary
+  -- client-supplied cross-employer identifiers.
+  if new.hiring_need_id is not null and not exists (
+    select 1 from public.wf_hiring_needs hn
+    where hn.hiring_need_id = new.hiring_need_id and hn.employer_id = new.employer_id
+  ) then
+    raise exception 'Hiring Need must belong to the same employer';
+  end if;
+  if new.source_job_listing_id is not null and not exists (
+    select 1 from public.wf_ats_job_listings source
+    where source.id = new.source_job_listing_id and source.employer_id = new.employer_id
+  ) then
+    raise exception 'Job source must belong to the same employer';
+  end if;
+  if new.assigned_hiring_manager_user_id is not null and not exists (
+    select 1 from public.app_role_memberships m
+    where m.user_id = new.assigned_hiring_manager_user_id
+      and lower(m.status) = 'active'
+      and lower(m.scope_type) in ('employer','contractor')
+      and m.scope_id = new.employer_id
+      and lower(m.role) in ('hiring_manager','employer_owner','employer_admin')
+  ) then
+    raise exception 'Assigned manager requires an active scoped employer membership';
+  end if;
   if tg_op = 'INSERT' then
+    if new.assigned_hiring_manager_user_id is not null and not v_owner_admin then
+      raise exception 'Only Employer Owner/Admin may assign a hiring manager';
+    end if;
+    -- Ignore client-controlled identity, revision and lifecycle timestamps.
+    new.id := gen_random_uuid();
+    new.job_listing_id := 'JOB-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
+    new.revision := 1;
+    new.created_at := now();
+    new.updated_at := now();
+    new.published_at := null;
+    new.closed_at := null;
     if new.status <> 'draft' or new.pipeline_version_id is not null then
       raise exception 'ATS jobs must start as unpublished drafts';
     end if;
