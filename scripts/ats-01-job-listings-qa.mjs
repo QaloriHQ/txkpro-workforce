@@ -6,7 +6,7 @@ import {
   parseJobPatch, jobToDatabase, mapJob,
 } from "../lib/employer/job-listings.ts";
 
-const migration = readFileSync(new URL("../supabase/migrations/20261018164705_ats_01_job_listings.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261018193301_ats_01_job_listings.sql", import.meta.url), "utf8");
 const repository = readFileSync(new URL("../lib/employer/job-listings-repository.ts", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../components/employer/job-listing-editor.tsx", import.meta.url), "utf8");
 const publishRoute = readFileSync(new URL("../app/api/employer/jobs/[id]/publish/route.ts", import.meta.url), "utf8");
