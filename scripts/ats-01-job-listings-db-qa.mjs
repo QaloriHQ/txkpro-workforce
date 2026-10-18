@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
-const migration = readFileSync(new URL("../supabase/migrations/20261018164705_ats_01_job_listings.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261018193301_ats_01_job_listings.sql", import.meta.url), "utf8");
 
 test("ATS-01 migration installs and enforces private draft boundaries in Postgres", async () => {
   const db = new PGlite();
