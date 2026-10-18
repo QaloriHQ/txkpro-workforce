@@ -78,3 +78,14 @@ tests; do not invent a JWT signing key or forward service role to browsers.
 - Manual signed-in staging UAT for Student, Institution, Employer, Advertiser
   and every other applicable role, mobile and desktop banner;
 - Security review of #205 (legacy admin shortcut issue), #144 (audit coverage).
+
+## Automated SEC-IMP-02 route coverage gate
+
+`node --experimental-strip-types --test scripts/impersonation-coverage-gate.mjs`
+reports dynamic counts of API routes, mutating handlers, high-risk candidates, and
+browser Supabase entry points. It reads an explicit deny-by-default review ledger
+(`SEC_IMP_02_ROUTE_REVIEW.json`). While certification is false, CI verifies the
+gate itself and reports missing coverage. If a future commit changes the
+compile-time certification flag, CI requires nonempty traceable evidence for each
+mutating route and browser entry point plus verified issuer, RLS/RPC and high-risk
+provider attribution. Adding a boolean alone is NOT authorization evidence.
