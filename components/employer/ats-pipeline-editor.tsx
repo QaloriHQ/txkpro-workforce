@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, DocumentDuplicateIcon,
   PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, MagnifyingGlassMinusIcon,
-  MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon,
+  MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon,
 } from "@heroicons/react/24/outline";
 import {
   ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE,
@@ -13,6 +13,7 @@ import {
   type PipelineTemplateSummary, type PipelineVersionSummary, type PipelineField,
 } from "@/lib/employer/ats-pipelines";
 import type { EmployerRole } from "@/lib/employer/types";
+import { autoLayoutPipeline, inspectPipelineGraph, simulateCandidateJourney } from "@/lib/employer/pipeline-experience";
 
 const LABELS: Record<ATSNodeKind, string> = {
   start: "Start", end: "End", application_form: "Application / form", assessment: "Assessment",
@@ -93,6 +94,13 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [linking, setLinking] = useState<{source:string;outcome?:"yes"|"no"} | null>(null);
   const [pointer, setPointer] = useState<{x:number;y:number} | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [branchChoices, setBranchChoices] = useState<Record<string, "yes" | "no">>({});
+  const [recovery, setRecovery] = useState<{ name: string; description: string; graph: PipelineGraph; revision: number } | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState("Autosave enabled");
+  const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
+  const latestDraft = useRef("");
+  const panRef = useRef<{ clientX: number; clientY: number; left: number; top: number } | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const editor = isPipelineConfigurator(role);
@@ -105,6 +113,39 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     try { validatePipelineGraph(graph, true); return ""; }
     catch (err) { return err instanceof Error ? err.message : "Invalid graph"; }
   }, [graph]);
+  const diagnostics = useMemo(() => inspectPipelineGraph(graph), [graph]);
+  const journey = useMemo(() => simulateCandidateJourney(graph, branchChoices), [graph, branchChoices]);
+  const draftKey = selectedId ? "txkpro:ats-draft:" + employerId + ":" + selectedId : "";
+  useEffect(() => {
+    latestDraft.current = JSON.stringify({ name, description, graph });
+    if (!dirty || !draftKey || !editor) return;
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({
+        savedAt: Date.now(), revision, name, description, graph,
+      }));
+    } catch { /* The server remains the durable save target. */ }
+  }, [name, description, graph, dirty, draftKey, editor, revision]);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      if (!draftKey || !editor) { setRecovery(null); return; }
+      try {
+        const raw = window.localStorage.getItem(draftKey);
+        if (!raw || raw.length > 150000) { setRecovery(null); return; }
+        const candidate = JSON.parse(raw) as { savedAt: number; revision: number; name: string; description: string; graph: PipelineGraph };
+        if (Date.now() - candidate.savedAt > 7 * 86400000 || candidate.revision !== revision) {
+          setRecovery(null); return;
+        }
+        const validated = validatePipelineGraph(candidate.graph, false);
+        if (typeof candidate.name !== "string" || typeof candidate.description !== "string") return;
+        if (JSON.stringify({name:candidate.name,description:candidate.description,graph:validated}) ===
+            JSON.stringify({name,description,graph})) { setRecovery(null); return; }
+        setRecovery({ name: candidate.name, description: candidate.description, graph: validated, revision });
+      } catch { setRecovery(null); }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+    // Inspect recovery on pipeline selection, not every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey, editor]);
   useEffect(() => {
     function beforeUnload(e: BeforeUnloadEvent) { if (dirty) { e.preventDefault(); e.returnValue = ""; } }
     window.addEventListener("beforeunload", beforeUnload);
@@ -139,10 +180,10 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   }
   function choosePipeline(p: PipelineTemplateSummary) {
     if (dirty && !window.confirm("Discard unsaved pipeline changes?")) return;
-    setSelectedId(p.id); setName(p.name); setDescription(p.description);
+    setSelectedId(p.id); setName(p.name); setDescription(p.description); setAutosaveStatus("Autosave enabled");
     setGraph(clone(p.graph)); setRevision(p.revision);
     setDirty(false); setError(""); setMessage(""); setSelectedNodeId(null);
-    setHistory([]); setFuture([]); setPreview(false); setSettingsOpen(false); setLinking(null); setPointer(null);
+    setHistory([]); setFuture([]); setPreview(false); setSettingsOpen(false); setLinking(null); setPointer(null); setBranchChoices({}); setRecovery(null);
   }
   function undo() {
     if (!history.length) return;
