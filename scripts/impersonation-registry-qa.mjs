@@ -98,3 +98,19 @@ test("contract documents high risk inclusion, actor attribution and locked data 
   assert.match(c, /Supabase/);
   assert.match(c, /not.*full impersonation/i);
 });
+
+test("full-session banner is global, non-dismissible, and Exit revokes the registry", () => {
+  const root = text("app/layout.tsx");
+  const banner = text("components/admin/impersonation-banner.tsx");
+  const styles = text("app/impersonation-banner.css");
+  assert.match(root, /impersonationEnabled\\(\\)/);
+  assert.match(root, /<body>\\{impersonationBanner\\}\\{children\\}<\\/body>/);
+  assert.match(banner, /Viewing as \\{targetName\\}/);
+  assert.match(banner, /Exit View as/);
+  assert.match(banner, /method: "DELETE"/);
+  assert.match(banner, /window.location.assign\\("\\/admin"\\)/);
+  assert.doesNotMatch(banner, /onClose|dismiss|isOpen/);
+  assert.match(styles, /position: sticky/);
+  assert.match(styles, /z-index: 9999/);
+  assert.match(styles, /safe-area-inset/);
+});

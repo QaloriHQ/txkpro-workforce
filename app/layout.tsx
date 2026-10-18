@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./theme.css";
 import "./community-shell.css";
+import "./impersonation-banner.css";
+import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
+import { impersonationEnabled } from "@/lib/impersonation/session-contract";
+import { getImpersonationRegistrySession } from "@/lib/impersonation/registry";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
@@ -63,15 +67,27 @@ const themeScript = `
   }
 })();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Display a global Exit banner only after the full target authorization
+  // bridge is independently certified. A registry entry alone is insufficient.
+  let impersonationBanner: React.ReactNode = null;
+  if (impersonationEnabled()) {
+    try {
+      const impersonation = await getImpersonationRegistrySession();
+      if (impersonation) impersonationBanner = (
+        <ImpersonationBanner targetName={impersonation.target.name}
+          targetScope={impersonation.session.target_membership_key} />
+      );
+    } catch { /* Auth expiry/revocation must not leak another user context. */ }
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>{impersonationBanner}{children}</body>
     </html>
   );
 }
