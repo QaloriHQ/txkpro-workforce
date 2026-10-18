@@ -26,7 +26,7 @@ All API handlers re-resolve `requireEmployerContext({approved:true})`; RLS indep
 
 ## Migration and verification
 
-Source migration: `supabase/migrations/20261018200500_ats_02_pipeline_templates.sql`. Never edit or reapply the ATS-01 migration. Validate with:
+Source migration: `supabase/migrations/20261018213605_ats_02_pipeline_templates.sql`. Never edit or reapply the ATS-01 migration. Validate with:
 
 - `npm run ats-pipelines:qa` (pure graph validation and actual isolated Postgres/RLS exercises)
 - `npm run typecheck`
