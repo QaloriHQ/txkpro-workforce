@@ -19,7 +19,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const employerId = new URL(request.url).searchParams.get("employerId");
     const context = await requireEmployerContext({ employerId, approved: true });
     const body = await request.json() as { revision?: unknown; fields?: unknown; action?: unknown };
-    if (!Number.isSafeInteger(body.revision) || Number(body.revision) < 1) {
+    if (typeof body.revision !== "number" || !Number.isSafeInteger(body.revision) || body.revision < 1) {
       return Response.json({ error: "A valid expected revision is required" }, { status: 400 });
     }
     if (body.action === "archive") {
