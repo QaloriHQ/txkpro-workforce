@@ -1,0 +1,26 @@
+/* Root-level Super Admin impersonation banner: intentionally conspicuous,
+   consistent across all role layouts, never dismissible without ending session. */
+.txk-impersonation-banner { position: sticky; top: 0; width: 100%; z-index: 9999;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: #121826; color: #fff; border-bottom: 3px solid #f2ba4c;
+  padding: 10px max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  box-shadow: 0 2px 14px rgba(0,0,0,.2); }
+.txk-impersonation-banner-content { display: flex; gap: 12px; align-items: center; min-width: 0; font-size: 14px; }
+.txk-impersonation-banner-content > svg { width: 23px; height: 23px; flex-shrink: 0; }
+.txk-impersonation-banner-content strong { display: block; font-weight: 800; overflow-wrap: anywhere; }
+.txk-impersonation-scope { display: block; opacity: .82; font-size: 12px; }
+.txk-impersonation-actions { display: flex; align-items: center; gap: 12px; }
+.txk-impersonation-actions [role="alert"] { font-size: 12px; color: #ffb4a3; }
+.txk-impersonation-actions button { display: inline-flex; gap: 8px; align-items: center;
+  flex-shrink: 0; cursor: pointer; padding: 10px 14px;
+  background: #fff; border: 0; border-radius: 9px; color: #101828; font-size: 13px; font-weight: 850; }
+.txk-impersonation-actions button:focus-visible { outline: 3px solid #ffcf61; outline-offset: 3px; }
+.txk-impersonation-actions button:disabled { cursor: wait; opacity: .7; }
+.txk-impersonation-actions button svg { width: 18px; height: 18px; }
+@media(max-width:560px) {
+  .txk-impersonation-banner { flex-wrap: wrap; padding-top: 9px; padding-bottom: 9px; }
+  .txk-impersonation-banner-content { font-size: 12px; }
+  .txk-impersonation-actions { width: 100%; justify-content: space-between; }
+  .txk-impersonation-actions button { min-height: 40px; }
+}
