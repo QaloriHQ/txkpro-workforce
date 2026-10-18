@@ -1,5 +1,5 @@
 {
-  "notes": "NOT approved. This is a deny-by-default certification ledger, not evidence of completed route review. Browser/SSR/RLS/high-risk provider paths must be validated before unlocking full impersonation.",
+  "notes": "NOT approved. Deny-by-default certification ledger. Actor-bound issuer, target-scoped browser/SSR/RLS, ordinary-write attribution, and evidence that ALL high-risk mutations are denied at API/RPC/provider boundaries are required.",
   "issuer": {
     "verified": false,
     "evidence": []
@@ -8,10 +8,10 @@
     "verified": false,
     "evidence": []
   },
-  "highRiskProviders": {
+  "routes": {},
+  "browser": {},
+  "highRiskDenial": {
     "verified": false,
     "evidence": []
-  },
-  "routes": {},
-  "browser": {}
+  }
 }

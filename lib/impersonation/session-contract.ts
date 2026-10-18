@@ -5,7 +5,7 @@
  * IMPORTANT: This compile-time stop is deliberate. Changing an env var alone
  * must never enable target-auth session issuance or cross-user data access.
  * Set true only in a separately reviewed SEC-IMP-02 commit once browser calls,
- * SSR, RLS, API routes and high-risk attribution are proven end-to-end.
+ * SSR, RLS, API routes, ordinary action attribution and the full high-risk DENY contract are proven end-to-end.
  */
 export const IMPERSONATION_DATA_PLANE_CERTIFIED = false as boolean;
 
