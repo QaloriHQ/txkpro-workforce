@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PendingSupportInvitation, PlatformAccount } from "@/lib/admin/platform-users";
 
@@ -25,7 +25,7 @@ export function PlatformUserSupport({ target, invitations }: {
       method: "POST", credentials: "same-origin",
       headers: { "content-type": "application/json", Accept: "application/json" },
       cache: "no-store",
-      body: JSON.stringify({ reason, ...input }),
+      body: JSON.stringify(action === "support" ? { reason, ...input } : input),
     });
     const body = (await result.json().catch(() => ({}))) as {
       ok?: boolean; error?: string; preview?: Preview;
@@ -34,14 +34,13 @@ export function PlatformUserSupport({ target, invitations }: {
     return body;
   }
 
-  async function openPreview(event: FormEvent) {
-    event.preventDefault();
+  async function openPreview() {
     if (busy) return;
     setBusy(true); setPreview(null); setMessage("");
     try {
       const result = await post("preview", { membershipKey });
       setPreview(result.preview ?? null);
-      setMessage("Support preview recorded in the platform audit trail.");
+      setMessage("Read-only preview ready. No request or notification was sent to this user.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Preview unavailable."); }
     finally { setBusy(false); }
   }
@@ -60,22 +59,19 @@ export function PlatformUserSupport({ target, invitations }: {
   }
 
   return <section className="card txk-admin-support" aria-label="Super Admin account support">
-    <h2>View as · Audited support preview</h2>
-    <p className="card-sub">Preview only: never logs in as this person, changes your role, issues credentials, or opens their private Workforce records. Your Super Admin identity remains the actor.</p>
-    <form onSubmit={openPreview}>
+    <h2>View as · Read-only preview</h2>
+    <p className="card-sub">Open a support view instantly. The selected user is not asked for permission or notified. Your authenticated Super Admin identity remains unchanged, and private user records are not loaded.</p>
+    <div className="txk-admin-user-tools">
       <label htmlFor="txk-admin-preview-member">Active role / organization scope</label>
       <select id="txk-admin-preview-member" value={membershipKey} onChange={event => { setMembershipKey(event.target.value); setPreview(null); }} disabled={busy || !active.length}>
         {active.map(m => <option key={m.key} value={m.key}>{m.role} · {m.scopeType}{m.scopeId ? " / " + m.scopeId : ""}</option>)}
       </select>
       {!active.length && <p className="txk-admin-small">No active role memberships to preview.</p>}
-      <label htmlFor="txk-admin-support-reason" style={{ display: "block", marginTop: 14 }}>Required support reason (12–240 characters)</label>
-      <textarea id="txk-admin-support-reason" value={reason} minLength={12} maxLength={240}
-        onChange={event => setReason(event.target.value)}
-        placeholder="Explain the support request; do not include private records or secrets." required />
-      <button className="button button-dark" type="submit" disabled={busy || !active.length || reason.trim().length < 12}>
-        {busy ? "Working…" : "Open audited View as preview"}
+      <button className="button button-dark" type="button" disabled={busy || !active.length}
+        onClick={() => void openPreview()}>
+        {busy ? "Opening…" : "View as"}
       </button>
-    </form>
+    </div>
     {message && <p role="status" aria-live="polite">{message}</p>}
     {preview && <section className="txk-admin-support-preview" aria-label="Read-only view as preview">
       <p className="eyebrow">Support preview — not impersonation</p>
@@ -89,6 +85,10 @@ export function PlatformUserSupport({ target, invitations }: {
     <section style={{ marginTop: 28 }}>
       <h3>Delegated invitation support</h3>
       <p className="card-sub">Only pending invitations for the verified account can be resent or revoked. These remain platform-admin actions, never actions taken as the user. Every request is audited.</p>
+      <label htmlFor="txk-admin-support-reason" style={{ display: "block", marginTop: 14 }}>Support reason required for invitation changes (12–240 characters)</label>
+      <textarea id="txk-admin-support-reason" value={reason} minLength={12} maxLength={240}
+        onChange={event => setReason(event.target.value)}
+        placeholder="Why do you need to resend or revoke this invitation?" />
       {!invitations.length ? <p>No matching pending invitations for this account.</p> :
         invitations.map(invite => <div className="txk-admin-invitation-row" key={invite.invitationId}>
           <div><strong>{invite.role}</strong> · {invite.scopeType}{invite.scopeId ? " / " + invite.scopeId : ""}

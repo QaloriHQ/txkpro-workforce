@@ -29,13 +29,13 @@ switching Supabase users, or fetching private data with a target user's authorit
   the account owner.
 
 ## Session, CSRF, throttling and audit
-- POST with same-origin check, no-store, JSON size validation and a bounded support reason.
-- All View-as attempts that reach the authorized preview are audited in
-  `platform_audit_events` with actor auth ID, target auth ID, reason, result, time.
+- Preview POST uses same-origin validation, no-store and bounded JSON. No user consent, support reason, or user notification is required to open View as.
+- View-as preview access attempts automatically write an internal event to `platform_audit_events` with actor, target, role, scope, result and time; no manually entered reason. This read-only access continues if logging is unavailable, with an internal sanitized warning. Do not notify the selected user.
+- Delegated invitation mutations separately require same-origin validation and a bounded support reason.
 - Before a delegated mutation, write a **pre-action audit record**; refuse to
   mutate on audit failure. On mutation success/failure, record the outcome too.
   The existing invitation RPC provides the canonical target-change audit.
-- Rate-limit sensitive operations via recent audit attempts by actor.
+- Rate-limit delegated mutations via recent audit attempts by actor; read-only previews remain permission-scoped but are not blocked by audit-service availability.
 - Do not send audit details, recipient identity, tokens or upstream secrets to
   unauthorized clients. No new SQL or migrations needed in this slice.
 

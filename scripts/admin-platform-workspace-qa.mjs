@@ -57,15 +57,20 @@ test("Only active platform Super Admin passes support operations", () => {
   assert.match(action, /isUuid\(userId\)/);
 });
 
-test("View as is an audited projection, never a swapped session", () => {
-  assert.match(preview, /requireSupportRequest\(request, body\)/);
+test("View as is one-click and preserves platform authorization without impersonation", () => {
+  assert.match(preview, /requirePlatformSuperAdmin\(\)/);
   assert.match(preview, /m\.status\.toLowerCase\(\) === "active"/);
-  assert.match(preview, /enforceSupportRateLimit/);
   assert.match(preview, /writeSupportAudit/);
+  assert.match(preview, /reason: ""/);
+  assert.match(preview, /request\.headers\.get\("origin"\)/);
   assert.match(preview, /supportPreviewSections/);
+  assert.match(preview, /read-only preview audit unavailable/);
+  assert.doesNotMatch(preview, /requireSupportRequest|enforceSupportRateLimit|signInWith|setSession|exchangeCodeForSession/);
   assert.match(client, /Support preview — not impersonation/);
+  assert.match(client, /onClick=\{\(\) => void openPreview\(\)\}/);
+  const viewMarkup = client.slice(client.indexOf("<h2>View as"), client.indexOf("<h3>Delegated invitation support"));
+  assert.doesNotMatch(viewMarkup, /required support reason|textarea|reason\.trim\(\)\.length/i);
   assert.match(contract, /never.*Supabase Auth session/i);
-  assert.doesNotMatch(preview, /signInWith|setSession|exchangeCodeForSession/);
 });
 
 test("Delegated actions only resend/revoke pending invitation through canonical service", () => {
@@ -81,15 +86,13 @@ test("Delegated actions only resend/revoke pending invitation through canonical 
   assert.match(contract, /No arbitrary user profile mutation/);
 });
 
-test("Every support POST validates origin and reason; logging fails closed", () => {
+test("Delegated mutations still require reason, origin, and fail-closed audit", () => {
   assert.match(auth, /request\.headers\.get\("origin"\)/);
-  assert.match(auth, /new URL\(request\.url\)\.origin/);
   assert.match(auth, /reason\.length < 12 \|\| reason\.length > 240/);
   assert.match(auth, /"platform_audit_events"/);
   assert.match(auth, /actor_auth_user_id: input\.actor\.authUserId/);
-  assert.match(auth, /target_id: input\.targetAuthUserId/);
-  assert.match(auth, /metadata: \{ supportReason: input\.reason/);
   assert.match(auth, /"Cache-Control": "private, no-store"/);
+  assert.match(action, /requireSupportRequest\(request, body\)/);
   assert.match(action, /await writeSupportAudit\([\s\S]*?await prepareUserInvitationResend/);
   assert.match(action, /enforceSupportRateLimit/);
   assert.doesNotMatch(action, /auth\.admin\.updateUserById/);
@@ -99,4 +102,11 @@ test("No production changes or unapproved privileged actions", () => {
   assert.match(contract, /Staging-only|staging-only/i);
   assert.doesNotMatch(action, /auth\.admin\.deleteUser|updateUserById|service_role.*cookie/);
   assert.doesNotMatch(preview, /auth\.admin\.generateLink|signInWithPassword/);
+});
+
+test("View as performs no target consent or notification calls", () => {
+  assert.match(preview, /requirePlatformSuperAdmin\(\)/);
+  assert.doesNotMatch(preview, /requireSupportRequest|notifyUser|deliverUserInvitation|signInAs|setSession/);
+  assert.match(client, /No request or notification was sent to this user/);
+  assert.match(contract, /No user consent, support reason, or user notification is required/);
 });
