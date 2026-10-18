@@ -39,6 +39,7 @@ export default async function AdminPage() {
         <Link className="button button-ghost" href="/admin/moderation">Reports &amp; moderation</Link>
         <Link className="button button-ghost" href="/admin/ads/preview">Ad placement preview</Link>
         <Link className="button button-ghost" href="/admin/advertisers">Advertiser approvals</Link>
+        {isPlatformSuperAdmin(account) && process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "staging" ? <Link className="button button-ghost" href="/admin/integrations/mgid">MGID publisher API</Link> : null}
         <div className="page-heading">
           <div>
             <p className="eyebrow">TXKPRO operations</p>
