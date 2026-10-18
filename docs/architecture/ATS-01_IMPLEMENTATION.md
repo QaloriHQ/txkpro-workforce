@@ -1,7 +1,7 @@
 # ATS-01 · Job Listings implementation and release boundary
 
 **Work item:** [#332](https://github.com/QaloriHQ/txkpro-workforce/issues/332) · [ATS-00 baseline](./ATS-00_ARCHITECTURE.md) · [PR #337](https://github.com/QaloriHQ/txkpro-workforce/pull/337)  
-**Target:** `staging` only · **Current state:** owner-approved canonical statuses and staging migration/UAT, **not production**, **not published**
+**Target:** `staging` only · **Current state:** canonical statuses included; staging migration applied, awaiting owner UAT, **not production**, **not published**
 
 ## Delivered in this PR
 
@@ -42,6 +42,6 @@ Published jobs must have a verified, same-employer, immutable `pipeline_version_
 
 ## Deployment and rollback
 
-Migration generated via `supabase migration new ats_01_job_listings` as `20261018164705_ats_01_job_listings.sql`. Apply to **staging only after** CI, SQL review and canonical source authorization. Do not apply against production under this task. On staging, activate the application only after the migration is present; otherwise the private draft pages return unavailable-data errors. No existing domain tables are modified by the migration. Rollback requires a reviewed data-preservation plan; do not drop records in an ad hoc deploy script.
+The ATS-01 SQL originated from `supabase migration new ats_01_job_listings`. After the owner approved canonical status names and the staging migration/UAT step, the reviewed SQL was applied to **TXKPRO Workforce Staging** (`qwxlgzlkaeaqfzjodtis`) on 2026-10-18. The Supabase migration ledger recorded version `20261018193301`, so the committed source filename is `20261018193301_ats_01_job_listings.sql` to prevent future duplicate pending migration detection. CI #739 passed for the reviewed SQL and draft editor. This staging authorization does **not** extend to production. Application UAT requires an approved preview or staging build using the staging database. No existing domain tables are modified by the migration. Rollback requires a reviewed data-preservation plan; do not drop records in an ad hoc deploy script.
 
 **Remaining upstream dependencies:** ATS-02 pipeline editor/publication; ATS-03 applicant records and submission; later ATS-04 through ATS-07 provider/interview/progress features. This PR is not the full ATS program and must not be represented as such.
