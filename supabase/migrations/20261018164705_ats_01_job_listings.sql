@@ -78,7 +78,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $$
   select coalesce(
     exists (
       select 1 from public.app_role_memberships m
@@ -101,7 +101,7 @@ as $
       )
     ), false
   );
-$;
+$$;
 revoke all on function security.wf_ats_has_employer_role(text,text[]) from public;
 grant execute on function security.wf_ats_has_employer_role(text,text[]) to authenticated, service_role;
 
@@ -113,6 +113,11 @@ create policy wf_ats_jobs_read_employer on public.wf_ats_job_listings
   for select to authenticated
   using (
     security.member_of_employer(employer_id)
+    and exists (
+      select 1 from public.contractors c
+      where c.contractor_id = employer_id
+        and c.approval_status = 'approved' and c.account_status = 'active'
+    )
     and (
       security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter','employer_read_only'])
       or (
@@ -140,17 +145,31 @@ create policy wf_ats_jobs_insert_employer on public.wf_ats_job_listings
 create policy wf_ats_jobs_update_employer on public.wf_ats_job_listings
   for update to authenticated
   using (
-    security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
-    or (
-      security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
-      and assigned_hiring_manager_user_id = security.current_legacy_user_id()
+    exists (
+      select 1 from public.contractors c
+      where c.contractor_id = employer_id
+        and c.approval_status = 'approved' and c.account_status = 'active'
+    )
+    and (
+      security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
+      or (
+        security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
+        and assigned_hiring_manager_user_id = security.current_legacy_user_id()
+      )
     )
   )
   with check (
-    security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
-    or (
-      security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
-      and assigned_hiring_manager_user_id = security.current_legacy_user_id()
+    exists (
+      select 1 from public.contractors c
+      where c.contractor_id = employer_id
+        and c.approval_status = 'approved' and c.account_status = 'active'
+    )
+    and (
+      security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
+      or (
+        security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
+        and assigned_hiring_manager_user_id = security.current_legacy_user_id()
+      )
     )
   );
 
