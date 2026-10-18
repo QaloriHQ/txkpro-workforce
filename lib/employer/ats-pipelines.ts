@@ -85,7 +85,7 @@ function fields(input: unknown): PipelineField[] {
     return { id: fieldId, label: text(f.label, "field label", 140), type: type as PipelineField["type"], required: bool(f.required, "field required"), ...(options.length ? { options } : {}) };
   });
 }
-function config(raw: unknown, kind: ATSNodeKind): PipelineNode["config"] {
+function config(raw: unknown, kind: ATSNodeKind, publish: boolean): PipelineNode["config"] {
   const v = obj(raw ?? {}, "component config");
   const allowed = ["instructions", "url", "fields", "disclosure", "expectedMinutes"];
   if (Object.keys(v).some((key) => !allowed.includes(key))) throw new Error("Unsupported or secret-bearing component setting");
@@ -106,11 +106,11 @@ function config(raw: unknown, kind: ATSNodeKind): PipelineNode["config"] {
     if (kind !== "application_form") throw new Error("Custom fields belong to form components");
     result.fields = fields(v.fields);
   }
-  if (kind === "consent" && !result.disclosure) throw new Error("Consent requires disclosure text");
+  if (publish && kind === "consent" && !result.disclosure) throw new Error("Consent requires disclosure text");
   return result;
 }
 
-export function validatePipelineGraph(input: unknown): PipelineGraph {
+export function validatePipelineGraph(input: unknown, publish = true): PipelineGraph {
   const graph = obj(input, "pipeline");
   if (graph.schemaVersion !== 1) throw new Error("Unsupported pipeline schema");
   if (!Array.isArray(graph.nodes) || graph.nodes.length < 2 || graph.nodes.length > 100) throw new Error("Pipeline requires 2–100 nodes");
@@ -124,7 +124,7 @@ export function validatePipelineGraph(input: unknown): PipelineGraph {
       x: number(n.x, "horizontal position", -20000, 20000),
       y: number(n.y, "vertical position", -20000, 20000),
       required: bool(n.required, "required"), candidateVisible: bool(n.candidateVisible, "candidate visibility"),
-      config: config(n.config, kind),
+      config: config(n.config, kind, publish),
     };
   });
   const ids = new Set(nodes.map((n) => n.id));
@@ -149,7 +149,7 @@ export function validatePipelineGraph(input: unknown): PipelineGraph {
     if (e.outcome && from.kind !== "decision") throw new Error("Only decision components can branch");
     return { id: edgeId, source, target, ...(e.outcome ? { outcome: e.outcome } : {}) };
   });
-  const edgesBySource = new Map(nodes.map((n) => [n.id, edges.filter((e) => e.source === n.id)]));
+  if (!publish) return { schemaVersion: 1, entryNodeId, nodes, edges };\n  const edgesBySource = new Map(nodes.map((n) => [n.id, edges.filter((e) => e.source === n.id)]));
   for (const node of nodes) {
     const outgoing = edgesBySource.get(node.id)!;
     if (node.kind === "end" && outgoing.length) throw new Error("End cannot have outgoing connections");
