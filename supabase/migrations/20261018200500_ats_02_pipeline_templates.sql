@@ -218,7 +218,7 @@ begin
   end loop;
   return true;
 exception when others then
-  return false;
+  raise;
 end;
 $$;
 revoke all on function security.wf_ats_graph_publishable(jsonb) from public, anon, authenticated;
