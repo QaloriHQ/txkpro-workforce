@@ -41,24 +41,24 @@ test("ATS-02 SQL installs; version publication is immutable and employer-scoped"
     await assert.rejects(db.query(`insert into public.wf_ats_pipeline_versions(employer_id,template_id,version_number,source_revision,graph_json,published_by_user_id)
       values('employer-a','${id}',1,1,'${graph}'::jsonb,'owner-a')`),/permission|policy|deny/i);
     await assert.rejects(db.query(`update public.wf_ats_pipeline_templates set employer_id='employer-b' where id='${id}'`),/policy|immutable|permission/i);
-    const published=await db.query(`select (public.wf_ats_publish_pipeline('employer-a','${id}',1)).*`);
+    const published=await db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${id}',1) as v`);
     assert.equal(published.rows.length,1);
     assert.equal(published.rows[0].version_number,1);
     assert.equal(published.rows[0].source_revision,1);
-    await assert.rejects(db.query(`select (public.wf_ats_publish_pipeline('employer-a','${id}',1)).*`),/unique|duplicate/i);
+    await assert.rejects(db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${id}',1) as v`),/unique|duplicate/i);
     await assert.rejects(db.query(`update public.wf_ats_pipeline_versions set version_number=42 where template_id='${id}'`),/permission|policy/i);
     await db.exec(`set app.actor_auth='${authB}';set app.actor_user='read-a';`);
     const unauth=await db.query(`update public.wf_ats_pipeline_templates set name='Forged' where id='${id}' returning id`);
     assert.equal(unauth.rows.length,0);
-    await assert.rejects(db.query(`select (public.wf_ats_publish_pipeline('employer-a','${id}',1)).*`),/publication requires|permission/i);
+    await assert.rejects(db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${id}',1) as v`),/publication requires|permission/i);
     await db.exec(`set app.actor_auth='${authC}';set app.actor_user='owner-b';set app.employer='employer-b';`);
     const other=await db.query(`select id from public.wf_ats_pipeline_templates where id='${id}'`);
     assert.equal(other.rows.length,0);
-    await assert.rejects(db.query(`select (public.wf_ats_publish_pipeline('employer-b','${id}',1)).*`),/not found|unauthorized/i);
+    await assert.rejects(db.query(`select v.* from public.wf_ats_publish_pipeline('employer-b','${id}',1) as v`),/not found|unauthorized/i);
     await db.exec(`set app.actor_auth='${authA}';set app.actor_user='owner-a';set app.employer='employer-a';`);
     const bad=JSON.stringify({ ...STARTER_PIPELINE, edges: [] }).replaceAll("'","''");
     await db.query(`update public.wf_ats_pipeline_templates set graph_json='${bad}'::jsonb where id='${id}'`);
-    await assert.rejects(db.query(`select (public.wf_ats_publish_pipeline('employer-a','${id}',2)).*`),/Invalid pipeline graph/i);
+    await assert.rejects(db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${id}',2) as v`),/Invalid pipeline graph/i);
     const versionCount=await db.query(`select count(*)::int as n from public.wf_ats_pipeline_versions where template_id='${id}'`);
     assert.equal(versionCount.rows[0].n,1);
   } finally { await db.close(); }
