@@ -149,7 +149,8 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
     if (e.outcome && from.kind !== "decision") throw new Error("Only decision components can branch");
     return { id: edgeId, source, target, ...(e.outcome ? { outcome: e.outcome } : {}) };
   });
-  if (!publish) return { schemaVersion: 1, entryNodeId, nodes, edges };\n  const edgesBySource = new Map(nodes.map((n) => [n.id, edges.filter((e) => e.source === n.id)]));
+  if (!publish) return { schemaVersion: 1, entryNodeId, nodes, edges };
+  const edgesBySource = new Map(nodes.map((n) => [n.id, edges.filter((e) => e.source === n.id)]));
   for (const node of nodes) {
     const outgoing = edgesBySource.get(node.id)!;
     if (node.kind === "end" && outgoing.length) throw new Error("End cannot have outgoing connections");
