@@ -52,8 +52,8 @@ function reviewed(x) {
   if (!entry.verifiedActor || !entry.verifiedTarget || !entry.verifiedRevocation) return false;
   // Each action must have route/RPC evidence. High-risk or unreviewed paths
   // MUST be denied, never just audited while they are still permitted.
-  const routePath = "/" + x.path.replace(/^app\\//, "").replace(/\\/route\\.(?:ts|js)$/, "")
-    .replace(/\\[[^\\]]+\\]/g, "example");
+  const routePath = "/" + x.path.slice("app/".length).split("/route.")[0]
+    .split("/").map(part => part.startsWith("[") && part.endsWith("]") ? "example" : part).join("/");
   const blocked = x.verbs.some(verb => {
     const decision = classifyImpersonationRequest(verb, routePath);
     return decision === "deny_high_risk" || decision === "deny_unreviewed";
