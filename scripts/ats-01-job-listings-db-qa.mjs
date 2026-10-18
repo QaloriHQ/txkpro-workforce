@@ -64,9 +64,12 @@ test("ATS-01 migration installs and enforces private draft boundaries in Postgre
     ].join("\n"));
     const readable = await db.query("select title from public.wf_ats_job_listings where employer_id='employer-a'");
     assert.equal(readable.rows.length, 1);
-    await assert.rejects(
-      db.query("update public.wf_ats_job_listings set title='Tampered' where employer_id='employer-a'"),
-    );
+    // RLS often turns unauthorized UPDATE into zero affected rows, not an
+    // exception; both behaviors must leave the record unchanged.
+    const denied = await db.query("update public.wf_ats_job_listings set title='Tampered' where employer_id='employer-a' returning id");
+    assert.equal(denied.rows.length, 0);
+    const unchanged = await db.query("select title from public.wf_ats_job_listings where employer_id='employer-a'");
+    assert.equal(unchanged.rows[0].title, "Lead Apprentice");
 
     await db.exec("set role anon;");
     const publicJobs = await db.query("select job_listing_id from public.wf_ats_public_jobs");
