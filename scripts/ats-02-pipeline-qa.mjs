@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE,
   validatePipelineGraph, validatePipelineName, isPipelineConfigurator, isPipelinePublisher } from "../lib/employer/ats-pipelines.ts";
 
-const migration = readFileSync(new URL("../supabase/migrations/20261018200500_ats_02_pipeline_templates.sql",import.meta.url),"utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",import.meta.url),"utf8");
 const repo = readFileSync(new URL("../lib/employer/ats-pipelines-repository.ts",import.meta.url),"utf8");
 const editor = readFileSync(new URL("../components/employer/ats-pipeline-editor.tsx",import.meta.url),"utf8");
 
