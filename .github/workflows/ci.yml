@@ -999,6 +999,7 @@ jobs:
       - run: npm run screening-policy:qa
       - run: node --experimental-strip-types --test scripts/pro-points-csv-qa.mjs
       - run: node --experimental-strip-types --test scripts/mgid-publisher-api-qa.mjs
+      - run: node --test scripts/admin-platform-workspace-qa.mjs
       - run: npm run typecheck
       - run: npm run wave11:qa
       - run: npm run wave12:qa

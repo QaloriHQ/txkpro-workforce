@@ -1,18 +1,14 @@
-import { Brand } from "@/components/brand";
 import { EducatorApprovalQueue } from "@/components/admin/educator-approval-queue";
 import { EmployerApprovalQueue } from "@/components/admin/employer-approval-queue";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { SignOutButton } from "@/components/sign-out-button";
 import { requireRole } from "@/lib/auth";
 import { listPendingEducatorApprovals } from "@/lib/admin/educator-approvals";
 import { listPendingEmployerApprovals } from "@/lib/admin/employer-approvals";
-import Link from "next/link";
-import { isPlatformSuperAdmin } from "@/lib/institutions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const account = await requireRole(["admin"]);
+  void account;
   const [pendingEmployers, pendingEducators] = await Promise.all([
     listPendingEmployerApprovals(),
     listPendingEducatorApprovals(account),
@@ -21,25 +17,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <header className="topbar">
-        <Brand />
-        <div className="header-actions">
-          <span className="pill pill-good">Platform Admin</span>
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-      </header>
-
-      <main className="page-wrap">
-        {isPlatformSuperAdmin(account) ? <Link className="button button-ghost" href="/admin/institutions">Institutions and access requests</Link> : null}
-        <Link className="button button-ghost" href="/professional/profile">My professional profile</Link>
-        <Link className="button button-ghost" href="/admin/invitations">Manage invitations</Link>
-        <Link className="button button-ghost" href="/admin/retention">Retention cases</Link>
-        <Link className="button button-ghost" href="/admin/audit">Audit &amp; events</Link>
-        <Link className="button button-ghost" href="/admin/moderation">Reports &amp; moderation</Link>
-        <Link className="button button-ghost" href="/admin/ads/preview">Ad placement preview</Link>
-        <Link className="button button-ghost" href="/admin/advertisers">Advertiser approvals</Link>
-        {isPlatformSuperAdmin(account) && process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "staging" ? <Link className="button button-ghost" href="/admin/integrations/mgid">MGID publisher API</Link> : null}
+      <main className="page-wrap" id="admin-overview">
         <div className="page-heading">
           <div>
             <p className="eyebrow">TXKPRO operations</p>
@@ -51,15 +29,21 @@ export default async function AdminPage() {
           <span className="pill">{pendingCount} approvals waiting</span>
         </div>
 
+        <section className="txk-admin-grid" aria-label="Platform overview">
+          <div className="card"><span>Pending approvals</span><strong>{pendingCount}</strong><p>Educator and Employer requests awaiting review</p></div>
+          <div className="card"><span>Access controls</span><strong>Role + scope</strong><p>Platform access remains server-authorized</p></div>
+          <div className="card"><span>Audit evidence</span><strong>Enabled</strong><p>Review events using the sidebar</p></div>
+        </section>
         <div className="callout" style={{ marginBottom: 18 }}>
           <strong>Server-controlled access</strong>
           Administrator privileges come only from active platform-level role
           membership. User onboarding can never create Admin access.
         </div>
 
-        <EducatorApprovalQueue initialItems={pendingEducators} />
-        <EmployerApprovalQueue initialItems={pendingEmployers} />
-        <p style={{ marginTop: 24 }}><Link className="txk-button txk-button-default" href="/admin/concierge">Concierge production queue</Link></p>
+        <section id="approvals" aria-label="Pending educator and employer approvals">
+          <EducatorApprovalQueue initialItems={pendingEducators} />
+          <EmployerApprovalQueue initialItems={pendingEmployers} />
+        </section>
       </main>
     </>
   );
