@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ArrowRightStartOnRectangleIcon,
   Bars3Icon, BellAlertIcon, BuildingOffice2Icon, ChartBarSquareIcon,
   ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ClipboardDocumentCheckIcon,
   Cog6ToothIcon, DocumentChartBarIcon, HomeIcon, MegaphoneIcon,

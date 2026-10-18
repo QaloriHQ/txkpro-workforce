@@ -7,5 +7,5 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const account = await requireRole(["admin"]);
-  return <AdminWorkspaceShell isSuperAdmin={isPlatformSuperAdmin(account)}>{children}</AdminWorkspaceShell>;
+  return <AdminWorkspaceShell isSuperAdmin={isPlatformSuperAdmin(account)} stagingMgid={process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "staging"}>{children}</AdminWorkspaceShell>;
 }
