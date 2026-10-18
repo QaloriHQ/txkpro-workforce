@@ -103,12 +103,12 @@ test("full-session banner is global, non-dismissible, and Exit revokes the regis
   const root = text("app/layout.tsx");
   const banner = text("components/admin/impersonation-banner.tsx");
   const styles = text("app/impersonation-banner.css");
-  assert.match(root, /impersonationEnabled\\(\\)/);
-  assert.match(root, /<body>\\{impersonationBanner\\}\\{children\\}<\\/body>/);
-  assert.match(banner, /Viewing as \\{targetName\\}/);
+  assert.match(root, /impersonationEnabled\(\)/);
+  assert.match(root, /<body>\{impersonationBanner\}\{children\}<\/body>/);
+  assert.match(banner, /Viewing as \{targetName\}/);
   assert.match(banner, /Exit View as/);
   assert.match(banner, /method: "DELETE"/);
-  assert.match(banner, /window.location.assign\\("\\/admin"\\)/);
+  assert.match(banner, /window\.location\.assign\("\/admin"\)/);
   assert.doesNotMatch(banner, /onClose|dismiss|isOpen/);
   assert.match(styles, /position: sticky/);
   assert.match(styles, /z-index: 9999/);
