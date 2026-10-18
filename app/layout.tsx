@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./theme.css";
 import "./community-shell.css";
+import "./employer/sidebar-improvements.css";
 import "./impersonation-banner.css";
 import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import { impersonationEnabled } from "@/lib/impersonation/session-contract";
