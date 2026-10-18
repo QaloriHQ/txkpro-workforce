@@ -605,6 +605,22 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   <label><span className="ats-pipeline-setting-title">Candidate-visible <Help label="Candidate visibility" text="Controls whether candidates see this step on their progress tracker. Private internal reviews must stay hidden."/></span>
                     <input type="checkbox" checked={selectedNode.candidateVisible} disabled={!editor} onChange={(e) => setNode({ ...selectedNode,candidateVisible:e.target.checked })}/></label>
                 </div>
+                <label><span className="ats-pipeline-setting-title">Responsible role <Help label="Responsible role" text="Who is accountable for this step? The candidate view shows either a candidate action or waiting on the employer, never private role assignments."/></span>
+                  <select className="select" disabled={!editor} value={selectedNode.config.ownerRole??""}
+                    onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,
+                      ownerRole:(e.target.value||undefined) as PipelineNode["config"]["ownerRole"]}})}>
+                    <option value="">Based on step type</option>
+                    <option value="candidate">Candidate</option><option value="recruiter">Recruiter</option>
+                    <option value="hiring_manager">Hiring manager</option><option value="employer_admin">Employer administrator</option>
+                  </select></label>
+                <div className="ats-pipeline-settings-duration">
+                  <label><span className="ats-pipeline-setting-title">Estimated effort (minutes) <Help label="Expected minutes" text="Approximate time to complete the task. Informational only; does not set an appointment."/></span>
+                    <input className="input" type="number" min={1} max={1440} disabled={!editor} value={selectedNode.config.expectedMinutes??""}
+                      onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,expectedMinutes:e.target.value?Number(e.target.value):undefined}})}/></label>
+                  <label><span className="ats-pipeline-setting-title">Target window (hours) <Help label="Target hours" text="Planning window measured after this step is assigned. This is not a firm calendar deadline or a reminder until ATS-03 task assignments launch."/></span>
+                    <input className="input" type="number" min={1} max={2160} disabled={!editor} value={selectedNode.config.targetHours??""}
+                      onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,targetHours:e.target.value?Number(e.target.value):undefined}})}/></label>
+                </div>
                 <label><span className="ats-pipeline-setting-title">Instructions <Help label="Instructions" text="Candidate-safe guidance for completing this step. Do not include private notes or assessment answers."/></span>
                   <textarea className="textarea" rows={3} value={selectedNode.config.instructions??""} disabled={!editor}
                     onChange={(e) => setNode({ ...selectedNode,config:{...selectedNode.config,instructions:e.target.value} })}/></label>
