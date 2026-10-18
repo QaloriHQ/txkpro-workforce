@@ -185,8 +185,10 @@ export function upsertPipelineConnection(
   if (from.kind === "end" || to.kind === "start") throw new Error("Start and End connections cannot be reversed");
   if (from.kind === "decision" && !outcome) throw new Error("Choose Yes or No for a decision branch");
   if (from.kind !== "decision" && outcome) throw new Error("Only decision components support Yes/No branches");
+  // Converting a regular step into a decision must discard its legacy
+  // unlabelled "next" edge when an explicit Yes/No relation is created.
   const replaced = graph.edges.filter((edge) => !(edge.source === source &&
-    (from.kind !== "decision" || edge.outcome === outcome)));
+    (from.kind !== "decision" || !edge.outcome || edge.outcome === outcome)));
   const edge: PipelineEdge = {
     id: "edge_" + crypto.randomUUID().replaceAll("-", "").slice(0, 12),
     source, target, ...(outcome ? { outcome } : {}),
