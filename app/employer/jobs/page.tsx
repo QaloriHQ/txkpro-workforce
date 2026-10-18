@@ -5,12 +5,15 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
 import { listEmployerJobs } from "@/lib/employer/job-listings-repository";
+import { listEmployerPipelines } from "@/lib/employer/ats-pipelines-repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function EmployerJobsPage() {
   const context = await requireEmployerContext({ approved: true });
-  const jobs = await listEmployerJobs(context);
+  const [jobs, pipelineLibrary] = await Promise.all([
+    listEmployerJobs(context), listEmployerPipelines(context),
+  ]);
   return <>
     <header className="topbar">
       <Brand /><EmployerWorkspaceNav active="jobs" /><ThemeToggle /><SignOutButton />
@@ -18,17 +21,17 @@ export default async function EmployerJobsPage() {
     <main className="page-wrap">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Employer · ATS-01</p>
+          <p className="eyebrow">Employer · ATS-02</p>
           <h1>Job listings</h1>
-          <p className="card-sub">Build, preview, duplicate, and save private job postings or reusable templates.</p>
+          <p className="card-sub">Build listings and templates, assign an immutable hiring pipeline, and publish securely.</p>
         </div>
         <span className="pill pill-neutral">{jobs.length} listings</span>
       </div>
       <div className="callout" style={{ marginBottom: 18 }}>
-        <strong>Draft release.</strong> ATS-01 keeps all listings private. Public posting requires
-        an approved, immutable pipeline version from ATS-02.
+        <strong>Publishing available.</strong> Choose a previously published hiring pipeline version before publishing a complete job. Public application submission launches in ATS-03.
       </div>
-      <JobListingEditor initialJobs={jobs} employerId={context.employerId}
+      <JobListingEditor initialJobs={jobs} initialPipelines={pipelineLibrary.pipelines}
+        initialVersions={pipelineLibrary.versions} employerId={context.employerId}
         role={context.role} legacyUserId={context.legacyUserId} />
     </main>
   </>;

@@ -6,6 +6,8 @@ import {
   type JobEditableFields, type JobListing,
 } from "@/lib/employer/job-listings";
 import type { EmployerRole } from "@/lib/employer/types";
+import type { PipelineTemplateSummary, PipelineVersionSummary } from "@/lib/employer/ats-pipelines";
+import Link from "next/link";
 
 type EditorMode = "wizard" | "advanced";
 const STAGES = ["Role & overview", "Location & compensation", "Requirements & benefits", "Review"] as const;
@@ -29,9 +31,10 @@ function errorText(result: Response): Promise<string> {
 }
 
 export function JobListingEditor({
-  initialJobs, employerId, role, legacyUserId,
+  initialJobs, initialPipelines, initialVersions, employerId, role, legacyUserId,
 }: {
-  initialJobs: JobListing[]; employerId: string; role: EmployerRole; legacyUserId: string;
+  initialJobs: JobListing[]; initialPipelines: PipelineTemplateSummary[];
+  initialVersions: PipelineVersionSummary[]; employerId: string; role: EmployerRole; legacyUserId: string;
 }) {
   const [jobs, setJobs] = useState(initialJobs);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -46,6 +49,7 @@ export function JobListingEditor({
   const [filter, setFilter] = useState<"all" | "jobs" | "templates">("all");
   const [message, setMessage] = useState("");
   const [conflict, setConflict] = useState(false);
+  const [pipelineChoice, setPipelineChoice] = useState("");
 
   const editGeneration = useRef(0);
   const inFlight = useRef<Promise<boolean> | null>(null);
@@ -88,6 +92,7 @@ export function JobListingEditor({
     setMessage("");
     setStage(0);
     setPreview(false);
+    setPipelineChoice(job.pipelineVersionId ?? "");
     editGeneration.current += 1;
   }
 
@@ -231,6 +236,33 @@ export function JobListingEditor({
     finally { setBusy(false); }
   }
 
+  async function publish() {
+    if (!selected || !pipelineChoice || busy || saving || conflict ||
+        !["employer_owner", "employer_admin"].includes(role) ||
+        selected.status !== "draft" || draft.isTemplate ||
+        !(await beforeNavigate())) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/employer/jobs/" + encodeURIComponent(selected.id) +
+        "/publish?employerId=" + encodeURIComponent(employerId), {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ revision: revisionRef.current, pipelineVersionId: pipelineChoice }),
+      });
+      if (!response.ok) {
+        if (response.status === 409) { conflictRef.current = true; setConflict(true); }
+        throw new Error(await errorText(response));
+      }
+      const { job } = await response.json() as { job: JobListing };
+      setJobs((previous) => previous.map((item) => item.id === job.id ? job : item));
+      selectJob(job);
+      setMessage("Job published to the public listings. Applications will be enabled in ATS-03.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not publish job");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function fieldLabel(label: string, content: React.ReactNode, hint?: string) {
     return <label style={{ display: "grid", gap: 5, minWidth: 0 }}>
       <strong style={{ fontSize: 13 }}>{label}</strong>
@@ -297,7 +329,7 @@ export function JobListingEditor({
             <button type="button" className="button button-ghost button-small" onClick={() => void persist()} disabled={!canWrite || !dirty || saving || conflict}>Save now</button>
             <button type="button" className="button button-ghost button-small" onClick={() => void duplicate(selected)} disabled={busy || !canCreateJob(role)}>Duplicate</button>
           </div>
-          <p className="card-sub">Private draft. Pipeline assignment and publication become available after ATS-02. Your editor mode is only a view; the saved listing is shared.</p>
+          <p className="card-sub">Drafts remain private until published with a versioned hiring pipeline. Wizard and advanced mode share one revision-safe listing. Applicant submissions start in ATS-03.</p>
           {!canWrite ? <div className="callout">This listing is read-only for your employer role or current assignment.</div> : null}
         </div>
         {preview ? <section className="card" aria-label="Job listing preview" style={{ display: "grid", gap: 12 }}>
@@ -347,18 +379,36 @@ export function JobListingEditor({
             <p><strong>Job:</strong> {draft.title || "Untitled"}</p>
             <p><strong>Location:</strong> {[draft.locationCity, draft.locationState].filter(Boolean).join(", ") || "Incomplete"}</p>
             <p><strong>Requirements:</strong> {draft.requirements.length} · <strong>Skills:</strong> {draft.skills.length} · <strong>Benefits:</strong> {draft.benefits.length}</p>
-            <div className="callout"><strong>Publication blocked:</strong> ATS-02 must provide a published pipeline version. This draft is not publicly visible.</div>
+            {selected.status === "published" ? <div className="callout">This listing is publicly discoverable. Applications are not yet available (ATS-03).</div> :
+              <div className="callout">Choose an approved hiring pipeline version below and publish the complete job. Your selection is applied atomically on publication.</div>}
           </div>)}
           {mode === "wizard" ? <div style={{ display: "flex", gap: 9, justifyContent: "space-between" }}>
             <button className="button button-ghost" type="button" disabled={stage === 0} onClick={() => setStage((value) => Math.max(0, value - 1))}>Back</button>
-            <button className="button button-brand" type="button" disabled={stage === 3} onClick={() => setStage((value) => Math.min(3, value + 1))}>Next step</button>
+            {stage < STAGES.length - 1 ? <button className="button button-brand" type="button" onClick={() => setStage((value) => Math.min(3, value + 1))}>Next step</button> : <span className="card-sub">Final step</span>}
           </div> : null}
         </>}
         <div className="card" style={{ display: "grid", gap: 8 }}>
           <strong>Publication readiness</strong>
-          <p className="card-sub">Pipeline version assignment: unavailable until ATS-02. Publishing cannot be bypassed from this interface or the API.</p>
+          <p className="card-sub">Only employer Owner/Admin can publish. The selected, published pipeline version is immutable for this job. Applicants will use this same version in ATS-03.</p>
+          <label style={{ display: "grid", gap: 5 }}>
+            <strong style={{ fontSize: 13 }}>Published hiring pipeline version</strong>
+            <select className="select" aria-label="Published hiring pipeline version" value={pipelineChoice}
+              disabled={selected.status !== "draft" || !["employer_owner", "employer_admin"].includes(role)}
+              onChange={(event) => setPipelineChoice(event.target.value)}>
+              <option value="">Select published pipeline version</option>
+              {initialVersions.map((version) => <option value={version.id} key={version.id}>
+                {initialPipelines.find((p) => p.id === version.templateId)?.name ?? "Pipeline"} · Version {version.versionNumber}
+              </option>)}
+            </select>
+          </label>
+          {!initialVersions.length ? <p className="card-sub">No published pipelines yet. <Link href="/employer/pipeline-builder">Create and publish a pipeline</Link> first.</p> : null}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <button className="button button-brand" type="button" disabled title="ATS-02: published pipeline version required">Publish job (ATS-02)</button>
+            {selected.status === "published" ? <Link className="button button-ghost" href={"/jobs/" + encodeURIComponent(selected.jobListingId)}>View public listing</Link> :
+              <button className="button button-brand" type="button" disabled={busy || saving || conflict ||
+                selected.status !== "draft" || draft.isTemplate || !pipelineChoice ||
+                !["employer_owner", "employer_admin"].includes(role)} onClick={() => void publish()}>
+                {busy ? "Publishing…" : "Publish job"}
+              </button>}
             {selected.status === "draft" && (role === "employer_owner" || role === "employer_admin") ? <button className="button button-ghost" type="button" disabled={busy || dirty || saving} onClick={() => void archive()}>Archive draft</button> : null}
           </div>
         </div>

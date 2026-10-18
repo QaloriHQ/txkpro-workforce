@@ -125,3 +125,30 @@ export async function archiveEmployerJob(
   if (!data) conflict("The listing changed. Reload before archiving.");
   return mapJob(data);
 }
+
+/** ATS-02: Only Owner/Admin can bind an immutable published pipeline version in
+ * the authenticated database transaction; a direct client cannot choose a foreign tenant. */
+export async function publishEmployerJob(
+  context: EmployerContext, id: string, revision: number, versionId: string,
+): Promise<JobListing> {
+  if (!canManageJobStatus(context.role)) forbidden("Only Employer Owner/Admin may publish a listing");
+  const original = await getEmployerJob(context, id);
+  if (original.status !== "draft" || original.isTemplate) conflict("Only non-template drafts can be published");
+  if (original.revision !== revision) conflict("Job has changed. Reload before publishing.");
+  if (!original.title.trim() || !original.description.trim() ||
+      (original.remotePolicy !== "remote" && (!original.locationCity.trim() || !original.locationState.trim()))) {
+    throw new Response("Complete the title, description and required location before publishing", { status: 400 });
+  }
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.rpc("wf_ats_publish_job", {
+    p_employer_id: context.employerId, p_job_id: id,
+    p_pipeline_version_id: versionId, p_expected_revision: revision,
+  });
+  if (error) {
+    if (error.code === "40001" || error.code === "23505") conflict("Job changed or was already published. Reload.");
+    if (error.code === "23503" || error.code === "42501") forbidden("Pipeline version is unavailable for this employer");
+    throw error;
+  }
+  if (!data) throw new Error("Publishing returned no listing");
+  return mapJob(data as Record<string, unknown>);
+}

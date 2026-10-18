@@ -1439,3 +1439,37 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 
 /* ATS-01: keep the two-pane editor usable on small devices. */
 @media (max-width: 850px) { .ats-job-layout { grid-template-columns: minmax(0, 1fr) !important; } }
+
+/* ATS-02 Pipeline Editor — semantic TXKPRO surfaces with responsive drag/drop and keyboard controls. */
+.ats-pipeline-layout{display:grid;grid-template-columns:minmax(235px,290px) minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+.ats-pipeline-sidebar,.ats-pipeline-workspace{min-width:0}
+.ats-pipeline-sidebar h3{margin:20px 0 8px}.ats-pipeline-workspace{display:grid;gap:16px}
+.ats-pipeline-sidebar svg,.ats-pipeline-toolbar svg,.ats-pipeline-inspector svg{width:17px;height:17px;flex-shrink:0}
+.ats-pipeline-list-item{display:grid;text-align:left;gap:6px;width:100%;padding:12px;border:1px solid var(--txk-border);border-radius:10px;background:var(--txk-bg-panel);color:var(--txk-text-primary);cursor:pointer;overflow-wrap:anywhere}
+.ats-pipeline-list-item small{color:var(--txk-text-muted)}.ats-pipeline-list-item.is-selected{outline:2px solid var(--txk-text-primary);outline-offset:1px}
+.ats-pipeline-palette{display:grid;gap:7px;max-height:530px;overflow:auto}
+.ats-pipeline-palette-item{width:100%;min-height:44px;text-align:left;display:flex;align-items:center;flex-wrap:wrap;gap:8px;border:1px dashed var(--txk-border);border-radius:9px;padding:10px;background:var(--txk-bg-panel);color:var(--txk-text-primary);cursor:grab}
+.ats-pipeline-palette-item small{font-size:11px;color:var(--txk-text-muted);margin-left:auto}
+.ats-pipeline-palette-item:disabled{opacity:.5;cursor:not-allowed}
+.ats-pipeline-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ats-pipeline-fields label,.ats-pipeline-inspector label{display:grid;gap:7px;font-size:13px;font-weight:600}
+.ats-pipeline-fields .input,.ats-pipeline-inspector .input,.ats-pipeline-inspector .select,.ats-pipeline-inspector .textarea{width:100%;min-width:0;max-width:100%}
+.ats-pipeline-toolbar{display:grid;gap:12px}.ats-pipeline-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.ats-pipeline-actions .button{display:inline-flex;align-items:center;gap:5px;min-height:40px}
+.ats-pipeline-validation,.ats-pipeline-valid{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0;font-size:13px;overflow-wrap:anywhere}
+.ats-pipeline-validation{color:var(--txk-danger,#b42318)}.ats-pipeline-valid{color:var(--txk-success,#087a4d)}
+.ats-pipeline-canvas-wrap{max-width:100%;overflow:auto;border:1px solid var(--txk-border);border-radius:12px;background:var(--txk-bg-panel)}
+.ats-pipeline-canvas{width:1800px;height:1100px;position:relative;background-color:var(--txk-bg-panel);background-image:linear-gradient(var(--txk-border) 1px, transparent 1px),linear-gradient(90deg,var(--txk-border) 1px,transparent 1px);background-size:28px 28px;overflow:hidden}
+.ats-pipeline-canvas-content{transform-origin:0 0;position:absolute;inset:0}
+.ats-pipeline-wires{position:absolute;left:0;top:0;pointer-events:none;color:var(--txk-text-muted)}
+.ats-pipeline-node{position:absolute;display:grid;text-align:left;gap:8px;width:210px;min-height:80px;border:2px solid var(--txk-border);border-radius:12px;padding:12px;background:var(--txk-bg-panel);color:var(--txk-text-primary);box-shadow:0 4px 14px rgb(0 0 0 / 8%);cursor:grab}
+.ats-pipeline-node small{font-size:12px;color:var(--txk-text-muted);line-height:1.4}
+.ats-pipeline-node.is-selected{border-color:var(--txk-text-primary);box-shadow:0 0 0 2px var(--txk-bg-panel),0 0 0 4px var(--txk-text-primary)}
+.ats-pipeline-node:focus-visible,.ats-pipeline-palette-item:focus-visible,.ats-pipeline-list-item:focus-visible{outline:3px solid var(--txk-text-primary);outline-offset:3px}
+.ats-pipeline-canvas-hint{position:sticky;left:14px;top:10px;display:inline-block;padding:9px;border:1px solid var(--txk-border);border-radius:8px;background:var(--txk-bg-panel);color:var(--txk-text-muted);font-size:12px;max-width:340px;pointer-events:none}
+.ats-pipeline-inspector{display:grid;gap:10px}.ats-pipeline-connections{display:grid;gap:9px;border:1px solid var(--txk-border);border-radius:12px;padding:12px;min-width:0}
+.ats-pipeline-connections label{margin-top:8px}.ats-pipeline-version{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;padding:12px;border:1px solid var(--txk-border);border-radius:10px}
+.ats-pipeline-version small{color:var(--txk-text-muted)}
+@media(max-width:1000px){.ats-pipeline-layout{grid-template-columns:minmax(0,1fr)}.ats-pipeline-palette{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-height:none}}
+@media(max-width:650px){.ats-pipeline-page{padding-top:100px}.ats-pipeline-fields{grid-template-columns:1fr}.ats-pipeline-actions .button{min-height:44px}.ats-pipeline-toolbar{gap:16px}.ats-pipeline-canvas-wrap{max-height:520px}.ats-pipeline-canvas-hint{max-width:260px}}
+@media(prefers-reduced-motion:reduce){.ats-pipeline-node{transition:none}}
