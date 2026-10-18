@@ -85,7 +85,9 @@ test("repository enforces exact tenant, ownership and compare-and-swap revisions
   assert.match(repository, /source_job_listing_id: source\.id/);
   assert.match(repository, /status: "draft"/);
   assert.match(repository, /Never copy an active pipeline binding/);
-  assert.match(publishRoute, /status: 409/);
+  assert.match(publishRoute, /publishEmployerJob/);
+  assert.match(publishRoute, /pipelineVersionId/);
+  assert.match(publishRoute, /requireEmployerContext/);
   assert.match(publishRoute, /requireEmployerContext/);
 });
 
