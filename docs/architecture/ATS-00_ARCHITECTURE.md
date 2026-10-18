@@ -262,3 +262,16 @@ Names above are reviewer roles, **not evidence that any specific person approved
 - [ ] PR CI, owner review, staging/UAT/deployment evidence completed; issue/project reconciliation.
 
 **Interpretation:** This is an ATS-00 architecture artifact, not implementation of job listings, workflows, applications, integrations, migrations, or production release.
+
+### Machine-readable naming crosswalk (PROPOSED)
+
+The accompanying ATS-00_CONTRACTS.json deliberately uses snake_case *concept identifiers* for downstream checks. These are not approved SQL names or existing relations:
+
+| Concept token | Human-readable contract above |
+| --- | --- |
+| pipeline_edge | Pipeline Node / Edge |
+| job_pipeline_assignment | Job–Pipeline Assignment |
+| employer_provider_connection | Provider Connection |
+| ats_audit_outbox | Audit / Outbox Event |
+| external_applicant_identity | Applicant Identity (external branch) |
+
