@@ -1001,6 +1001,7 @@ jobs:
       - run: node --experimental-strip-types --test scripts/mgid-publisher-api-qa.mjs
       - run: node --test scripts/admin-platform-workspace-qa.mjs
       - run: node --experimental-strip-types --test scripts/impersonation-registry-qa.mjs
+      - run: node --experimental-strip-types --test scripts/impersonation-action-policy-qa.mjs
       - run: npm run typecheck
       - run: npm run wave11:qa
       - run: npm run wave12:qa
