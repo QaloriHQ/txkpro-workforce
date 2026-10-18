@@ -225,6 +225,33 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   function finishLink(target: string) {
     if (linking) connect(linking.source, target, linking.outcome);
   }
+  function recoverDraft() {
+    if (!recovery) return;
+    try { validatePipelineGraph(recovery.graph, false); }
+    catch { setRecovery(null); setError("Recovery copy is invalid"); return; }
+    if (recovery.revision !== revision) { setRecovery(null); setError("Pipeline revision changed. Reload before restoring."); return; }
+    change(clone(recovery.graph)); setName(recovery.name); setDescription(recovery.description);
+    setRecovery(null); setAutosaveStatus("Recovered draft — saving");
+  }
+  function discardRecovery() {
+    if (draftKey) try { window.localStorage.removeItem(draftKey); } catch { /* storage may be disabled */ }
+    setRecovery(null);
+  }
+  function centerOnNode(node: PipelineNode) {
+    const view = viewportRef.current;
+    if (!view) return;
+    view.scrollTo({ left: Math.max(0,(node.x+105)*zoom-view.clientWidth/2),
+      top: Math.max(0,(node.y+40)*zoom-view.clientHeight/2), behavior: "smooth" });
+  }
+  function panToMapPoint(event: React.MouseEvent<HTMLButtonElement>) {
+    const view = viewportRef.current;
+    if (!view) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX-rect.left)/rect.width*3000;
+    const y = (event.clientY-rect.top)/rect.height*2400;
+    view.scrollTo({ left: Math.max(0,x*zoom-view.clientWidth/2),
+      top: Math.max(0,y*zoom-view.clientHeight/2), behavior: "smooth" });
+  }
   function editNode(id: string) {
     if (linking) { finishLink(id); return; }
     setSelectedNodeId(id); setSettingsOpen(true);
@@ -246,9 +273,9 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   }
   async function save(): Promise<boolean> {
     if (!selectedId || !editor || busy) return false;
-    setBusy(true); setError("");
+    const snapshot = JSON.stringify({ name, description, graph });
+    setBusy(true); setError(""); setAutosaveStatus("Saving…");
     try {
-      // Save incomplete drafts; publish validates the complete connected DAG.
       validatePipelineGraph(graph, false);
       const response = await fetch("/api/employer/pipelines/" + selectedId + endpoint, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -257,11 +284,27 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
       if (!response.ok) throw new Error(await getMessage(response));
       const { pipeline } = await response.json() as { pipeline: PipelineTemplateSummary };
       setPipelines((p) => p.map((row) => row.id === selectedId ? pipeline : row));
-      setRevision(pipeline.revision); setDirty(false); setMessage("Saved draft revision " + pipeline.revision);
-      return true;
-    } catch (e) { setError(e instanceof Error ? e.message : "Save failed"); return false; }
-    finally { setBusy(false); }
+      setRevision(pipeline.revision);
+      if (latestDraft.current === snapshot) {
+        setDirty(false); setAutosaveStatus("All changes saved");
+        setMessage("Saved draft revision " + pipeline.revision);
+        try { window.localStorage.removeItem("txkpro:ats-draft:" + employerId + ":" + selectedId); } catch { /* optional offline recovery */ }
+        return true;
+      }
+      setDirty(true); setAutosaveStatus("New edits pending");
+      return false;
+    } catch (e) {
+      setAutosaveStatus("Autosave paused — retry Save draft");
+      setError(e instanceof Error ? e.message : "Save failed"); return false;
+    } finally { setBusy(false); }
   }
+  useEffect(() => {
+    if (!dirty || busy || !editor || !selectedId || recovery || autosaveStatus === "Autosave paused — retry Save draft") return;
+    const timer = window.setTimeout(() => { void save(); }, 1800);
+    return () => window.clearTimeout(timer);
+    // debounce; save captures revision and full draft snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, busy, graph, name, description, selectedId, revision, recovery, autosaveStatus, editor]);
   async function publish() {
     if (!selectedId || !publisher || busy) return;
     if (check) { setError("Fix workflow before publishing: " + check); return; }
