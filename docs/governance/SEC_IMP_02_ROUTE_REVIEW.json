@@ -1,0 +1,17 @@
+{
+  "notes": "NOT approved. This is a deny-by-default certification ledger, not evidence of completed route review. Browser/SSR/RLS/high-risk provider paths must be validated before unlocking full impersonation.",
+  "issuer": {
+    "verified": false,
+    "evidence": []
+  },
+  "rls": {
+    "verified": false,
+    "evidence": []
+  },
+  "highRiskProviders": {
+    "verified": false,
+    "evidence": []
+  },
+  "routes": {},
+  "browser": {}
+}

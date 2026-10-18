@@ -4,10 +4,10 @@
 
 A platform-scoped, active Super Admin may select an existing user in All Users and
 enter that user's **fully functional** account experience, without target consent,
-manually entered reason, or notifications. Every ordinary user route, view and permitted non-high-risk mutation must behave according to the selected user's currently active role and organization scope. All high-risk actions remain blocked. A non-dismissible banner must identify the target and
+manually entered reason, or notifications. Every ordinary user route, view and permitted non-high-risk mutation must behave according to the selected user's currently active role and organization scope. All high-risk actions must be blocked. A non-dismissible banner must identify the target and
 show **Exit**; Exit immediately restores the authenticated Super Admin workspace.
 
-**Owner amendment — 2026-10-18: HIGH-RISK ACTIONS ARE EXCLUDED.** The final product must DENY payments, refunds, account deletion/suspension, credential or security changes, MFA, role/permission grants, invitation approvals/revocations, identity verification, financial transfers and irreversible operations during impersonation. Ordinary interactions such as normal profile edits, community posts and messaging may remain available, subject to target permissions. No user permission, user notification or manual reason for View as.
+**Owner amendment — 2026-10-18: high-risk actions are EXCLUDED.** During impersonation, deny payments, refunds, funding, payouts, account deletion/suspension, credential/security changes, MFA, role/permission grants, invitation approvals or revocations, verification, and irreversible operations. Ordinary profile editing, posts and messaging may remain available only with the target's own verified permissions. User consent, reason input and user notification are not required.
 
 ## Mandatory security invariants
 
@@ -17,9 +17,9 @@ show **Exit**; Exit immediately restores the authenticated Super Admin workspace
    Supabase Auth subject, RLS, API routes and browser RPCs must agree on the target
    context. The original Super Admin's broad access must not leak into the
    impersonated workspace.
-3. Every action (including ordinary profile, community and communications writes) must carry both real
+3. Every permitted ordinary action must carry both real
    actor and target identity, role/scope, impersonation registry id and correlation id
-   to canonical auditable events and external callbacks. All high-risk operations MUST be rejected in the API, browser Supabase/RPC and underlying RLS/service functions. Ordinary write provenance must fail closed if attribution cannot be committed.
+   to canonical auditable events and relevant external callbacks. High-risk operations are always DENIED at browser Supabase, Next.js API, database RLS and RPC boundaries. Ordinary-write attribution must fail closed if it cannot be durably committed.
 4. No raw target-user access/refresh tokens, magic links, reusable sessions or
    passwords can be given to the browser in a way that grants unbound target
    credentials outside the actor-verified impersonation scope.
@@ -47,12 +47,8 @@ is indistinguishable from a regular target login, and its refresh token could be
 reused outside the actor-bound context. For the final production-grade bridge,
 implement a verified issuer/auth-hook or locked-down server proxy with actor+target
 claims across browser and server, RLS and RPC checks, session revocation, and
-denial of financial and security operations at their actual data-plane boundaries. Decide bridge mechanics with
+blocking financial and security operations in the data plane. Decide bridge mechanics with
 tests; do not invent a JWT signing key or forward service role to browsers.
-
-## Updated enforcement requirement
-
-The `lib/impersonation/action-policy.ts` classifier is a preliminary, **fail-closed policy contract** for ordinary web API actions. It is not an issuer, an RLS check or a completed security barrier. Current routes and direct browser Supabase calls must be brought under one server-verifiable target+actor context before an impersonation session is enabled. Do NOT flip the hard-coded certification gate merely because path-level policy tests pass.
 
 ## Current gated deliverable: SEC-IMP-01
 
@@ -60,7 +56,7 @@ The `lib/impersonation/action-policy.ts` classifier is a preliminary, **fail-clo
 - Node-only registry functions can issue/revoke session capabilities and write
   platform audit events; there is no target-session credential in these records.
 - Endpoints are **hard-disabled by a compile-time constant** until the native
-  browser+server+database bridge and all high-risk deny enforcement has passed.
+  browser+server+database bridge and all high-risk deny controls have passed.
 - The existing `View as` read-only preview is unchanged in this wave.
 - No new credentials, no notification, no unauthorized user access.
 
@@ -71,8 +67,23 @@ The `lib/impersonation/action-policy.ts` classifier is a preliminary, **fail-clo
 - SSR, Server Actions, 169 API routes, authentication refresh and logout;
 - Multi-tab, expiry, revocation, concurrent sessions, account removal, actor
   revocation, target membership/scope revocation; real user unaffected;
-- Negative authorization tests for high-risk actions (including payments, account/security and role changes) and actor-target provenance for ordinary writes;
+- Negative tests proving high-risk actions are rejected by API, browser/RLS/RPC and external-provider integrations, plus actor and target provenance for permitted ordinary writes;
 - Test error behavior if audit, DB, issuer or proxy is unavailable;
 - Manual signed-in staging UAT for Student, Institution, Employer, Advertiser
   and every other applicable role, mobile and desktop banner;
 - Security review of #205 (legacy admin shortcut issue), #144 (audit coverage).
+
+## Automated SEC-IMP-02 route coverage gate
+
+`node --experimental-strip-types --test scripts/impersonation-coverage-gate.mjs`
+reports dynamic counts of API routes, mutating handlers, high-risk candidates, and
+browser Supabase entry points. It reads an explicit deny-by-default review ledger
+(`SEC_IMP_02_ROUTE_REVIEW.json`). While certification is false, CI verifies the
+gate itself and reports missing coverage. If a future commit changes the
+compile-time certification flag, CI requires nonempty traceable evidence for each
+mutating route and browser entry point plus verified issuer, RLS/RPC and high-risk
+provider high-risk DENY enforcement. Adding a boolean alone is NOT authorization evidence.
+
+## Ordinary-action policy contract
+
+`lib/impersonation/action-policy.ts` classifies selected web API methods/paths into ordinary reads, explicitly reviewed ordinary writes, excluded high-risk operations and unreviewed mutations (deny). The classifier and its CI tests are not an enforcement boundary. Browser Supabase requests and RLS/RPCs must independently enforce identical actor+target scope and high-risk exclusions before the certification gate can be enabled.
