@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import { PGlite } from "@electric-sql/pglite";
 import { STARTER_PIPELINE, validatePipelineGraph } from "../lib/employer/ats-pipelines.ts";
 import { inspectPipelineGraph, autoLayoutPipeline, simulateCandidateJourney } from "../lib/employer/pipeline-experience.ts";
 const read = path=>readFileSync(new URL("../"+path, import.meta.url),"utf8");
@@ -93,4 +94,36 @@ test("SQL publish gate accepts bounded task ownership metadata",()=>{
  assert.match(sql,/targetHours/);
  assert.match(sql,/2160/);
  assert.match(sql,/security\.wf_ats_graph_publishable/);
+});
+
+test("DB publish guard accepts valid owner/target metadata and rejects malformed metadata",async()=>{
+  const db=new PGlite();
+  try{
+    await db.exec([
+      "create role anon;", "create role authenticated;", "create role service_role;",
+      "create schema security;", "create schema auth;",
+      "create table public.users(user_id text primary key,auth_user_id uuid);",
+      "create table public.contractors(contractor_id text primary key,owner_user_id text,approval_status text,account_status text);",
+      "create table public.wf_hiring_needs(hiring_need_id text primary key,employer_id text);",
+      "create table public.app_role_memberships(user_id text,auth_user_id uuid,status text,scope_type text,scope_id text,role text);",
+      "create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.actor_auth',true),'')::uuid $$;",
+      "create function security.current_legacy_user_id() returns text language sql stable as $$ select current_setting('app.actor_user',true) $$;",
+      "create function security.member_of_employer(p text) returns boolean language sql stable as $$ select p=current_setting('app.employer',true) $$;",
+    ].join("\n"));
+    await db.exec(read("supabase/migrations/20261018193301_ats_01_job_listings.sql"));
+    await db.exec(read("supabase/migrations/20261018213605_ats_02_pipeline_templates.sql"));
+    await db.exec(read("supabase/migrations/20261018230000_ats_02_pipeline_task_metadata.sql"));
+    const graph=structuredClone(STARTER_PIPELINE);
+    graph.nodes[1].config.ownerRole="candidate";
+    graph.nodes[1].config.targetHours=48;
+    const good=await db.query("select security.wf_ats_graph_publishable($1::jsonb) as valid",[JSON.stringify(graph)]);
+    assert.equal(good.rows[0].valid,true);
+    graph.nodes[1].config.ownerRole="platform_admin";
+    const bad=await db.query("select security.wf_ats_graph_publishable($1::jsonb) as valid",[JSON.stringify(graph)]);
+    assert.equal(bad.rows[0].valid,false);
+    graph.nodes[1].config.ownerRole="candidate";
+    graph.nodes[1].config.targetHours=9999;
+    const excess=await db.query("select security.wf_ats_graph_publishable($1::jsonb) as valid",[JSON.stringify(graph)]);
+    assert.equal(excess.rows[0].valid,false);
+  } finally { await db.close(); }
 });
