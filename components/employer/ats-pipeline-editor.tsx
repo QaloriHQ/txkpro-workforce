@@ -408,22 +408,57 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           </div>
           <div className="ats-pipeline-actions">
 
-            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate preview"}</button>
+            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate journey simulator"}</button>
             <button type="button" className="button button-small button-ghost" disabled={!editor || busy} onClick={() => void duplicate()}><DocumentDuplicateIcon aria-hidden="true" /> Duplicate</button>
             <button type="button" className="button button-small button-ghost" disabled={!dirty || !editor || busy} onClick={() => void save()}>{busy ? "Working…" : "Save draft"}</button>
             <button type="button" className="button button-small button-dark" disabled={!publisher || busy || Boolean(check)}
               title={check || "Publish an immutable version"} onClick={() => void publish()}><CheckCircleIcon aria-hidden="true" /> Publish version</button>
           </div>
-          <p className="card-sub" role="status">{dirty ? "Unsaved draft changes" : "Saved draft"} · Revision {revision} · {currentVersions.length ? "Latest v" + currentVersions[0].versionNumber : "No published version"}</p>
-          {check ? <p className="ats-pipeline-validation" role="status"><ExclamationTriangleIcon aria-hidden="true" /> Publish blocked: {check}</p> :
+          <p className="card-sub" role="status">{autosaveStatus} · {dirty ? "Unsaved changes" : "Saved draft"} · Revision {revision} · {currentVersions.length ? "Latest v" + currentVersions[0].versionNumber : "No published version"}</p>
+          {recovery ? <div className="ats-pipeline-recovery" role="alert">
+            <strong>Recover local draft?</strong> Unsaved edits from this browser are available for this pipeline.
+            <button type="button" className="button button-small button-dark" onClick={recoverDraft}>Restore draft</button>
+            <button type="button" className="button button-small button-ghost" onClick={discardRecovery}>Discard copy</button>
+          </div> : null}
+          {check ? <p className="ats-pipeline-validation" role="status"><ExclamationTriangleIcon aria-hidden="true" /> Publish blocked: {check} · {diagnostics.filter(i=>i.severity==="error").length} highlighted issue(s)</p> :
             <p className="ats-pipeline-valid"><CheckCircleIcon aria-hidden="true" /> Graph passes structural validation</p>}
           {message ? <p role="status">{message}</p> : null}
           {error ? <p role="alert" className="ats-pipeline-validation">{error}{error.toLowerCase().includes("revision") ? <button className="button button-small button-ghost" type="button" onClick={() => location.reload()}><ArrowPathIcon aria-hidden="true" /> Reload</button> : null}</p> : null}
         </div>
-        {preview ? <div className="card" aria-label="Applicant progress preview">
-          <h2>Candidate-visible steps (preview)</h2>
-          <p className="card-sub">Only public instructions are displayed. This is a preview, not a candidate application.</p>
-          <ol>{graph.nodes.filter((n) => n.candidateVisible && n.kind !== "start").map((n) => <li key={n.id}><strong>{n.label}</strong> {n.required ? "(Required)" : "(Optional)"}<p>{n.config.instructions}</p></li>)}</ol>
+        {preview ? <div className="card ats-pipeline-simulator" aria-label="Candidate journey simulator">
+          <h2>Candidate journey simulator</h2>
+          <p className="card-sub">Planning preview only. No applicant data or status changes. Choose a decision branch to see how it changes the candidate-visible path.</p>
+          <div className="ats-pipeline-simulator-grid">
+            <section aria-label="Human decision scenarios">
+              <h3>Decision scenario</h3>
+              {graph.nodes.filter(n=>n.kind==="decision").map(node=><label key={node.id} className="ats-pipeline-simulator-choice">
+                <span>{node.label}</span>
+                <select className="select" value={branchChoices[node.id]??""}
+                  onChange={e=>setBranchChoices(old=>({...old,[node.id]:e.target.value as "yes"|"no"}))}>
+                  <option value="">Await human decision</option><option value="yes">Yes path</option><option value="no">No path</option>
+                </select>
+              </label>)}
+              {!graph.nodes.some(n=>n.kind==="decision") ? <p className="card-sub">This workflow has no decision branches.</p> : null}
+              <p className="card-sub">Simulation never automatically accepts or rejects a candidate.</p>
+            </section>
+            <section aria-label="Candidate next action and timeline">
+              <h3>Candidate next action</h3>
+              <p className="ats-pipeline-next-action">{journey.nextAction ?? "Await next steps"}</p>
+              {journey.awaitingDecision ? <p className="ats-pipeline-validation">This preview stops at a pending human decision.</p> : null}
+              {journey.diagnostics.map(d=><p className="ats-pipeline-validation" key={d}>{d}</p>)}
+              <ol className="ats-pipeline-candidate-timeline">
+                {journey.steps.map((step,i)=><li key={step.id}>
+                  <span className="ats-pipeline-timeline-number">{i+1}</span>
+                  <div><strong>{step.label}</strong><small>{step.owner==="candidate"?"Candidate action":"Waiting on employer"} · {step.required?"Required":"Optional"} · Planned, not completed</small>
+                    {step.instructions ? <p>{step.instructions}</p> : null}
+                    {step.targetHours ? <small>Target: within {step.targetHours} hours of assignment (not a confirmed deadline)</small> : null}
+                    {step.expectedMinutes ? <small>Estimated effort: {step.expectedMinutes} minutes</small> : null}
+                  </div>
+                </li>)}
+              </ol>
+              {!journey.steps.length ? <p className="card-sub">No candidate-visible steps on this selected path yet.</p> : null}
+            </section>
+          </div>
         </div> : <>
           <div className="ats-pipeline-canvas-area">
             <div className="ats-pipeline-canvas-wrap">
