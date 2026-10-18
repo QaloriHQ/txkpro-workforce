@@ -77,7 +77,7 @@ test("start requires real super admin and native auth claims session id", () => 
   assert.match(s, /supabase\.auth\.getClaims\(\)/);
   assert.match(s, /claims\?\.sub !== actor\.authUserId/);
   assert.match(s, /validUuid\(authSessionId\)/);
-  assert.match(s, /membership\.status\.toLowerCase\(\) === "active"/);
+  assert.match(s, /m\.status\.toLowerCase\(\) === "active"/);
   assert.match(s, /writeSupportAudit/);
   assert.match(s, /await writeSupportAudit\([\s\S]*?const old =/);
 });
