@@ -198,11 +198,19 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const onCanvasDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     if (!editor) return;
-    const kind = event.dataTransfer.getData("application/x-txk-ats-kind") as ATSNodeKind;
-    if (!ATS_NODE_KINDS.includes(kind)) return;
     const box = canvasRef.current?.getBoundingClientRect();
     if (!box) return;
-    add(kind, Math.round((event.clientX - box.left) / zoom), Math.round((event.clientY - box.top) / zoom));
+    const x = Math.round((event.clientX - box.left) / zoom);
+    const y = Math.round((event.clientY - box.top) / zoom);
+    const existingId = event.dataTransfer.getData("application/x-txk-ats-node");
+    const existingNode = graph.nodes.find((n) => n.id === existingId);
+    if (existingNode) {
+      setNode({ ...existingNode, x, y });
+      return;
+    }
+    const kind = event.dataTransfer.getData("application/x-txk-ats-kind") as ATSNodeKind;
+    if (!ATS_NODE_KINDS.includes(kind)) return;
+    add(kind, x, y);
   // onDrop uses current editor state to insert one node.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, editor, zoom]);
