@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { IMPERSONATION_DATA_PLANE_CERTIFIED } from "../lib/impersonation/session-contract.ts";
+import { classifyImpersonationRequest } from "../lib/impersonation/action-policy.ts";
 
 const project = fileURLToPath(new URL("../", import.meta.url));
 const sourceDirectories = ["app", "components", "lib"];
@@ -47,9 +48,17 @@ const rawReview = readFileSync(new URL("../docs/governance/SEC_IMP_02_ROUTE_REVI
 const review = JSON.parse(rawReview);
 function reviewed(x) {
   const entry = review.routes[x.path];
-  return entry && Array.isArray(entry.evidence) && entry.evidence.length > 0 &&
-    entry.verifiedActor && entry.verifiedTarget && entry.verifiedRevocation &&
-    entry.highRiskProvenance;
+  if (!entry || !Array.isArray(entry.evidence) || entry.evidence.length === 0) return false;
+  if (!entry.verifiedActor || !entry.verifiedTarget || !entry.verifiedRevocation) return false;
+  // Each action must have route/RPC evidence. High-risk or unreviewed paths
+  // MUST be denied, never just audited while they are still permitted.
+  const routePath = "/" + x.path.replace(/^app\\//, "").replace(/\\/route\\.(?:ts|js)$/, "")
+    .replace(/\\[[^\\]]+\\]/g, "example");
+  const blocked = x.verbs.some(verb => {
+    const decision = classifyImpersonationRequest(verb, routePath);
+    return decision === "deny_high_risk" || decision === "deny_unreviewed";
+  });
+  return blocked ? entry.verifiedDeny === true : entry.verifiedOrdinaryWriteAudit === true;
 }
 
 test("coverage inventory discovers all Next API routes and direct browser Supabase entry points", () => {
@@ -66,7 +75,7 @@ test("data plane remains locked until 100% API and browser/RLS review is approve
     assert.deepEqual(missing, [], "Cannot certify data plane with unreviewed mutating API routes.");
     assert.deepEqual(browserMissing, [], "Cannot certify data plane with unreviewed browser Supabase entry points.");
     assert.equal(review.rls?.verified, true, "Cannot certify data plane without RLS/RPC actor attribution evidence.");
-    assert.equal(review.highRiskProviders?.verified, true, "Cannot certify without high-risk provider audit coverage.");
+    assert.equal(review.highRiskDenial?.verified, true, "Cannot certify without high-risk provider/RLS/RPC denial coverage.");
     assert.equal(review.issuer?.verified, true, "Cannot certify without an actor-bound token issuer.");
   } else {
     assert.equal(review.issuer?.verified ?? false, false);
