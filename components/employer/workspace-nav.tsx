@@ -72,7 +72,7 @@ const groups: NavGroup[] = [
   {
     label: "Talent & Hiring",
     items: [
-      { key: "jobs", href: "/employer/jobs", label: "Job listings", icon: BriefcaseIcon },
+      { key: "jobs", href: "/employer/jobs", label: "Job listings", icon: BriefcaseIcon },\n      { key: "pipeline-builder", href: "/employer/pipeline-builder", label: "Pipeline editor", icon: QueueListIcon },
       {
         key: "screening",
         href: "/employer/screening",
