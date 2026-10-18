@@ -8,6 +8,7 @@ import {
 
 const migration = readFileSync(new URL("../supabase/migrations/20261018164705_ats_01_job_listings.sql", import.meta.url), "utf8");
 const repository = readFileSync(new URL("../lib/employer/job-listings-repository.ts", import.meta.url), "utf8");
+const editor = readFileSync(new URL("../components/employer/job-listing-editor.tsx", import.meta.url), "utf8");
 const publishRoute = readFileSync(new URL("../app/api/employer/jobs/[id]/publish/route.ts", import.meta.url), "utf8");
 
 test("roles obey employer owner/admin, recruiter, assigned-manager and read-only boundaries", () => {
@@ -83,4 +84,14 @@ test("repository enforces exact tenant, ownership and compare-and-swap revisions
   assert.match(repository, /Never copy an active pipeline binding/);
   assert.match(publishRoute, /status: 409/);
   assert.match(publishRoute, /requireEmployerContext/);
+});
+
+test("editor serializes unsaved revisions when switching records", () => {
+  assert.match(editor, /revisionRef\\.current = payload\\.job\\.revision/);
+  assert.match(editor, /editGeneration\\.current === generation/);
+  assert.match(editor, /for \\(let attempt = 0; attempt < 5;/);
+  assert.match(editor, /inFlight\\.current && !\\(await inFlight\\.current\\)/);
+  assert.match(editor, /beforeunload/);
+  assert.match(editor, /Guided wizard/);
+  assert.match(editor, /Advanced editor/);
 });
