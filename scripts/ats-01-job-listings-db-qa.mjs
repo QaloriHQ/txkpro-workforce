@@ -17,6 +17,7 @@ test("ATS-01 migration installs and enforces private draft boundaries in Postgre
       "grant usage on schema security to authenticated;",
       "create table public.users(user_id text primary key, auth_user_id uuid);",
       "create table public.contractors(contractor_id text primary key, owner_user_id text, approval_status text, account_status text);",
+      "grant select on public.contractors to authenticated;",
       "create table public.wf_hiring_needs(hiring_need_id text primary key, employer_id text);",
       "create table public.app_role_memberships(user_id text, auth_user_id uuid, status text, scope_type text, scope_id text, role text);",
       "create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('app.actor_auth', true),'')::uuid $$;",
