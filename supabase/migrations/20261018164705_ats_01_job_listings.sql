@@ -70,6 +70,41 @@ create index if not exists wf_ats_jobs_source_idx
   on public.wf_ats_job_listings(source_job_listing_id)
   where source_job_listing_id is not null;
 
+-- ATS-specific scoped role check intentionally does not inherit the platform
+-- admin bypass in the legacy security.has_employer_role helper.
+create or replace function security.wf_ats_has_employer_role(p_employer_id text, p_roles text[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select coalesce(
+    exists (
+      select 1 from public.app_role_memberships m
+      where m.auth_user_id = (select auth.uid())
+        and lower(m.status) = 'active'
+        and lower(m.scope_type) in ('employer','contractor')
+        and m.scope_id = p_employer_id
+        and (
+          lower(m.role) = any (select lower(x) from unnest(p_roles) x)
+          or (lower(m.role) = 'contractor_owner' and 'employer_owner' = any (select lower(x) from unnest(p_roles) x))
+          or (lower(m.role) = 'contractor_recruiter' and 'recruiter' = any (select lower(x) from unnest(p_roles) x))
+        )
+    )
+    or (
+      'employer_owner' = any (select lower(x) from unnest(p_roles) x)
+      and exists (
+        select 1 from public.contractors c
+        where c.contractor_id = p_employer_id
+          and c.owner_user_id = security.current_legacy_user_id()
+      )
+    ), false
+  );
+$;
+revoke all on function security.wf_ats_has_employer_role(text,text[]) from public;
+grant execute on function security.wf_ats_has_employer_role(text,text[]) to authenticated, service_role;
+
 alter table public.wf_ats_job_listings enable row level security;
 revoke all on public.wf_ats_job_listings from anon, authenticated;
 grant select, insert, update on public.wf_ats_job_listings to authenticated;
@@ -79,9 +114,9 @@ create policy wf_ats_jobs_read_employer on public.wf_ats_job_listings
   using (
     security.member_of_employer(employer_id)
     and (
-      security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter','employer_read_only'])
+      security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter','employer_read_only'])
       or (
-        security.has_employer_role(employer_id, array['hiring_manager'])
+        security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
         and assigned_hiring_manager_user_id = security.current_legacy_user_id()
       )
     )
@@ -90,7 +125,7 @@ create policy wf_ats_jobs_read_employer on public.wf_ats_job_listings
 create policy wf_ats_jobs_insert_employer on public.wf_ats_job_listings
   for insert to authenticated
   with check (
-    security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
+    security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
     and created_by_user_id = security.current_legacy_user_id()
     and status = 'draft'
     and pipeline_version_id is null
@@ -105,16 +140,16 @@ create policy wf_ats_jobs_insert_employer on public.wf_ats_job_listings
 create policy wf_ats_jobs_update_employer on public.wf_ats_job_listings
   for update to authenticated
   using (
-    security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
+    security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
     or (
-      security.has_employer_role(employer_id, array['hiring_manager'])
+      security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
       and assigned_hiring_manager_user_id = security.current_legacy_user_id()
     )
   )
   with check (
-    security.has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
+    security.wf_ats_has_employer_role(employer_id, array['employer_owner','employer_admin','recruiter'])
     or (
-      security.has_employer_role(employer_id, array['hiring_manager'])
+      security.wf_ats_has_employer_role(employer_id, array['hiring_manager'])
       and assigned_hiring_manager_user_id = security.current_legacy_user_id()
     )
   );
@@ -147,7 +182,7 @@ declare
   v_owner_admin boolean;
 begin
   v_actor := security.current_legacy_user_id();
-  v_owner_admin := security.has_employer_role(new.employer_id, array['employer_owner','employer_admin']);
+  v_owner_admin := security.wf_ats_has_employer_role(new.employer_id, array['employer_owner','employer_admin']);
   -- Optional links are private tenant-owned relationships, never arbitrary
   -- client-supplied cross-employer identifiers.
   if new.hiring_need_id is not null and not exists (
