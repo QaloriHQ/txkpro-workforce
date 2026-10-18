@@ -30,7 +30,10 @@ export default async function HiringPipelinePage() {
               Follow each candidate’s hiring progress. Separate hiring attempts stay separate.
             </p>
           </div>
-          <span className="pill pill-neutral">{values.length} hiring journeys</span>
+          <div className="header-actions">
+            <span className="pill pill-neutral">{values.length} hiring journeys</span>
+            <Link href="/employer/pipeline-builder" className="button button-ghost">Edit hiring pipelines</Link>
+          </div>
         </div>
 
         <div className="callout" style={{ marginBottom: 18 }}>

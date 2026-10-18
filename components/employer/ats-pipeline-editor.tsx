@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, DocumentDuplicateIcon,
   PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, MagnifyingGlassMinusIcon,
-  MagnifyingGlassPlusIcon,
+  MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon,
 } from "@heroicons/react/24/outline";
 import {
   ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE,
-  isPipelineConfigurator, isPipelinePublisher, validatePipelineGraph,
+  isPipelineConfigurator, isPipelinePublisher, validatePipelineGraph, upsertPipelineConnection, removePipelineConnection,
   type ATSNodeKind, type PipelineGraph, type PipelineNode,
   type PipelineTemplateSummary, type PipelineVersionSummary, type PipelineField,
 } from "@/lib/employer/ats-pipelines";
@@ -22,6 +22,29 @@ const LABELS: Record<ATSNodeKind, string> = {
   drug_test: "Drug testing", manual_review: "Human review",
   decision: "Yes / no decision", notification: "Notification",
 };
+const DESCRIPTIONS: Record<ATSNodeKind,string> = {
+  start:"The entry point of the candidate journey.",
+  end:"Marks the end of a hiring workflow path.",
+  application_form:"Collect applicant answers with a configurable form template.",
+  assessment:"Request a skills assessment or structured exercise.",
+  video:"Show an introductory or instructional video to candidates.",
+  consent:"Require an explicit Boolean consent with a clear disclosure.",
+  contract_signature:"Send a document for electronic signature (provider setup required).",
+  interview_in_person:"Arrange an in-person interview or appointment.",
+  interview_online:"Plan a video interview (provider setup required).",
+  background_check:"Request provider-managed background screening and consent.",
+  fingerprinting:"Coordinate an authorized local fingerprint appointment.",
+  drug_test:"Coordinate a provider-managed drug test.",
+  manual_review:"Route an application to an authorized human reviewer.",
+  decision:"Split the workflow into Yes and No branches, without automatic candidate rejection.",
+  notification:"Show or send a workflow notification when integrations are enabled.",
+};
+function Help({ text, label }: { text:string; label:string }) {
+  return <details className="ats-pipeline-help">
+    <summary aria-label={"Help: "+label} title={"Help: "+label}><QuestionMarkCircleIcon aria-hidden="true"/></summary>
+    <span className="ats-pipeline-help-popover">{text}</span>
+  </details>;
+}
 function clone<T>(value: T): T { return structuredClone(value); }
 function createId(prefix: string) { return prefix + "_" + crypto.randomUUID().replaceAll("-", "").slice(0, 12); }
 function initialNode(kind: ATSNodeKind, x: number, y: number): PipelineNode {
@@ -66,7 +89,12 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [history, setHistory] = useState<PipelineGraph[]>([]);
   const [future, setFuture] = useState<PipelineGraph[]>([]);
   const [preview, setPreview] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [linking, setLinking] = useState<{source:string;outcome?:"yes"|"no"} | null>(null);
+  const [pointer, setPointer] = useState<{x:number;y:number} | null>(null);
+  const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const editor = isPipelineConfigurator(role);
   const publisher = isPipelinePublisher(role);
   const selected = pipelines.find((p) => p.id === selectedId);
@@ -82,6 +110,25 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [dirty]);
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const prior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    modalRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setSettingsOpen(false); }
+      if (event.key === "Tab" && modalRef.current) {
+        const controls = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary'));
+        if (!controls.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); prior?.focus(); };
+  }, [settingsOpen]);
   function change(next: PipelineGraph) {
     if (!editor) return;
     setHistory((h) => [...h.slice(-49), clone(graph)]); setFuture([]);
@@ -95,7 +142,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     setSelectedId(p.id); setName(p.name); setDescription(p.description);
     setGraph(clone(p.graph)); setRevision(p.revision);
     setDirty(false); setError(""); setMessage(""); setSelectedNodeId(null);
-    setHistory([]); setFuture([]); setPreview(false);
+    setHistory([]); setFuture([]); setPreview(false); setSettingsOpen(false); setLinking(null); setPointer(null);
   }
   function undo() {
     if (!history.length) return;
@@ -111,21 +158,35 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     if (!editor || kind === "start" || (kind === "end" && graph.nodes.some((n) => n.kind === "end"))) return;
     const node = initialNode(kind, x, y);
     change({ ...graph, nodes: [...graph.nodes, node] });
-    setSelectedNodeId(node.id);
+    setSelectedNodeId(node.id); setSettingsOpen(true);
   }
   function removeNode() {
     if (!selectedNode || selectedNode.kind === "start" || selectedNode.kind === "end") return;
     change({ ...graph, nodes: graph.nodes.filter((n) => n.id !== selectedNode.id),
       edges: graph.edges.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id) });
-    setSelectedNodeId(null);
+    setSelectedNodeId(null); setSettingsOpen(false); setLinking(null);
   }
   function connect(source: string, target: string, outcome?: "yes" | "no") {
-    const current = graph.nodes.find((n) => n.id === source);
-    if (!current || !target || target === source || !graph.nodes.some((n) => n.id === target)) return;
-    const matches = (e: PipelineGraph["edges"][number]) => e.source === source && (current.kind !== "decision" || e.outcome === outcome);
-    const edges = graph.edges.filter((e) => !matches(e));
-    edges.push({ id: createId("edge"), source, target, ...(outcome ? { outcome } : {}) });
-    change({ ...graph, edges });
+    if (!editor) return;
+    try {
+      change(target ? upsertPipelineConnection(graph, source, target, outcome) :
+        removePipelineConnection(graph, source, outcome));
+      setLinking(null); setPointer(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to connect components");
+      setLinking(null); setPointer(null);
+    }
+  }
+  function beginLink(source: string, outcome?: "yes" | "no") {
+    if (!editor) return;
+    setLinking({ source, outcome }); setPointer(null); setError("");
+  }
+  function finishLink(target: string) {
+    if (linking) connect(linking.source, target, linking.outcome);
+  }
+  function editNode(id: string) {
+    if (linking) { finishLink(id); return; }
+    setSelectedNodeId(id); setSettingsOpen(true);
   }
   async function create() {
     if (!editor) return;
@@ -221,9 +282,18 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     if (!box || !node) return;
     setNode({ ...node, x: Math.round((event.clientX - box.left) / zoom), y: Math.round((event.clientY - box.top) / zoom) });
   }
-  return <div className="ats-pipeline-layout">
-    <aside className="card ats-pipeline-sidebar" aria-label="Pipeline templates">
-      <div className="card-header"><h2>My pipelines</h2><button type="button" className="button button-small button-dark" onClick={() => void create()} disabled={!editor || busy}><PlusIcon aria-hidden="true" /> New</button></div>
+  return <div className={"ats-pipeline-layout " + (libraryCollapsed ? "is-library-collapsed" : "")}>
+    <aside className={"card ats-pipeline-sidebar " + (libraryCollapsed ? "is-collapsed" : "")} aria-label="Pipeline templates">
+      <div className="card-header ats-pipeline-sidehead">
+        <h2>{libraryCollapsed ? "Library" : "My pipelines"}</h2>
+        <button type="button" className="button button-small button-ghost" onClick={() => setLibraryCollapsed((value) => !value)}
+          aria-expanded={!libraryCollapsed} aria-label={libraryCollapsed ? "Expand component library" : "Collapse component library"}
+          title={libraryCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          {libraryCollapsed ? "Expand" : "Collapse"}
+        </button>
+        {!libraryCollapsed ? <button type="button" className="button button-small button-dark" onClick={() => void create()} disabled={!editor || busy}><PlusIcon aria-hidden="true" /> New</button> : null}
+      </div>
+      <div className="ats-pipeline-sidebar-body">
       <div className="grid">{pipelines.map((p) =>
         <button type="button" key={p.id} className={"ats-pipeline-list-item " + (p.id === selectedId ? "is-selected" : "")}
           aria-current={p.id === selectedId ? "true" : undefined} onClick={() => choosePipeline(p)}>
@@ -232,14 +302,18 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
         {!pipelines.length ? <p className="card-sub">Create your first reusable hiring pipeline.</p> : null}
       </div>
       <h3>Component library</h3>
-      <p className="card-sub">Drag a component onto the canvas, or select Add. Use the inspector to connect its next step.</p>
+      <p className="card-sub">Drag or add components, then connect the circular ports directly on the canvas. Select any node to configure.</p>
       <div className="ats-pipeline-palette">{ATS_NODE_KINDS.filter((kind) => kind !== "start" && kind !== "end").map((kind) =>
-        <button type="button" className="ats-pipeline-palette-item" key={kind} draggable={editor}
-          disabled={!editor || !selectedId}
-          onDragStart={(e) => e.dataTransfer.setData("application/x-txk-ats-kind", kind)}
-          onClick={() => add(kind)}>
-          <PlusIcon aria-hidden="true" /><span>{LABELS[kind]}</span>{ATS_PROVIDER_KINDS.has(kind) ? <small>Integration later</small> : null}
-        </button>)}</div>
+        <div className="ats-pipeline-palette-row" key={kind}>
+          <button type="button" className="ats-pipeline-palette-item" draggable={editor}
+            disabled={!editor || !selectedId}
+            onDragStart={(e) => e.dataTransfer.setData("application/x-txk-ats-kind", kind)}
+            onClick={() => add(kind)}>
+            <PlusIcon aria-hidden="true" /><span>{LABELS[kind]}</span>{ATS_PROVIDER_KINDS.has(kind) ? <small>Integration later</small> : null}
+          </button>
+          <Help label={LABELS[kind]} text={DESCRIPTIONS[kind]} />
+        </div>)}</div>
+      </div>
     </aside>
     <section className="ats-pipeline-workspace" aria-label="Pipeline editor">
       {!selected ? <div className="card"><h2>Pipeline editor</h2><p>Create a pipeline to get started.</p></div> : <>
@@ -249,10 +323,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
             <label>Description<input className="input" value={description} disabled={!editor} onChange={(e) => { setDescription(e.target.value); setDirty(true); }} /></label>
           </div>
           <div className="ats-pipeline-actions">
-            <button type="button" className="button button-small button-ghost" disabled={!history.length || !editor} onClick={undo} title="Undo"><ArrowUturnLeftIcon aria-hidden="true" /> Undo</button>
-            <button type="button" className="button button-small button-ghost" disabled={!future.length || !editor} onClick={redo} title="Redo"><ArrowUturnRightIcon aria-hidden="true" /> Redo</button>
-            <button type="button" className="button button-small button-ghost" disabled={zoom <= .4} onClick={() => setZoom((v) => Math.max(.4,+(v-.1).toFixed(2)))}><MagnifyingGlassMinusIcon aria-hidden="true" /> Zoom out</button>
-            <button type="button" className="button button-small button-ghost" disabled={zoom >= 1.6} onClick={() => setZoom((v) => Math.min(1.6,+(v+.1).toFixed(2)))}><MagnifyingGlassPlusIcon aria-hidden="true" /> Zoom in</button>
+
             <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate preview"}</button>
             <button type="button" className="button button-small button-ghost" disabled={!editor || busy} onClick={() => void duplicate()}><DocumentDuplicateIcon aria-hidden="true" /> Duplicate</button>
             <button type="button" className="button button-small button-ghost" disabled={!dirty || !editor || busy} onClick={() => void save()}>{busy ? "Working…" : "Save draft"}</button>
@@ -270,69 +341,144 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           <p className="card-sub">Only public instructions are displayed. This is a preview, not a candidate application.</p>
           <ol>{graph.nodes.filter((n) => n.candidateVisible && n.kind !== "start").map((n) => <li key={n.id}><strong>{n.label}</strong> {n.required ? "(Required)" : "(Optional)"}<p>{n.config.instructions}</p></li>)}</ol>
         </div> : <>
-          <div className="ats-pipeline-canvas-wrap">
-            <div className="ats-pipeline-canvas" ref={canvasRef} onDragOver={(e) => e.preventDefault()} onDrop={onCanvasDrop}
-              role="region" aria-label="Interactive hiring workflow canvas" tabIndex={0}>
-              <div className="ats-pipeline-canvas-content" style={{ transform: `scale(${zoom})` }}>
-                <svg viewBox="0 0 1800 1100" width="1800" height="1100" aria-hidden="true" className="ats-pipeline-wires">
-                  {graph.edges.map((edge) => {
-                    const a=graph.nodes.find((n) => n.id===edge.source), b=graph.nodes.find((n) => n.id===edge.target);
-                    if (!a || !b) return null;
-                    return <g key={edge.id}><path d={`M${a.x+210} ${a.y+40} C${a.x+250} ${a.y+40}, ${b.x-40} ${b.y+40}, ${b.x} ${b.y+40}`} stroke="currentColor" strokeWidth="2" fill="none" opacity=".65" />
-                      {edge.outcome ? <text x={(a.x+b.x)/2+110} y={(a.y+b.y)/2+20} fontSize="15" fill="currentColor">{edge.outcome}</text> : null}</g>;
-                  })}
-                </svg>
-                {graph.nodes.map((node) => <button key={node.id} type="button"
-                  className={"ats-pipeline-node " + (node.id === selectedNodeId ? "is-selected" : "")}
-                  style={{ left: node.x, top: node.y }} draggable={editor}
-                  onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("application/x-txk-ats-node", node.id); }}
-                  onDrop={(e) => { const id=e.dataTransfer.getData("application/x-txk-ats-node"); if (id) { e.stopPropagation(); moveNodeFromDrop(e,id); }}}
-                  onDragOver={(e) => e.preventDefault()}
-                  onClick={() => setSelectedNodeId(node.id)}
-                  onKeyDown={(e) => {
-                    if (!editor || !["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
-                    e.preventDefault(); const delta=e.shiftKey ? 40 : 10;
-                    setNode({ ...node, x: node.x + (e.key==="ArrowLeft"?-delta:e.key==="ArrowRight"?delta:0),
-                      y: node.y + (e.key==="ArrowUp"?-delta:e.key==="ArrowDown"?delta:0) });
-                  }} aria-pressed={node.id === selectedNodeId}>
-                  <strong>{node.label}</strong><small>{node.kind.replaceAll("_"," ")}{ATS_PROVIDER_KINDS.has(node.kind) ? " · Not connected" : ""}</small>
-                </button>)}
+          <div className="ats-pipeline-canvas-area">
+            <div className="ats-pipeline-canvas-wrap">
+              <div className="ats-pipeline-canvas" ref={canvasRef}
+                onDragOver={(e) => e.preventDefault()} onDrop={onCanvasDrop}
+                onPointerMove={(e) => {
+                  if (!linking) return;
+                  const rect = canvasRef.current?.getBoundingClientRect();
+                  if (rect) setPointer({ x: (e.clientX-rect.left)/zoom, y:(e.clientY-rect.top)/zoom });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape" && linking) { setLinking(null); setPointer(null); }
+                }}
+                role="region" aria-label="Interactive hiring workflow canvas" tabIndex={0}>
+                <div className="ats-pipeline-canvas-content" style={{ transform: `scale(${zoom})` }}>
+                  <svg viewBox="0 0 1800 1100" width="1800" height="1100" aria-hidden="true" className="ats-pipeline-wires">
+                    <defs><marker id="ats-pipeline-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor" /></marker></defs>
+                    {graph.edges.map((edge) => {
+                      const a=graph.nodes.find((n) => n.id===edge.source), b=graph.nodes.find((n) => n.id===edge.target);
+                      if (!a || !b) return null;
+                      const y=a.y+(a.kind==="decision"?(edge.outcome==="yes"?27:59):40);
+                      return <g key={edge.id}><path d={`M${a.x+214} ${y} C${a.x+270} ${y}, ${b.x-55} ${b.y+40}, ${b.x} ${b.y+40}`}
+                        markerEnd="url(#ats-pipeline-arrow)" stroke="currentColor" strokeWidth="2" fill="none" opacity=".85" />
+                        {edge.outcome ? <text x={(a.x+b.x)/2+110} y={(y+b.y+40)/2-10} fontSize="15" fill="currentColor">{edge.outcome}</text> : null}</g>;
+                    })}
+                    {linking && pointer ? (() => {
+                      const from = graph.nodes.find((node) => node.id === linking.source);
+                      if (!from) return null;
+                      const y=from.y+(from.kind==="decision"?(linking.outcome==="yes"?27:59):40);
+                      return <path d={`M${from.x+214} ${y} L${pointer.x} ${pointer.y}`} stroke="currentColor" strokeWidth="3" strokeDasharray="9 6" fill="none" opacity=".8"/>;
+                    })() : null}
+                  </svg>
+                  {graph.nodes.map((node) => <div key={node.id} data-pipeline-node={node.id}
+                    className={"ats-pipeline-node " + (node.id === selectedNodeId ? "is-selected " : "") + (linking ? "is-linking" : "")}
+                    style={{ left:node.x,top:node.y }}>
+                    {node.kind !== "start" ? <button type="button"
+                      className="ats-pipeline-port ats-pipeline-port-input"
+                      title={linking ? "Connect to "+node.label : "Incoming connections to "+node.label}
+                      aria-label={linking ? "Connect to "+node.label : "Input port for "+node.label}
+                      disabled={!editor || !linking}
+                      onPointerUp={(e) => { e.stopPropagation(); finishLink(node.id); }}
+                      onClick={(e) => { e.stopPropagation(); finishLink(node.id); }} /> : null}
+                    <button type="button" className="ats-pipeline-node-main"
+                      draggable={editor}
+                      onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("application/x-txk-ats-node", node.id); }}
+                      onDrop={(e) => { const id=e.dataTransfer.getData("application/x-txk-ats-node"); if (id) { e.stopPropagation(); moveNodeFromDrop(e,id); }}}
+                      onDragOver={(e) => e.preventDefault()}
+                      onClick={() => editNode(node.id)}
+                      onKeyDown={(e) => {
+                        if (!editor || !["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
+                        e.preventDefault(); const delta=e.shiftKey ? 40 : 10;
+                        setNode({ ...node, x: node.x + (e.key==="ArrowLeft"?-delta:e.key==="ArrowRight"?delta:0),
+                          y: node.y + (e.key==="ArrowUp"?-delta:e.key==="ArrowDown"?delta:0) });
+                      }} aria-pressed={node.id === selectedNodeId}>
+                      <strong>{node.label}</strong><small>{node.kind.replaceAll("_"," ")}{ATS_PROVIDER_KINDS.has(node.kind) ? " · Not connected" : ""}</small>
+                    </button>
+                    {node.kind !== "end" ? (node.kind==="decision" ? ["yes","no"] as const : ["next"] as const).map((outcome) =>
+                      <button key={outcome} type="button" className={"ats-pipeline-port ats-pipeline-port-output "+(outcome==="yes"?"is-yes":outcome==="no"?"is-no":"is-next")}
+                        disabled={!editor}
+                        title={"Link "+node.label+(outcome==="next"?"": " ("+outcome+")")+" to another step"}
+                        aria-label={"Start "+outcome+" connection from "+node.label}
+                        onPointerDown={(e) => { e.stopPropagation(); beginLink(node.id, outcome==="next"?undefined:outcome); }}
+                        onClick={(e) => { e.stopPropagation(); beginLink(node.id, outcome==="next"?undefined:outcome); }}>
+                        {outcome==="next" ? <span className="sr-only">Next</span> : outcome[0].toUpperCase()}
+                      </button>
+                    ) : null}
+                  </div>)}
+                </div>
+                <div className="ats-pipeline-canvas-hint">
+                  {linking ? <><strong>Connecting:</strong> select an input port or click a target node. Press Escape to cancel.
+                    <button type="button" onClick={() => { setLinking(null); setPointer(null); }}>Cancel</button></> :
+                    <>Select a node to edit settings. Use the round output ports to link steps; decision nodes use Yes/No ports. Arrow keys move a focused node.</>}
+                </div>
               </div>
-              <div className="ats-pipeline-canvas-hint">Select a node to configure it. Arrow keys move selected nodes; Shift+arrow moves farther. Drag from the library to add steps.</div>
+            </div>
+            <div className="ats-pipeline-canvas-controls" role="toolbar" aria-label="Canvas navigation and edit controls">
+              <button type="button" disabled={!history.length || !editor} onClick={undo} title="Undo change" aria-label="Undo"><ArrowUturnLeftIcon aria-hidden="true"/></button>
+              <button type="button" disabled={!future.length || !editor} onClick={redo} title="Redo change" aria-label="Redo"><ArrowUturnRightIcon aria-hidden="true"/></button>
+              <span className="ats-pipeline-canvas-divider" aria-hidden="true"/>
+              <button type="button" disabled={zoom <= .4} onClick={() => setZoom((v) => Math.max(.4,+(v-.1).toFixed(2)))} title="Zoom out" aria-label="Zoom out"><MagnifyingGlassMinusIcon aria-hidden="true"/></button>
+              <output aria-label="Canvas zoom level">{Math.round(zoom*100)}%</output>
+              <button type="button" disabled={zoom >= 1.6} onClick={() => setZoom((v) => Math.min(1.6,+(v+.1).toFixed(2)))} title="Zoom in" aria-label="Zoom in"><MagnifyingGlassPlusIcon aria-hidden="true"/></button>
+              <button type="button" onClick={() => setZoom(1)} title="Reset zoom to 100%" aria-label="Reset zoom"><ArrowsPointingOutIcon aria-hidden="true"/></button>
             </div>
           </div>
-          <div className="card ats-pipeline-inspector">
-            <h2>Component settings</h2>
-            {!selectedNode ? <p className="card-sub">Select a workflow component to edit its content, connections, or candidate visibility.</p> : <div className="grid">
-              <p className="eyebrow">{LABELS[selectedNode.kind]}</p>
-              <label>Step title<input className="input" value={selectedNode.label} disabled={!editor} onChange={(e) => setNode({ ...selectedNode, label: e.target.value })} /></label>
-              <div className="form-grid">
-                <label><input type="checkbox" checked={selectedNode.required} disabled={!editor || selectedNode.kind==="start"} onChange={(e) => setNode({ ...selectedNode, required: e.target.checked })} /> Required</label>
-                <label><input type="checkbox" checked={selectedNode.candidateVisible} disabled={!editor} onChange={(e) => setNode({ ...selectedNode, candidateVisible: e.target.checked })} /> Candidate-visible</label>
+          {settingsOpen && selectedNode ? <div className="ats-pipeline-modal-backdrop" onMouseDown={(e) => { if (e.target===e.currentTarget) setSettingsOpen(false); }}>
+            <div className="card ats-pipeline-inspector ats-pipeline-modal" ref={modalRef}
+              role="dialog" aria-modal="true" aria-labelledby="ats-pipeline-settings-heading" tabIndex={-1}>
+              <div className="ats-pipeline-modal-head">
+                <div><p className="eyebrow">{LABELS[selectedNode.kind]}</p><h2 id="ats-pipeline-settings-heading">Component settings</h2></div>
+                <button type="button" aria-label="Close component settings" title="Close settings" onClick={() => setSettingsOpen(false)}><XMarkIcon aria-hidden="true"/></button>
               </div>
-              <label>Instructions<textarea className="textarea" rows={3} value={selectedNode.config.instructions ?? ""} disabled={!editor} onChange={(e) => setNode({ ...selectedNode, config: { ...selectedNode.config, instructions: e.target.value } })} /></label>
-              {selectedNode.kind === "consent" ? <label>Required disclosure<textarea className="textarea" rows={3} value={selectedNode.config.disclosure ?? ""} disabled={!editor} onChange={(e) => setNode({ ...selectedNode, config: { ...selectedNode.config, disclosure: e.target.value } })} /></label> : null}
-              {["video","assessment"].includes(selectedNode.kind) ? <label>Public HTTPS media URL<input className="input" type="url" value={selectedNode.config.url ?? ""} disabled={!editor} onChange={(e) => setNode({ ...selectedNode, config: { ...selectedNode.config, url: e.target.value } })} /></label> : null}
-              {selectedNode.kind === "application_form" ? <label>Form template fields (one per line: id|label|type|required|choices)
-                <textarea className="textarea" rows={6} defaultValue={defaultFields(selectedNode.config.fields)} key={selectedNode.id}
-                  disabled={!editor} onBlur={(e) => {
-                    try { const fields = parseFields(e.target.value); if (JSON.stringify(fields) !== JSON.stringify(selectedNode.config.fields ?? [])) setNode({ ...selectedNode, config: { ...selectedNode.config, fields } }); }
-                    catch (err) { setError(err instanceof Error ? err.message : "Invalid fields"); }
-                  }} /></label> : null}
-              {selectedNode.kind !== "end" ? <fieldset className="ats-pipeline-connections"><legend>Connect next step</legend>
-                {(selectedNode.kind === "decision" ? ["yes","no"] : ["next"]).map((outcome) => {
-                  const assigned = graph.edges.find((e) => e.source===selectedNode.id && (outcome==="next" || e.outcome===outcome));
-                  return <label key={outcome}>{outcome==="next"?"Next":outcome.toUpperCase()}
-                    <select className="select" disabled={!editor} value={assigned?.target ?? ""} onChange={(e) => connect(selectedNode.id, e.target.value, outcome==="next"?undefined:outcome as "yes"|"no")}>
-                      <option value="">Choose a component</option>
-                      {graph.nodes.filter((n) => n.id !== selectedNode.id && n.kind !== "start").map((n) => <option value={n.id} key={n.id}>{n.label}</option>)}
-                    </select>
-                  </label>;
-                })}</fieldset> : null}
-              {selectedNode.kind !== "start" && selectedNode.kind !== "end" ? <button type="button" className="button button-ghost" disabled={!editor} onClick={removeNode}><TrashIcon aria-hidden="true" /> Remove step</button> : null}
-              {ATS_PROVIDER_KINDS.has(selectedNode.kind) ? <p className="card-sub">Provider workflow execution is not enabled in ATS-02. This node configures a future manual/integration requirement only.</p> : null}
-            </div>}
-          </div>
+              <p className="card-sub">Changes update your draft immediately. Use Save draft to persist them.</p>
+              <div className="ats-pipeline-settings-fields">
+                <label><span className="ats-pipeline-setting-title">Step title <Help label="Step title" text="A short descriptive name shown on the workflow and to candidates when visible."/></span>
+                  <input className="input" value={selectedNode.label} disabled={!editor} onChange={(e) => setNode({ ...selectedNode,label:e.target.value })}/></label>
+                <div className="form-grid ats-pipeline-settings-switches">
+                  <label><span className="ats-pipeline-setting-title">Required <Help label="Required step" text="When enabled, completion of this step is required to advance along the workflow."/></span>
+                    <input type="checkbox" checked={selectedNode.required} disabled={!editor || selectedNode.kind==="start"} onChange={(e) => setNode({ ...selectedNode, required:e.target.checked })}/></label>
+                  <label><span className="ats-pipeline-setting-title">Candidate-visible <Help label="Candidate visibility" text="Controls whether candidates see this step on their progress tracker. Private internal reviews must stay hidden."/></span>
+                    <input type="checkbox" checked={selectedNode.candidateVisible} disabled={!editor} onChange={(e) => setNode({ ...selectedNode,candidateVisible:e.target.checked })}/></label>
+                </div>
+                <label><span className="ats-pipeline-setting-title">Instructions <Help label="Instructions" text="Candidate-safe guidance for completing this step. Do not include private notes or assessment answers."/></span>
+                  <textarea className="textarea" rows={3} value={selectedNode.config.instructions??""} disabled={!editor}
+                    onChange={(e) => setNode({ ...selectedNode,config:{...selectedNode.config,instructions:e.target.value} })}/></label>
+                {selectedNode.kind==="consent" ? <label><span className="ats-pipeline-setting-title">Required disclosure <Help label="Required disclosure" text="Describe exactly what the candidate is consenting to. Publishing a consent node requires non-empty disclosure text."/></span>
+                  <textarea className="textarea" rows={3} value={selectedNode.config.disclosure??""} disabled={!editor}
+                    onChange={(e) => setNode({ ...selectedNode,config:{...selectedNode.config,disclosure:e.target.value} })}/></label> : null}
+                {["video","assessment"].includes(selectedNode.kind) ? <label><span className="ats-pipeline-setting-title">Public HTTPS media URL <Help label="Media URL" text="An HTTPS link to the public media or assessment instructions. Do not paste private video tokens, API keys or answer keys."/></span>
+                  <input className="input" type="url" value={selectedNode.config.url??""} disabled={!editor}
+                    onChange={(e) => setNode({ ...selectedNode,config:{...selectedNode.config,url:e.target.value} })}/></label>:null}
+                {selectedNode.kind==="application_form" ? <label><span className="ats-pipeline-setting-title">Form template fields <Help label="Form fields" text="One field per line: id|label|type|required|choices. Types: text, textarea, email, number, select, checkbox. Select choices are comma-separated."/></span>
+                  <textarea className="textarea" rows={6} defaultValue={defaultFields(selectedNode.config.fields)} key={selectedNode.id}
+                    disabled={!editor} onBlur={(e) => {
+                      try { const fields=parseFields(e.target.value); if (JSON.stringify(fields)!==JSON.stringify(selectedNode.config.fields??[]))
+                        setNode({ ...selectedNode, config:{...selectedNode.config,fields} }); }
+                      catch (err) { setError(err instanceof Error?err.message:"Invalid fields"); }
+                    }}/></label> : null}
+                {selectedNode.kind!=="end" ? <fieldset className="ats-pipeline-connections"><legend>Connections <Help label="Connections" text="Assign a next step, or close settings and click the connection ports on the canvas. Decisions require separate Yes and No branches."/></legend>
+                  {(selectedNode.kind==="decision" ? ["yes","no"] : ["next"]).map((outcome) => {
+                    const assigned=graph.edges.find((e)=>e.source===selectedNode.id && (outcome==="next" || e.outcome===outcome));
+                    return <label key={outcome}><span className="ats-pipeline-setting-title">{outcome==="next"?"Next step":outcome.toUpperCase()+" branch"}
+                        <Help label={outcome+" connection"} text={outcome==="next"?"Choose the next component. Empty means unlinked.": "Route the "+outcome.toUpperCase()+" result to a specific next step."}/></span>
+                      <select className="select" disabled={!editor} value={assigned?.target??""}
+                        onChange={(e) => connect(selectedNode.id,e.target.value,outcome==="next"?undefined:outcome as "yes"|"no")}>
+                        <option value="">No connection</option>
+                        {graph.nodes.filter((n)=>n.id!==selectedNode.id && n.kind!=="start").map((n)=><option key={n.id} value={n.id}>{n.label}</option>)}
+                      </select>
+                    </label>;
+                  })}</fieldset> : null}
+                {selectedNode.kind!=="start" && selectedNode.kind!=="end" ? <button type="button" className="button button-ghost" disabled={!editor} onClick={removeNode}><TrashIcon aria-hidden="true"/> Remove step</button> : null}
+                {ATS_PROVIDER_KINDS.has(selectedNode.kind) ? <p className="card-sub">Provider execution is not enabled in ATS-02. Publishing a node does not start screening or other external actions.</p> : null}
+              </div>
+              <div className="ats-pipeline-modal-footer">
+                <span className="card-sub">{dirty?"Unsaved changes":"Saved draft"} · Rev. {revision}</span>
+                <button type="button" className="button button-dark" onClick={() => setSettingsOpen(false)}>Done</button>
+              </div>
+            </div>
+          </div> : null}
         </>}
         {currentVersions.length ? <div className="card"><h2>Published versions</h2><p className="card-sub">Published snapshots are immutable. Editing this draft and publishing again creates a new version.</p>
           <div className="grid">{currentVersions.map((v) => <div className="ats-pipeline-version" key={v.id}><strong>Version {v.versionNumber}</strong><small>{new Date(v.publishedAt).toLocaleString()}</small><small>{v.graph.nodes.length} steps</small></div>)}</div>

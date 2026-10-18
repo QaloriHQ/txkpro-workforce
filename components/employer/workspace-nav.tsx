@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ComponentType, type SVGProps } from "react";
+import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import {
   AcademicCapIcon,
   Bars3Icon,
@@ -15,6 +15,10 @@ import {
   UserGroupIcon,
   GlobeAltIcon,
   XMarkIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 type EmployerSection =
@@ -74,7 +78,6 @@ const groups: NavGroup[] = [
     label: "Talent & Hiring",
     items: [
       { key: "jobs", href: "/employer/jobs", label: "Job listings", icon: BriefcaseIcon },
-      { key: "pipeline-builder", href: "/employer/pipeline-builder", label: "Pipeline editor", icon: QueueListIcon },
       {
         key: "screening",
         href: "/employer/screening",
@@ -105,6 +108,7 @@ const groups: NavGroup[] = [
         label: "Interviews",
         icon: CalendarDaysIcon,
       },
+
       {
         key: "pipeline",
         href: "/employer/pipeline",
@@ -146,6 +150,16 @@ const groups: NavGroup[] = [
 
 export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [pipelineExpanded, setPipelineExpanded] = useState(active === "pipeline" || active === "pipeline-builder");
+  useEffect(() => {
+    if (!open) return;
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [open]);
 
   return (
     <>
@@ -166,13 +180,23 @@ export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
 
       <nav
         id="employer-workspace-navigation"
-        className={`employer-sidebar ${open ? "is-open" : ""}`}
+        className={`employer-sidebar ${open ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}
         aria-label="Employer workspace"
       >
         <div className="employer-sidebar-heading">
-          <span>Workforce</span>
-          <strong>Employer workspace</strong>
-          <small>Talent, learning and placement operations</small>
+          <div className="employer-sidebar-identity">
+            <span>Workforce</span>
+            <strong>Employer workspace</strong>
+            <small>Talent, learning and placement operations</small>
+          </div>
+          <button type="button" className="employer-sidebar-collapse" onClick={() => setCollapsed((value) => !value)}
+            aria-label={collapsed ? "Expand Employer sidebar" : "Collapse Employer sidebar"}
+            aria-expanded={!collapsed} title={collapsed ? "Expand navigation" : "Collapse navigation"}>
+            {collapsed ? <ChevronDoubleRightIcon aria-hidden="true" /> : <ChevronDoubleLeftIcon aria-hidden="true" />}
+          </button>
+          <button className="employer-sidebar-mobile-close" type="button" aria-label="Close Employer drawer" onClick={() => setOpen(false)}>
+            <XMarkIcon aria-hidden="true" />
+          </button>
         </div>
 
         <div className="employer-sidebar-links">
@@ -185,18 +209,41 @@ export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
               <span className="employer-nav-label">{group.label}</span>
               {group.items.map((item) => {
                 const IconComponent = item.icon;
+                if (item.key === "pipeline") {
+                  return <div className="employer-nav-parent" key={item.key}>
+                    <div className="employer-nav-parent-row">
+                      <Link
+                        className={`employer-sidebar-link employer-nav-parent-link ${active === "pipeline" || active === "pipeline-builder" ? "active" : ""}`}
+                        href={item.href} title={collapsed ? item.label : undefined}
+                        aria-current={active === "pipeline" ? "page" : undefined}
+                        onClick={() => setOpen(false)}>
+                        <IconComponent className="employer-sidebar-icon" aria-hidden="true" />
+                        <span>{item.label}</span>
+                      </Link>
+                      <button type="button" className="employer-nav-expand"
+                        title="Show Hiring Pipeline subpages"
+                        aria-label={pipelineExpanded ? "Collapse Hiring Pipeline subpages" : "Expand Hiring Pipeline subpages"}
+                        aria-expanded={pipelineExpanded}
+                        onClick={() => setPipelineExpanded((value) => !value)}>
+                        {pipelineExpanded ? <ChevronDownIcon aria-hidden="true"/> : <ChevronRightIcon aria-hidden="true"/>}
+                      </button>
+                    </div>
+                    {pipelineExpanded ? <Link
+                      className={`employer-sidebar-link employer-nav-child ${active === "pipeline-builder" ? "active" : ""}`}
+                      href="/employer/pipeline-builder" title={collapsed ? "Pipeline editor" : undefined}
+                      aria-current={active === "pipeline-builder" ? "page" : undefined}
+                      onClick={() => setOpen(false)}>
+                      <QueueListIcon className="employer-sidebar-icon" aria-hidden="true" />
+                      <span>Pipeline editor</span>
+                    </Link> : null}
+                  </div>;
+                }
                 return (
-                  <Link
-                    className={`employer-sidebar-link ${active === item.key ? "active" : ""}`}
-                    href={item.href}
-                    key={item.key}
+                  <Link className={`employer-sidebar-link ${active === item.key ? "active" : ""}`}
+                    href={item.href} key={item.key} title={collapsed ? item.label : undefined}
                     aria-current={active === item.key ? "page" : undefined}
-                    onClick={() => setOpen(false)}
-                  >
-                    <IconComponent
-                      className="employer-sidebar-icon"
-                      aria-hidden="true"
-                    />
+                    onClick={() => setOpen(false)}>
+                    <IconComponent className="employer-sidebar-icon" aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 );
