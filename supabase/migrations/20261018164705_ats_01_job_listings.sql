@@ -63,6 +63,13 @@ create index if not exists wf_ats_jobs_employer_status_idx
 create index if not exists wf_ats_jobs_hiring_manager_idx
   on public.wf_ats_job_listings(employer_id, assigned_hiring_manager_user_id)
   where assigned_hiring_manager_user_id is not null;
+-- Cover the referenced-user foreign keys independently of employer-first indexes.
+create index if not exists wf_ats_jobs_creator_fk_idx
+  on public.wf_ats_job_listings(created_by_user_id)
+  where created_by_user_id is not null;
+create index if not exists wf_ats_jobs_manager_fk_idx
+  on public.wf_ats_job_listings(assigned_hiring_manager_user_id)
+  where assigned_hiring_manager_user_id is not null;
 create index if not exists wf_ats_jobs_hiring_need_idx
   on public.wf_ats_job_listings(hiring_need_id)
   where hiring_need_id is not null;
@@ -265,8 +272,15 @@ begin
        old.application_instructions, old.is_template, old.hiring_need_id) then
       raise exception 'Published/closed job content cannot be edited as a draft';
     end if;
-    if new.status is distinct from old.status and not v_owner_admin then
-      raise exception 'Only Employer Owner/Admin may transition job status';
+    if new.status is distinct from old.status then
+      if not v_owner_admin then
+        raise exception 'Only Employer Owner/Admin may transition job status';
+      end if;
+      -- ATS-01 only supports draft archival. Do not allow direct SQL callers
+      -- to silently reopen archives or invent future lifecycle transitions.
+      if old.status <> 'draft' or new.status <> 'archived' then
+        raise exception 'ATS-01 only permits draft to archived';
+      end if;
     end if;
     new.revision := old.revision + 1;
     new.updated_at := now();
