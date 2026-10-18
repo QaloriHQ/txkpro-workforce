@@ -1,7 +1,7 @@
 # ATS-01 · Job Listings implementation and release boundary
 
 **Work item:** [#332](https://github.com/QaloriHQ/txkpro-workforce/issues/332) · [ATS-00 baseline](./ATS-00_ARCHITECTURE.md) · [PR #337](https://github.com/QaloriHQ/txkpro-workforce/pull/337)  
-**Target:** `staging` only · **Current state:** reviewable draft branch, **not production**, **not published**
+**Target:** `staging` only · **Current state:** owner-approved canonical statuses and staging migration/UAT, **not production**, **not published**
 
 ## Delivered in this PR
 
@@ -18,7 +18,7 @@
 
 ## New bounded statuses and schema review
 
-The ATS-01 listing status vocabulary is `draft`, `published`, `paused`, `closed`, `archived`. The latter four are **reserved** pending immutable pipeline-version validation in ATS-02; ATS-01 only creates drafts and can archive draft records. These are new **ATS-specific** values, not aliases of existing Hiring Need/Referral/Interview/Placement statuses. Exact names and lifecycle definitions require canonical Status Dictionary update or explicit source-owner approval **before staging migration is applied**; this implementation document does not override the core source hierarchy.
+The ATS-01 listing status vocabulary is `draft`, `published`, `paused`, `closed`, `archived`. The latter four are **reserved** pending immutable pipeline-version validation in ATS-02; ATS-01 only creates drafts and can archive draft records. These are new **ATS-specific** values, not aliases of existing Hiring Need/Referral/Interview/Placement statuses. The owner approved the five exact names on 2026-10-18 for canonical-source inclusion. They are recorded in `docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt` Appendix M. This approval is limited to listing-status names and the reviewed staging migration/UAT step; it is not authorization to activate publish, pause, close, public applications or production rollout.
 
 Published jobs must have a verified, same-employer, immutable `pipeline_version_id`; ATS-02 adds that FK and a reviewed atomic publication protocol. ATS-03 owns applicant submission and identity isolation. No ATS-01 endpoint allows an employer to bypass the version check.
 
