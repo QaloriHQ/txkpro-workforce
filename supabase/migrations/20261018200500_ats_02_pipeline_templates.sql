@@ -27,13 +27,15 @@ create table public.wf_ats_pipeline_versions (
   id uuid primary key default gen_random_uuid(),
   employer_id text not null references public.contractors(contractor_id),
   template_id uuid not null,
-  version_number integer not null check (version_number > 0),\n  source_revision integer not null check (source_revision > 0),
+  version_number integer not null check (version_number > 0),
+  source_revision integer not null check (source_revision > 0),
   graph_json jsonb not null check (jsonb_typeof(graph_json) = 'object'),
   published_by_user_id text not null references public.users(user_id),
   published_at timestamptz not null default now(),
   constraint wf_ats_version_same_employer foreign key (template_id, employer_id)
     references public.wf_ats_pipeline_templates(id, employer_id) on delete restrict,
-  constraint wf_ats_version_number_unique unique (template_id, version_number),\n  constraint wf_ats_version_source_revision_unique unique (template_id, source_revision),
+  constraint wf_ats_version_number_unique unique (template_id, version_number),
+  constraint wf_ats_version_source_revision_unique unique (template_id, source_revision),
   constraint wf_ats_version_employer_unique unique (id, employer_id)
 );
 create index wf_ats_pipeline_versions_employer_idx
