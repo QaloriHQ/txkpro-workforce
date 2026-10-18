@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { checkMgidPublisherRestApi } from "../lib/mgid/publisher-api.ts";
+import { checkMgidPublisherRestApi, checkMgidAdvertiserRestApi, diagnoseMgidApiAccess } from "../lib/mgid/publisher-api.ts";
 
 const valid = { clientId: "123456", token: "test-secret-not-a-real-token" };
 const response = (body, status = 200, type = "application/json") =>
@@ -101,7 +101,83 @@ test("route is staging-only, platform-super-admin only, same-origin, no-store, P
 test("no MGID report values, token, or auction entitlement are exposed to browser", () => {
   const route = repoFile("app/api/admin/integrations/mgid/test/route.ts");
   const client = repoFile("components/admin/mgid-connection-check.tsx");
-  assert.match(route, /checkMgidPublisherRestApi/);
+  assert.match(route, /diagnoseMgidApiAccess/);
   assert.doesNotMatch(client, /MGID_CLIENT_API_TOKEN|MGID_CLIENT_API_ID/);
   assert.match(client, /Native OpenRTB S2S access: Not verified/);
+});
+
+test("MGID advertiser endpoint is fixed, read-only, bearer authenticated and checks response account ID", async () => {
+  let seenUrl, seenInit;
+  const probe = await checkMgidAdvertiserRestApi({
+    ...valid, fetcher: async (url, init) => {
+      seenUrl = url;
+      seenInit = init;
+      return response(JSON.stringify({ id: 123456, wallet: { balance: 999999 } }));
+    },
+  });
+  assert.deepEqual(probe, { outcome: "authenticated", upstreamStatus: 200 });
+  assert.equal(seenUrl, "https://api.mgid.com/v1/clients/123456");
+  assert.equal(seenInit.method, "GET");
+  assert.equal(seenInit.cache, "no-store");
+  assert.equal(seenInit.redirect, "error");
+  assert.equal(seenInit.headers.Authorization, "Bearer " + valid.token);
+  assert.ok(seenInit.signal instanceof AbortSignal);
+  assert.doesNotMatch(JSON.stringify(probe), /wallet|balance|999999|test-secret/);
+});
+
+test("publisher 401 followed by advertiser 200 produces a safe advertiser classification", async () => {
+  const urls = [];
+  const result = await diagnoseMgidApiAccess({
+    ...valid, fetcher: async (url) => {
+      urls.push(url);
+      return url.includes("/v2/pub/") ? response('{"errors":["bad pub token"]}', 401)
+        : response('{"id":123456,"wallet":{"balance":1337}}');
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.outcome, "authentication_rejected");
+  assert.equal(result.advertiserProbe?.outcome, "authenticated");
+  assert.equal(urls.length, 2);
+  assert.doesNotMatch(JSON.stringify(result), /1337|wallet|bad pub token|test-secret/);
+});
+
+test("publisher successful auth never probes advertiser API", async () => {
+  const urls = [];
+  const result = await diagnoseMgidApiAccess({ ...valid, fetcher: async (url) => {
+    urls.push(url);
+    return response("[]");
+  } });
+  assert.equal(result.ok, true);
+  assert.equal(result.advertiserProbe, undefined);
+  assert.equal(urls.length, 1);
+});
+
+test("invalid or mismatched advertiser account response is not accepted", async () => {
+  const values = [
+    response('{"id":999999}'),
+    response('{"wallet":{"balance":42}}'),
+    response('[]'),
+    response('<html/>', 200, 'text/html'),
+    response('{"errors":["authentication failed"]}', 200),
+  ];
+  for (const value of values) {
+    const probe = await checkMgidAdvertiserRestApi({ ...valid, fetcher: async () => value });
+    assert.equal(probe.outcome, "unexpected_response");
+  }
+});
+
+test("both API endpoints rejecting 401 does not confirm credentials", async () => {
+  const result = await diagnoseMgidApiAccess({ ...valid, fetcher: async () => response('{"errors":"private"}', 401) });
+  assert.equal(result.ok, false);
+  assert.equal(result.advertiserProbe?.outcome, "authentication_rejected");
+  assert.doesNotMatch(JSON.stringify(result), /private/);
+});
+
+test("401 diagnostic does not access untrusted hosts or expose environment secret values", () => {
+  const route = repoFile("app/api/admin/integrations/mgid/test/route.ts");
+  const client = repoFile("components/admin/mgid-connection-check.tsx");
+  assert.match(route, /diagnoseMgidApiAccess/);
+  assert.match(route, /result\.advertiserProbe\?\.outcome === "authenticated"/);
+  assert.match(client, /Advertiser API verified; publisher access not confirmed/);
+  assert.doesNotMatch(client, /MGID_CLIENT_API_TOKEN|MGID_CLIENT_API_ID/);
 });

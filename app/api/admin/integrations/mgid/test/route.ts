@@ -1,6 +1,6 @@
 import { getAccountContext } from "@/lib/auth";
 import { isPlatformSuperAdmin } from "@/lib/institutions";
-import { checkMgidPublisherRestApi } from "@/lib/mgid/publisher-api";
+import { diagnoseMgidApiAccess } from "@/lib/mgid/publisher-api";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,12 +30,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Origin rejected" }, { status: 403, headers });
   }
 
-  const result = await checkMgidPublisherRestApi({
+  const result = await diagnoseMgidApiAccess({
     clientId: process.env.MGID_CLIENT_API_ID,
     token: process.env.MGID_CLIENT_API_TOKEN,
   });
 
-  const status = result.ok ? 200 :
+  const status = result.ok || result.advertiserProbe?.outcome === "authenticated" ? 200 :
     result.outcome === "missing_configuration" || result.outcome === "invalid_configuration" ? 503 :
     result.outcome === "timed_out" ? 504 : 502;
 

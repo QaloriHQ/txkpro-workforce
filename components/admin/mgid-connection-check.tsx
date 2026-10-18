@@ -9,6 +9,7 @@ type ConnectionResponse = {
   openRtbS2S?: string;
   outcome?: string;
   upstreamStatus?: number;
+  advertiserProbe?: { outcome?: string; upstreamStatus?: number };
   error?: string;
 };
 
@@ -16,7 +17,7 @@ const labels: Record<string, string> = {
   authenticated: "Publisher reporting API authentication verified.",
   missing_configuration: "Required MGID credentials are missing in this deployment.",
   invalid_configuration: "The configured MGID Client API ID or token format is invalid.",
-  authentication_rejected: "MGID rejected the API credentials (HTTP 401).",
+  authentication_rejected: "The publisher reporting API rejected this request (HTTP 401). This can mean an invalid token or a credential belonging to another MGID API.",
   permission_denied: "MGID denied access to publisher reporting (HTTP 403).",
   invalid_report_request: "MGID rejected the report parameters or client ID (HTTP 422).",
   rate_limited: "MGID rate-limited the request (HTTP 429).",
@@ -53,7 +54,7 @@ export function MgidConnectionCheck() {
     <section className="card" aria-label="MGID publisher API connection test">
       <h2>Test the publisher REST API</h2>
       <p>
-        Runs one read-only report request from the server. Credentials, website
+        Checks the publisher reporting API and, only if MGID rejects access, the separate read-only advertiser account API. Credentials, website
         statistics, and upstream response bodies are never sent to your browser.
       </p>
       <button className="txk-button txk-button-primary" type="button"
@@ -62,9 +63,21 @@ export function MgidConnectionCheck() {
       </button>
       {result ? (
         <div role="status" aria-live="polite" style={{ marginTop: 16 }}>
-          <strong>{result.ok ? "Connected" : "Connection not confirmed"}</strong>
+          <strong>{result.ok ? "Publisher reporting connected" : result.advertiserProbe?.outcome === "authenticated" ? "Advertiser API verified; publisher access not confirmed" : "Connection not confirmed"}</strong>
           <p>{labels[result.outcome ?? ""] ?? result.error ?? "Unable to verify connectivity."}</p>
-          {result.upstreamStatus ? <p>HTTP status: {result.upstreamStatus}</p> : null}
+          {result.upstreamStatus ? <p>Publisher API HTTP status: {result.upstreamStatus}</p> : null}
+          {result.advertiserProbe ? (
+            <>
+              <p>{result.advertiserProbe.outcome === "authenticated"
+                ? "These credentials work on the MGID Ads advertiser API, but did not authorize publisher reporting. Ask MGID for publisher API access or the matching publisher credentials."
+                : result.advertiserProbe.outcome === "authentication_rejected"
+                ? "The MGID advertiser API also rejected these credentials. Verify that the Client API ID and token come from the same account, are current, and are authorized."
+                : result.advertiserProbe.outcome === "permission_denied"
+                ? "The advertiser API also denied access (HTTP 403). Ask MGID to confirm the account's API permissions."
+                : "Advertiser API check: " + (labels[result.advertiserProbe.outcome ?? ""] ?? "Not verified.")}</p>
+              {result.advertiserProbe.upstreamStatus ? <p>Advertiser API HTTP status: {result.advertiserProbe.upstreamStatus}</p> : null}
+            </>
+          ) : null}
           <p>Native OpenRTB S2S access: Not verified.</p>
         </div>
       ) : null}
