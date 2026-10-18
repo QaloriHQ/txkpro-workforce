@@ -5,7 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { STARTER_PIPELINE } from "../lib/employer/ats-pipelines.ts";
 
 const baseline = readFileSync(new URL("../supabase/migrations/20261018193301_ats_01_job_listings.sql",import.meta.url),"utf8");
-const migration = readFileSync(new URL("../supabase/migrations/20261018200500_ats_02_pipeline_templates.sql",import.meta.url),"utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",import.meta.url),"utf8");
 const authA="aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const authB="bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
 const authC="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
