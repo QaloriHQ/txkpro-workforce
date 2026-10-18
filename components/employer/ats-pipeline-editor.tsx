@@ -206,7 +206,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   // onDrop uses current editor state to insert one node.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, editor, zoom]);
-  function moveNodeFromDrop(event: React.DragEvent<HTMLDivElement>, nodeId: string) {
+  function moveNodeFromDrop(event: React.DragEvent<HTMLElement>, nodeId: string) {
     event.preventDefault();
     const box = canvasRef.current?.getBoundingClientRect();
     const node = graph.nodes.find((n) => n.id === nodeId);
