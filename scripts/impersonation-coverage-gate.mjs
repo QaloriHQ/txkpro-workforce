@@ -36,7 +36,7 @@ const mutating = routes.map(route => ({
 })).filter(route => route.verbs.some(v => v !== "GET"));
 
 const browser = audit.filter(x =>
-  (/^["']use client["'];?/m.test(x.content) || /components\//.test(x.path)) &&
+  (x.path === "lib/supabase/client.ts" || /^["']use client["'];?/m.test(x.content) || /components\//.test(x.path)) &&
   (/createBrowserSupabaseClient\(/.test(x.content) || /createClient\(/.test(x.content) && x.content.includes("@supabase/supabase-js")),
 ).map(x => x.path);
 
