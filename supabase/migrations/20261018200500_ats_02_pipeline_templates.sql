@@ -27,13 +27,13 @@ create table public.wf_ats_pipeline_versions (
   id uuid primary key default gen_random_uuid(),
   employer_id text not null references public.contractors(contractor_id),
   template_id uuid not null,
-  version_number integer not null check (version_number > 0),
+  version_number integer not null check (version_number > 0),\n  source_revision integer not null check (source_revision > 0),
   graph_json jsonb not null check (jsonb_typeof(graph_json) = 'object'),
   published_by_user_id text not null references public.users(user_id),
   published_at timestamptz not null default now(),
   constraint wf_ats_version_same_employer foreign key (template_id, employer_id)
     references public.wf_ats_pipeline_templates(id, employer_id) on delete restrict,
-  constraint wf_ats_version_number_unique unique (template_id, version_number),
+  constraint wf_ats_version_number_unique unique (template_id, version_number),\n  constraint wf_ats_version_source_revision_unique unique (template_id, source_revision),
   constraint wf_ats_version_employer_unique unique (id, employer_id)
 );
 create index wf_ats_pipeline_versions_employer_idx
@@ -148,10 +148,10 @@ declare
     'contract_signature','interview_in_person','interview_online',
     'background_check','fingerprinting','drug_test','manual_review','decision','notification'];
 begin
-  if p_graph is null or jsonb_typeof(p_graph)<>'object'
+  if p_graph is null or jsonb_typeof(p_graph) is distinct from 'object'
     or p_graph->>'schemaVersion'<>'1'
-    or jsonb_typeof(p_graph->'nodes')<>'array'
-    or jsonb_typeof(p_graph->'edges')<>'array' then return false; end if;
+    or jsonb_typeof(p_graph->'nodes') is distinct from 'array'
+    or jsonb_typeof(p_graph->'edges') is distinct from 'array' then return false; end if;
   v_nodes:=p_graph->'nodes'; v_edges:=p_graph->'edges';
   if jsonb_array_length(v_nodes) not between 2 and 100 or jsonb_array_length(v_edges)>200 then return false; end if;
   v_entry:=p_graph->>'entryNodeId';
@@ -159,17 +159,17 @@ begin
     v_id:=n->>'id'; v_kind:=n->>'kind';
     if v_id is null or v_id !~ '^[a-z][a-z0-9_-]{0,59}$' or v_id=any(v_ids)
       or not (v_kind=any(v_allowed))
-      or jsonb_typeof(n->'config')<>'object'
-      or jsonb_typeof(n->'required')<>'boolean'
-      or jsonb_typeof(n->'candidateVisible')<>'boolean'
-      or jsonb_typeof(n->'x')<>'number'
-      or jsonb_typeof(n->'y')<>'number' then return false; end if;
+      or jsonb_typeof(n->'config') is distinct from 'object'
+      or jsonb_typeof(n->'required') is distinct from 'boolean'
+      or jsonb_typeof(n->'candidateVisible') is distinct from 'boolean'
+      or jsonb_typeof(n->'x') is distinct from 'number'
+      or jsonb_typeof(n->'y') is distinct from 'number' then return false; end if;
     if exists(select 1 from jsonb_object_keys(n->'config') k
       where k not in ('instructions','url','fields','disclosure','expectedMinutes')) then return false; end if;
     if v_kind='consent' and nullif(btrim(n->'config'->>'disclosure'),'') is null then return false; end if;
     if v_kind<>'application_form' and n->'config' ? 'fields' then return false; end if;
     if v_kind='application_form' and n->'config' ? 'fields' and
-      (jsonb_typeof(n->'config'->'fields')<>'array' or jsonb_array_length(n->'config'->'fields')>35) then return false; end if;
+      (jsonb_typeof(n->'config'->'fields') is distinct from 'array' or jsonb_array_length(n->'config'->'fields')>35) then return false; end if;
     v_ids:=array_append(v_ids,v_id);
     if v_kind='start' then v_starts:=v_starts+1; end if;
     if v_kind='end' then v_ends:=v_ends+1; end if;
@@ -253,3 +253,15 @@ end;
 $$;
 revoke all on function security.wf_ats_publish_pipeline(text,uuid,integer) from public, anon;
 grant execute on function security.wf_ats_publish_pipeline(text,uuid,integer) to authenticated;
+
+-- Expose only a narrowly scoped authenticated RPC through PostgREST.
+-- The security-schema implementation independently authenticates and verifies role/tenant.
+create or replace function public.wf_ats_publish_pipeline(
+  p_employer_id text, p_template_id uuid, p_revision integer)
+returns public.wf_ats_pipeline_versions
+language sql security definer set search_path = ''
+as $$
+  select security.wf_ats_publish_pipeline(p_employer_id,p_template_id,p_revision);
+$$;
+revoke all on function public.wf_ats_publish_pipeline(text,uuid,integer) from public, anon;
+grant execute on function public.wf_ats_publish_pipeline(text,uuid,integer) to authenticated;
