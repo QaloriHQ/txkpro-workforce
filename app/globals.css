@@ -1436,3 +1436,6 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 
 .authcard-progress-steps .button {margin-top:10px;min-height:44px;font-size:12px;padding:10px 12px;}
 .authcard-progress-steps .screening-actions {gap:8px;}
+
+/* ATS-01: keep the two-pane editor usable on small devices. */
+@media (max-width: 850px) { .ats-job-layout { grid-template-columns: minmax(0, 1fr) !important; } }
