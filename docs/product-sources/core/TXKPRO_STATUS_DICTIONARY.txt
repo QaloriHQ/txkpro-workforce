@@ -246,3 +246,13 @@ ADVERTISER_CREDIT_ENTRY_TYPE: stripe_funding, campaign_allocation, campaign_rele
 
 APPENDIX L — ADS-03 OWNER APPROVED 2026-10-16 (#265, #277)
 ADS-03 introduces no new canonical lifecycle status. Invalidated and provider_reconciled remain append-only AD_DELIVERY_EVENT_TYPE values. Pacing labels are derived reporting language only and are never stored as campaign state. Actual spend is recognized only from provider reconciliation evidence.
+
+
+APPENDIX M — ATS-01 OWNER APPROVED 2026-10-18 (#332)
+ATS_JOB_LISTING_STATUS: draft, published, paused, closed, archived.
+- draft: unpublished employer-owned editable listing; may be archived by an authorized Employer Owner/Admin. ATS-01 creates drafts only.
+- published: externally discoverable listing accepting new applications only when its employer-approved publication transaction validates a same-employer immutable published pipeline version; not enabled in ATS-01.
+- paused: previously published listing temporarily unavailable for new applications; existing applications retain their originally pinned pipeline version and progress. Not enabled in ATS-01.
+- closed: listing no longer accepting applications; existing application/history records remain governed by their independent lifecycles. Not enabled in ATS-01.
+- archived: removed from the employer's active workspace but retained with its audit history. In ATS-01 an authorized Employer Owner/Admin may archive a draft; archival must not alter existing applicant, referral, interview, placement or retention statuses.
+These values are exclusive to the new Job Listing aggregate, separate from Hiring Need, Referral, Interview, Placement and all other canonical statuses. ATS-01 does not activate public publication, pause/close transitions, pipeline reassignment, or applicant submission. Those transitions require ATS-02/ATS-03 reviewed schema, API and event contracts; do not infer reopen, unarchive or automated application rejection rules. All authorized status changes require scoped tenant/role checks and immutable audit evidence.
