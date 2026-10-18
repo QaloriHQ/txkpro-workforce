@@ -1,0 +1,164 @@
+{
+  "kind": "TXKPRO_ATS_ARCHITECTURE_PROPOSAL",
+  "schemaVersion": "ats-architecture-proposal-v1",
+  "issue": 328,
+  "taskId": "ATS-00",
+  "branchTarget": "staging",
+  "implementationReadiness": {
+    "schemaApproved": false,
+    "statusEventNamesApproved": false,
+    "legalProviderActivationApproved": false,
+    "productionMigrationAuthorized": false,
+    "productionDeploymentAuthorized": false,
+    "projectPreflight": "EXCEPTION_PROJECT_ACCESS_ONLY",
+    "clineExecutor": "OWNER_DIRECT_EXECUTION_OVERRIDE",
+    "eightConfirmationsValidated": false
+  },
+  "sources": [
+    "docs/product-sources/core/TXKPRO_WORKFORCE_MVP1_PRD.txt",
+    "docs/product-sources/core/TXKPRO_WORKFORCE_MVP1_TRD.txt",
+    "docs/product-sources/core/TXKPRO_DATA_OWNERSHIP_AND_SCOPE_RULES.txt",
+    "docs/product-sources/core/TXKPRO_ROLE_PERMISSIONS_MATRIX.txt",
+    "docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt",
+    "docs/product-sources/core/TXKPRO_CROSS_APP_EVENT_MAP.txt",
+    "docs/UX_PIPELINE_PROGRESS.md",
+    "docs/D10_OFFICIAL_PLACEMENT.md",
+    "docs/governance/CHECKR_STAGING.md",
+    "docs/governance/AUTHCARD_STAGING.md",
+    "docs/governance/AUTHENTICATE_STAGING.md",
+    "supabase/migrations/20260920182953_workforce_employer_wave7_core.sql",
+    "lib/employer/types.ts",
+    "lib/employer/auth.ts",
+    "lib/employer/candidate-pipeline.ts"
+  ],
+  "approvedProductDecisions": [
+    "student_and_external_applicants",
+    "reusable_versioned_pipelines",
+    "inflight_version_pinned",
+    "google_microsoft_two_way_apple_invites",
+    "employer_owned_checkr_connection_and_billing",
+    "phased_delivery"
+  ],
+  "recommendedPendingProviderApproval": [
+    "dropbox_sign"
+  ],
+  "canonicalExistingModels": [
+    "wf_hiring_needs",
+    "referral",
+    "interview_request",
+    "placement",
+    "derived_hiring_journey"
+  ],
+  "proposedEntities": [
+    "job_listing",
+    "pipeline_template",
+    "pipeline_version",
+    "pipeline_node",
+    "pipeline_edge",
+    "job_pipeline_assignment",
+    "external_applicant_identity",
+    "application",
+    "application_task",
+    "employer_provider_connection",
+    "interview_appointment",
+    "ats_audit_outbox"
+  ],
+  "proposedWorkflowNodeKinds": [
+    "start",
+    "end",
+    "application_form",
+    "assessment",
+    "video",
+    "consent",
+    "contract_signature",
+    "interview_in_person",
+    "interview_online",
+    "background_check",
+    "fingerprinting",
+    "drug_test"
+  ],
+  "proposedEventNames": [
+    "ATS_JOB_PUBLISHED",
+    "ATS_PIPELINE_VERSION_PUBLISHED",
+    "ATS_APPLICATION_SUBMITTED",
+    "ATS_APPLICATION_WITHDRAWN",
+    "ATS_TASK_COMPLETED",
+    "ATS_APPOINTMENT_CONFIRMED",
+    "ATS_APPOINTMENT_CANCELLED",
+    "ATS_CONSENT_RECORDED",
+    "ATS_PROVIDER_STATUS_RECONCILED"
+  ],
+  "invariants": [
+    {
+      "id": "TENANT",
+      "test": "Every employer resource read/write checks active employer membership and assignment scope; deny other-tenant ID."
+    },
+    {
+      "id": "SEPARATE_HIRING_NEED",
+      "test": "Job listing is never an alias/mutation of wf_hiring_needs."
+    },
+    {
+      "id": "VERSION_PIN",
+      "test": "Submitted application version ID never changes after pipeline V2 publication."
+    },
+    {
+      "id": "DUPLICATE_SAFE",
+      "test": "Duplicating job/pipeline does not carry applicants, secrets, screening orders, bookings, signature evidence or audits."
+    },
+    {
+      "id": "GRAPH_ACYCLIC",
+      "test": "Published graph has reachable entry/end, no cycles/unreachable nodes/unguarded conditions."
+    },
+    {
+      "id": "CANDIDATE_PROJECTION",
+      "test": "Applicant projection excludes private evaluations, hidden branches, raw reports and provider tokens."
+    },
+    {
+      "id": "HUMAN_DECISION",
+      "test": "Assessment or screening completion never automatically rejects or confirms hiring."
+    },
+    {
+      "id": "D10",
+      "test": "Offer/hire/scheduled start never confirms official placement without actual start evidence."
+    },
+    {
+      "id": "WEBHOOK",
+      "test": "Provider callbacks require signature, replay dedupe and tenant+subject binding."
+    },
+    {
+      "id": "PUBLICATION",
+      "test": "Public listing projection never includes employer private notes/fields."
+    },
+    {
+      "id": "AUTOSAVE",
+      "test": "Wizard and advanced editor share draft revision; stale save conflicts."
+    },
+    {
+      "id": "PRODUCTION",
+      "test": "No production deploy or migration in ATS-00."
+    }
+  ],
+  "openDecisions": [
+    "ATS-D01",
+    "ATS-D02",
+    "ATS-D03",
+    "ATS-D04",
+    "ATS-D05",
+    "ATS-D06",
+    "ATS-D07",
+    "ATS-D08",
+    "ATS-D09",
+    "ATS-D10",
+    "ATS-D11",
+    "ATS-D12"
+  ],
+  "nextTasks": [
+    "ATS-01",
+    "ATS-02",
+    "ATS-03",
+    "ATS-04",
+    "ATS-05",
+    "ATS-06",
+    "ATS-07"
+  ]
+}
