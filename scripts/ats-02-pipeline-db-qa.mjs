@@ -32,6 +32,7 @@ test("ATS-02 SQL installs; version publication is immutable and employer-scoped"
     ].join("\n"));
     await db.exec(baseline);
     await db.exec(migration);
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261018213810_ats_02_rpc_invoker.sql", import.meta.url), "utf8"));
     await db.exec(`set role authenticated; set app.actor_auth='${authA}'; set app.actor_user='owner-a'; set app.employer='employer-a';`);
     const graph=JSON.stringify(STARTER_PIPELINE).replaceAll("'","''");
     const inserted=await db.query(`insert into public.wf_ats_pipeline_templates(employer_id,name,description,created_by_user_id,revision,graph_json)
