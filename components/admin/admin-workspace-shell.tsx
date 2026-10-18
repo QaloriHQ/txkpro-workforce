@@ -17,7 +17,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 const groups = [
   { label: "Workspace", items: [
     { label: "Overview", href: "/admin", icon: Squares2X2Icon },
-    { label: "Approvals", href: "/admin", icon: ClipboardDocumentCheckIcon, key: "approvals" },
+    { label: "Approvals", href: "/admin#approvals", icon: ClipboardDocumentCheckIcon, key: "approvals" },
   ] },
   { label: "People & Access", items: [
     { label: "All users", href: "/admin/users", icon: UsersIcon, superOnly: true },

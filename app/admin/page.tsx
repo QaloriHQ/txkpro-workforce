@@ -40,8 +40,10 @@ export default async function AdminPage() {
           membership. User onboarding can never create Admin access.
         </div>
 
-        <EducatorApprovalQueue initialItems={pendingEducators} />
-        <EmployerApprovalQueue initialItems={pendingEmployers} />
+        <section id="approvals" aria-label="Pending educator and employer approvals">
+          <EducatorApprovalQueue initialItems={pendingEducators} />
+          <EmployerApprovalQueue initialItems={pendingEmployers} />
+        </section>
       </main>
     </>
   );

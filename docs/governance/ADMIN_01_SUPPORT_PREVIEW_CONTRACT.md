@@ -6,7 +6,7 @@ Owner-approved scope: GitHub issue #319. This is a **staging-only** release. Pro
 **View as is not account impersonation.** The actual authenticated platform Super Admin remains
 the actor on every read and write. The preview presents curated identity, role membership,
 scope and expected navigation information without minting tokens, changing cookies,
-switching Supabase users, or fetching private data with a target user's authority.
+switching Supabase users, or fetching private data with a target user's authority. The application must never establish a Supabase Auth session for the target identity.
 
 ## Actor authorization
 - Verified Supabase identity plus active account and active `super_admin` membership with `scope_type=platform`.

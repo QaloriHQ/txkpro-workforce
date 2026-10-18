@@ -59,7 +59,7 @@ test("Only active platform Super Admin passes support operations", () => {
 
 test("View as is an audited projection, never a swapped session", () => {
   assert.match(preview, /requireSupportRequest\(request, body\)/);
-  assert.match(preview, /membership\.status\.toLowerCase\(\) === "active"/);
+  assert.match(preview, /m\.status\.toLowerCase\(\) === "active"/);
   assert.match(preview, /enforceSupportRateLimit/);
   assert.match(preview, /writeSupportAudit/);
   assert.match(preview, /supportPreviewSections/);
