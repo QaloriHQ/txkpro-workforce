@@ -86,7 +86,7 @@ test("timeout and network failure are distinguished without leaking exception de
 test("route is staging-only, platform-super-admin only, same-origin, no-store, POST only", () => {
   const route = repoFile("app/api/admin/integrations/mgid/test/route.ts");
   const page = repoFile("app/admin/integrations/mgid/page.tsx");
-  const navigation = repoFile("app/admin/page.tsx");
+  const navigation = repoFile("components/admin/admin-workspace-shell.tsx");
   assert.match(route, /isPlatformSuperAdmin\(account\)/);
   assert.match(route, /VERCEL_ENV !== "preview"/);
   assert.match(route, /VERCEL_GIT_COMMIT_REF !== "staging"/);
