@@ -140,7 +140,8 @@ create trigger wf_ats_pipeline_template_guard_trigger
 -- This protects against directly writing an invalid draft through the authenticated Data API.
 create or replace function security.wf_ats_graph_publishable(p_graph jsonb)
 returns boolean language plpgsql immutable set search_path = ''
-as $$
+as $
+#variable_conflict use_column
 declare
   v_nodes jsonb; v_edges jsonb; n jsonb; e jsonb; v_id text; v_kind text;
   v_ids text[] := array[]::text[]; v_remaining text[]; v_selected text;
@@ -244,8 +245,8 @@ begin
   select coalesce(max(version_number),0)+1 into v_number
     from public.wf_ats_pipeline_versions where template_id=p_template_id;
   insert into public.wf_ats_pipeline_versions
-    (employer_id,template_id,version_number,graph_json,published_by_user_id)
-    values (p_employer_id,p_template_id,v_number,v_template.graph_json,security.current_legacy_user_id())
+    (employer_id,template_id,version_number,source_revision,graph_json,published_by_user_id)
+    values (p_employer_id,p_template_id,v_number,v_template.revision,v_template.graph_json,security.current_legacy_user_id())
     returning * into v_version;
   insert into security.wf_ats_pipeline_audit
     (employer_id,template_id,version_id,operation,actor_user_id,revision)
