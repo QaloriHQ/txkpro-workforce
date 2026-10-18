@@ -173,6 +173,45 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
   if (visited.size !== nodes.length) throw new Error("Every component must be reachable from Start");
   return { schemaVersion: 1, entryNodeId, nodes, edges };
 }
+/** Editor-safe, immutable edge linking with immediate cycle/branch checks.
+ * Validation runs again on the server when drafts are saved/published. */
+export function upsertPipelineConnection(
+  graph: PipelineGraph, source: string, target: string,
+  outcome?: "yes" | "no",
+): PipelineGraph {
+  const from = graph.nodes.find((n) => n.id === source);
+  const to = graph.nodes.find((n) => n.id === target);
+  if (!from || !to || source === target) throw new Error("Choose two different workflow components");
+  if (from.kind === "end" || to.kind === "start") throw new Error("Start and End connections cannot be reversed");
+  if (from.kind === "decision" && !outcome) throw new Error("Choose Yes or No for a decision branch");
+  if (from.kind !== "decision" && outcome) throw new Error("Only decision components support Yes/No branches");
+  const replaced = graph.edges.filter((edge) => !(edge.source === source &&
+    (from.kind !== "decision" || edge.outcome === outcome)));
+  const edge: PipelineEdge = {
+    id: "edge_" + crypto.randomUUID().replaceAll("-", "").slice(0, 12),
+    source, target, ...(outcome ? { outcome } : {}),
+  };
+  const next: PipelineGraph = { ...graph, edges: [...replaced, edge] };
+  // Prevent a new back-edge in the editor without requiring a completed draft.
+  const visiting = new Set<string>(), visited = new Set<string>();
+  function walk(nodeId: string) {
+    if (visiting.has(nodeId)) throw new Error("This connection creates a cycle");
+    if (visited.has(nodeId)) return;
+    visiting.add(nodeId);
+    for (const connection of next.edges.filter((e) => e.source === nodeId)) walk(connection.target);
+    visiting.delete(nodeId); visited.add(nodeId);
+  }
+  for (const node of graph.nodes) walk(node.id);
+  return validatePipelineGraph(next, false);
+}
+
+export function removePipelineConnection(graph: PipelineGraph, source: string, outcome?: "yes" | "no"): PipelineGraph {
+  const from = graph.nodes.find((n) => n.id === source);
+  if (!from) return graph;
+  return { ...graph, edges: graph.edges.filter((edge) => edge.source !== source ||
+    (from.kind === "decision" && edge.outcome !== outcome)) };
+}
+
 export function validatePipelineName(raw: unknown): string {
   const name = text(raw, "pipeline name", 140);
   if (name.length < 3) throw new Error("Pipeline name must have at least 3 characters");
