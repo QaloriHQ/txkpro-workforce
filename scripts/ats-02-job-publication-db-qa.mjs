@@ -6,8 +6,8 @@ import { STARTER_PIPELINE } from "../lib/employer/ats-pipelines.ts";
 
 const files = [
   "../supabase/migrations/20261018193301_ats_01_job_listings.sql",
-  "../supabase/migrations/20261018200500_ats_02_pipeline_templates.sql",
-  "../supabase/migrations/20261018213000_ats_02_job_publication.sql",
+  "../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",
+  "../supabase/migrations/20261018213618_ats_02_job_publication.sql",
 ].map(path => readFileSync(new URL(path, import.meta.url),"utf8"));
 const ids = {
   owner:"aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
