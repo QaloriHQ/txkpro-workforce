@@ -145,6 +145,27 @@ export function JobListingEditor({
     return !conflictRef.current;
   }
 
+  async function reloadSelected() {
+    if (!selectedId || busy) return;
+    setBusy(true);
+    try {
+      const response = await fetch("/api/employer/jobs/" + encodeURIComponent(selectedId) + "?employerId=" + encodeURIComponent(employerId), { cache: "no-store" });
+      if (!response.ok) throw new Error(await errorText(response));
+      const { job } = await response.json() as { job: JobListing };
+      setJobs((previous) => previous.map((item) => item.id === job.id ? job : item));
+      selectJob(job);
+      setMessage("Latest saved revision loaded. Unsaved local edits were discarded.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Reload failed"); }
+    finally { setBusy(false); }
+  }
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
   async function createJob(asTemplate: boolean) {
     if (busy || !canCreateJob(role) || !(await beforeNavigate())) return;
     setBusy(true);
@@ -331,7 +352,7 @@ export function JobListingEditor({
           </div>
         </div>
       </>}
-      {message ? <div className="callout" role={conflict ? "alert" : "status"}>{message}{conflict ? <button type="button" className="button button-ghost button-small" onClick={() => { if (selected) selectJob(selected); }}>Discard local edits and reload saved revision</button> : null}</div> : null}
+      {message ? <div className="callout" role={conflict ? "alert" : "status"}>{message}{conflict ? <button type="button" className="button button-ghost button-small" onClick={() => void reloadSelected()}>Discard local edits and reload latest revision</button> : null}</div> : null}
     </div>
   </div>;
 }
