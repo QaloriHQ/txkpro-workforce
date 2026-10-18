@@ -46,7 +46,6 @@ export function AdminWorkspaceShell({ children, isSuperAdmin, stagingMgid = fals
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => { setDrawerOpen(false); }, [pathname]);
   useEffect(() => {
     if (!drawerOpen) return;
     function onEscape(event: KeyboardEvent) {

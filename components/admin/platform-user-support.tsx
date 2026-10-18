@@ -81,7 +81,7 @@ export function PlatformUserSupport({ target, invitations }: {
       <p className="eyebrow">Support preview — not impersonation</p>
       <h3>{preview.role} · {preview.scopeType}{preview.scopeId ? " / " + preview.scopeId : ""}</h3>
       <p>Account: {preview.name} · {preview.accountStatus}</p>
-      <p className="txk-admin-small">Expected role navigation (no target's private records loaded):</p>
+      <p className="txk-admin-small">Expected role navigation (no private records loaded):</p>
       <ul>{preview.expectedSections.map(item => <li key={item}>{item}</li>)}</ul>
       <p><strong>Actions in this preview are disabled.</strong> Supported delegation is listed below.</p>
     </section>}
