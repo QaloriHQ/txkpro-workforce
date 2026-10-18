@@ -23,6 +23,7 @@ type EmployerSection =
   | "saved"
   | "referrals"
   | "interviews"
+  | "pipeline-builder"
   | "pipeline"
   | "jobs"
   | "placements"
