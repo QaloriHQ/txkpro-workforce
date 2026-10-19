@@ -85,3 +85,10 @@ test("staging-only configuration and expired idempotency", () => {
   assert.equal(retrySafe(new Date(Date.now() - 3600000).toISOString()), true);
   assert.equal(retrySafe(new Date(Date.now() - 86400000).toISOString()), false);
 });
+
+test("OAuth rejection classifier never returns arbitrary provider content", async () => {
+  const { oauthRejectionCategory } = await import("../lib/checkr/contracts.ts");
+  for (const payload of [null, [], "private-secret", { error: "invalid code private-secret" }, { error: { private: "secret" } }, { message: "private-secret" }])
+    assert.equal(oauthRejectionCategory(payload), "unclassified");
+  assert.equal(oauthRejectionCategory({ error: "Application not found." }), "application_not_found");
+});

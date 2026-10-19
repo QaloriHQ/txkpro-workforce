@@ -6,6 +6,7 @@ import ts from "typescript";
 import * as contracts from "../lib/checkr/contracts.ts";
 function fixture({
   tokenStatus = 200,
+  tokenError = "secret-provider-detail",
   saveError = false,
   price = 1000,
   wrongInvitation = false,
@@ -51,7 +52,7 @@ function fixture({
     calls.push({ url, options });
     const path = new URL(url).pathname;
     let data;
-    if (path === "/oauth/tokens") return Response.json({ access_token: "access", checkr_account_id: "acct", error: "secret-provider-detail" }, { status: tokenStatus });
+    if (path === "/oauth/tokens") return Response.json({ access_token: "access", checkr_account_id: "acct", error: tokenError }, { status: tokenStatus });
     else if (path === "/v1/account")
       data = {
         id: "acct",
@@ -247,5 +248,16 @@ test("OAuth diagnostics distinguish token rejection, save failure and success wi
     if (options.tokenStatus) { assert.match(logs, /422/); assert.match(logs, /token_exchange/); assert.equal(f.services.some(s => s.op === "connect"), false); }
     else if (options.saveError) assert.match(logs, /save_connection/);
     else assert.match(logs, /checkr_oauth_connection_saved/);
+  }
+});
+
+test("OAuth rejection records only documented categories and preserves token-exchange failure", async () => {
+  for (const [tokenError, category] of [["application not found", "application_not_found"], ["invalid code", "invalid_code"], ["user not found", "user_not_found"], ["missing param(s)", "missing_parameters"], ["sensitive-provider-response", "unclassified"]]) {
+    const f = fixture({ tokenStatus: 422, tokenError });
+    await assert.rejects(f.api.connect("private-employer", "private-code"), e => e.status === 503);
+    const rejection = f.logs.find(l => l[0] === "checkr_oauth_token_rejected");
+    assert.equal(rejection[1].category, category);
+    assert.equal(JSON.stringify(f.logs).includes(tokenError), false);
+    assert.equal(f.services.some(s => s.op === "connect"), false);
   }
 });
