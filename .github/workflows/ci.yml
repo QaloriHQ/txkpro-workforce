@@ -1012,5 +1012,6 @@ jobs:
       - run: npm run ats-jobs:qa
       - run: npm run ats-pipelines:qa
       - run: node --experimental-strip-types --test scripts/ats-02-canvas-ui-qa.mjs
+      - run: node --experimental-strip-types --test scripts/ats-02-experience-qa.mjs
       - run: npm run lint
       - run: npm run build

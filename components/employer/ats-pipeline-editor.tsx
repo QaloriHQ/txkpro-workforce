@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, DocumentDuplicateIcon,
   PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, MagnifyingGlassMinusIcon,
-  MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon,
+  MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon,
 } from "@heroicons/react/24/outline";
 import {
   ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE,
@@ -13,6 +13,7 @@ import {
   type PipelineTemplateSummary, type PipelineVersionSummary, type PipelineField,
 } from "@/lib/employer/ats-pipelines";
 import type { EmployerRole } from "@/lib/employer/types";
+import { autoLayoutPipeline, inspectPipelineGraph, simulateCandidateJourney } from "@/lib/employer/pipeline-experience";
 
 const LABELS: Record<ATSNodeKind, string> = {
   start: "Start", end: "End", application_form: "Application / form", assessment: "Assessment",
@@ -93,6 +94,14 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [linking, setLinking] = useState<{source:string;outcome?:"yes"|"no"} | null>(null);
   const [pointer, setPointer] = useState<{x:number;y:number} | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [branchChoices, setBranchChoices] = useState<Record<string, "yes" | "no">>({});
+  const [recovery, setRecovery] = useState<{ name: string; description: string; graph: PipelineGraph; revision: number } | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState("Autosave enabled");
+  const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
+  const [viewportSize, setViewportSize] = useState({width:950,height:500});
+  const latestDraft = useRef("");
+  const panRef = useRef<{ clientX: number; clientY: number; left: number; top: number } | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const editor = isPipelineConfigurator(role);
@@ -105,11 +114,51 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     try { validatePipelineGraph(graph, true); return ""; }
     catch (err) { return err instanceof Error ? err.message : "Invalid graph"; }
   }, [graph]);
+  const diagnostics = useMemo(() => inspectPipelineGraph(graph), [graph]);
+  const journey = useMemo(() => simulateCandidateJourney(graph, branchChoices), [graph, branchChoices]);
+  const draftKey = selectedId ? "txkpro:ats-draft:" + employerId + ":" + selectedId : "";
+  useEffect(() => {
+    latestDraft.current = JSON.stringify({ name, description, graph });
+    if (!dirty || !draftKey || !editor) return;
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({
+        savedAt: Date.now(), revision, name, description, graph,
+      }));
+    } catch { /* The server remains the durable save target. */ }
+  }, [name, description, graph, dirty, draftKey, editor, revision]);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      if (!draftKey || !editor) { setRecovery(null); return; }
+      try {
+        const raw = window.localStorage.getItem(draftKey);
+        if (!raw || raw.length > 150000) { setRecovery(null); return; }
+        const candidate = JSON.parse(raw) as { savedAt: number; revision: number; name: string; description: string; graph: PipelineGraph };
+        if (Date.now() - candidate.savedAt > 7 * 86400000 || candidate.revision !== revision) {
+          setRecovery(null); return;
+        }
+        const validated = validatePipelineGraph(candidate.graph, false);
+        if (typeof candidate.name !== "string" || typeof candidate.description !== "string") return;
+        if (JSON.stringify({name:candidate.name,description:candidate.description,graph:validated}) ===
+            JSON.stringify({name,description,graph})) { setRecovery(null); return; }
+        setRecovery({ name: candidate.name, description: candidate.description, graph: validated, revision });
+      } catch { setRecovery(null); }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+    // Inspect recovery on pipeline selection, not every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey, editor]);
   useEffect(() => {
     function beforeUnload(e: BeforeUnloadEvent) { if (dirty) { e.preventDefault(); e.returnValue = ""; } }
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [dirty]);
+  useEffect(() => {
+    const element=viewportRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer=new ResizeObserver(() => setViewportSize({width:element.clientWidth,height:element.clientHeight}));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [preview, selectedId]);
   useEffect(() => {
     if (!settingsOpen) return;
     const prior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -139,10 +188,10 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   }
   function choosePipeline(p: PipelineTemplateSummary) {
     if (dirty && !window.confirm("Discard unsaved pipeline changes?")) return;
-    setSelectedId(p.id); setName(p.name); setDescription(p.description);
+    setSelectedId(p.id); setName(p.name); setDescription(p.description); setAutosaveStatus("Autosave enabled");
     setGraph(clone(p.graph)); setRevision(p.revision);
     setDirty(false); setError(""); setMessage(""); setSelectedNodeId(null);
-    setHistory([]); setFuture([]); setPreview(false); setSettingsOpen(false); setLinking(null); setPointer(null);
+    setHistory([]); setFuture([]); setPreview(false); setSettingsOpen(false); setLinking(null); setPointer(null); setBranchChoices({}); setRecovery(null);
   }
   function undo() {
     if (!history.length) return;
@@ -184,6 +233,33 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   function finishLink(target: string) {
     if (linking) connect(linking.source, target, linking.outcome);
   }
+  function recoverDraft() {
+    if (!recovery) return;
+    try { validatePipelineGraph(recovery.graph, false); }
+    catch { setRecovery(null); setError("Recovery copy is invalid"); return; }
+    if (recovery.revision !== revision) { setRecovery(null); setError("Pipeline revision changed. Reload before restoring."); return; }
+    change(clone(recovery.graph)); setName(recovery.name); setDescription(recovery.description);
+    setRecovery(null); setAutosaveStatus("Recovered draft — saving");
+  }
+  function discardRecovery() {
+    if (draftKey) try { window.localStorage.removeItem(draftKey); } catch { /* storage may be disabled */ }
+    setRecovery(null);
+  }
+  function centerOnNode(node: PipelineNode) {
+    const view = viewportRef.current;
+    if (!view) return;
+    view.scrollTo({ left: Math.max(0,(node.x+105)*zoom-view.clientWidth/2),
+      top: Math.max(0,(node.y+40)*zoom-view.clientHeight/2), behavior: "smooth" });
+  }
+  function panToMapPoint(event: React.MouseEvent<HTMLButtonElement>) {
+    const view = viewportRef.current;
+    if (!view) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX-rect.left)/rect.width*3000;
+    const y = (event.clientY-rect.top)/rect.height*2400;
+    view.scrollTo({ left: Math.max(0,x*zoom-view.clientWidth/2),
+      top: Math.max(0,y*zoom-view.clientHeight/2), behavior: "smooth" });
+  }
   function editNode(id: string) {
     if (linking) { finishLink(id); return; }
     setSelectedNodeId(id); setSettingsOpen(true);
@@ -205,9 +281,9 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   }
   async function save(): Promise<boolean> {
     if (!selectedId || !editor || busy) return false;
-    setBusy(true); setError("");
+    const snapshot = JSON.stringify({ name, description, graph });
+    setBusy(true); setError(""); setAutosaveStatus("Saving…");
     try {
-      // Save incomplete drafts; publish validates the complete connected DAG.
       validatePipelineGraph(graph, false);
       const response = await fetch("/api/employer/pipelines/" + selectedId + endpoint, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -216,11 +292,27 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
       if (!response.ok) throw new Error(await getMessage(response));
       const { pipeline } = await response.json() as { pipeline: PipelineTemplateSummary };
       setPipelines((p) => p.map((row) => row.id === selectedId ? pipeline : row));
-      setRevision(pipeline.revision); setDirty(false); setMessage("Saved draft revision " + pipeline.revision);
-      return true;
-    } catch (e) { setError(e instanceof Error ? e.message : "Save failed"); return false; }
-    finally { setBusy(false); }
+      setRevision(pipeline.revision);
+      if (latestDraft.current === snapshot) {
+        setDirty(false); setAutosaveStatus("All changes saved");
+        setMessage("Saved draft revision " + pipeline.revision);
+        try { window.localStorage.removeItem("txkpro:ats-draft:" + employerId + ":" + selectedId); } catch { /* optional offline recovery */ }
+        return true;
+      }
+      setDirty(true); setAutosaveStatus("New edits pending");
+      return false;
+    } catch (e) {
+      setAutosaveStatus("Autosave paused — retry Save draft");
+      setError(e instanceof Error ? e.message : "Save failed"); return false;
+    } finally { setBusy(false); }
   }
+  useEffect(() => {
+    if (!dirty || busy || !editor || !selectedId || recovery || autosaveStatus === "Autosave paused — retry Save draft") return;
+    const timer = window.setTimeout(() => { void save(); }, 1800);
+    return () => window.clearTimeout(timer);
+    // debounce; save captures revision and full draft snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, busy, graph, name, description, selectedId, revision, recovery, autosaveStatus, editor]);
   async function publish() {
     if (!selectedId || !publisher || busy) return;
     if (check) { setError("Fix workflow before publishing: " + check); return; }
@@ -324,28 +416,83 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           </div>
           <div className="ats-pipeline-actions">
 
-            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate preview"}</button>
+            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate journey simulator"}</button>
             <button type="button" className="button button-small button-ghost" disabled={!editor || busy} onClick={() => void duplicate()}><DocumentDuplicateIcon aria-hidden="true" /> Duplicate</button>
             <button type="button" className="button button-small button-ghost" disabled={!dirty || !editor || busy} onClick={() => void save()}>{busy ? "Working…" : "Save draft"}</button>
             <button type="button" className="button button-small button-dark" disabled={!publisher || busy || Boolean(check)}
               title={check || "Publish an immutable version"} onClick={() => void publish()}><CheckCircleIcon aria-hidden="true" /> Publish version</button>
           </div>
-          <p className="card-sub" role="status">{dirty ? "Unsaved draft changes" : "Saved draft"} · Revision {revision} · {currentVersions.length ? "Latest v" + currentVersions[0].versionNumber : "No published version"}</p>
-          {check ? <p className="ats-pipeline-validation" role="status"><ExclamationTriangleIcon aria-hidden="true" /> Publish blocked: {check}</p> :
+          <p className="card-sub" role="status">{autosaveStatus} · {dirty ? "Unsaved changes" : "Saved draft"} · Revision {revision} · {currentVersions.length ? "Latest v" + currentVersions[0].versionNumber : "No published version"}</p>
+          {recovery ? <div className="ats-pipeline-recovery" role="alert">
+            <strong>Recover local draft?</strong> Unsaved edits from this browser are available for this pipeline.
+            <button type="button" className="button button-small button-dark" onClick={recoverDraft}>Restore draft</button>
+            <button type="button" className="button button-small button-ghost" onClick={discardRecovery}>Discard copy</button>
+          </div> : null}
+          {check ? <p className="ats-pipeline-validation" role="status"><ExclamationTriangleIcon aria-hidden="true" /> Publish blocked: {check} · {diagnostics.filter(i=>i.severity==="error").length} highlighted issue(s)</p> :
             <p className="ats-pipeline-valid"><CheckCircleIcon aria-hidden="true" /> Graph passes structural validation</p>}
           {message ? <p role="status">{message}</p> : null}
           {error ? <p role="alert" className="ats-pipeline-validation">{error}{error.toLowerCase().includes("revision") ? <button className="button button-small button-ghost" type="button" onClick={() => location.reload()}><ArrowPathIcon aria-hidden="true" /> Reload</button> : null}</p> : null}
         </div>
-        {preview ? <div className="card" aria-label="Applicant progress preview">
-          <h2>Candidate-visible steps (preview)</h2>
-          <p className="card-sub">Only public instructions are displayed. This is a preview, not a candidate application.</p>
-          <ol>{graph.nodes.filter((n) => n.candidateVisible && n.kind !== "start").map((n) => <li key={n.id}><strong>{n.label}</strong> {n.required ? "(Required)" : "(Optional)"}<p>{n.config.instructions}</p></li>)}</ol>
+        {preview ? <div className="card ats-pipeline-simulator" aria-label="Candidate journey simulator">
+          <h2>Candidate journey simulator</h2>
+          <p className="card-sub">Planning preview only. No applicant data or status changes. Choose a decision branch to see how it changes the candidate-visible path.</p>
+          <div className="ats-pipeline-simulator-grid">
+            <section aria-label="Human decision scenarios">
+              <h3>Decision scenario</h3>
+              {graph.nodes.filter(n=>n.kind==="decision").map(node=><label key={node.id} className="ats-pipeline-simulator-choice">
+                <span>{node.label}</span>
+                <select className="select" value={branchChoices[node.id]??""}
+                  onChange={e=>setBranchChoices(old=>({...old,[node.id]:e.target.value as "yes"|"no"}))}>
+                  <option value="">Await human decision</option><option value="yes">Yes path</option><option value="no">No path</option>
+                </select>
+              </label>)}
+              {!graph.nodes.some(n=>n.kind==="decision") ? <p className="card-sub">This workflow has no decision branches.</p> : null}
+              <p className="card-sub">Simulation never automatically accepts or rejects a candidate.</p>
+            </section>
+            <section aria-label="Candidate next action and timeline">
+              <h3>Candidate next action</h3>
+              <p className="ats-pipeline-next-action">{journey.nextAction ?? "Await next steps"}</p>
+              {journey.awaitingDecision ? <p className="ats-pipeline-validation">This preview stops at a pending human decision.</p> : null}
+              {journey.diagnostics.map(d=><p className="ats-pipeline-validation" key={d}>{d}</p>)}
+              <ol className="ats-pipeline-candidate-timeline">
+                {journey.steps.map((step,i)=><li key={step.id}>
+                  <span className="ats-pipeline-timeline-number">{i+1}</span>
+                  <div><strong>{step.label}</strong><small>{step.owner==="candidate"?"Candidate action":"Waiting on employer"} · {step.required?"Required":"Optional"} · Planned, not completed</small>
+                    {step.instructions ? <p>{step.instructions}</p> : null}
+                    {step.targetHours ? <small>Target: within {step.targetHours} hours of assignment (not a confirmed deadline)</small> : null}
+                    {step.expectedMinutes ? <small>Estimated effort: {step.expectedMinutes} minutes</small> : null}
+                  </div>
+                </li>)}
+              </ol>
+              {!journey.steps.length ? <p className="card-sub">No candidate-visible steps on this selected path yet.</p> : null}
+            </section>
+          </div>
         </div> : <>
           <div className="ats-pipeline-canvas-area">
-            <div className="ats-pipeline-canvas-wrap">
+            <div className="ats-pipeline-canvas-wrap" ref={viewportRef}
+              onScroll={e=>setScrollPosition({left:e.currentTarget.scrollLeft,top:e.currentTarget.scrollTop})}>
               <div className="ats-pipeline-canvas" ref={canvasRef}
+                style={{width:3000*zoom,height:2400*zoom}}
+                onPointerDown={e=>{
+                  if (e.button!==0 || linking || (e.target as HTMLElement).closest("[data-pipeline-node]") ||
+                      (e.target as HTMLElement).closest(".ats-pipeline-canvas-hint")) return;
+                  const view=viewportRef.current;
+                  if (!view) return;
+                  panRef.current={clientX:e.clientX,clientY:e.clientY,left:view.scrollLeft,top:view.scrollTop};
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerUp={e=>{
+                  if (!panRef.current) return;
+                  panRef.current=null;
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+                }}
+                onPointerCancel={()=>{panRef.current=null;}}
                 onDragOver={(e) => e.preventDefault()} onDrop={onCanvasDrop}
                 onPointerMove={(e) => {
+                  if (panRef.current && viewportRef.current) {
+                    viewportRef.current.scrollLeft=panRef.current.left-(e.clientX-panRef.current.clientX);
+                    viewportRef.current.scrollTop=panRef.current.top-(e.clientY-panRef.current.clientY);
+                  }
                   if (!linking) return;
                   const rect = canvasRef.current?.getBoundingClientRect();
                   if (rect) setPointer({ x: (e.clientX-rect.left)/zoom, y:(e.clientY-rect.top)/zoom });
@@ -354,8 +501,8 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   if (e.key === "Escape" && linking) { setLinking(null); setPointer(null); }
                 }}
                 role="region" aria-label="Interactive hiring workflow canvas" tabIndex={0}>
-                <div className="ats-pipeline-canvas-content" style={{ transform: `scale(${zoom})` }}>
-                  <svg viewBox="0 0 1800 1100" width="1800" height="1100" aria-hidden="true" className="ats-pipeline-wires">
+                <div className="ats-pipeline-canvas-content" style={{ width:3000,height:2400,transform: `scale(${zoom})` }}>
+                  <svg viewBox="0 0 3000 2400" width="3000" height="2400" aria-hidden="true" className="ats-pipeline-wires">
                     <defs><marker id="ats-pipeline-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor" /></marker></defs>
                     {graph.edges.map((edge) => {
                       const a=graph.nodes.find((n) => n.id===edge.source), b=graph.nodes.find((n) => n.id===edge.target);
@@ -375,6 +522,10 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   {graph.nodes.map((node) => <div key={node.id} data-pipeline-node={node.id}
                     className={"ats-pipeline-node " + (node.id === selectedNodeId ? "is-selected " : "") + (linking ? "is-linking" : "")}
                     style={{ left:node.x,top:node.y }}>
+                    {diagnostics.some(issue=>issue.nodeId===node.id) ? <span className="ats-pipeline-node-issue" role="status"
+                      title={diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}>
+                      <ExclamationTriangleIcon aria-hidden="true"/><span className="sr-only">{diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}</span>
+                    </span> : null}
                     {node.kind !== "start" ? <button type="button"
                       className="ats-pipeline-port ats-pipeline-port-input"
                       title={linking ? "Connect to "+node.label : "Incoming connections to "+node.label}
@@ -423,7 +574,27 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               <output aria-label="Canvas zoom level">{Math.round(zoom*100)}%</output>
               <button type="button" disabled={zoom >= 1.6} onClick={() => setZoom((v) => Math.min(1.6,+(v+.1).toFixed(2)))} title="Zoom in" aria-label="Zoom in"><MagnifyingGlassPlusIcon aria-hidden="true"/></button>
               <button type="button" onClick={() => setZoom(1)} title="Reset zoom to 100%" aria-label="Reset zoom"><ArrowsPointingOutIcon aria-hidden="true"/></button>
+              <span className="ats-pipeline-canvas-divider" aria-hidden="true"/>
+              <button type="button" disabled={!editor} title="Automatically arrange workflow nodes" aria-label="Auto-layout pipeline"
+                onClick={() => change(autoLayoutPipeline(graph))}><ArrowsPointingInIcon aria-hidden="true"/></button>
+              <button type="button" disabled={!selectedNode} title="Center selected component" aria-label="Center selected component"
+                onClick={() => {if(selectedNode) centerOnNode(selectedNode);}}><MagnifyingGlassPlusIcon aria-hidden="true"/></button>
             </div>
+            <button type="button" className="ats-pipeline-minimap" aria-label="Minimap: click to pan across workflow" title="Click to move the canvas"
+              onClick={panToMapPoint}>
+              <svg viewBox="0 0 3000 2400" width="190" height="152" aria-hidden="true">
+                <rect x={scrollPosition.left/zoom} y={scrollPosition.top/zoom}
+                  width={viewportSize.width/zoom} height={viewportSize.height/zoom}
+                  fill="none" stroke="currentColor" strokeWidth="24" rx="22"/>
+                {graph.edges.map(edge=>{
+                  const a=graph.nodes.find(n=>n.id===edge.source), b=graph.nodes.find(n=>n.id===edge.target);
+                  return a&&b ? <line key={edge.id} x1={a.x+100} y1={a.y+40} x2={b.x+100} y2={b.y+40} stroke="currentColor" strokeWidth="12" opacity=".55"/> : null;
+                })}
+                {graph.nodes.map(node=><rect key={node.id} x={node.x} y={node.y} width="210" height="80" rx="12"
+                  fill={node.id===selectedNodeId?"var(--txk-info)":"var(--txk-text-muted)"}/>)}
+              </svg>
+              <span>Minimap · pan</span>
+            </button>
           </div>
           {settingsOpen && selectedNode ? <div className="ats-pipeline-modal-backdrop" onMouseDown={(e) => { if (e.target===e.currentTarget) setSettingsOpen(false); }}>
             <div className="card ats-pipeline-inspector ats-pipeline-modal" ref={modalRef}
@@ -441,6 +612,22 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                     <input type="checkbox" checked={selectedNode.required} disabled={!editor || selectedNode.kind==="start"} onChange={(e) => setNode({ ...selectedNode, required:e.target.checked })}/></label>
                   <label><span className="ats-pipeline-setting-title">Candidate-visible <Help label="Candidate visibility" text="Controls whether candidates see this step on their progress tracker. Private internal reviews must stay hidden."/></span>
                     <input type="checkbox" checked={selectedNode.candidateVisible} disabled={!editor} onChange={(e) => setNode({ ...selectedNode,candidateVisible:e.target.checked })}/></label>
+                </div>
+                <label><span className="ats-pipeline-setting-title">Responsible role <Help label="Responsible role" text="Who is accountable for this step? The candidate view shows either a candidate action or waiting on the employer, never private role assignments."/></span>
+                  <select className="select" disabled={!editor} value={selectedNode.config.ownerRole??""}
+                    onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,
+                      ownerRole:(e.target.value||undefined) as PipelineNode["config"]["ownerRole"]}})}>
+                    <option value="">Based on step type</option>
+                    <option value="candidate">Candidate</option><option value="recruiter">Recruiter</option>
+                    <option value="hiring_manager">Hiring manager</option><option value="employer_admin">Employer administrator</option>
+                  </select></label>
+                <div className="ats-pipeline-settings-duration">
+                  <label><span className="ats-pipeline-setting-title">Estimated effort (minutes) <Help label="Expected minutes" text="Approximate time to complete the task. Informational only; does not set an appointment."/></span>
+                    <input className="input" type="number" min={1} max={1440} disabled={!editor} value={selectedNode.config.expectedMinutes??""}
+                      onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,expectedMinutes:e.target.value?Number(e.target.value):undefined}})}/></label>
+                  <label><span className="ats-pipeline-setting-title">Target window (hours) <Help label="Target hours" text="Planning window measured after this step is assigned. This is not a firm calendar deadline or a reminder until ATS-03 task assignments launch."/></span>
+                    <input className="input" type="number" min={1} max={2160} disabled={!editor} value={selectedNode.config.targetHours??""}
+                      onChange={e=>setNode({...selectedNode,config:{...selectedNode.config,targetHours:e.target.value?Number(e.target.value):undefined}})}/></label>
                 </div>
                 <label><span className="ats-pipeline-setting-title">Instructions <Help label="Instructions" text="Candidate-safe guidance for completing this step. Do not include private notes or assessment answers."/></span>
                   <textarea className="textarea" rows={3} value={selectedNode.config.instructions??""} disabled={!editor}

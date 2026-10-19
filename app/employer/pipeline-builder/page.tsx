@@ -1,5 +1,6 @@
 import Link from "next/link";
 import "./pipeline-editor-enhancements.css";
+import "./pipeline-simulator.css";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { ATSPipelineEditor } from "@/components/employer/ats-pipeline-editor";
