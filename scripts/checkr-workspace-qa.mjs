@@ -8,7 +8,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { seal, unseal } from "../lib/rewards/contracts.ts";
 import { sandboxConfigurationIssues } from "../lib/checkr/contracts.ts";
 function oauthFixture() {
-  const stored = new Map(), connected = [];
+  const stored = new Map(), connected = [], logs = [];
   let actor = "owner", allowed = true;
   const env = { CHECKR_SANDBOX_CLIENT_ID: "partner", CHECKR_SANDBOX_CLIENT_SECRET: "secret", CHECKR_SANDBOX_APP_ORIGIN: "https://staging-workforce.txkpro.com", REWARDS_ENCRYPTION_KEY: crypto.randomBytes(32).toString("base64") };
   const jar = { set: (key, value, options) => stored.set(key, { value, options }), get: key => stored.get(key), delete: key => stored.delete(key) };
@@ -19,8 +19,8 @@ function oauthFixture() {
     "./contracts": { sandboxConfigurationIssues }, "@/lib/rewards/contracts": { seal, unseal },
   };
   const code = ts.transpileModule(readFileSync(new URL("../lib/checkr/oauth.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { exports: mod.exports, module: mod, require: n => { if (!(n in dependencies)) throw Error(n); return dependencies[n]; }, process: { env }, Date, Buffer, URL, Response, console: { warn() {}, info() {} } });
-  return { api: mod.exports, stored, connected, env, actor: a => { actor = a; }, deny: () => { allowed = false; } };
+  vm.runInNewContext(code, { exports: mod.exports, module: mod, require: n => { if (!(n in dependencies)) throw Error(n); return dependencies[n]; }, process: { env }, Date, Buffer, URL, Response, console: { warn: (...args) => logs.push(args), info: (...args) => logs.push(args) } });
+  return { api: mod.exports, stored, connected, env, logs, actor: a => { actor = a; }, deny: () => { allowed = false; } };
 }
 test("OAuth binds encrypted secure cookie, state, employer and actor", async () => {
   const f = oauthFixture();
@@ -114,4 +114,17 @@ test("candidate read projection isolates subject and excludes employer-only fiel
     assert.equal((await read("candidate"))[0].canOpen, false);
     await assert.rejects(db.query("select * from security.wf_checkr_accounts"));
   } finally { await db.close(); }
+});
+
+test("OAuth session diagnostics classify missing cookie and wrong actor without identifiers or state", async () => {
+  const missing = oauthFixture();
+  await assert.rejects(missing.api.finishConnection("private-code", "a".repeat(64)));
+  assert.match(JSON.stringify(missing.logs), /session_cookie/);
+  const f = oauthFixture(), { url } = await f.api.beginConnection("private-employer");
+  const state = new URL(url).searchParams.get("state");
+  f.actor("private-actor");
+  await assert.rejects(f.api.finishConnection("private-code", state));
+  const logs = JSON.stringify(f.logs);
+  assert.match(logs, /actor_binding/);
+  for (const secret of [state, "private-employer", "private-actor", "private-code", f.env.REWARDS_ENCRYPTION_KEY]) assert.equal(logs.includes(secret), false);
 });

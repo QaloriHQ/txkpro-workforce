@@ -61,6 +61,8 @@ async function service<T = Record<string, unknown>>(
   const { data, error } = await createAdminClient().rpc("checkr_service", {
     p_input: input,
   });
+  if (error && input.op === "connect")
+    console.warn("checkr_oauth_save_failed", { code: /^[A-Z0-9]{5}$/.test(error.code || "") ? error.code : "unknown" });
   if (error)
     throw new Response(
       error.code === "42501"
@@ -93,6 +95,8 @@ async function api(
     redirect: "error",
     signal: AbortSignal.timeout(15000),
   });
+  if (path === "/oauth/tokens")
+    console.info("checkr_oauth_token_response", { status: r.status });
   if (!r.ok)
     throw new Response(
       "Checkr did not confirm this operation. Resume the same request.",
@@ -114,34 +118,44 @@ async function account(employerId: string) {
   return { ...stored, token };
 }
 export async function connect(employerId: string, code: string) {
-  const auth = await authority({ op: "connect", employerId });
-  const c = config();
-  if (!code || code.length > 10000)
-    throw new Response("Connection code required", { status: 400 });
-  const result = await api(
-    "/oauth/tokens",
-    undefined,
-    new URLSearchParams({
-      client_id: c.clientId,
-      client_secret: c.secret,
-      code,
-    }),
-  );
-  if (typeof result.access_token !== "string" || !result.access_token)
-    throw new Response("Checkr connection not confirmed", { status: 503 });
-  const accountId = providerId(result.checkr_account_id);
-  await service({
-    op: "connect",
-    employerId,
-    actor: auth.actor,
-    accountId,
-    sealed: seal(
-      { token: result.access_token },
-      c.key,
-      `checkr:staging:${employerId}`,
-    ),
-  });
-  return { connected: true };
+  let stage = "connection_authority";
+  try {
+    const auth = await authority({ op: "connect", employerId });
+    const c = config();
+    if (!code || code.length > 10000)
+      throw new Response("Connection code required", { status: 400 });
+    stage = "token_exchange";
+    const result = await api(
+      "/oauth/tokens",
+      undefined,
+      new URLSearchParams({
+        client_id: c.clientId,
+        client_secret: c.secret,
+        code,
+      }),
+    );
+    stage = "token_response_validation";
+    if (typeof result.access_token !== "string" || !result.access_token)
+      throw new Response("Checkr connection not confirmed", { status: 503 });
+    const accountId = providerId(result.checkr_account_id);
+    stage = "save_connection";
+    await service({
+      op: "connect",
+      employerId,
+      actor: auth.actor,
+      accountId,
+      sealed: seal(
+        { token: result.access_token },
+        c.key,
+        `checkr:staging:${employerId}`,
+      ),
+    });
+    console.info("checkr_oauth_connection_saved");
+    return { connected: true };
+  } catch (error) {
+    console.warn("checkr_oauth_connection_failed", { stage, status: error instanceof Response ? error.status : null });
+    throw error;
+  }
 }
 export async function setup(employerId: string) {
   await authority({ op: "connect", employerId });
