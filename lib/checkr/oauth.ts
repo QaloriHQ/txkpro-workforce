@@ -2,14 +2,19 @@ import "server-only";
 import { cookies } from "next/headers";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { authority, connect } from "./server";
-import { sandboxConfigured } from "./contracts";
+import { sandboxConfigurationIssues } from "./contracts";
 import { seal, unseal } from "@/lib/rewards/contracts";
 
 const COOKIE = "__Host-checkr-oauth";
 const CONTEXT = "checkr:staging:oauth";
 type Pending = { state: string; employerId: string; actor: string; expires: number };
 function configuration() {
-  if (!sandboxConfigured(process.env)) throw new Response("Checkr sandbox setup is unavailable.", { status: 503 });
+  const issues = sandboxConfigurationIssues(process.env);
+  if (issues.length) {
+    console.warn("checkr_sandbox_configuration", { issues });
+    throw new Response(`Checkr sandbox setup is unavailable. Staging configuration needs: ${issues.join(", ")}.`, { status: 503 });
+  }
+  console.info("checkr_sandbox_configuration_ready");
   return { key: process.env.REWARDS_ENCRYPTION_KEY!, clientId: process.env.CHECKR_SANDBOX_CLIENT_ID!, origin: process.env.CHECKR_SANDBOX_APP_ORIGIN! };
 }
 export async function beginConnection(employerId: string) {

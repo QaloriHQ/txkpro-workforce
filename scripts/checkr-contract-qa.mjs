@@ -8,7 +8,16 @@ import {
   operationalStatus,
   retrySafe,
   sandboxConfigured,
+  sandboxConfigurationIssues,
 } from "../lib/checkr/contracts.ts";
+test("sandbox diagnostics identify missing configuration without exposing values or loosening origin", () => {
+  assert.deepEqual(sandboxConfigurationIssues({}), ["partner client ID", "partner client secret", "staging app origin", "token encryption key"]);
+  const env = { CHECKR_SANDBOX_CLIENT_ID: "id", CHECKR_SANDBOX_CLIENT_SECRET: "secret", CHECKR_SANDBOX_APP_ORIGIN: "https://staging-workforce.txkpro.com", REWARDS_ENCRYPTION_KEY: Buffer.alloc(32).toString("base64") };
+  assert.deepEqual(sandboxConfigurationIssues(env), []);
+  assert.deepEqual(sandboxConfigurationIssues({ ...env, CHECKR_SANDBOX_APP_ORIGIN: env.CHECKR_SANDBOX_APP_ORIGIN + "/" }), ["staging app origin"]);
+  assert.deepEqual(sandboxConfigurationIssues({ ...env, REWARDS_ENCRYPTION_KEY: Buffer.alloc(31).toString("base64") }), ["token encryption key"]);
+  assert.deepEqual(sandboxConfigurationIssues({ ...env, CHECKR_SANDBOX_CLIENT_SECRET: " " }), ["partner client secret"]);
+});
 test("Checkr signature compact JSON, wrong key and malformed payload", () => {
   const raw = ' { "id": "evt", "type": "report.completed" } ';
   const sig = createHmac("sha256", "fixture")

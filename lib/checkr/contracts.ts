@@ -8,14 +8,16 @@ export type CheckrPackage = {
   screenings: string[];
 };
 export type CheckrNode = { id: string; name: string; packages: string[] };
+export function sandboxConfigurationIssues(env: Record<string, string | undefined>) {
+  const issues: string[] = [];
+  if (!env.CHECKR_SANDBOX_CLIENT_ID?.trim()) issues.push("partner client ID");
+  if (!env.CHECKR_SANDBOX_CLIENT_SECRET?.trim()) issues.push("partner client secret");
+  if (env.CHECKR_SANDBOX_APP_ORIGIN !== "https://staging-workforce.txkpro.com") issues.push("staging app origin");
+  if (!env.REWARDS_ENCRYPTION_KEY || Buffer.from(env.REWARDS_ENCRYPTION_KEY, "base64").length !== 32) issues.push("token encryption key");
+  return issues;
+}
 export function sandboxConfigured(env: Record<string, string | undefined>) {
-  return Boolean(
-    env.CHECKR_SANDBOX_CLIENT_ID &&
-    env.CHECKR_SANDBOX_CLIENT_SECRET &&
-    env.CHECKR_SANDBOX_APP_ORIGIN === "https://staging-workforce.txkpro.com" &&
-    env.REWARDS_ENCRYPTION_KEY &&
-    Buffer.from(env.REWARDS_ENCRYPTION_KEY, "base64").length === 32,
-  );
+  return sandboxConfigurationIssues(env).length === 0;
 }
 export function providerId(value: unknown): string {
   if (typeof value !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(value))
