@@ -5,18 +5,22 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 import * as contracts from "../lib/checkr/contracts.ts";
 function fixture({
+  tokenStatus = 200,
+  saveError = false,
   price = 1000,
   wrongInvitation = false,
   reportResult = "consider",
   invitationStatus = "completed",
   invitationUrl = "https://apply.checkrhq-staging.net/invite/test/fixture",
 } = {}) {
+  const logs = [];
   const calls = [],
     services = [];
   let candidateId = null;
   const view = { actor: "canonical-owner" };
   const service = async (input) => {
     services.push(input);
+    if (input.op === "connect" && saveError) throw new Response("secret-database-detail", { status: 409 });
     switch (input.op) {
       case "account":
         return { sealed: "encrypted", accountId: "acct", credentialed: true };
@@ -47,7 +51,7 @@ function fixture({
     calls.push({ url, options });
     const path = new URL(url).pathname;
     let data;
-    if (path === "/oauth/tokens") data = { access_token: "access", checkr_account_id: "acct" };
+    if (path === "/oauth/tokens") return Response.json({ access_token: "access", checkr_account_id: "acct", error: "secret-provider-detail" }, { status: tokenStatus });
     else if (path === "/v1/account")
       data = {
         id: "acct",
@@ -149,9 +153,9 @@ function fixture({
     URLSearchParams,
     URL,
     AbortSignal,
-    console,
+    console: { info: (...args) => logs.push(args), warn: (...args) => logs.push(args) },
   });
-  return { api: vmModule.exports, calls, services };
+  return { api: vmModule.exports, calls, services, logs };
 }
 test("candidate invitation access binds provider object and rejects unsafe or finished links", async () => {
   const own = fixture({ invitationStatus: "pending" });
@@ -229,4 +233,19 @@ test("API reconciliation writes completion only; findings never enter RPC or res
   assert.equal(status.reportStatus, "complete");
   assert.equal(JSON.stringify(f.services).includes("never-return"), false);
   assert.equal(JSON.stringify(f.services).includes("consider"), false);
+});
+
+test("OAuth diagnostics distinguish token rejection, save failure and success without sensitive values", async () => {
+  for (const options of [{ tokenStatus: 422 }, { saveError: true }, {}]) {
+    const f = fixture(options);
+    if (Object.keys(options).length) await assert.rejects(f.api.connect("private-employer", "private-code"));
+    else await f.api.connect("private-employer", "private-code");
+    const logs = JSON.stringify(f.logs);
+    for (const secret of ["private-employer", "private-code", "secret-provider-detail", "secret-database-detail", "canonical-owner", "encrypted"])
+      assert.equal(logs.includes(secret), false);
+    assert.match(logs, /checkr_oauth_token_response/);
+    if (options.tokenStatus) { assert.match(logs, /422/); assert.match(logs, /token_exchange/); assert.equal(f.services.some(s => s.op === "connect"), false); }
+    else if (options.saveError) assert.match(logs, /save_connection/);
+    else assert.match(logs, /checkr_oauth_connection_saved/);
+  }
 });

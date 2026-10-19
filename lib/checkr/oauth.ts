@@ -31,18 +31,32 @@ export async function beginConnection(employerId: string) {
   return { url: url.href };
 }
 export async function finishConnection(code: string, state: string) {
-  const c = configuration();
-  const jar = await cookies();
-  const saved = jar.get(COOKIE)?.value;
-  jar.delete(COOKIE);
-  if (!saved || !/^[a-f0-9]{64}$/.test(state)) throw new Response("Checkr connection expired. Start again.", { status: 400 });
-  let pending: Pending;
-  try { pending = unseal<Pending>(saved, c.key, CONTEXT); }
-  catch { throw new Response("Checkr connection could not be verified.", { status: 400 }); }
-  if (!/^[a-f0-9]{64}$/.test(pending.state) || !timingSafeEqual(Buffer.from(state), Buffer.from(pending.state)) || !Number.isFinite(pending.expires) || pending.expires < Date.now())
-    throw new Response("Checkr connection expired. Start again.", { status: 400 });
-  const auth = await authority({ op: "connect", employerId: pending.employerId });
-  if (auth.actor !== pending.actor) throw new Response("Checkr connection belongs to another session.", { status: 403 });
-  await connect(pending.employerId, code);
-  return pending.employerId;
+  let stage = "configuration";
+  try {
+    const c = configuration();
+    stage = "session_cookie";
+    const jar = await cookies();
+    const saved = jar.get(COOKIE)?.value;
+    jar.delete(COOKIE);
+    if (!saved || !/^[a-f0-9]{64}$/.test(state)) throw new Response("Checkr connection expired. Start again.", { status: 400 });
+    stage = "session_decryption";
+    let pending: Pending;
+    try { pending = unseal<Pending>(saved, c.key, CONTEXT); }
+    catch { throw new Response("Checkr connection could not be verified.", { status: 400 }); }
+    stage = "state_and_expiry";
+    if (!/^[a-f0-9]{64}$/.test(pending.state) || !timingSafeEqual(Buffer.from(state), Buffer.from(pending.state)) || !Number.isFinite(pending.expires) || pending.expires < Date.now())
+      throw new Response("Checkr connection expired. Start again.", { status: 400 });
+    stage = "employer_authority";
+    const auth = await authority({ op: "connect", employerId: pending.employerId });
+    stage = "actor_binding";
+    if (auth.actor !== pending.actor) throw new Response("Checkr connection belongs to another session.", { status: 403 });
+    console.info("checkr_oauth_session_validated");
+    stage = "account_connection";
+    await connect(pending.employerId, code);
+    console.info("checkr_oauth_callback_connected");
+    return pending.employerId;
+  } catch (error) {
+    console.warn("checkr_oauth_callback_failed", { stage, status: error instanceof Response ? error.status : null });
+    throw error;
+  }
 }
