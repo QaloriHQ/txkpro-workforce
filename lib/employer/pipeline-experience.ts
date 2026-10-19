@@ -1,4 +1,4 @@
-import { validatePipelineGraph, type PipelineGraph, type PipelineNode } from "./ats-pipelines";
+import { validatePipelineGraph, type PipelineGraph, type PipelineNode, type PipelineEdge } from "./ats-pipelines";
 
 export type PipelineIssue = { nodeId: string; message: string; severity: "error" | "warning" };
 export type CandidatePreviewStep = {
@@ -101,7 +101,7 @@ export function simulateCandidateJourney(
   while (id && nodes.has(id)) {
     if (seen.has(id)) { diagnostics.push("Workflow cycle detected"); break; }
     seen.add(id);
-    const node = nodes.get(id)!;
+    const node: PipelineNode = nodes.get(id)!;
     if (node.kind === "end") completedPath = true;
     if (node.candidateVisible && node.kind !== "start") {
       steps.push({
@@ -117,7 +117,7 @@ export function simulateCandidateJourney(
     if (node.kind === "decision" && !choices[node.id]) {
       awaitingDecision = node.id; break;
     }
-    const next = node.kind === "decision" ? outgoing.find(edge => edge.outcome === choices[node.id]) : outgoing[0];
+    const next: PipelineEdge | undefined = node.kind === "decision" ? outgoing.find(edge => edge.outcome === choices[node.id]) : outgoing[0];
     if (!next) { diagnostics.push("Missing connection after " + node.label); break; }
     id = next.target;
   }
