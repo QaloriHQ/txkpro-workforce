@@ -47,7 +47,8 @@ function fixture({
     calls.push({ url, options });
     const path = new URL(url).pathname;
     let data;
-    if (path === "/v1/account")
+    if (path === "/oauth/tokens") data = { access_token: "access", checkr_account_id: "acct" };
+    else if (path === "/v1/account")
       data = {
         id: "acct",
         authorized: true,
@@ -157,6 +158,18 @@ test("candidate invitation access binds provider object and rejects unsafe or fi
   assert.equal((await own.api.candidateInvitation("tenant", "order-uuid")).url, "https://apply.checkrhq-staging.net/invite/test/fixture");
   for (const opts of [{ invitationStatus: "completed" }, { invitationStatus: "pending", invitationUrl: "https://evil.example/invite/test" }, { invitationStatus: "pending", invitationUrl: "http://apply.checkrhq-staging.net/invite/test" }])
     await assert.rejects(fixture(opts).api.candidateInvitation("tenant", "order-uuid"));
+});
+test("OAuth token exchange uses documented client credentials form, not a client ID as an API key", async () => {
+  const f = fixture();
+  await f.api.connect("tenant", "authorization-code");
+  const request = f.calls.find(c => c.url.endsWith("/oauth/tokens"));
+  assert.equal(request.options.headers.Authorization, undefined);
+  assert.equal(request.options.body.get("client_id"), "fixture");
+  assert.equal(request.options.body.get("client_secret"), "fixture");
+  assert.equal(request.options.body.get("code"), "authorization-code");
+  const saved = f.services.find(c => c.op === "connect");
+  assert.equal(saved.actor, "canonical-owner");
+  assert.equal(saved.sealed, "encrypted");
 });
 test("provider dispatch uses sandbox origin, canonical actor, stable idempotency and scoped location", async () => {
   const f = fixture();

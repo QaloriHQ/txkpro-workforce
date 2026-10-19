@@ -80,11 +80,11 @@ async function api(
   form?: URLSearchParams,
   key?: string,
 ) {
-  const c = config();
+  config();
   const r = await fetch(`${CHECKR_ORIGIN}${path}`, {
     method: form ? "POST" : "GET",
     headers: {
-      Authorization: `Basic ${Buffer.from(`${token || c.clientId}:`).toString("base64")}`,
+      ...(token ? { Authorization: `Basic ${Buffer.from(`${token}:`).toString("base64")}` } : {}),
       ...(form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
       ...(key ? { "Idempotency-Key": key } : {}),
     },
@@ -122,7 +122,6 @@ export async function connect(employerId: string, code: string) {
     "/oauth/tokens",
     undefined,
     new URLSearchParams({
-      grant_type: "authorization_code",
       client_id: c.clientId,
       client_secret: c.secret,
       code,
