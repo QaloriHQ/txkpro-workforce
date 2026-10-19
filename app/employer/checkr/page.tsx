@@ -8,7 +8,16 @@ import { sandboxConfigured } from "@/lib/checkr/contracts";
 export const dynamic = "force-dynamic";
 export default async function CheckrWorkspace({ searchParams }: { searchParams: Promise<{ employer?: string; connection?: string }> }) {
   const query = await searchParams;
-  const context = await requireEmployerContext({ approved: true, employerId: query.employer });
+  let context;
+  try { context = await requireEmployerContext({ approved: true, employerId: query.employer }); }
+  catch (e) {
+    if (e instanceof Response && e.status === 403) return <main className="page-wrap"><h1>Checkr sandbox</h1>
+      <p>Sign in with an approved employer account to manage Checkr.</p>
+      <Link className="button button-dark" href="/login">Sign in</Link>
+      <Link className="button button-ghost" href="/dashboard">My workspace</Link>
+    </main>;
+    throw e;
+  }
   let data;
   try { data = await authority({ op: "workspace", employerId: context.employerId }); }
   catch (e) {
