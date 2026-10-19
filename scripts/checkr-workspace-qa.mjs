@@ -63,6 +63,26 @@ test("OAuth reports only configuration categories and never credential values", 
   for (const value of [f.env.CHECKR_SANDBOX_CLIENT_SECRET, f.env.REWARDS_ENCRYPTION_KEY, f.env.CHECKR_SANDBOX_APP_ORIGIN]) assert.equal(message.includes(value), false);
   assert.equal(f.stored.size, 0);
 });
+test("Checkr return page denies missing/expired employer sessions without a server error or workspace read", async () => {
+  let workspaceReads = 0;
+  const mod = { exports: {} };
+  const component = () => null;
+  const dependencies = {
+    "react/jsx-runtime": { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+    "next/link": { default: component },
+    "@/components/brand": { Brand: component },
+    "@/components/employer/workspace-nav": { EmployerWorkspaceNav: component },
+    "@/components/rewards/checkr-panel": { CheckrPanel: component },
+    "@/lib/employer/auth": { requireEmployerContext: async () => { throw new Response("Denied", { status: 403 }); } },
+    "@/lib/checkr/server": { authority: async () => { workspaceReads++; throw Error("must not read workspace"); } },
+    "@/lib/checkr/contracts": { sandboxConfigured: () => true },
+  };
+  const code = ts.transpileModule(readFileSync(new URL("../app/employer/checkr/page.tsx", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  vm.runInNewContext(code, { exports: mod.exports, module: mod, require: n => { if (!(n in dependencies)) throw Error(n); return dependencies[n]; }, Response });
+  const result = await mod.exports.default({ searchParams: Promise.resolve({ connection: "retry" }) });
+  assert.match(JSON.stringify(result), /Sign in with an approved employer account/);
+  assert.equal(workspaceReads, 0);
+});
 test("candidate read projection isolates subject and excludes employer-only fields", async () => {
   const db = new PGlite();
   try {
