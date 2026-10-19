@@ -1,4 +1,4 @@
-import { validatePipelineGraph, type PipelineGraph, type PipelineNode, type PipelineEdge } from "./ats-pipelines";
+import type { PipelineGraph, PipelineNode, PipelineEdge } from "./ats-pipelines";
 
 export type PipelineIssue = { nodeId: string; message: string; severity: "error" | "warning" };
 export type CandidatePreviewStep = {
@@ -46,14 +46,19 @@ export function inspectPipelineGraph(graph: PipelineGraph): PipelineIssue[] {
     if (from && to && (to.kind === "start" || from.kind === "end" || from.id === to.id))
       add(from, "Invalid direction of connection");
   }
-  try { validatePipelineGraph(graph, true); }
-  catch (e) {
-    const reason = e instanceof Error ? e.message : "Invalid workflow";
-    if (!issues.some(x => reason.includes(x.message))) {
-      const start = nodes.get(graph.entryNodeId);
-      if (start) add(start, reason);
+  const visiting = new Set<string>(), visited = new Set<string>();
+  function checkCycle(id: string) {
+    if (visiting.has(id)) {
+      const node = nodes.get(id);
+      if (node) add(node, "Connection creates a workflow cycle");
+      return;
     }
+    if (visited.has(id)) return;
+    visiting.add(id);
+    for (const edge of graph.edges.filter(e => e.source === id)) checkCycle(edge.target);
+    visiting.delete(id); visited.add(id);
   }
+  for (const node of graph.nodes) checkCycle(node.id);
   return issues;
 }
 
