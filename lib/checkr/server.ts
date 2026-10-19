@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { seal, unseal } from "@/lib/rewards/contracts";
 import {
   CHECKR_ORIGIN,
+  oauthRejectionCategory,
   curatePackage,
   packagesForNode,
   providerId,
@@ -95,8 +96,14 @@ async function api(
     redirect: "error",
     signal: AbortSignal.timeout(15000),
   });
-  if (path === "/oauth/tokens")
+  if (path === "/oauth/tokens") {
     console.info("checkr_oauth_token_response", { status: r.status });
+    if (!r.ok) {
+      let category = "unclassified";
+      try { category = oauthRejectionCategory(await r.clone().json()); } catch { /* Never log raw provider errors. */ }
+      console.warn("checkr_oauth_token_rejected", { category });
+    }
+  }
   if (!r.ok)
     throw new Response(
       "Checkr did not confirm this operation. Resume the same request.",

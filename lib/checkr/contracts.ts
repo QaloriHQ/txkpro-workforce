@@ -94,3 +94,18 @@ export function retrySafe(startedAt: string, now = Date.now()) {
     Number.isFinite(elapsed) && elapsed >= 0 && elapsed < 23 * 60 * 60 * 1000
   );
 }
+
+// Return only fixed labels from Checkr's documented OAuth error list. Never log input.
+export function oauthRejectionCategory(value: unknown): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "unclassified";
+  const error = (value as Record<string, unknown>).error;
+  if (typeof error !== "string") return "unclassified";
+  switch (error.trim().toLowerCase().replace(/\.$/, "")) {
+    case "missing param(s)":
+    case "missing params": return "missing_parameters";
+    case "invalid code": return "invalid_code";
+    case "application not found": return "application_not_found";
+    case "user not found": return "user_not_found";
+    default: return "unclassified";
+  }
+}
