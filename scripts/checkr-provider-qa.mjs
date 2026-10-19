@@ -8,6 +8,8 @@ function fixture({
   price = 1000,
   wrongInvitation = false,
   reportResult = "consider",
+  invitationStatus = "completed",
+  invitationUrl = "https://apply.checkrhq-staging.net/invite/test/fixture",
 } = {}) {
   const calls = [],
     services = [];
@@ -81,7 +83,8 @@ function fixture({
         candidate_id: "cand",
         package: "basic",
         report_id: "report",
-        status: "completed",
+        status: invitationStatus,
+        invitation_url: invitationUrl,
       };
     else if (path === "/v1/reports/report")
       data = {
@@ -143,11 +146,18 @@ function fixture({
     Response,
     Buffer,
     URLSearchParams,
+    URL,
     AbortSignal,
     console,
   });
   return { api: vmModule.exports, calls, services };
 }
+test("candidate invitation access binds provider object and rejects unsafe or finished links", async () => {
+  const own = fixture({ invitationStatus: "pending" });
+  assert.equal((await own.api.candidateInvitation("tenant", "order-uuid")).url, "https://apply.checkrhq-staging.net/invite/test/fixture");
+  for (const opts of [{ invitationStatus: "completed" }, { invitationStatus: "pending", invitationUrl: "https://evil.example/invite/test" }, { invitationStatus: "pending", invitationUrl: "http://apply.checkrhq-staging.net/invite/test" }])
+    await assert.rejects(fixture(opts).api.candidateInvitation("tenant", "order-uuid"));
+});
 test("provider dispatch uses sandbox origin, canonical actor, stable idempotency and scoped location", async () => {
   const f = fixture();
   await f.api.dispatch("tenant", "order-uuid");

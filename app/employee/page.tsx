@@ -30,6 +30,7 @@ export default async function Employee() {
             My incentives
           </Link>
           <Link className="button" href="/account/authcard">My AuthCard</Link>
+          <Link className="button" href="/candidate/hiring">My hiring progress &amp; Checkr</Link>
         </nav>
         <div className="header-actions">
           <ThemeToggle />

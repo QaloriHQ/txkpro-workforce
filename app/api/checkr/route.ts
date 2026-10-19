@@ -1,4 +1,5 @@
 import { boundedRequest, classError } from "@/lib/classes/request";
+import { beginConnection } from "@/lib/checkr/oauth";
 import {
   authority,
   setup,
@@ -12,6 +13,8 @@ import {
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
+    if (new URL(request.url).origin !== "https://staging-workforce.txkpro.com")
+      throw new Response("Checkr is available in sandbox only.", { status: 403 });
     if (request.headers.get("origin") !== new URL(request.url).origin)
       throw new Response("Origin denied", { status: 403 });
     const input = await (await boundedRequest(request)).json();
@@ -24,6 +27,9 @@ export async function POST(request: Request) {
       throw new Response("Workspace required", { status: 400 });
     let result: unknown;
     switch (input.op) {
+      case "authorize":
+        result = await beginConnection(input.employerId);
+        break;
       case "setup":
         result = await setup(input.employerId);
         break;

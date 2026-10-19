@@ -5,36 +5,6 @@ import { ActionModal } from "@/components/design-system/action-modal";
 import { ShieldCheckIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import type { CheckrWorkspace } from "@/lib/checkr/server";
 import type { CheckrPackage, CheckrNode } from "@/lib/checkr/contracts";
-// JavaScript SDK: avoids the provider's React adapter (documented through React 18).
-declare global {
-  interface Window {
-    Checkr?: {
-      Embeds: {
-        SignUpFlow: new (options: Record<string, unknown>) => {
-          modal: () => void;
-        };
-      };
-    };
-  }
-}
-let sdk: Promise<void> | undefined;
-function loadSDK() {
-  if (window.Checkr) return Promise.resolve();
-  if (!sdk)
-    sdk = new Promise<void>((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src =
-        "https://cdn.jsdelivr.net/npm/@checkr/web-sdk/dist/web-sdk.umd.js";
-      script.onload = () => resolve();
-      script.onerror = () => {
-        sdk = undefined;
-        script.remove();
-        reject(new Error("Unable to load Checkr setup. Try again."));
-      };
-      document.head.appendChild(script);
-    });
-  return sdk;
-}
 const money = (c: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     c / 100,
@@ -93,15 +63,8 @@ export function CheckrPanel({
   }
   async function connect() {
     await run(async () => {
-      const setup = await call("setup");
-      await loadSDK();
-      if (!window.Checkr) throw new Error("Checkr setup unavailable");
-      new window.Checkr.Embeds.SignUpFlow({
-        env: "staging",
-        oauthTokenPath: `/api/checkr/oauth?employer=${encodeURIComponent(employerId)}`,
-        partner: { id: setup.clientId, name: "TXKPRO Workforce" },
-      }).modal();
-      setFeedback("Finish Checkr setup, then refresh your connection.");
+      const result = await call("authorize");
+      window.location.assign(result.url);
     });
   }
   async function refreshCatalog() {
