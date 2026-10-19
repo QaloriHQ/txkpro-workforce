@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const origin = "https://staging-workforce.txkpro.com";
   const url = new URL(request.url);
-  if (url.origin !== origin || process.env.CHECKR_SANDBOX_APP_ORIGIN !== origin)
+  if (url.origin !== origin)
     return new Response("Sandbox only", { status: 403 });
   let status = "connected";
   let employerId = "";

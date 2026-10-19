@@ -6,7 +6,7 @@ import * as crypto from "node:crypto";
 import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
 import { seal, unseal } from "../lib/rewards/contracts.ts";
-import { sandboxConfigured } from "../lib/checkr/contracts.ts";
+import { sandboxConfigurationIssues } from "../lib/checkr/contracts.ts";
 function oauthFixture() {
   const stored = new Map(), connected = [];
   let actor = "owner", allowed = true;
@@ -16,10 +16,10 @@ function oauthFixture() {
   const dependencies = {
     "server-only": {}, "next/headers": { cookies: async () => jar }, "node:crypto": crypto,
     "./server": { authority: async () => { if (!allowed) throw new Response("Denied", { status: 403 }); return { actor }; }, connect: async (...args) => connected.push(args) },
-    "./contracts": { sandboxConfigured }, "@/lib/rewards/contracts": { seal, unseal },
+    "./contracts": { sandboxConfigurationIssues }, "@/lib/rewards/contracts": { seal, unseal },
   };
   const code = ts.transpileModule(readFileSync(new URL("../lib/checkr/oauth.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(code, { exports: mod.exports, module: mod, require: n => { if (!(n in dependencies)) throw Error(n); return dependencies[n]; }, process: { env }, Date, Buffer, URL, Response });
+  vm.runInNewContext(code, { exports: mod.exports, module: mod, require: n => { if (!(n in dependencies)) throw Error(n); return dependencies[n]; }, process: { env }, Date, Buffer, URL, Response, console: { warn() {}, info() {} } });
   return { api: mod.exports, stored, connected, env, actor: a => { actor = a; }, deny: () => { allowed = false; } };
 }
 test("OAuth binds encrypted secure cookie, state, employer and actor", async () => {
@@ -51,6 +51,17 @@ test("OAuth denies tampering, wrong actor, expired state and revoked authority",
     await assert.rejects(f.api.finishConnection("code", state));
     assert.equal(f.connected.length, 0);
   }
+});
+test("OAuth reports only configuration categories and never credential values", async () => {
+  const f = oauthFixture();
+  f.env.CHECKR_SANDBOX_APP_ORIGIN = "https://workforce.txkpro.com";
+  let failure;
+  try { await f.api.beginConnection("tenant"); } catch (error) { failure = error; }
+  assert.equal(failure?.status, 503);
+  const message = await failure.text();
+  assert.match(message, /staging app origin/);
+  for (const value of [f.env.CHECKR_SANDBOX_CLIENT_SECRET, f.env.REWARDS_ENCRYPTION_KEY, f.env.CHECKR_SANDBOX_APP_ORIGIN]) assert.equal(message.includes(value), false);
+  assert.equal(f.stored.size, 0);
 });
 test("candidate read projection isolates subject and excludes employer-only fields", async () => {
   const db = new PGlite();
