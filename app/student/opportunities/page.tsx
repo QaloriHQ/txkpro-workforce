@@ -37,6 +37,7 @@ export default async function StudentWorkspacePage({ searchParams }: { searchPar
           <div>
             <p className="eyebrow">Local workforce</p>
             <h1>Career</h1>
+            <Link className="button button-ghost" href="/candidate/hiring">My hiring progress &amp; Checkr</Link>
             <p className="card-sub">
               Explore career opportunities and manage your path from interview to employment.
             </p>

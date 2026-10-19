@@ -14,6 +14,7 @@ import {
 } from "@/lib/employer/ats-pipelines";
 import type { EmployerRole } from "@/lib/employer/types";
 import { autoLayoutPipeline, inspectPipelineGraph, simulateCandidateJourney } from "@/lib/employer/pipeline-experience";
+import { CheckrConnection } from "@/components/employer/checkr-connection";
 
 const LABELS: Record<ATSNodeKind, string> = {
   start: "Start", end: "End", application_form: "Application / form", assessment: "Assessment",
@@ -401,9 +402,10 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
             disabled={!editor || !selectedId}
             onDragStart={(e) => e.dataTransfer.setData("application/x-txk-ats-kind", kind)}
             onClick={() => add(kind)}>
-            <PlusIcon aria-hidden="true" /><span>{LABELS[kind]}</span>{ATS_PROVIDER_KINDS.has(kind) ? <small>Integration later</small> : null}
+            <PlusIcon aria-hidden="true" /><span>{LABELS[kind]}</span>{ATS_PROVIDER_KINDS.has(kind) ? <small>{kind === "background_check" ? "Checkr sandbox" : "Integration later"}</small> : null}
           </button>
           <Help label={LABELS[kind]} text={DESCRIPTIONS[kind]} />
+          {kind === "background_check" ? <div className="ats-checkr-palette-action"><CheckrConnection employerId={employerId} /></div> : null}
         </div>)}</div>
       </div>
     </aside>
@@ -658,7 +660,8 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                     </label>;
                   })}</fieldset> : null}
                 {selectedNode.kind!=="start" && selectedNode.kind!=="end" ? <button type="button" className="button button-ghost" disabled={!editor} onClick={removeNode}><TrashIcon aria-hidden="true"/> Remove step</button> : null}
-                {ATS_PROVIDER_KINDS.has(selectedNode.kind) ? <p className="card-sub">Provider execution is not enabled in ATS-02. Publishing a node does not start screening or other external actions.</p> : null}
+                {selectedNode.kind === "background_check" ? <CheckrConnection employerId={employerId} /> : null}
+                {ATS_PROVIDER_KINDS.has(selectedNode.kind) ? <p className="card-sub">Publishing a node does not start screening or other external actions. Candidate task execution requires an assigned application.</p> : null}
               </div>
               <div className="ats-pipeline-modal-footer">
                 <span className="card-sub">{dirty?"Unsaved changes":"Saved draft"} · Rev. {revision}</span>

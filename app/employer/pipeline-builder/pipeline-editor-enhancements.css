@@ -9,6 +9,8 @@
 .ats-pipeline-sidehead h2{flex:1}
 .ats-pipeline-palette-row{display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;gap:5px;min-width:0}
 .ats-pipeline-palette-row>.ats-pipeline-palette-item{min-width:0}
+.ats-checkr-palette-action{grid-column:1 / -1;min-width:0}
+.ats-checkr-palette-action .txk-modal-action>button{width:100%;white-space:normal}
 .ats-pipeline-help{position:relative;display:inline-grid;place-items:center;flex:0 0 auto;z-index:8;min-width:24px}
 .ats-pipeline-help summary{list-style:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:99px;color:var(--txk-info);cursor:help}
 .ats-pipeline-help summary::-webkit-details-marker{display:none}

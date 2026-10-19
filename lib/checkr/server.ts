@@ -80,11 +80,11 @@ async function api(
   form?: URLSearchParams,
   key?: string,
 ) {
-  const c = config();
+  config();
   const r = await fetch(`${CHECKR_ORIGIN}${path}`, {
     method: form ? "POST" : "GET",
     headers: {
-      Authorization: `Basic ${Buffer.from(`${token || c.clientId}:`).toString("base64")}`,
+      ...(token ? { Authorization: `Basic ${Buffer.from(`${token}:`).toString("base64")}` } : {}),
       ...(form ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
       ...(key ? { "Idempotency-Key": key } : {}),
     },
@@ -122,7 +122,6 @@ export async function connect(employerId: string, code: string) {
     "/oauth/tokens",
     undefined,
     new URLSearchParams({
-      grant_type: "authorization_code",
       client_id: c.clientId,
       client_secret: c.secret,
       code,
@@ -171,6 +170,7 @@ export async function catalog(employerId: string) {
   if (details.id !== a.accountId)
     throw new Response("Checkr account mismatch", { status: 503 });
   const credentialed =
+    a.credentialed &&
     details.authorized === true &&
     details.api_authorized === true &&
     details.purpose === "employment";
@@ -201,7 +201,7 @@ export async function catalog(employerId: string) {
       packages: Array.isArray(x.packages) ? x.packages.map(providerId) : [],
     }));
   else if (
-    result.error !== "Sorry, your account is not enabled for segmentation"
+    !["Sorry, your account is not enabled for segmentation", "Sorry, your account is not enabled for Hierarchy"].includes(result.error)
   )
     throw new Response("Checkr account hierarchy unavailable", { status: 503 });
   return { packages, nodes, credentialed };
@@ -390,6 +390,20 @@ export async function reconcile(
 export async function review(input: Record<string, unknown>) {
   const auth = await authority(input);
   return service({ ...input, actor: auth.actor });
+}
+// Caller resolves the signed-in subject through candidateChecks() first.
+export async function candidateInvitation(employerId: string, orderId: string) {
+  const saved = await service<{ invitationId: string; candidateId: string; package: string }>({ op: "read", employerId, orderId });
+  if (!saved.invitationId) throw new Response("Invitation not sent yet.", { status: 409 });
+  const a = await account(employerId);
+  const invitation = await api(`/v1/invitations/${providerId(saved.invitationId)}`, a.token);
+  if (invitation.id !== saved.invitationId || invitation.candidate_id !== saved.candidateId || invitation.package !== saved.package || invitation.status !== "pending")
+    throw new Response("Invitation is no longer available.", { status: 409 });
+  const url = new URL(invitation.invitation_url);
+  if (url.protocol !== "https:" || url.username || url.password || url.port ||
+      !["apply.checkr.com", "apply.checkrhq-staging.net", "apply.checkr-staging.com"].includes(url.hostname) || !url.pathname.startsWith("/invite/"))
+    throw new Response("Checkr invitation could not be verified.", { status: 503 });
+  return { url: url.href };
 }
 export async function processEvent(event: Record<string, unknown>) {
   const data = event.data as { object?: { id?: string } } | undefined;
