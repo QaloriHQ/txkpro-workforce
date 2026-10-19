@@ -70,6 +70,6 @@ test("role boundaries and data contract preserve employer scope and revision",()
 });
 test("canvas provides accessible drag, keyboard, graph branch and version controls",()=>{
   for(const phrase of ["onDragStart","onDrop","onKeyDown","ArrowLeft","candidateVisible",
-    "connect(selectedNode.id", "Publish version","Duplicate","Undo","Redo","Candidate preview",
+    "connect(selectedNode.id", "Publish version","Duplicate","Undo","Redo","Candidate journey simulator",
     "role=\"region\"", "aria-pressed"]) assert.ok(editor.includes(phrase), "Missing: "+phrase);
 });
