@@ -16,7 +16,15 @@ Vercel metadata confirms CHECKR_SANDBOX_CLIENT_ID, CHECKR_SANDBOX_CLIENT_SECRET 
 
 Partner application callback: `https://staging-workforce.txkpro.com/api/checkr/oauth/callback`. Webhook: `https://staging-workforce.txkpro.com/api/checkr/webhook`. Preserve deployment protection; provider-compatible delivery must be verified separately. CHECKR_SANDBOX_ORDERING_ENABLED remains gated until partner validation succeeds. Use synthetic adult mock candidates only; no real-person/minor screening is authorized.
 
-Migration `20261019193600_ats_05_checkr_candidate_access.sql` adds two subject-scoped read functions only; private records retain existing RLS/no direct grants. Public wrapper is SECURITY INVOKER; private definer derives active Auth user. No workflow status/event, report result, raw PII or automatic decision is added.
+Migration `20261019194612_ats_05_checkr_candidate_access.sql` adds two subject-scoped read functions only; private records retain existing RLS/no direct grants. Public wrapper is SECURITY INVOKER; private definer derives active Auth user. No workflow status/event, report result, raw PII or automatic decision is added.
+
+## Staging release evidence — 2026-10-19
+
+PR #341 merged into staging as `dc86b5392fb4fd9be63f23c27486029ca44f39f3` after full CI run 786 (`39313311986`) passed. Sixteen Checkr tests and eight pipeline regression tests pass locally, plus typecheck, lint (one unchanged baseline warning) and fresh-cache build. Sandbox credentials were confirmed present by Vercel metadata; sensitive values are not returned by the connector and validity is not asserted.
+
+Supabase staging `qwxlgzlkaeaqfzjodtis` applied this migration once, recorded as `20261019194612 / ats_05_checkr_candidate_access`. Source filename was aligned to that server-assigned ledger version without changing the applied SQL. Do not replay either the original development filename (`20261019193600`) or this applied migration. Rollback-only live tests passed own/foreign/anonymous/service/private-table/disconnected-account checks; fixtures were rolled back. Reusable SQL is `supabase/staging/tests/checkr_candidate_workspace.sql`. Post-DDL security advisors show no new security findings and no candidate-function warnings. Existing private deny-all table and unused-index findings remain baseline.
+
+Owner browser/provider UAT remains outstanding, and #331 remains OPEN with no Project status claim. Production is unchanged. Exact deployment state is recorded in the issue/PR release comment.
 
 ## Verification and remaining acceptance
 

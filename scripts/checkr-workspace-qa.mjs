@@ -68,7 +68,7 @@ test("candidate read projection isolates subject and excludes employer-only fiel
       insert into public.wf_screening_orders values('00000000-0000-4000-8000-000000000001','tenant','candidate','processing',now());
       insert into security.wf_checkr_quotes values('00000000-0000-4000-8000-000000000001','Basic');
       insert into security.wf_checkr_dispatch values('00000000-0000-4000-8000-000000000001','private-invitation','pending',null);`);
-    await db.exec(readFileSync(new URL("../supabase/migrations/20261019193600_ats_05_checkr_candidate_access.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261019194612_ats_05_checkr_candidate_access.sql", import.meta.url), "utf8"));
     const read = async actor => {
       await db.exec("reset role"); await db.query("select set_config('test.actor',$1,false)", [actor]); await db.exec("set role authenticated");
       return (await db.query("select public.checkr_candidate_workspace() as value")).rows[0].value;
