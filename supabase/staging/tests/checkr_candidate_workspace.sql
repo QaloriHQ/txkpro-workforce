@@ -1,0 +1,45 @@
+begin;
+do $$
+declare a text;b text;au uuid;bu uuid;e text;oid uuid:=gen_random_uuid();aid text:='ats05-rollback-'||gen_random_uuid()::text;v jsonb;
+begin
+ select user_id,auth_user_id into a,au from public.users where lower(status)='active' and auth_user_id is not null order by user_id limit 1;
+ select user_id,auth_user_id into b,bu from public.users where lower(status)='active' and auth_user_id is not null and user_id<>a order by user_id limit 1;
+ select contractor_id into e from public.contractors where approval_status='approved' and account_status='active' order by contractor_id limit 1;
+ if a is null or b is null or e is null then raise exception 'QA prerequisites unavailable';end if;
+ -- An independent temporary account avoids touching a connected employer token.
+ select contractor_id into e from public.contractors c where approval_status='approved' and account_status='active' and not exists(select 1 from security.wf_checkr_accounts ca where ca.employer_id=c.contractor_id) order by contractor_id limit 1;
+ if e is null then raise exception 'No unconnected test employer available';end if;
+ insert into security.wf_checkr_accounts(employer_id,account_id,sealed_token) values(e,aid,'rollback-only-no-provider-token');
+ insert into public.wf_screening_orders(id,employer_id,ordered_by,subject_user_id,audience,checks,quoted_cents,status,reserved_month) values(oid,e,a,a,'employee',array['ats05_fixture'],1,'processing',date_trunc('month',now())::date);
+ insert into security.wf_checkr_quotes(employer_id,actor,subject,audience,account_id,package_slug,package_name,base_cents,location,order_id) values(e,a,a,'employee',aid,'ats05_fixture','Rollback test',1,'{"country":"US","state":"TX"}',oid);
+ insert into security.wf_checkr_dispatch(order_id,candidate_id,invitation_id,invitation_status) values(oid,'ats05-candidate',aid,'pending');
+ perform set_config('request.jwt.claim.sub',au::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',au,'role','authenticated')::text,true);
+ execute 'set local role authenticated';
+ select public.checkr_candidate_workspace() into v;
+ if not exists(select 1 from jsonb_array_elements(v) x where x->>'id'=oid::text and (x->>'canOpen')::boolean) then raise exception 'Own screening missing';end if;
+ if exists(select 1 from jsonb_array_elements(v) x where x ?| array['sealed_token','invitation_id','result','quoted_cents']) then raise exception 'Private field leak';end if;
+ begin execute 'select * from security.wf_checkr_accounts';raise exception 'Private table exposed';exception when insufficient_privilege then null;end;
+ execute 'reset role';
+ perform set_config('request.jwt.claim.sub',bu::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',bu,'role','authenticated')::text,true);
+ execute 'set local role authenticated';
+ select public.checkr_candidate_workspace() into v;
+ if exists(select 1 from jsonb_array_elements(v) x where x->>'id'=oid::text) then raise exception 'Foreign screening exposed';end if;
+ execute 'reset role';
+ update security.wf_checkr_accounts set connected=false where employer_id=e;
+ perform set_config('request.jwt.claim.sub',au::text,true);
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',au,'role','authenticated')::text,true);
+ execute 'set local role authenticated';
+ select public.checkr_candidate_workspace() into v;
+ if exists(select 1 from jsonb_array_elements(v) x where x->>'id'=oid::text and (x->>'canOpen')::boolean) then raise exception 'Disconnected account invitation accessible';end if;
+ execute 'reset role';
+ execute 'set local role anon';
+ begin perform public.checkr_candidate_workspace();raise exception 'Anonymous allowed';exception when insufficient_privilege then null;end;
+ execute 'reset role';
+ execute 'set local role service_role';
+ begin perform public.checkr_candidate_workspace();raise exception 'Service role allowed';exception when insufficient_privilege then null;end;
+ execute 'reset role';
+end $$;
+rollback;
+select 'candidate own/foreign/anonymous/service/private-table/disconnected checks passed; fixtures rolled back' as verification;
