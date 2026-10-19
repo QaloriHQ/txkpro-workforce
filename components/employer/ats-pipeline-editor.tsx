@@ -98,6 +98,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [recovery, setRecovery] = useState<{ name: string; description: string; graph: PipelineGraph; revision: number } | null>(null);
   const [autosaveStatus, setAutosaveStatus] = useState("Autosave enabled");
   const [scrollPosition, setScrollPosition] = useState({ left: 0, top: 0 });
+  const [viewportSize, setViewportSize] = useState({width:950,height:500});
   const latestDraft = useRef("");
   const panRef = useRef<{ clientX: number; clientY: number; left: number; top: number } | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -151,6 +152,13 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [dirty]);
+  useEffect(() => {
+    const element=viewportRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer=new ResizeObserver(() => setViewportSize({width:element.clientWidth,height:element.clientHeight}));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [preview, selectedId]);
   useEffect(() => {
     if (!settingsOpen) return;
     const prior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -576,7 +584,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               onClick={panToMapPoint}>
               <svg viewBox="0 0 3000 2400" width="190" height="152" aria-hidden="true">
                 <rect x={scrollPosition.left/zoom} y={scrollPosition.top/zoom}
-                  width={(viewportRef.current?.clientWidth??950)/zoom} height={(viewportRef.current?.clientHeight??500)/zoom}
+                  width={viewportSize.width/zoom} height={viewportSize.height/zoom}
                   fill="none" stroke="currentColor" strokeWidth="24" rx="22"/>
                 {graph.edges.map(edge=>{
                   const a=graph.nodes.find(n=>n.id===edge.source), b=graph.nodes.find(n=>n.id===edge.target);
