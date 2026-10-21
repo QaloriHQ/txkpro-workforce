@@ -535,3 +535,11 @@
   .student-event-cover { max-height:260px; }
   .student-discovery-empty { width:calc(100% - 28px); }
 }
+
+.student-ad-testing { margin: 12px auto; padding: 16px; max-width: 1200px; border: 1px solid var(--txk-border, var(--line)); border-radius: var(--txk-radius-card, 12px); background: var(--txk-bg-panel, var(--card)); color: var(--txk-text-primary, var(--ink)); display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+.student-ad-testing p { margin: 4px 0 0; font-size: 13px; }
+.student-ad-testing label { display: grid; gap: 4px; font-size: 13px; }
+.student-ad-testing select { min-height: 44px; }
+.student-ad-testing nav { display: flex; flex-wrap: wrap; gap: 8px 20px; width: 100%; }
+.student-ad-testing nav a { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 640px) { .student-ad-testing { margin: 8px; padding: 12px; } }

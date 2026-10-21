@@ -70,3 +70,33 @@ test('normalized MGID creative uses each layout without fabricated member action
  const ad={provider:'mgid',advertiserName:'Example advertiser',headline:'Provider headline',body:'Provider description',imageUrl:'https://imgg-cdn.mgid.com/example.jpg',imageAlt:'',destinationUrl:'https://www.mgid.com/ghits/example',ctaLabel:'Learn more'};
  for(const layout of ['feed','events','polls','articles','comments','sidebar']){const html=renderToStaticMarkup(React.createElement(renderer.NativeAdPresentation,{ad,layout,preview:false,onClick:()=>{}}));assert.match(html,/Sponsored<\/span>/);assert.match(html,/Provider headline/);assert.match(html,/rel="noopener noreferrer sponsored"/);assert.match(html,/imgg-cdn.mgid.com/);assert.doesNotMatch(html,/c.mgid.com|RSVP|Vote now|likes|Reply/);}
 });
+
+test('Student ad testing is restricted to active canonical Students on staging previews',()=>{
+ const {stagingStudentAdTesting:enabled}=load('lib/ads/test-mode.ts');
+ const staging={VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:'staging'};
+ assert.equal(enabled(staging,'student','active'),true);
+ for(const [env,role,status] of [[{...staging,VERCEL_ENV:'production'},'student','active'],[{...staging,VERCEL_GIT_COMMIT_REF:'feature'},'student','active'],[staging,'admin','active'],[staging,'student','inactive'],[staging,null,'active']])assert.equal(enabled(env,role,status),false);
+});
+test('actual Student surfaces render image samples with the same threshold and disabled provider actions',()=>{
+ const mocks={'next/navigation':{usePathname:()=>'/student/community'}};
+ const testing=load('components/ads/student-ad-testing.tsx',mocks);
+ const sponsored=load('components/ads/sponsored-placement.tsx',{'@/components/ads/student-ad-testing':testing});
+ const render=(enabled,n)=>renderToStaticMarkup(React.createElement(testing.StudentAdTesting,{enabled},React.createElement(sponsored.SponsoredPlacement,{placement:'in_comments',listKind:'comments',itemCount:n})));
+ const sample=render(true,3);assert.match(sample,/Staging ad testing/);assert.match(sample,/sponsored-badge">Sponsored/);assert.match(sample,/sample-creative.svg/);assert.match(sample,/Preview/);assert.match(sample,/disabled=""/);assert.match(sample,/Sample comments/);
+ assert.doesNotMatch(render(true,2),/sponsored-badge/);assert.doesNotMatch(render(false,3),/Staging ad testing|sample-creative.svg|sponsored-badge/);
+ const privateTesting=load('components/ads/student-ad-testing.tsx',{'next/navigation':{usePathname:()=>'/student/messages'}});
+ assert.doesNotMatch(renderToStaticMarkup(React.createElement(privateTesting.StudentAdTesting,{enabled:true},'Private content')),/Staging ad testing/);
+});
+test('Student workspace uses public articles and the existing Admin preview keeps its role gate',()=>{
+ const workspace=fs.readFileSync(path.join(root,'app/student/page.tsx'),'utf8');assert.match(workspace,/adTesting \? listPublicArticles\(\) : Promise.resolve\(\[\]\)/);assert.match(workspace,/<ArticleGallery items=\{articles\}/);
+ assert.match(fs.readFileSync(path.join(root,'app/admin/ads/preview/page.tsx'),'utf8'),/requireRole\(\["admin"\]\)/);
+});
+test('Student display selection switches between text samples and live placeholders',()=>{
+ for(const mode of ['text','live']){
+  const testing=load('components/ads/student-ad-testing.tsx',{'next/navigation':{usePathname:()=>'/student'},react:{...React,useState:()=>[mode,()=>{}]}});
+  const sponsored=load('components/ads/sponsored-placement.tsx',{'@/components/ads/student-ad-testing':testing});
+  const html=renderToStaticMarkup(React.createElement(testing.StudentAdTesting,{enabled:true},React.createElement(sponsored.SponsoredPlacement,{placement:'in_article',listKind:'articles',itemCount:3})));
+  assert.doesNotMatch(html,/sample-creative.svg/);
+  if(mode==='text'){assert.match(html,/sponsored-badge/);assert.match(html,/Preview/);}else{assert.doesNotMatch(html,/sponsored-badge|Preview/);assert.match(html,/Normal tracking applies/);}
+ }
+});

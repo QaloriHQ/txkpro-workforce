@@ -1,3 +1,6 @@
+import { listPublicArticles } from "@/lib/community/public-repository";
+import { ArticleGallery } from "@/components/community/article-gallery";
+import { stagingStudentAdTesting } from "@/lib/ads/test-mode";
 import Link from "next/link";
 import {ProgressCard} from "@/components/pro-points/progress-card";
 import {pointsSummary} from "@/lib/pro-points/server";
@@ -12,7 +15,8 @@ export const dynamic = "force-dynamic";
 export default async function StudentHome() {
  const context = await getStudentContext();
  if (!context) redirect("/dashboard");
- const [interviews, placements, training, evidence, points] = await Promise.all([listStudentInterviews(),listStudentPlacements(),listStudentEmployerTrainingAssignments(),getStudentReadinessEvidence(context.studentId),pointsSummary()]);
+ const adTesting = stagingStudentAdTesting(process.env, "student", "active");
+ const [interviews, placements, training, evidence, points, articles] = await Promise.all([listStudentInterviews(),listStudentPlacements(),listStudentEmployerTrainingAssignments(),getStudentReadinessEvidence(context.studentId),pointsSummary(),adTesting ? listPublicArticles() : Promise.resolve([])]);
  const active = training.filter(a => a.status !== "cancelled");
  const priority = interviews.find(i => ["sent", "no_response"].includes(i.status));
  const nextTraining = active.find(a => a.status !== "completed");
@@ -24,5 +28,6 @@ export default async function StudentHome() {
   <section className="student-home-section"><h2>Today</h2><p className="card-sub">A quick daily action that builds consistent workforce habits.</p><article className="card student-daily-card"><div className="student-daily-heading"><ShieldCheckIcon aria-hidden="true" /><div><h3>Daily activities</h3><p className="card-sub">Daily practice for your workforce journey.</p></div><Link className="button" href="/student/points">View programs</Link></div><p>Check-ins, trivia and other activities are available through your accepted programs.</p></article></section>
   <ProgressCard summary={points} owner/>
   <section className="student-home-section"><div className="student-section-heading"><div><h2>Workforce progress</h2><p className="card-sub">Separate, explainable readiness signals.</p></div><Link className="button" href="/student/profile">View profile</Link></div><div className="student-workforce-metrics">{[[evidence.verifiedSkills.length,"Instructor Verified Skills"],[active.filter(a=>a.status === "completed").length,"Completed Employer Training"],[interviews.length,"Interview Activity"],[placements.filter(p=>p.officialPlacement).length,"Confirmed Placements"]].map(([value,label])=><article className="card" key={String(label)}><strong>{value}</strong><span>{label}</span></article>)}</div></section>
+  {adTesting ? <section className="student-home-section"><h2>Community articles</h2><p className="card-sub">Public community reading and sponsored placement testing.</p><ArticleGallery items={articles} /></section> : null}
  </main></>;
 }
