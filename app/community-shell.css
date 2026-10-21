@@ -477,6 +477,7 @@
 .sponsored-sidebar .sponsored-copy h2 { font-size:16px; }
 .sponsored-cta { display:inline-flex; align-items:center; width:fit-content; min-height:32px; color:var(--brand); font-weight:800; text-decoration:none; }
 .sponsored-cta:hover { text-decoration:underline; }
+.sponsored-gallery .sponsored-copy p,.sponsored-sidebar .sponsored-copy p,.sponsored-comment .sponsored-copy p { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
 .sponsored-gallery .sponsored-cta { width:auto; margin-top:auto; }
 .sponsored-controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .sponsored-controls button { display:inline-flex; align-items:center; gap:4px; min-height:28px; padding:2px 4px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-size:11px; }
@@ -496,6 +497,8 @@
 .sponsored-copy p { margin:0; font-size:13px; line-height:1.45; }
 .sponsored-comment .sponsored-cta { min-height:28px; font-size:12px; }
 .sponsored-comment .sponsored-controls { margin-top:2px; }
+.sponsored-comment .sponsored-controls button { min-height:28px; flex:0 0 auto; padding:2px 4px; font-size:11px; }
+.sponsored-comment .sponsored-controls svg { width:13px; height:13px; }
 .sponsored-comment .sponsored-identity > strong { font-size:12px; }
 .sponsored-multiplex { margin-top:18px; }
 .ad-layout-example .student-discovery-grid { width:100%; grid-template-columns:minmax(0,1fr); }
