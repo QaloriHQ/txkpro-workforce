@@ -68,7 +68,7 @@ function PostComments({ post, onCount, onReport }: { post: CommunityPost; onCoun
         <span className="community-avatar">{comment.authorImageUrl ? <img src={comment.authorImageUrl} alt="" /> : comment.authorName.slice(0,2).toUpperCase()}</span>
         <div><strong>{comment.authorName}</strong><p>{comment.body}</p><small>{relativeTime(comment.createdAt)}</small> <button type="button" onClick={() => setReplyTo(comment)}>Reply</button>{!comment.isOwn ? <button type="button" onClick={() => onReport({ type: "comment", id: comment.id, userId: comment.authorUserId, label: `Comment by ${comment.authorName}` })}>Report</button> : null}</div>
       </article>)}
-      {comments.length >= 2 ? <SponsoredPlacement placement="in_comments" contentId={post.id} /> : null}
+      {comments.length >= 3 ? <SponsoredPlacement placement="in_comments" contentId={post.id} itemCount={comments.length} listKind="comments" listItemIds={comments.map(comment => comment.id)} /> : null}
       <form className="community-comment-form" onSubmit={submit}>
         {replyTo ? <p>Replying to <strong>{replyTo.authorName}</strong> <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p> : null}
         <label><span className="sr-only">{replyTo ? "Write a reply" : "Write a comment"}</span><textarea name="body" required maxLength={2000} rows={2} placeholder={replyTo ? "Write a reply…" : "Write a comment…"} /></label>
@@ -173,7 +173,7 @@ export function CommunityFeed() {
     <aside className="community-rail" aria-label="Community navigation">
       <h2>Community</h2>
       <p>Connect with the TXKPRO workforce network.</p>
-      <a href="#feed">Your feed</a><Link href="/groups">Groups</Link><Link href="/events">Events</Link>
+      <a href="#feed">Your feed</a><Link href="/articles">Articles</Link><Link href="/groups">Groups</Link><Link href="/events">Events</Link>
     </aside>
     <section className="community-main">
       <div id="feed" className="community-filter-bar">
@@ -192,10 +192,10 @@ export function CommunityFeed() {
         {post.media.length ? <div className={`community-media-gallery community-media-${Math.min(post.media.length,4)}`}>{post.media.slice(0,4).map((url,index)=><figure key={url}><img className="community-post-media" src={url} alt={`Post attachment ${index+1}`} />{index===3&&post.media.length>4?<span>+{post.media.length-4}</span>:null}</figure>)}</div> : null}
         <div className="community-counts"><span>{post.likeCount} likes</span><span>{post.commentCount} comments · {post.shareCount} shares</span></div>
         <footer><button type="button" className={post.viewerLiked ? "active" : ""} onClick={() => void toggle(post, "like")}><HandThumbUpIcon aria-hidden="true" /> Like</button><PostComments post={post} onCount={count => setPosts(items => items.map(item => item.id === post.id ? { ...item, commentCount: count } : item))} onReport={setReportTarget} /><button type="button" className={post.viewerShared ? "active" : ""} onClick={() => void share(post, "share")}><ShareIcon aria-hidden="true" /> Share</button><button type="button" className={post.viewerReposted ? "active" : ""} onClick={() => void share(post, "repost")}><ArrowPathRoundedSquareIcon aria-hidden="true" /> Repost</button><button type="button" className={post.viewerSaved ? "active" : ""} onClick={() => void toggle(post, "save")}><BookmarkIcon aria-hidden="true" /> Save</button><button type="button" aria-label="Report post" onClick={() => setReportTarget({ type: "post", id: post.id, userId: post.authorUserId, label: post.title || `Post by ${post.authorName}` })}><FlagIcon aria-hidden="true" /></button></footer>
-      </article>{index === 3 ? <SponsoredPlacement placement="in_feed" /> : null}</Fragment>)}</div>
+      </article>{index === 2 ? <SponsoredPlacement itemCount={posts.length} listItemIds={posts.map(item => item.id)} placement="in_feed" /> : null}</Fragment>)}</div>
       {cursor ? <button className="community-load-more" disabled={loading} onClick={() => void load(true, cursor)}>{loading ? "Loading…" : "Load more"}</button> : null}
     </section>
-    <aside className="community-rail community-guidelines"><h2>Community standards</h2><p>Be useful, respectful, and mindful that public posts may appear in search engines.</p><p><Link href="/polls">Create a poll</Link></p><p><Link href="/events">Create an event</Link></p><SponsoredPlacement placement="multiplex" /></aside>
+    <aside className="community-rail community-guidelines"><h2>Community standards</h2><p>Be useful, respectful, and mindful that public posts may appear in search engines.</p><p><Link href="/polls">Create a poll</Link></p><p><Link href="/events">Create an event</Link></p><SponsoredPlacement placement="multiplex" itemCount={posts.length} listItemIds={posts.map(item => item.id)} /></aside>
     {reportTarget ? <div className="moderation-modal-backdrop" role="presentation"><form className="moderation-modal community-report-modal" role="dialog" aria-modal="true" aria-labelledby="community-report-title" onSubmit={report}>
       <div className="card-header"><div><p className="eyebrow">Community safety</p><h2 id="community-report-title">Report {reportTarget.type}</h2><p className="card-sub">{reportTarget.label}</p></div><button className="button button-ghost button-small" type="button" onClick={() => setReportTarget(null)}>Close</button></div>
       <label>What happened?<select name="reason" defaultValue="spam">{reportReasons.map(([value,label]) => <option value={value} key={value}>{label}</option>)}</select></label>

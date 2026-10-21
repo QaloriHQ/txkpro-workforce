@@ -55,3 +55,27 @@ Remaining activation dependencies: MGID confirms filters; actual live-visitor su
 Usage telemetry start was attempted with scripts/txkpro-agent-usage.mjs and failed because gh is unavailable. Native model token/cost telemetry is unavailable; no estimates are substituted for actuals. Issue records disclose this limitation.
 
 Staging migration ledger: 20261021001853_ads_04_mgid_native_feed. SQL confirms both tables have RLS and deny anon/authenticated SELECT; reserve denies anon/authenticated EXECUTE and report denies anon EXECUTE. Advisor delta: two informational RLS/no-policy findings are intentional for service-only tables; one authenticated SECURITY DEFINER finding is intentional for the active-actor-and-token-checked report function, matching the canonical moderation RPC pattern. Guidance: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy and https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable. Existing unrelated advisories are unchanged.
+
+## Confirmed exclusions and three-item list policy (owner approved 2026-10-20)
+
+Owner confirms Vitaliy applied exclusions. Staging MGID_FILTERS_CONFIRMED is now true; production gate remains false. No numeric IDs are guessed. Native requests occur only during real visitor viewing of eligible lists; deterministic previews never call MGID.
+
+Every SponsoredPlacement now requires itemCount >= 3. Feeds and event/poll/article galleries insert one unit after the third visible organic item. Search/filter results below three unmount the unit; feed rail requires three feed items; comments require three displayed comments. Single article/post bodies never qualify alone. Related public articles form their own list; /articles provides a searchable public article gallery. Poll answer choices are not organic list items.
+
+Delivery API requires itemCount, listKind (posts/events/polls/articles/comments), and exactly three distinct bounded listIds in addition to placement/requestKey and optional contentId. Before any direct selection or provider request, server checks the canonical anonymous projection of all three records, expected content kind, active/public group context, or comments belonging to the specified public parent. Client counts cannot authorize private data. Only coarse allowlisted /events, /polls, /articles, /community, /student/community and validated public post paths are shared with MGID. Queries and IDs from list-context checks are never forwarded to the provider. No new schema/status/event model.
+
+### Review locations
+
+- /student/community: sample posts/articles/events/polls in the mixed feed; ad after third item; sidebar ad requires three items. Open sample comments to see a three-comment placement.
+- /events and /polls: Student searchable galleries, with three clearly labeled samples each.
+- /articles: four sample article cards; search down to two or fewer to verify ad removal.
+- /community/posts/POST-ADS04-SAMPLE-ARTICLE-1: sample article with three comments and three related sample articles. Each qualifying list has its own unit; article text alone has none.
+- /admin/ads/preview: presentation-only sample lists for all six surfaces, 0/1/2/3/6-item selector, local sample creative, no real telemetry or budgets. Hide control works; change count to reset previews.
+
+### Staging fixtures
+
+Executed only on qwxlgzlkaeaqfzjodtis, following successful rollback dry-run: supabase/staging/fixtures/ads04-sample-lists.sql. Uses existing Demo Student/public page, 3 posts + 4 articles + 3 events + 3 polls, each with 3 comments. No real user impersonation, Auth account creation, fabricated reactions/RSVPs/votes, or production seeding. content_origin=organization prevents PRO Points; robots_index=false prevents sample indexing. Event descriptions explicitly say no real event is scheduled. Stable ADS04-SAMPLE keys make content inserts idempotent. New items use canonical published/open statuses and standard moderation behavior.
+
+Cleanup, if requested: remove only wf_profile_posts rows with profile_post_id beginning POST-ADS04-SAMPLE-, author_user_id=USR-DEMO-STUDENT, and content_origin=organization; linked sample comments/event/poll rows cascade. Do not delete or change the existing demo identity/profile. This fixture is outside migration directories and never runs automatically on production.
+
+Verification includes actual React server rendering at 0/1/2/3/6 items, positive and negative server list-context checks, private-group rejection and API selector/provider non-invocation below threshold. Owner performs browser/visual UAT. Current Project exception and unavailable usage telemetry remain disclosed on #278.

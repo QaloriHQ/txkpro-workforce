@@ -1,3 +1,5 @@
+import { adListEligible, type AdListKind } from "@/lib/ads/list-policy";
+import { publicAdListContext } from "@/lib/ads/list-context";
 import { selectMgidAd } from "@/lib/mgid/delivery";
 import { selectNativeAd } from "@/lib/ads/delivery-repository";
 import type { AdPlacement } from "@/lib/ads/types";
@@ -16,7 +18,16 @@ export async function GET(request: Request) {
   if (!placements.has(placement) || !uuid.test(requestKey) || (contentId && contentId.length > 80)) {
     return Response.json({ error: "Invalid advertising request." }, { status: 400, headers });
   }
+  const itemCount = Number(params.get("itemCount"));
+  const listKind = params.get("listKind") as AdListKind;
+  let listIds: unknown;
+  try { listIds = JSON.parse(params.get("listIds") || "null"); } catch { listIds = null; }
+  if (!adListEligible(itemCount) || !["posts","events","polls","articles","comments"].includes(listKind) ||
+    !Array.isArray(listIds) || listIds.length !== 3 || listIds.some(id => typeof id !== "string")) {
+    return Response.json({ ad: null, reason: "invalid_context" }, { headers });
+  }
   try {
+    if (!await publicAdListContext(listKind, listIds, contentId)) return Response.json({ ad: null, reason: "invalid_context" }, { headers });
     const direct = await selectNativeAd({ placement, contentId, requestKey });
     // An invalid/private context or database failure must never trigger a network call.
     if (direct.ad || direct.reason !== "no_fill") return Response.json(direct, { headers });
