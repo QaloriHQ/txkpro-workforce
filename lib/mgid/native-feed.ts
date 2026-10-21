@@ -87,14 +87,16 @@ export async function requestMgidAd(input: {
     // filters are separately mandatory before this function can serve live ads.
     if (input.excludedCategories.length && (!category || !/^\d{1,10}$/.test(category))) return fail("invalid_creative", undefined, "category");
     if (category && input.excludedCategories.includes(category)) return fail("excluded_category");
-    const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com"]);
+    const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com", "clck.mgid.com"]);
     const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com", "imggprx.mgid.com"]);
     if (!destinationUrl || !imageUrl) {
-      const field = !destinationUrl ? "click_url" : "image_url";
-      const value = !destinationUrl ? row.link : row.image;
-      let host: string | undefined;
-      try { if (typeof value === "string") host = new URL(value.startsWith("//") ? "https:" + value : value).hostname; } catch { /* No raw value or error logging. */ }
-      return fail("unsafe_url", undefined, field, host);
+      for (const [field, valid, value] of [["click_url", destinationUrl, row.link], ["image_url", imageUrl, row.image]] as const) {
+        if (valid) continue;
+        let host: string | undefined;
+        try { if (typeof value === "string") host = new URL(value.startsWith("//") ? "https:" + value : value).hostname; } catch { /* No raw value or error logging. */ }
+        fail("unsafe_url", undefined, field, host);
+      }
+      return null;
     }
     // icon is deliberately discarded: MGID says it is optional for JSON feeds.
     // Never call it per teaser or accidentally render it as an advertiser logo.
