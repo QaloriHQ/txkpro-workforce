@@ -64,11 +64,10 @@ function PostComments({ post, onCount, onReport }: { post: CommunityPost; onCoun
     {open ? <section id={`comments-${post.id}`} className="community-comments" aria-label={`Comments on ${post.title || "post"}`}>
       {loading ? <p role="status">Loading comments…</p> : null}
       {!loading && comments.length === 0 ? <p className="card-sub">No comments yet. Start the conversation.</p> : null}
-      {comments.map(comment => <article className={comment.parentId ? "community-comment community-comment-reply" : "community-comment"} key={comment.id}>
+      {comments.map((comment,index) => <Fragment key={comment.id}><article className={comment.parentId ? "community-comment community-comment-reply" : "community-comment"} key={comment.id}>
         <span className="community-avatar">{comment.authorImageUrl ? <img src={comment.authorImageUrl} alt="" /> : comment.authorName.slice(0,2).toUpperCase()}</span>
         <div><strong>{comment.authorName}</strong><p>{comment.body}</p><small>{relativeTime(comment.createdAt)}</small> <button type="button" onClick={() => setReplyTo(comment)}>Reply</button>{!comment.isOwn ? <button type="button" onClick={() => onReport({ type: "comment", id: comment.id, userId: comment.authorUserId, label: `Comment by ${comment.authorName}` })}>Report</button> : null}</div>
-      </article>)}
-      {comments.length >= 3 ? <SponsoredPlacement placement="in_comments" contentId={post.id} itemCount={comments.length} listKind="comments" listItemIds={comments.map(comment => comment.id)} /> : null}
+      </article>{index === 2 ? <SponsoredPlacement placement="in_comments" contentId={post.id} itemCount={comments.length} listKind="comments" listItemIds={comments.map(comment => comment.id)} /> : null}</Fragment>)}
       <form className="community-comment-form" onSubmit={submit}>
         {replyTo ? <p>Replying to <strong>{replyTo.authorName}</strong> <button type="button" onClick={() => setReplyTo(null)}>Cancel</button></p> : null}
         <label><span className="sr-only">{replyTo ? "Write a reply" : "Write a comment"}</span><textarea name="body" required maxLength={2000} rows={2} placeholder={replyTo ? "Write a reply…" : "Write a comment…"} /></label>

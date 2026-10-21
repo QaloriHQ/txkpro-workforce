@@ -1,5 +1,6 @@
 /* Public community media is user-supplied HTTPS content and remains unoptimized. */
 /* eslint-disable @next/next/no-img-element */
+import { Fragment } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -23,8 +24,7 @@ export function PublicCommunityPostView({post, relatedPosts = []}:{post:PublicCo
         <div className="community-public-gallery">{(post.media||[]).map((url,index)=><img className="community-post-media" src={url} alt={`Attachment ${index+1} for ${title}`} key={url}/>)}</div>
         <footer>{post.likeCount||0} likes · {(post.comments||[]).length} comments · {post.shareCount||0} shares</footer>
       </article>
-      <section className="community-public-comments" aria-labelledby="public-comments"><h2 id="public-comments">Comments</h2>{post.comments?.length?post.comments.map(c=><article key={c.id} className={c.parentId?"community-comment community-comment-reply":"community-comment"}><div><strong>{c.authorProfilePath?<Link href={c.authorProfilePath}>{c.authorName}</Link>:c.authorName}</strong><p>{c.body}</p><small>{new Date(c.createdAt).toLocaleDateString()}</small></div></article>):<p className="card-sub">No public comments yet.</p>}<p><Link className="button" href="/login">Sign in to participate</Link></p></section>
-      <SponsoredPlacement placement="in_comments" contentId={post.id} itemCount={post.comments?.length || 0} listKind="comments" listItemIds={post.comments?.map(comment => comment.id)} />
+      <section className="community-public-comments" aria-labelledby="public-comments"><h2 id="public-comments">Comments</h2>{post.comments?.length?post.comments.map((c,index)=><Fragment key={c.id}><article key={c.id} className={c.parentId?"community-comment community-comment-reply":"community-comment"}><div><strong>{c.authorProfilePath?<Link href={c.authorProfilePath}>{c.authorName}</Link>:c.authorName}</strong><p>{c.body}</p><small>{new Date(c.createdAt).toLocaleDateString()}</small></div></article>{index===2?<SponsoredPlacement placement="in_comments" contentId={post.id} itemCount={post.comments?.length || 0} listKind="comments" listItemIds={post.comments?.map(comment => comment.id)} />:null}</Fragment>):<p className="card-sub">No public comments yet.</p>}<p><Link className="button" href="/login">Sign in to participate</Link></p></section>
       {relatedPosts.length ? <section><h2>More articles</h2><ArticleGallery items={relatedPosts} contentId={post.id} /></section> : null}
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html:serializeJsonLd(schema)}}/>
     </main></>;

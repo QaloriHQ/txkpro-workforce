@@ -454,20 +454,58 @@
 .student-discovery-empty h2,.student-discovery-empty p { margin:0; }
 .student-discovery-empty p { color:var(--txk-text-muted); }
 
-.sponsored-placement { position:relative; display:grid; gap:12px; padding:16px; border:1px solid color-mix(in srgb,var(--brand) 32%,var(--line)); border-radius:14px; background:color-mix(in srgb,var(--brand) 4%,var(--surface)); overflow:hidden; }
-.sponsored-placement > img { width:100%; max-height:260px; border-radius:10px; object-fit:cover; }
-.sponsored-label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:var(--muted); font-size:11px; letter-spacing:.04em; }
-.sponsored-label strong { padding:3px 7px; border-radius:999px; background:var(--brand); color:#fff; text-transform:uppercase; }
-.sponsored-copy h2 { margin:0 0 6px; font-size:18px; }
-.sponsored-copy p { margin:0 0 10px; color:var(--muted); line-height:1.5; }
-.sponsored-copy a { font-weight:800; }
-.sponsored-controls { display:flex; gap:8px; }
-.sponsored-controls button { display:inline-flex; align-items:center; gap:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; }
-.sponsored-controls svg { width:16px; }
-.sponsored-report { display:grid; gap:8px; padding-top:10px; border-top:1px solid var(--line); }
+.sponsored-placement { position:relative; min-width:0; overflow:hidden; color:var(--text); }
+.sponsored-badge { display:inline-flex; align-items:center; flex:0 0 auto; padding:2px 6px; border:1px solid var(--txk-info,var(--brand)); border-radius:999px; background:var(--txk-info-bg,var(--surface-subtle)); color:var(--txk-info,var(--brand)); font-size:10px; line-height:1.4; font-weight:800; white-space:nowrap; }
+.sponsored-identity { display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+.sponsored-identity > strong { overflow-wrap:anywhere; font-size:13px; }
+.sponsored-preview-label { font-size:10px; color:var(--muted); }
+.sponsored-avatar svg { width:18px; height:18px; }
+.sponsored-placement > .sponsored-header { display:flex; align-items:center; gap:10px; padding:17px 17px 8px; }
+.sponsored-placement > .sponsored-header > .sponsored-identity { display:flex; }
+.sponsored-content { padding:8px 17px 14px; }
+.sponsored-copy h2 { margin:0 0 6px; font-size:19px; line-height:1.3; overflow-wrap:anywhere; }
+.sponsored-feed .sponsored-copy h2 { padding:0; font-size:20px; }
+.sponsored-feed .sponsored-copy p { color:var(--text); line-height:1.6; }
+.sponsored-copy p { margin:0 0 10px; color:var(--muted); line-height:1.5; overflow-wrap:anywhere; }
+.sponsored-media { display:block; width:100%; max-width:100%; object-fit:cover; }
+.sponsored-media[hidden] { display:none; }
+.sponsored-media-feed { max-height:360px; aspect-ratio:16/9; }
+.sponsored-gallery .sponsored-media { height:180px; border-radius:0; }
+.sponsored-sidebar { padding:0; }
+.sponsored-sidebar .sponsored-media { aspect-ratio:16/9; max-height:180px; }
+.sponsored-sidebar .sponsored-content { padding:12px; }
+.sponsored-sidebar .sponsored-copy h2 { font-size:16px; }
+.sponsored-cta { display:inline-flex; align-items:center; width:fit-content; min-height:32px; color:var(--brand); font-weight:800; text-decoration:none; }
+.sponsored-cta:hover { text-decoration:underline; }
+.sponsored-gallery .sponsored-copy p,.sponsored-sidebar .sponsored-copy p,.sponsored-comment .sponsored-copy p { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+.sponsored-gallery .sponsored-cta { width:auto; margin-top:auto; }
+.sponsored-controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.sponsored-controls button { display:inline-flex; align-items:center; gap:4px; min-height:28px; padding:2px 4px; border:0; background:transparent; color:var(--muted); cursor:pointer; font-size:11px; }
+.sponsored-controls svg { width:13px; height:13px; }
+.sponsored-report { display:grid; gap:8px; margin-top:8px; padding-top:10px; border-top:1px solid var(--line); }
 .sponsored-report label { display:grid; gap:4px; }
-.sponsored-report div { display:flex; gap:8px; }
+.sponsored-report textarea,.sponsored-report select { width:100%; min-width:0; box-sizing:border-box; }
+.sponsored-report div { display:flex; flex-wrap:wrap; gap:8px; }
+.sponsored-comment { display:flex; align-items:flex-start; gap:9px; padding:0; border:0; background:transparent; border-radius:0; box-shadow:none; }
+.sponsored-comment > .sponsored-comment-body { flex:1; min-width:0; padding:9px 11px; border-radius:12px; background:var(--surface-subtle); }
+.sponsored-comment-copy { margin-top:7px; }
+.sponsored-comment-copy.sponsored-has-image { display:grid; grid-template-columns:72px minmax(0,1fr); align-items:start; gap:10px; }
+.sponsored-media-comments { width:72px; height:72px; border-radius:8px; }
+.sponsored-comment .sponsored-copy h3 { margin:0 0 4px; font-size:13px; line-height:1.4; }
+.sponsored-comment .sponsored-feed .sponsored-copy h2 { padding:0; font-size:20px; }
+.sponsored-feed .sponsored-copy p { color:var(--text); line-height:1.6; }
+.sponsored-copy p { margin:0; font-size:13px; line-height:1.45; }
+.sponsored-comment .sponsored-cta { min-height:28px; font-size:12px; }
+.sponsored-comment .sponsored-controls { margin-top:2px; }
+.sponsored-comment .sponsored-controls button { min-height:28px; flex:0 0 auto; padding:2px 4px; font-size:11px; }
+.sponsored-comment .sponsored-controls svg { width:13px; height:13px; }
+.sponsored-comment .sponsored-identity > strong { font-size:12px; }
 .sponsored-multiplex { margin-top:18px; }
+.ad-layout-example .student-discovery-grid { width:100%; grid-template-columns:minmax(0,1fr); }
+.ad-layout-example .community-comments { padding:0; border:0; }
+.ad-layout-example .community-post-list { display:grid; gap:12px; }
+.ad-example-copy { padding:14px 17px; }
+@media (max-width:420px) { .sponsored-comment-copy.sponsored-has-image { grid-template-columns:56px minmax(0,1fr); gap:8px; } .sponsored-media-comments { width:56px; height:56px; } }
 .ad-preview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
 @media (max-width:760px) { .ad-preview-grid { grid-template-columns:1fr; } }
 .student-discovery-empty button { min-height:42px; margin-top:6px; padding:8px 13px; border:1px solid var(--txk-border); border-radius:10px; background:var(--txk-bg-subtle); color:var(--txk-text-primary); font-weight:800; cursor:pointer; }

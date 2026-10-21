@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/staging/migrations/20261016025814_workforce_ads_01_native_delivery.sql");
-const placement = read("components/ads/sponsored-placement.tsx");
+const placement = read("components/ads/sponsored-placement.tsx") + read("components/ads/native-ad-presentation.tsx");
 const feed = read("components/community/community-feed.tsx");
 const preview = read("app/admin/ads/preview/page.tsx") + read("components/ads/list-layout-preview.tsx");
 const deliveryRoute = read("app/api/ads/delivery/route.ts");
@@ -58,7 +58,8 @@ test("sponsored UI is clearly labeled and offers controls", () => {
   assert.match(placement, /rel="noopener noreferrer sponsored"/);
   assert.match(placement, /intersectionRatio >= 0\.5/);
   assert.match(placement, /setTimeout[\s\S]*1000/);
-  assert.match(placement, /preview \? <span>Preview only<\/span>/);
+  assert.match(placement, /sponsored-badge/);
+  assert.match(placement, /Preview only/);
 });
 
 test("governance sources define lifecycle, event and privacy boundaries", () => {

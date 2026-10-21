@@ -1,7 +1,7 @@
 "use client";
-/* Approved sponsored media is remote HTTPS content and intentionally bypasses image optimization. */
-/* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { nativeAdLayout, nativeAdClasses } from "@/lib/ads/presentation";
+import { NativeAdPresentation } from "@/components/ads/native-ad-presentation";
 import { FlagIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { adListEligible, type AdListKind } from "@/lib/ads/list-policy";
 import type { AdDeliveryResult, AdPlacement, NativeAd } from "@/lib/ads/types";
@@ -23,14 +23,14 @@ async function sendEvent(ad: NativeAd, eventType: "viewable" | "clicked") {
   await fetch(`/api/ads/delivery/${ad.deliveryId}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, provider: ad.provider, eventType }), keepalive: true }).catch(() => undefined);
 }
 
-type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[] };
+type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[]; previewMedia?: "image" | "text" };
 export function SponsoredPlacement(props: PlacementProps) {
   if (!adListEligible(props.itemCount)) return null;
-  return <EligiblePlacement key={`${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}`} {...props} />;
+  return <EligiblePlacement key={`${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}:${props.previewMedia || "image"}`} {...props} />;
 }
 
-function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds }: PlacementProps) {
-  const [ad, setAd] = useState<NativeAd | null>(preview ? { ...previewAd, placement } : null);
+function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds, previewMedia = "image" }: PlacementProps) {
+  const [ad, setAd] = useState<NativeAd | null>(preview ? { ...previewAd, placement, imageUrl: previewMedia === "image" ? previewAd.imageUrl : null } : null);
   const [hidden, setHidden] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -77,14 +77,14 @@ function EligiblePlacement({ placement, contentId, preview = false, itemCount, l
     else setFeedback("The report could not be submitted.");
   }
 
+  const layout = nativeAdLayout(placement, listKind);
   if (hidden) return null;
   if (!ad) return <div ref={slot} style={{ minHeight: 1 }} />;
-  return <aside ref={card} className={`sponsored-placement sponsored-${placement}`} aria-label={`Sponsored content from ${ad.advertiserName}`}>
-    <div className="sponsored-label"><strong>Sponsored</strong>{preview ? <span>Preview only</span> : null}<span>{ad.advertiserName}</span></div>
-    {ad.imageUrl ? <img src={ad.imageUrl} alt={ad.imageAlt || ""} /> : null}
-    <div className="sponsored-copy"><h2>{ad.headline}</h2><p>{ad.body}</p><a href={ad.destinationUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={() => { if (!preview) void sendEvent(ad, "clicked"); }}>{ad.ctaLabel}</a></div>
+  return <aside ref={card} className={`sponsored-placement sponsored-${placement} ${nativeAdClasses(layout)}`} data-ad-layout={layout} aria-label={`Sponsored content from ${ad.advertiserName}`}>
+    <NativeAdPresentation ad={ad} layout={layout} preview={preview} onClick={event => { if (preview) event.preventDefault(); else void sendEvent(ad, "clicked"); }}>
     <div className="sponsored-controls"><button type="button" onClick={() => setHidden(true)}><XMarkIcon aria-hidden="true" /> Hide</button><button type="button" onClick={() => setReporting(true)} disabled={preview}><FlagIcon aria-hidden="true" /> Report</button></div>
     {reporting ? <form className="sponsored-report" onSubmit={report}><label>Reason<select name="reason" defaultValue="spam"><option value="spam">Spam</option><option value="scam">Scam or fraud</option><option value="misinformation">Misinformation</option><option value="unsafe">Unsafe content</option><option value="other">Other</option></select></label><label>Details<textarea name="details" maxLength={2000} rows={2} /></label><div><button type="submit">Submit report</button><button type="button" onClick={() => setReporting(false)}>Cancel</button></div></form> : null}
     {feedback ? <p role="status">{feedback}</p> : null}
+    </NativeAdPresentation>
   </aside>;
 }
