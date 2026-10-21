@@ -1,0 +1,57 @@
+# ADS-04 — MGID native JSON delivery
+
+Owner approved MGID, required request data sharing and category exclusions in the implementation session following the approval email from Vitaliy. The task-scoped Project-access exception is recorded on issue #278: Project/task-context/preflight checks are WAIVED/UNAVAILABLE because PROJECTS_TOKEN is unavailable, never PASS. Other checks and production boundaries remain intact. The normal Cline executor is not available in this environment; owner explicitly requested direct implementation.
+
+## Contract
+
+- Direct approved inventory wins. Only a successful canonical selector result with `reason=no_fill` can trigger MGID. Invalid/private context and database failures cannot.
+- Public feed (`/community`, `/student/community`) and published public post/article contexts only. No private groups/messages, screening, hiring, institution, assessment, profile, funding or safety surfaces. The canonical selector validates content before network fallback. Only same-origin allowlisted path is forwarded; query and fragment are removed.
+- Fixed endpoint `https://api-wa.mgid.com/2099644`, real-time/no-store, `cn=1`, `src_id=txkpro.com:<placement>`, URL-encoded real IP and UA, language and page Referer. IP comes only from the Vercel-overwritten `x-vercel-forwarded-for` header; unavailable trusted identity means no fill. Never synthesize a visitor IP or use an arbitrary X-Forwarded-For chain.
+- Feed token and rotating reporting token are separate, server-only secrets. Reporting client API ID is 879009; website ID is 1116569 and is not interpolated into the v2 account report path.
+- Request budget: 2.5-second timeout, 64 KiB streamed maximum, fixed HTTPS media/click host allowlists, no redirects, bounded text and strict shape checks. Unknown hosts fail closed pending evidence from MGID. No response/error/URL logging.
+- `icon` is discarded. MGID states it is optional for JSON feeds. No optional pixel is invoked, preventing duplicate widget tracking.
+- Existing Sponsored disclosure, hide/report and native click URL rendering. Separate provider marker prevents writing MGID telemetry into direct campaign funding/budget records. No PRO Points.
+- Served, viewable and clicked events deduplicate by delivery/event type. Random delivery token authorizes measurement; it conveys no user/account access. Same-origin events/reports; reports additionally require active canonical community identity. Reports use canonical moderation cases, evidence and audit. No new domain lifecycle statuses.
+- Durable request reservations serialize a daily HMAC of visitor IP (10 attempts/minute); raw IP and UA are never persisted. One reservation per random request ID. Reservation performs bounded cleanup of up to 100 external deliveries older than 30 days per request; associated events cascade and moderation snapshots remain preserved. Daily fingerprints are for abuse control, not audience targeting.
+- Admin-only staging status displays configuration gates and last-24-hour TXKPRO counts. These are not provider-verified billable impressions or revenue. Reporting authentication remains independently testable.
+
+## Configuration and release
+
+Staging branch of Vercel project `txkpro-workforce`; Supabase staging `qwxlgzlkaeaqfzjodtis`. Production database and production release are not authorized.
+
+| Variable | Meaning |
+| --- | --- |
+| `ADS_DELIVERY_ENABLED` | Existing overall delivery switch |
+| `MGID_FEED_TOKEN` | Secret from approved feed; never reporting credential |
+| `MGID_NATIVE_ENABLED` | Explicit native-feed switch |
+| `MGID_FILTERS_CONFIRMED` | Set true only after MGID confirms approved exclusions are applied |
+| `MGID_EXCLUDED_CATEGORY_IDS` | Optional comma-separated exact numeric IDs, defense in depth; never guessed |
+| `MGID_PRODUCTION_AUTHORIZED` | Separate production release gate; default false |
+| `MGID_CLIENT_API_ID` | 879009 for publisher reporting |
+| `MGID_CLIENT_API_TOKEN` | Existing rotating publisher reporting credential |
+
+Apply the additive ADS-04 migration to staging before deploying. No applied migration is rewritten. Rollback: disable MGID_NATIVE_ENABLED; direct delivery continues unchanged. Keep filters confirmation false until provider evidence exists. No synthetic feed requests/pixel calls for smoke testing; validate real supply via owner browsing after filters are confirmed. Test credentials were not supplied by MGID; no sandbox capability is claimed.
+
+## Exclusions for Vitaliy to confirm
+
+The supplied sheet was retrieved as CSV. It contains labels and hierarchy but **no numeric category IDs**. Approved policy:
+
+- Adult/dating: Product promotions → Family and Relationships → Dating; Pick up; plus adult/explicit content across the feed.
+- Gambling: Events and Attractions → Betting; Casinos; Lottery.
+- Weapons: weapons and weapon-related content, including Consumer Electronics → Self Defense where weapon-related.
+- Sensational health claims: misleading/miracle treatment, cure, supplement and weight-loss claims across Healthy Living/Medical Health.
+- Get-rich-quick: misleading easy-income/investment claims across Business and Investing/Personal Finance.
+
+The last three policies do not map exactly to the sheet's broad labels. MGID must confirm how it applies claim/content exclusions and provide exact IDs when available. Do not blanket-exclude all legitimate health, finance or self-defense content without owner approval. No email or spreadsheet modification is sent automatically.
+
+## Verification and owner UAT
+
+Run MGID feed, database and publisher QA, native delivery/analytics regressions, typecheck, lint and build. Database QA includes replay/rate-limit checks, revoked client grants, invalid identity/token reports, report deduplication and event idempotency. Inspect staging migration ledger/RLS/grants and advisors. CI required before staging merge.
+
+Owner manual UAT after filters confirmed: public feed and article with direct no-fill; clearly Sponsored responsive card; actual MGID click URL; hide; signed-in report appears in moderation; 50%-visible-for-one-second viewable event only once; refresh is a new real-time request; direct inventory retains priority; no external ad on private/sensitive pages; global/provider kill switches; 24-hour admin counts. No browser staging automation is performed.
+
+Remaining activation dependencies: MGID confirms filters; actual live-visitor supply/host shapes; reporting token validity; owner visual/signed-in UAT; provider payout/account terms confirmed by owner; separate production authorization. Do not close ADS-04 or claim production released while these remain.
+
+Usage telemetry start was attempted with scripts/txkpro-agent-usage.mjs and failed because gh is unavailable. Native model token/cost telemetry is unavailable; no estimates are substituted for actuals. Issue records disclose this limitation.
+
+Staging migration ledger: 20261021001853_ads_04_mgid_native_feed. SQL confirms both tables have RLS and deny anon/authenticated SELECT; reserve denies anon/authenticated EXECUTE and report denies anon EXECUTE. Advisor delta: two informational RLS/no-policy findings are intentional for service-only tables; one authenticated SECURITY DEFINER finding is intentional for the active-actor-and-token-checked report function, matching the canonical moderation RPC pattern. Guidance: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy and https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable. Existing unrelated advisories are unchanged.

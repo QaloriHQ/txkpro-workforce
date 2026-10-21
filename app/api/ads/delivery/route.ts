@@ -1,3 +1,4 @@
+import { selectMgidAd } from "@/lib/mgid/delivery";
 import { selectNativeAd } from "@/lib/ads/delivery-repository";
 import type { AdPlacement } from "@/lib/ads/types";
 
@@ -15,6 +16,12 @@ export async function GET(request: Request) {
   if (!placements.has(placement) || !uuid.test(requestKey) || (contentId && contentId.length > 80)) {
     return Response.json({ error: "Invalid advertising request." }, { status: 400, headers });
   }
-  try { return Response.json(await selectNativeAd({ placement, contentId, requestKey }), { headers }); }
+  try {
+    const direct = await selectNativeAd({ placement, contentId, requestKey });
+    // An invalid/private context or database failure must never trigger a network call.
+    if (direct.ad || direct.reason !== "no_fill") return Response.json(direct, { headers });
+    const ad = await selectMgidAd(request, { placement, contentId, requestKey });
+    return Response.json(ad ? { ad } : direct, { headers });
+  }
   catch { return Response.json({ ad: null, reason: "no_fill", externalFallback: "disabled" }, { headers }); }
 }

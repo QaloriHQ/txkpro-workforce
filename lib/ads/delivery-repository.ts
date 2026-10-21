@@ -28,9 +28,9 @@ export async function recordNativeAdEvent(deliveryId: string, eventToken: string
   return data as { recorded: boolean; eventType: string; eventId: string };
 }
 
-export async function reportNativeAd(deliveryId: string, eventToken: string, reason: string, details: string) {
+export async function reportNativeAd(deliveryId: string, eventToken: string, reason: string, details: string, provider?: string) {
   const client = await createServerSupabaseClient();
-  const { data, error } = await client.rpc("ad_delivery_report", {
+  const { data, error } = await client.rpc(provider === "mgid" ? "external_ad_report" : "ad_delivery_report", {
     p_delivery_id: deliveryId,
     p_event_token: eventToken,
     p_reason: reason,

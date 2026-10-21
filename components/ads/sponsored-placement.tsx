@@ -19,7 +19,7 @@ const previewAd: NativeAd = {
 };
 
 async function sendEvent(ad: NativeAd, eventType: "viewable" | "clicked") {
-  await fetch(`/api/ads/delivery/${ad.deliveryId}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, eventType }), keepalive: true }).catch(() => undefined);
+  await fetch(`/api/ads/delivery/${ad.deliveryId}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, provider: ad.provider, eventType }), keepalive: true }).catch(() => undefined);
 }
 
 export function SponsoredPlacement({ placement, contentId, preview = false }: { placement: AdPlacement; contentId?: string; preview?: boolean }) {
@@ -28,6 +28,7 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
   const [reporting, setReporting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const card = useRef<HTMLElement>(null);
+  const slot = useRef<HTMLDivElement>(null);
   const viewable = useRef(false);
 
   useEffect(() => {
@@ -36,11 +37,16 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
     const params = new URLSearchParams({ placement, requestKey });
     if (contentId) params.set("contentId", contentId);
     const controller = new AbortController();
-    void fetch(`/api/ads/delivery?${params}`, { signal: controller.signal })
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      void fetch(`/api/ads/delivery?${params}`, { signal: controller.signal })
       .then(response => response.ok ? response.json() as Promise<AdDeliveryResult> : { ad: null })
-      .then(result => setAd(result.ad))
+      .then(result => { viewable.current = false; setAd(result.ad); setHidden(false); })
       .catch(() => undefined);
-    return () => controller.abort();
+    });
+    if (slot.current) observer.observe(slot.current);
+    return () => { controller.abort(); observer.disconnect(); };
   }, [contentId, placement, preview]);
 
   useEffect(() => {
@@ -48,7 +54,8 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
     let timer: number | undefined;
     const observer = new IntersectionObserver(entries => {
       if (entries[0]?.isIntersecting && entries[0].intersectionRatio >= 0.5 && !viewable.current) {
-        timer = window.setTimeout(() => { viewable.current = true; void sendEvent(ad, "viewable"); }, 1000);
+        if (timer) window.clearTimeout(timer);
+        timer = window.setTimeout(() => { if (document.visibilityState === "visible") { viewable.current = true; void sendEvent(ad, "viewable"); } }, 1000);
       } else if (timer) { window.clearTimeout(timer); timer = undefined; }
     }, { threshold: [0.5] });
     observer.observe(card.current);
@@ -57,12 +64,13 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
 
   async function report(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!ad || preview) return; const data = new FormData(event.currentTarget);
-    const response = await fetch(`/api/ads/delivery/${ad.deliveryId}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, reason: data.get("reason"), details: data.get("details") }) });
+    const response = await fetch(`/api/ads/delivery/${ad.deliveryId}/report`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, provider: ad.provider, reason: data.get("reason"), details: data.get("details") }) });
     if (response.ok) { setFeedback("Report received."); setReporting(false); setHidden(true); }
     else setFeedback("The report could not be submitted.");
   }
 
-  if (!ad || hidden) return null;
+  if (hidden) return null;
+  if (!ad) return <div ref={slot} style={{ minHeight: 1 }} />;
   return <aside ref={card} className={`sponsored-placement sponsored-${placement}`} aria-label={`Sponsored content from ${ad.advertiserName}`}>
     <div className="sponsored-label"><strong>Sponsored</strong>{preview ? <span>Preview only</span> : null}<span>{ad.advertiserName}</span></div>
     {ad.imageUrl ? <img src={ad.imageUrl} alt={ad.imageAlt || ""} /> : null}
