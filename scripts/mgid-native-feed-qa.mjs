@@ -23,7 +23,7 @@ test('workspace public article placement discloses only its public article URL',
  for(const path of ['/student/profile','/student/points','/student/opportunities','/student/employer-training/secret'])assert.equal(mgidPublicPage(req('https://txkpro.com'+path),null),null);
 });
 test('no-fill diagnostics distinguish provider failures without leaking response or visitor data',async()=>{
- const cases=[['http_error',async()=>new Response('secret provider body',{status:403})],['empty',async()=>response([])],['invalid_response',async()=>new Response('<html>secret</html>')],['unsafe_url',async()=>response([{...row,image:'https://private.example/secret'}])],['network_error',async()=>{throw new Error('token=secret&ip=private');}],['timeout',async()=>{throw new DOMException('private','TimeoutError');}]];
+ const cases=[['http_error',async()=>new Response('secret provider body',{status:403})],['empty',async()=>response([])],['invalid_response',async()=>new Response('<html>secret</html>')],['unsafe_url',async()=>response([{...row,image:'https://blocked.example/secret'}])],['network_error',async()=>{throw new Error('token=secret&ip=private');}],['timeout',async()=>{throw new DOMException('private','TimeoutError');}]];
  for(const [outcome,fetcher] of cases){const diagnostics=[];assert.equal(await requestMgidAd({...input,fetcher,onDiagnostic:d=>diagnostics.push(d)}),null);assert.equal(diagnostics.length,1);assert.equal(diagnostics[0].outcome,outcome);assert.doesNotMatch(JSON.stringify(diagnostics),/secret|private|test-only-token|203\.0\.113|Browser/);if(outcome==='http_error')assert.equal(diagnostics[0].status,403);}
 });
 test('valid bounded JSON is accepted even with an upstream text MIME label; non-JSON remains rejected',async()=>{
@@ -45,4 +45,16 @@ test('missing metadata never defeats configured local exclusions, required copy 
  for(const category of [undefined,null,'IAB5-3','108'])assert.equal(await requestMgidAd({...input,excludedCategories:['108'],fetcher:async()=>response([{...row,category}])}),null);
  for(const patch of [{title:null},{title:''},{description:{}},{link:'https://unsafe.test/ad'},{image:'https://unsafe.test/image'}])assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,Id:null,category:null,...patch}])}),null);
  const diagnostics=[];await requestMgidAd({...input,fetcher:async()=>response([{...row,title:null}]),onDiagnostic:d=>diagnostics.push(d)});assert.deepEqual(diagnostics,[{outcome:'invalid_creative',field:'title'}]);
+});
+test('documented MGID image proxy and legacy HTTP assets normalize to HTTPS without changing tracking parameters',async()=>{
+ const ad=await requestMgidAd({...input,fetcher:async()=>response([{...row,link:'http://www.mgid.com/ghits/123?rid=opaque%2Bvalue',image:'http://imggprx.mgid.com/creative.jpg?size=492x328'}])});
+ assert.equal(ad.destinationUrl,'https://www.mgid.com/ghits/123?rid=opaque%2Bvalue');assert.equal(ad.imageUrl,'https://imggprx.mgid.com/creative.jpg?size=492x328');
+ for(const image of ['http://imgg-cdn.mgid.com/image.jpg','//imggprx.mgid.com/image.jpg'])assert.ok(await requestMgidAd({...input,fetcher:async()=>response([{...row,image}])}));
+ for(const image of ['https://imggprx.mgid.com.evil.test/image','http://127.0.0.1/image','https://user:secret@imggprx.mgid.com/image','https://imggprx.mgid.com:8080/image','javascript:alert(1)'])assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,image}])}),null);
+});
+test('URL diagnostics identify only field and hostname, and logger excludes paths, secrets and IPs',async()=>{
+ const diagnostics=[];await requestMgidAd({...input,fetcher:async()=>response([{...row,image:'https://media.example.com/private?token=secret'}]),onDiagnostic:d=>diagnostics.push(d)});assert.deepEqual(diagnostics,[{outcome:'unsafe_url',field:'image_url',host:'media.example.com'}]);
+ const {logMgidDiagnostic}=await import('../lib/mgid/diagnostics.ts');const old=console.info;const logged=[];console.info=(...args)=>logged.push(args);
+ try{logMgidDiagnostic(diagnostics[0]);logMgidDiagnostic({outcome:'unsafe_url',field:'click_url',host:'127.0.0.1',url:'https://secret',token:'secret'});}finally{console.info=old;}
+ assert.deepEqual(logged,[['mgid_native_delivery',diagnostics[0]],['mgid_native_delivery',{outcome:'unsafe_url',field:'click_url'}]]);assert.doesNotMatch(JSON.stringify(logged),/secret|private|127\.0\.0\.1/);
 });

@@ -10,8 +10,11 @@ export function mgidHttpsUrl(value: unknown, hosts: string[]): string | null {
   if (typeof value !== "string" || value.length > 8192) return null;
   try {
     const url = new URL(value.startsWith("//") ? "https:" + value : value);
-    if (url.protocol !== "https:" || url.username || url.password || url.port ||
+    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || url.port ||
       !hosts.includes(url.hostname)) return null;
+    // MGID documents legacy HTTP assets. Upgrade only a reviewed provider host,
+    // preserving the path/query and never allowing mixed-content rendering.
+    if (url.protocol === "http:") url.protocol = "https:";
     return url.href;
   } catch { return null; }
 }
@@ -37,7 +40,7 @@ export async function requestMgidAd(input: {
   page: string; sourceId: string; excludedCategories: string[]; fetcher?: typeof fetch;
   onDiagnostic?: (diagnostic: MgidDiagnostic) => void;
 }): Promise<MgidCreative | null> {
-  const fail = (outcome: MgidDiagnostic["outcome"], status?: number, field?: MgidDiagnostic["field"]): null => { input.onDiagnostic?.({ outcome, ...(status ? {status} : {}), ...(field ? {field} : {}) }); return null; };
+  const fail = (outcome: MgidDiagnostic["outcome"], status?: number, field?: MgidDiagnostic["field"], host?: string): null => { input.onDiagnostic?.({ outcome, ...(status ? {status} : {}), ...(field ? {field} : {}), ...(host ? {host} : {}) }); return null; };
   if (!input.token || /\s/.test(input.token) || !isIP(input.ip) || !input.userAgent ||
     input.userAgent.length > 1024 || input.language.length > 256) return fail("invalid_input");
   const url = new URL("https://api-wa.mgid.com/2099644");
@@ -85,8 +88,14 @@ export async function requestMgidAd(input: {
     if (input.excludedCategories.length && (!category || !/^\d{1,10}$/.test(category))) return fail("invalid_creative", undefined, "category");
     if (category && input.excludedCategories.includes(category)) return fail("excluded_category");
     const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com"]);
-    const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com"]);
-    if (!destinationUrl || !imageUrl) return fail("unsafe_url");
+    const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com", "imggprx.mgid.com"]);
+    if (!destinationUrl || !imageUrl) {
+      const field = !destinationUrl ? "click_url" : "image_url";
+      const value = !destinationUrl ? row.link : row.image;
+      let host: string | undefined;
+      try { if (typeof value === "string") host = new URL(value.startsWith("//") ? "https:" + value : value).hostname; } catch { /* No raw value or error logging. */ }
+      return fail("unsafe_url", undefined, field, host);
+    }
     // icon is deliberately discarded: MGID says it is optional for JSON feeds.
     // Never call it per teaser or accidentally render it as an advertiser logo.
     return { creativeId, category,
