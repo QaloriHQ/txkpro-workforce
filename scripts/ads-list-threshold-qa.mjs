@@ -12,9 +12,9 @@ const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
 function load(relative,mocks={}){
  const source=fs.readFileSync(path.join(root,relative),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
- const module={exports:{}};
+ const compiledModule={exports:{}};
  const resolve=name=>name in mocks?mocks[name]:name==='@/lib/ads/list-policy'?{adListEligible}:name==='next/link'?{__esModule:true,default:({children,...props})=>React.createElement('a',props,children)}:require(name);
- new Function('require','module','exports',js)(resolve,module,module.exports);return module.exports;
+ new Function('require','module','exports',js)(resolve,compiledModule,compiledModule.exports);return compiledModule.exports;
 }
 const placement=load('components/ads/sponsored-placement.tsx');
 test('actual sponsored component renders no unit or fetch placeholder below three; three renders preview',()=>{
