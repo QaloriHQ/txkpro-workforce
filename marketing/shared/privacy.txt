@@ -1,0 +1,361 @@
+TXK PRO™ PRIVACY POLICY
+Effective Date: September 15, 2026
+Last Updated: September 15, 2026
+This Privacy Policy explains how TXK PRO™ ("TXK PRO," "we," "us," or "our") collects, uses, protects, retains, and discloses personal information when you use our websites, applications, portals, forms, communications, programs, and related services (collectively, the "Services").
+This Privacy Policy also describes our practices for SMS and text messaging. The SMS provisions below are intended to make clear how mobile phone numbers, SMS opt-in information, and messaging consent are handled.
+By using the Services, you acknowledge the practices described in this Privacy Policy. Where consent is required by law, we will request it separately.
+Contact:
+TXK PRO
+Website: https://txkpro.com
+Email: hello@txkpro.com
+1. SCOPE OF THIS PRIVACY POLICY
+This Privacy Policy applies to personal information collected through TXK PRO Services, including information submitted through:
+- TXK PRO websites and web applications;
+- account registration and profile forms;
+- workforce, training, scholarship, employment, contractor, sponsor, or program-related forms;
+- SMS opt-in and consent forms;
+- customer support and contact forms;
+- surveys, interviews, applications, and questionnaires;
+- email, SMS, and other communications with TXK PRO;
+- files, documents, images, videos, credentials, resumes, certifications, or other materials you choose to upload;
+- analytics, cookies, logs, and similar technologies used to operate and improve the Services.
+This Privacy Policy does not apply to websites, applications, or services operated independently by third parties. Third-party services are governed by their own privacy policies.
+2. PERSONAL INFORMATION WE MAY COLLECT
+The information we collect depends on how you interact with TXK PRO and which Services you use.
+2.1 Contact and Identification Information
+We may collect information such as:
+- name;
+- email address;
+- mobile or other telephone number;
+- mailing address;
+- city, state, ZIP code, or service area;
+- account username or internal account identifier;
+- organization, school, employer, contractor, sponsor, or business affiliation.
+2.2 Account and Profile Information
+If you create an account or profile, we may collect:
+- account credentials or authentication information;
+- profile details;
+- communication preferences;
+- account status;
+- role or user type;
+- profile image;
+- information you choose to make visible through a public or limited-access profile.
+Passwords should be stored using secure authentication methods and are not intended to be stored in readable form by TXK PRO.
+2.3 Professional, Workforce, Education, and Application Information
+Depending on the Services you use, you may choose to provide information such as:
+- employment history;
+- education and training history;
+- skills and experience;
+- resumes and cover letters;
+- licenses, certifications, and credentials;
+- portfolio content;
+- program or course information;
+- job or workforce application information;
+- availability;
+- professional interests;
+- application responses;
+- references or other information you voluntarily provide.
+If TXK PRO provides services to an educational institution or other organization under a separate agreement, additional contractual or legal terms may apply to information processed on behalf of that organization.
+2.4 Business, Contractor, and Sponsor Information
+For business, contractor, employer, sponsor, or organizational users, we may collect:
+- business name;
+- business contact information;
+- business website;
+- company description;
+- service or workforce needs;
+- business credentials;
+- program participation information;
+- sponsorship or partnership information;
+- lead, application, opportunity, or project information;
+- documents submitted for verification or participation.
+2.5 Communications and Support Information
+We may collect information you provide when you communicate with us, including:
+- support requests;
+- email correspondence;
+- SMS messages;
+- chat or messaging content;
+- survey responses;
+- feedback;
+- notes from meetings or interviews;
+- reports, complaints, or dispute information.
+2.6 Content and Files
+When a feature allows uploads, we may collect the files you choose to submit, including:
+- documents;
+- images;
+- videos;
+- resumes;
+- cover letters;
+- certificates;
+- licenses;
+- credentials;
+- project or portfolio materials;
+- other files associated with your account, application, profile, or request.
+Please do not provide sensitive information that is not necessary for the purpose of the form, application, or Service you are using.
+2.7 Transaction and Payment Information
+If a TXK PRO Service includes payments, purchases, sponsorships, donations, subscriptions, or other transactions, payment information may be processed by a third-party payment processor. TXK PRO may receive transaction-related information such as payment status, amount, date, transaction identifier, and limited billing information.
+We do not intend to store complete payment card numbers unless expressly required and handled through an appropriate payment-processing system.
+2.8 Device, Usage, and Technical Information
+When you use our online Services, we may automatically collect information such as:
+- IP address;
+- browser type;
+- device type;
+- operating system;
+- pages or screens viewed;
+- referring or exit pages;
+- date and time of access;
+- interactions with features;
+- application or system logs;
+- approximate location derived from an IP address;
+- cookie or similar technology identifiers.
+SMS AND MOBILE MESSAGING PRIVACY
+TXK PRO may collect your mobile phone number and SMS messaging consent when you voluntarily opt in to receive text messages from TXK PRO.
+TXK PRO uses this information to send account notifications, application and service-request updates, appointment and scheduling reminders, verification notices, support communications, and other informational messages that you have requested or consented to receive.
+Message frequency varies. Message and data rates may apply. You may reply STOP at any time to opt out of SMS messages. Reply HELP for assistance.
+TXK PRO does not sell, rent, share, transfer, or provide mobile phone numbers, SMS opt-in information, or SMS messaging consent to third parties or affiliates for their marketing or promotional purposes.
+Mobile information and messaging consent may be processed by service providers acting on behalf of TXK PRO solely as necessary to provide and operate the TXK PRO messaging program. Such service providers are not permitted to use this information for their own marketing or promotional purposes.
+For avoidance of doubt, any other provisions of this Privacy Policy describing the disclosure or sharing of personal information do not permit the sharing of mobile phone numbers, SMS opt-in data, or SMS consent with third parties or affiliates for marketing or promotional purposes.
+We may use this information to operate, secure, analyze, troubleshoot, and improve the Services.
+2.9 SMS and Mobile Messaging Information
+If you opt in to receive SMS or MMS messages from TXK PRO, we may collect and maintain:
+- your mobile phone number;
+- the date and time of consent;
+- the method or source through which you opted in;
+- the consent language presented when you opted in;
+- the version of the consent disclosure;
+- messaging preferences;
+- message delivery information;
+- opt-out status;
+- HELP, STOP, START, or similar keyword activity;
+- records reasonably necessary to demonstrate and administer your consent.
+SMS consent information is handled in accordance with Section 8 of this Privacy Policy.
+3. HOW WE COLLECT INFORMATION
+We may collect personal information:
+A. Directly from you, when you:
+- create an account;
+- complete a form;
+- apply for a program, opportunity, job, scholarship, service, or other offering;
+- upload a document or file;
+- communicate with TXK PRO;
+- opt in to SMS messaging;
+- participate in an interview, survey, meeting, or event;
+- make a payment or transaction.
+B. Automatically, through:
+- cookies;
+- analytics;
+- server logs;
+- device and browser information;
+- security and fraud-prevention tools.
+C. From organizations or people you authorize, when permitted, such as:
+- an employer;
+- contractor;
+- training program;
+- educational institution;
+- sponsor;
+- program administrator;
+- service provider;
+- another user acting at your direction.
+D. From service providers that help us operate the Services, subject to their contractual and legal obligations.
+4. HOW WE USE PERSONAL INFORMATION
+We may use personal information to:
+- provide, operate, maintain, and improve TXK PRO Services;
+- create and manage accounts;
+- authenticate users and protect account access;
+- process forms, applications, requests, registrations, or submissions;
+- connect users with relevant programs, opportunities, contractors, employers, sponsors, organizations, or services where the applicable feature is designed to do so;
+- manage user profiles and permitted public profile information;
+- communicate about accounts, applications, programs, opportunities, schedules, appointments, events, transactions, or Services;
+- provide customer service and technical support;
+- send SMS messages when a user has provided the required consent;
+- maintain records of SMS consent and opt-out requests;
+- process payments or transaction records;
+- review or verify submitted documents;
+- prevent fraud, misuse, spam, abuse, or security incidents;
+- troubleshoot technical problems;
+- monitor and improve performance and user experience;
+- conduct analytics and generate aggregated or de-identified insights;
+- maintain operational, security, and audit records;
+- enforce our agreements, policies, and applicable terms;
+- comply with legal obligations and lawful requests;
+- protect the rights, property, safety, and security of TXK PRO, our users, and others.
+We will not use SMS opt-in data or messaging consent for purposes inconsistent with the consent provided.
+5. COOKIES AND SIMILAR TECHNOLOGIES
+We may use cookies and similar technologies to:
+- maintain sessions;
+- remember preferences;
+- support authentication;
+- improve website functionality;
+- understand usage patterns;
+- diagnose errors;
+- help protect the Services.
+Your browser may allow you to block or delete cookies. Some features may not function properly if necessary cookies are disabled.
+If we use third-party analytics or similar tools, those providers may process technical or usage information on our behalf under their own terms and applicable agreements.
+6. HOW WE DISCLOSE PERSONAL INFORMATION
+We may disclose personal information only as reasonably necessary for the purposes described in this Privacy Policy.
+6.1 Service Providers
+We may provide information to vendors and service providers that perform services on our behalf, such as:
+- cloud hosting;
+- database services;
+- authentication;
+- email delivery;
+- SMS delivery;
+- file storage;
+- analytics;
+- payment processing;
+- security;
+- customer support;
+- infrastructure and technical services.
+These providers may process information only as necessary to perform services for TXK PRO and are expected to protect information in accordance with applicable contractual and legal obligations.
+IMPORTANT SMS EXCEPTION:
+Mobile phone numbers, SMS opt-in data, and SMS messaging consent are not shared with third parties or affiliates for their own marketing or promotional purposes.
+6.2 At Your Direction
+We may disclose information when you intentionally ask us to share it or when a feature is specifically designed to transmit information to a person or organization you select.
+For example, if you submit an application to a particular employer or choose to send profile information to a particular organization, the information you authorize may be provided to that recipient.
+SMS consent is not transferred merely because other information is shared at your direction. A recipient that wants to send its own marketing or promotional text messages must obtain any consent required for its own messaging program.
+6.3 Legal, Safety, and Compliance Reasons
+We may disclose information where we reasonably believe disclosure is necessary to:
+- comply with applicable law, regulation, legal process, subpoena, court order, or governmental request;
+- investigate fraud, abuse, security issues, or violations;
+- protect the rights, property, safety, or security of TXK PRO, our users, or others;
+- establish, exercise, or defend legal claims.
+6.4 Business Transactions
+If TXK PRO is involved in a merger, acquisition, financing, reorganization, sale of assets, or similar business transaction, information may be transferred as part of that transaction subject to applicable law and appropriate safeguards.
+Any successor receiving mobile messaging information remains subject to the restrictions described in this Privacy Policy. SMS opt-in consent is not permission for unrelated entities to market to you by text.
+6.5 Aggregated or De-Identified Information
+We may use or disclose information that has been aggregated or de-identified so that it cannot reasonably be associated with an identifiable individual.
+6.6 No Sale of Personal Information for Third-Party Marketing
+TXK PRO does not sell your personal information to third parties for their own marketing or promotional purposes.
+Most importantly for our messaging program:
+WE DO NOT SELL, RENT, SHARE, OR PROVIDE YOUR MOBILE PHONE NUMBER, SMS OPT-IN INFORMATION, OR SMS MESSAGING CONSENT TO THIRD PARTIES OR AFFILIATES FOR THEIR MARKETING OR PROMOTIONAL PURPOSES.
+All categories of information disclosure described in this Privacy Policy exclude text messaging originator opt-in data and consent from use by third parties or affiliates for marketing or promotional purposes.
+7. DATA RETENTION
+We retain personal information for as long as reasonably necessary to:
+- provide the Services;
+- maintain your account;
+- complete the purpose for which the information was collected;
+- comply with legal, accounting, operational, or reporting requirements;
+- maintain security and audit records;
+- prevent fraud or abuse;
+- resolve disputes;
+- enforce agreements;
+- document consent or opt-out requests.
+When information is no longer reasonably necessary, we may delete, anonymize, or securely dispose of it, subject to applicable legal requirements and technical limitations.
+We may retain limited SMS consent and opt-out records after an opt-out request so that we can honor the request, maintain suppression records, and demonstrate messaging compliance.
+8. SMS / TEXT MESSAGING PRIVACY AND CONSENT
+This section applies specifically to SMS and MMS messaging from TXK PRO.
+8.1 How Users Opt In
+TXK PRO sends recurring SMS or MMS messages only where the recipient has provided the consent required for the applicable messaging program.
+Where consent is collected through a website or web form, the SMS consent control is intended to be presented separately from other agreements and must be actively selected by the user. The SMS consent checkbox must not be pre-checked by default.
+Where SMS consent is optional in connection with another service, declining SMS consent will not prevent the user from completing the underlying action solely because they declined promotional or informational SMS messaging.
+Consent to receive marketing or promotional SMS messages is not a condition of purchasing goods or services.
+8.2 Types of Messages
+Depending on the program and the consent you provide, TXK PRO text messages may include:
+- account or service notifications;
+- application or opportunity updates;
+- scheduling and reminder messages;
+- program or event information;
+- support communications;
+- transactional or operational updates;
+- promotional information where you have expressly opted in to receive such messages.
+The actual message types you receive will depend on the specific SMS program for which you opted in.
+8.3 Message Frequency
+Message frequency varies based on your activity, the TXK PRO program, and the communications you have requested or consented to receive.
+8.4 Message and Data Rates
+MESSAGE AND DATA RATES MAY APPLY.
+Your mobile carrier may charge fees for sending or receiving SMS or MMS messages according to your wireless plan.
+8.5 How to Opt Out
+You may opt out of TXK PRO SMS messages at any time by replying:
+STOP
+to a TXK PRO text message.
+After an opt-out request is processed, you may receive a final confirmation message. You will not receive additional messages from that SMS program unless you later provide new consent or otherwise re-enroll in accordance with applicable requirements.
+Other recognized opt-out keywords may also be honored where supported by our messaging provider.
+8.6 How to Get Help
+For SMS assistance, reply:
+HELP
+to a TXK PRO text message, or contact us at:
+hello@txkpro.com
+8.7 SMS Non-Sharing Statement
+TXK PRO does not share, sell, rent, transfer, or provide your mobile phone number, SMS opt-in data, or SMS messaging consent to third parties or affiliates for their own marketing or promotional purposes.
+Mobile information and messaging consent are used only for purposes related to the TXK PRO messaging program for which consent was provided and for service providers acting on TXK PRO's behalf to operate or support that messaging program.
+Text messaging originator opt-in data and consent are excluded from any disclosure to third parties or affiliates for marketing or promotional use.
+8.8 Messaging Service Providers
+We may use communications service providers to transmit messages and administer the technical operation of our SMS program. Such providers may process mobile numbers and message-related data solely as necessary to provide services to TXK PRO.
+Use of a communications service provider to deliver TXK PRO messages does not authorize that provider to use your SMS consent for its own marketing or promotional purposes.
+8.9 Carrier Responsibility
+Wireless carriers are not responsible for delayed or undelivered messages.
+8.10 Revoking Consent
+You may revoke SMS consent at any time using the opt-out instructions above. Revoking SMS consent does not necessarily close your TXK PRO account or prevent you from using non-SMS Services.
+We may also stop sending messages if a number is invalid, reassigned, blocked, or otherwise unavailable.
+9. COMMUNICATION PREFERENCES
+You may manage communications in the manner provided by the applicable communication.
+For SMS:
+Reply STOP to opt out.
+For email marketing:
+Use the unsubscribe link included in the applicable marketing email, where available.
+You may still receive communications that are necessary to provide a requested service, respond to you, maintain security, or comply with legal obligations, subject to applicable law and the communication channel involved.
+10. SECURITY
+TXK PRO uses reasonable administrative, technical, and organizational safeguards designed to protect personal information against unauthorized access, loss, misuse, alteration, or disclosure.
+These measures may include, as appropriate:
+- access controls;
+- authentication;
+- role-based permissions;
+- encrypted communications;
+- restricted administrative access;
+- logging and monitoring;
+- secure hosting and storage practices;
+- vendor controls;
+- backup and recovery practices.
+No electronic transmission, storage system, or online service can be guaranteed to be completely secure. You are responsible for protecting your account credentials and notifying us if you suspect unauthorized access to your account.
+11. YOUR PRIVACY CHOICES AND RIGHTS
+Depending on where you live and the laws that apply, you may have rights regarding your personal information, which may include the right to:
+- request access to personal information we maintain about you;
+- request correction of inaccurate information;
+- request deletion of certain personal information;
+- request information about how personal information is used or disclosed;
+- withdraw consent where processing is based on consent;
+- opt out of certain communications.
+These rights may be subject to exceptions or limitations under applicable law.
+To submit a privacy request, contact:
+hello@txkpro.com
+We may need to verify your identity before completing a request. We will not discriminate against you for exercising privacy rights provided by applicable law.
+12. STATE-SPECIFIC PRIVACY RIGHTS
+Residents of certain U.S. states may have additional privacy rights under state law.
+Where applicable, TXK PRO will provide the access, correction, deletion, appeal, opt-out, or other rights required by law.
+Nothing in this section changes our SMS commitment: mobile phone numbers, SMS opt-in data, and SMS consent are not sold or shared with third parties or affiliates for their own marketing or promotional purposes.
+13. CHILDREN'S PRIVACY
+TXK PRO does not knowingly collect personal information from children under 13 through general consumer Services without appropriate authorization where required by law.
+Some TXK PRO programs may involve students or younger users. Where a specific service is provided through or in cooperation with a school, parent, guardian, training program, or other authorized organization, additional consent, contractual, or legal requirements may apply.
+If you believe a child under 13 has provided personal information to TXK PRO inappropriately, contact us at hello@txkpro.com so we can review the matter.
+14. THIRD-PARTY LINKS AND SERVICES
+The Services may contain links to third-party websites, tools, job postings, organizations, payment services, social platforms, or other external resources.
+TXK PRO does not control the privacy practices of independent third parties. Review the privacy policy of the third-party service before providing information to it.
+A link from TXK PRO to a third-party service does not authorize that third party to use your TXK PRO SMS consent for its own messaging or marketing program.
+15. DATA TRANSFERS
+Our service providers may process information in locations different from where you live. Where required, we take reasonable steps designed to ensure that appropriate protections are in place for personal information transferred or processed across jurisdictions.
+16. CHANGES TO THIS PRIVACY POLICY
+We may update this Privacy Policy from time to time to reflect:
+- changes to our Services;
+- legal or regulatory requirements;
+- changes to our privacy practices;
+- changes to our messaging program;
+- security or operational improvements.
+When we make material changes, we will update the "Last Updated" date above and may provide additional notice where appropriate or required.
+Changes to this Privacy Policy do not retroactively create SMS marketing consent where consent is legally required. If a new messaging purpose requires new consent, TXK PRO will obtain that consent as required.
+17. CONTACT US
+If you have questions about this Privacy Policy, SMS privacy, or our data practices, contact:
+TXK PRO
+Website: https://txkpro.com
+Email: hello@txkpro.com
+18. SMS COMPLIANCE SUMMARY
+For clarity, TXK PRO's SMS privacy practices include the following commitments:
+1. SMS consent is obtained through an affirmative opt-in process.
+2. Website SMS consent checkboxes are not pre-checked by default.
+3. SMS consent is separate from general acceptance of a Privacy Policy or Terms of Service.
+4. Consent to promotional SMS messaging is not a condition of purchasing goods or services.
+5. Message frequency varies.
+6. Message and data rates may apply.
+7. Users may reply STOP to opt out.
+8. Users may reply HELP for assistance.
+9. Mobile phone numbers, SMS opt-in information, and SMS consent are not sold.
+10. Mobile phone numbers, SMS opt-in information, and SMS consent are not shared with third parties or affiliates for their own marketing or promotional purposes.
+11. Service providers may process messaging information only as necessary to operate TXK PRO's messaging program on our behalf.
+12. TXK PRO maintains records reasonably necessary to administer consent and honor opt-out requests.
