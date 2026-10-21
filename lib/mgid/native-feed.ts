@@ -1,3 +1,4 @@
+import type { MgidDiagnostic } from "./diagnostics";
 import { isIP } from "node:net";
 
 export type MgidCreative = {
@@ -34,9 +35,11 @@ export function mgidPublicPage(request: Request, contentId: string | null): stri
 export async function requestMgidAd(input: {
   token?: string; ip: string; userAgent: string; language: string;
   page: string; sourceId: string; excludedCategories: string[]; fetcher?: typeof fetch;
+  onDiagnostic?: (diagnostic: MgidDiagnostic) => void;
 }): Promise<MgidCreative | null> {
+  const fail = (outcome: MgidDiagnostic["outcome"], status?: number): null => { input.onDiagnostic?.({ outcome, ...(status ? {status} : {}) }); return null; };
   if (!input.token || /\s/.test(input.token) || !isIP(input.ip) || !input.userAgent ||
-    input.userAgent.length > 1024 || input.language.length > 256) return null;
+    input.userAgent.length > 1024 || input.language.length > 256) return fail("invalid_input");
   const url = new URL("https://api-wa.mgid.com/2099644");
   url.search = new URLSearchParams({ content_type: "json", src_id: input.sourceId,
     token: input.token, ip: input.ip, ua: input.userAgent, cn: "1", source_lang_iso2: "en" }).toString();
@@ -45,33 +48,40 @@ export async function requestMgidAd(input: {
       headers: { Accept: "application/json", "Accept-Language": input.language || "en", Referer: input.page },
       cache: "no-store", redirect: "error", signal: AbortSignal.timeout(2500),
     });
-    if (!response.ok || !response.headers.get("content-type")?.includes("application/json") ||
-      Number(response.headers.get("content-length") || 0) > 65536 || !response.body) return null;
+    if (!response.ok) return fail("http_error", response.status);
+    // The feed contract is JSON; validate its bytes and shape rather than
+    // discarding a valid feed solely because an upstream MIME label differs.
+    if (!response.body) return fail("invalid_response");
+    if (Number(response.headers.get("content-length") || 0) > 65536) return fail("oversized_response");
     const reader = response.body.getReader();
     const chunks: Uint8Array[] = []; let size = 0;
     try {
       while (true) {
         const { done, value } = await reader.read(); if (done) break;
         size += value.byteLength;
-        if (size > 65536) { await reader.cancel(); return null; }
+        if (size > 65536) { await reader.cancel(); return fail("oversized_response"); }
         chunks.push(value);
       }
     } finally { reader.releaseLock(); }
-    const data: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    if (!Array.isArray(data) || data.length !== 1) return null;
+    let data: unknown;
+    try { data = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { return fail("invalid_response"); }
+    if (Array.isArray(data) && data.length === 0) return fail("empty");
+    if (!Array.isArray(data) || data.length !== 1) return fail("invalid_response");
     const row = data[0];
     if (!row || typeof row !== "object" || !/^[\w-]{1,128}$/.test(String(row.Id ?? "")) ||
       !/^\d{1,10}$/.test(String(row.category ?? "")) ||
-      input.excludedCategories.includes(String(row.category)) ||
       typeof row.title !== "string" || !row.title.trim() || row.title.length > 200 ||
-      (row.description != null && (typeof row.description !== "string" || row.description.length > 2000))) return null;
+      (row.description != null && (typeof row.description !== "string" || row.description.length > 2000))) return fail("invalid_creative");
+    if (input.excludedCategories.includes(String(row.category))) return fail("excluded_category");
     const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com"]);
     const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com"]);
-    if (!destinationUrl || !imageUrl) return null;
+    if (!destinationUrl || !imageUrl) return fail("unsafe_url");
     // icon is deliberately discarded: MGID says it is optional for JSON feeds.
     // Never call it per teaser or accidentally render it as an advertiser logo.
     return { creativeId: String(row.Id), category: String(row.category),
       advertiserName: typeof row.adv === "string" && row.adv.trim() ? row.adv.slice(0, 120) : "MGID partner",
       headline: row.title, body: row.description || "", imageUrl, destinationUrl };
-  } catch { return null; } // Never log the request URL, token or upstream error.
+  } catch (error) {
+    return fail(error instanceof Error && ["TimeoutError", "AbortError"].includes(error.name) ? "timeout" : "network_error");
+  } // Never log the request URL, token or upstream error.
 }

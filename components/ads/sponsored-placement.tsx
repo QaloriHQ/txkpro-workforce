@@ -24,22 +24,21 @@ async function sendEvent(ad: NativeAd, eventType: "viewable" | "clicked") {
   await fetch(`/api/ads/delivery/${ad.deliveryId}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, provider: ad.provider, eventType }), keepalive: true }).catch(() => undefined);
 }
 
-type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[]; previewMedia?: "image" | "text" };
+type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[]; previewMedia?: "image" | "text"; showStatus?: boolean };
 export function SponsoredPlacement(props: PlacementProps) {
   const mode = useAdTestMode();
   const preview = props.preview || mode === "image" || mode === "text";
   const previewMedia = mode === "text" ? "text" : props.previewMedia || "image";
   if (!adListEligible(props.itemCount)) return null;
-  return <EligiblePlacement key={`${preview}:${previewMedia}:${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}:${props.previewMedia || "image"}`} {...props} preview={preview} previewMedia={previewMedia} />;
+  return <EligiblePlacement key={`${preview}:${previewMedia}:${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}:${props.previewMedia || "image"}`} {...props} preview={preview} previewMedia={previewMedia} showStatus={mode === "live"} />;
 }
 
-function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds, previewMedia = "image" }: PlacementProps) {
+function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds, previewMedia = "image", showStatus = false }: PlacementProps) {
   const [ad, setAd] = useState<NativeAd | null>(preview ? { ...previewAd, placement, imageUrl: previewMedia === "image" ? previewAd.imageUrl : null } : null);
   const [hidden, setHidden] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const card = useRef<HTMLElement>(null);
-  const slot = useRef<HTMLDivElement>(null);
   const viewable = useRef(false);
 
   const listIds = JSON.stringify(listItemIds?.slice(0,3) || []);
@@ -49,16 +48,17 @@ function EligiblePlacement({ placement, contentId, preview = false, itemCount, l
     const params = new URLSearchParams({ placement, requestKey, itemCount: String(itemCount), listKind, listIds });
     if (contentId) params.set("contentId", contentId);
     const controller = new AbortController();
-    const observer = new IntersectionObserver(entries => {
-      if (!entries.some(entry => entry.isIntersecting)) return;
-      observer.disconnect();
-      void fetch(`/api/ads/delivery?${params}`, { signal: controller.signal })
+    // Every eligible list mount (including a new Student session) gets a fresh
+    // request. Viewability controls measurement, never whether inventory loads.
+    void fetch(`/api/ads/delivery?${params}`, { signal: controller.signal, cache: "no-store" })
       .then(response => response.ok ? response.json() as Promise<AdDeliveryResult> : { ad: null })
-      .then(result => { viewable.current = false; setAd(result.ad); setHidden(false); })
-      .catch(() => undefined);
-    });
-    if (slot.current) observer.observe(slot.current);
-    return () => { controller.abort(); observer.disconnect(); };
+      .then(result => {
+        if (controller.signal.aborted) return;
+        viewable.current = false; setAd(result.ad); setHidden(false);
+        setFeedback(result.ad ? "" : "Live ads are unavailable right now.");
+      })
+      .catch(() => { if (!controller.signal.aborted) setFeedback("Live ads could not be loaded. Try reloading the page."); });
+    return () => controller.abort();
   }, [contentId, placement, preview, itemCount, listKind, listIds]);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ function EligiblePlacement({ placement, contentId, preview = false, itemCount, l
 
   const layout = nativeAdLayout(placement, listKind);
   if (hidden) return null;
-  if (!ad) return <div ref={slot} style={{ minHeight: 1 }} />;
+  if (!ad) return <div style={{ minHeight: 1 }}>{showStatus && feedback ? <p className="card-sub" role="status">{feedback}</p> : null}</div>;
   return <aside ref={card} className={`sponsored-placement sponsored-${placement} ${nativeAdClasses(layout)}`} data-ad-layout={layout} aria-label={`Sponsored content from ${ad.advertiserName}`}>
     <NativeAdPresentation ad={ad} layout={layout} preview={preview} onClick={event => { if (preview) event.preventDefault(); else void sendEvent(ad, "clicked"); }}>
     <div className="sponsored-controls"><button type="button" onClick={() => setHidden(true)}><XMarkIcon aria-hidden="true" /> Hide</button><button type="button" onClick={() => setReporting(true)} disabled={preview}><FlagIcon aria-hidden="true" /> Report</button></div>

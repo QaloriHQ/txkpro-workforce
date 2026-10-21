@@ -78,7 +78,7 @@ test('Student ad testing is restricted to active canonical Students on staging p
  for(const [env,role,status] of [[{...staging,VERCEL_ENV:'production'},'student','active'],[{...staging,VERCEL_GIT_COMMIT_REF:'feature'},'student','active'],[staging,'admin','active'],[staging,'student','inactive'],[staging,null,'active']])assert.equal(enabled(env,role,status),false);
 });
 test('actual Student surfaces render image samples with the same threshold and disabled provider actions',()=>{
- const mocks={'next/navigation':{usePathname:()=>'/student/community'}};
+ const mocks={'next/navigation':{usePathname:()=>'/student/community'},react:{...React,useState:()=>['image',()=>{}]}};
  const testing=load('components/ads/student-ad-testing.tsx',mocks);
  const sponsored=load('components/ads/sponsored-placement.tsx',{'@/components/ads/student-ad-testing':testing});
  const render=(enabled,n)=>renderToStaticMarkup(React.createElement(testing.StudentAdTesting,{enabled},React.createElement(sponsored.SponsoredPlacement,{placement:'in_comments',listKind:'comments',itemCount:n})));
@@ -99,4 +99,24 @@ test('Student display selection switches between text samples and live placehold
   assert.doesNotMatch(html,/sample-creative.svg/);
   if(mode==='text'){assert.match(html,/sponsored-badge/);assert.match(html,/Preview/);}else{assert.doesNotMatch(html,/sponsored-badge|Preview/);assert.match(html,/Normal tracking applies/);}
  }
+});
+
+test('new Student sessions default to live and every eligible mount fetches fresh inventory before viewability',async()=>{
+ const testing=load('components/ads/student-ad-testing.tsx',{'next/navigation':{usePathname:()=>'/student/community'}});
+ const ssr=renderToStaticMarkup(React.createElement(testing.StudentAdTesting,{enabled:true},'list'));
+ assert.match(ssr,/Live inventory: provider ads/);assert.doesNotMatch(ssr,/Sample ads: no provider/);
+ const effects=[];const calls=[];const old=globalThis.fetch;
+ globalThis.fetch=async(url,init)=>{calls.push({url:String(url),init});return {ok:true,json:async()=>({ad:null})};};
+ try{
+  const component=load('components/ads/sponsored-placement.tsx',{'@/components/ads/student-ad-testing':{useAdTestMode:()=> 'live'},react:{...React,useEffect:callback=>effects.push(callback)}});
+  for(let session=0;session<2;session++){
+   renderToStaticMarkup(React.createElement(component.SponsoredPlacement,{placement:'in_feed',itemCount:3,listItemIds:['a','b','c']}));
+   const delivery=effects.splice(0);for(const run of delivery)run();
+  }
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls.length,2);assert.notEqual(new URL(calls[0].url,'https://local.test').searchParams.get('requestKey'),new URL(calls[1].url,'https://local.test').searchParams.get('requestKey'));
+  for(const call of calls){assert.equal(call.init.cache,'no-store');assert.match(call.url,/itemCount=3/);assert.doesNotMatch(call.url,/events|report/);}
+  renderToStaticMarkup(React.createElement(component.SponsoredPlacement,{placement:'in_feed',itemCount:2}));assert.equal(effects.length,0);
+  renderToStaticMarkup(React.createElement(component.SponsoredPlacement,{placement:'in_feed',itemCount:3,preview:true}));for(const run of effects.splice(0))run();assert.equal(calls.length,2);
+ }finally{globalThis.fetch=old;}
 });
