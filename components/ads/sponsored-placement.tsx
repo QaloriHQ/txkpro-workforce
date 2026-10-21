@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { FlagIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { adListEligible, type AdListKind } from "@/lib/ads/list-policy";
 import type { AdDeliveryResult, AdPlacement, NativeAd } from "@/lib/ads/types";
 
 const previewAd: NativeAd = {
@@ -12,8 +13,8 @@ const previewAd: NativeAd = {
   advertiserName: "Example workforce partner",
   headline: "Reach skilled local talent",
   body: "This preview shows how approved native sponsorship appears without resembling member content.",
-  imageUrl: null,
-  imageAlt: null,
+  imageUrl: "/ads/sample-creative.svg",
+  imageAlt: "Sample sponsored creative for layout review",
   destinationUrl: "https://example.com",
   ctaLabel: "Learn more",
 };
@@ -22,7 +23,13 @@ async function sendEvent(ad: NativeAd, eventType: "viewable" | "clicked") {
   await fetch(`/api/ads/delivery/${ad.deliveryId}/events`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventToken: ad.eventToken, provider: ad.provider, eventType }), keepalive: true }).catch(() => undefined);
 }
 
-export function SponsoredPlacement({ placement, contentId, preview = false }: { placement: AdPlacement; contentId?: string; preview?: boolean }) {
+type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[] };
+export function SponsoredPlacement(props: PlacementProps) {
+  if (!adListEligible(props.itemCount)) return null;
+  return <EligiblePlacement key={`${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}`} {...props} />;
+}
+
+function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds }: PlacementProps) {
   const [ad, setAd] = useState<NativeAd | null>(preview ? { ...previewAd, placement } : null);
   const [hidden, setHidden] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -31,10 +38,11 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
   const slot = useRef<HTMLDivElement>(null);
   const viewable = useRef(false);
 
+  const listIds = JSON.stringify(listItemIds?.slice(0,3) || []);
   useEffect(() => {
     if (preview) return;
     const requestKey = crypto.randomUUID();
-    const params = new URLSearchParams({ placement, requestKey });
+    const params = new URLSearchParams({ placement, requestKey, itemCount: String(itemCount), listKind, listIds });
     if (contentId) params.set("contentId", contentId);
     const controller = new AbortController();
     const observer = new IntersectionObserver(entries => {
@@ -47,7 +55,7 @@ export function SponsoredPlacement({ placement, contentId, preview = false }: { 
     });
     if (slot.current) observer.observe(slot.current);
     return () => { controller.abort(); observer.disconnect(); };
-  }, [contentId, placement, preview]);
+  }, [contentId, placement, preview, itemCount, listKind, listIds]);
 
   useEffect(() => {
     if (!ad || preview || !card.current) return;

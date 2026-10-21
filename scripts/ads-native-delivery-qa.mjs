@@ -6,8 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const migration = read("supabase/staging/migrations/20261016025814_workforce_ads_01_native_delivery.sql");
 const placement = read("components/ads/sponsored-placement.tsx");
 const feed = read("components/community/community-feed.tsx");
-const article = read("components/community/public-community-post.tsx");
-const preview = read("app/admin/ads/preview/page.tsx");
+const preview = read("app/admin/ads/preview/page.tsx") + read("components/ads/list-layout-preview.tsx");
 const deliveryRoute = read("app/api/ads/delivery/route.ts");
 const statuses = read("docs/product-sources/core/TXKPRO_STATUS_DICTIONARY.txt");
 const events = read("docs/product-sources/core/TXKPRO_CROSS_APP_EVENT_MAP.txt");
@@ -22,7 +21,7 @@ test("all four placements have preview and live surfaces", () => {
   assert.match(feed, /placement="in_feed"/);
   assert.match(feed, /placement="in_comments"/);
   assert.match(feed, /placement="multiplex"/);
-  assert.match(article, /placement="in_article"/);
+  assert.match(read("components/community/article-gallery.tsx"), /placement="in_article"/);
 });
 
 test("delivery fails closed and external fallback remains disabled", () => {

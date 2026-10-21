@@ -2,7 +2,7 @@
 /* Event cover images are user uploads served through the Community media route. */
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   CalendarDaysIcon,
   ChartBarSquareIcon,
@@ -11,6 +11,8 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import type { StudentEventGalleryItem, StudentPollGalleryItem } from "@/lib/community/student-gallery-repository";
+
+import { SponsoredPlacement } from "@/components/ads/sponsored-placement";
 
 type EventFilter = "upcoming" | "mine" | "going" | "interested" | "past";
 type PollFilter = "open" | "voted" | "mine" | "closed";
@@ -92,7 +94,7 @@ export function StudentEventGallery({ items, nowIso }: { items: StudentEventGall
   return <>
     <SearchAndFilters query={query} setQuery={setQuery} selected={filter} setSelected={setFilter} filters={eventFilters} label="Events" />
     {visible.length ? <section className="student-discovery-grid" aria-label="Event results">
-      {visible.map((event) => <article className="student-discovery-card student-event-card" key={event.id}>
+      {visible.map((event, index) => <Fragment key={event.id}><article className="student-discovery-card student-event-card" key={event.id}>
         {event.coverUrl ? <img className="student-event-cover" src={event.coverUrl} alt="" /> : <div className="student-event-cover student-event-cover-fallback"><CalendarDaysIcon aria-hidden="true" /></div>}
         <div className="student-discovery-card-body">
           <div className="student-discovery-card-kicker"><span>{event.status === "published" ? "Event" : event.status}</span>{event.isOwn ? <span>Created by you</span> : null}</div>
@@ -105,7 +107,7 @@ export function StudentEventGallery({ items, nowIso }: { items: StudentEventGall
           </dl>
           <Link className="student-discovery-card-link" href={`/events/${event.id}`}>View event</Link>
         </div>
-      </article>)}
+      </article>{index === 2 ? <SponsoredPlacement placement="in_feed" itemCount={visible.length} listKind="events" listItemIds={visible.map(item => item.id)} /> : null}</Fragment>)}
     </section> : <DiscoveryEmpty label="events" filtered={Boolean(normalizedQuery) || filter !== "upcoming"} onReset={() => { setQuery(""); setFilter("upcoming"); }} />}
   </>;
 }
@@ -125,9 +127,9 @@ export function StudentPollGallery({ items, nowIso }: { items: StudentPollGaller
   return <>
     <SearchAndFilters query={query} setQuery={setQuery} selected={filter} setSelected={setFilter} filters={pollFilters} label="Polls" />
     {visible.length ? <section className="student-discovery-grid" aria-label="Poll results">
-      {visible.map((poll) => {
+      {visible.map((poll, index) => {
         const closed = poll.status !== "open" || new Date(poll.closesAt).getTime() <= now;
-        return <article className="student-discovery-card student-poll-card" key={poll.id}>
+        return <Fragment key={poll.id}><article className="student-discovery-card student-poll-card" key={poll.id}>
           <div className="student-poll-icon"><ChartBarSquareIcon aria-hidden="true" /></div>
           <div className="student-discovery-card-body">
             <div className="student-discovery-card-kicker"><span>{closed ? "Closed" : "Open poll"}</span>{poll.isOwn ? <span>Created by you</span> : poll.viewerVoted ? <span>Voted</span> : null}</div>
@@ -137,7 +139,7 @@ export function StudentPollGallery({ items, nowIso }: { items: StudentPollGaller
             <p className="student-poll-meta">{poll.selectionMode === "single" ? "Choose one" : `Choose up to ${poll.maxSelections}`} · {poll.totalBallots} response{poll.totalBallots === 1 ? "" : "s"}</p>
             <Link className="student-discovery-card-link" href={`/polls/${poll.id}`}>{closed || poll.viewerVoted ? "View results" : "Vote now"}</Link>
           </div>
-        </article>;
+        </article>{index === 2 ? <SponsoredPlacement placement="in_feed" itemCount={visible.length} listKind="polls" listItemIds={visible.map(item => item.id)} /> : null}</Fragment>;
       })}
     </section> : <DiscoveryEmpty label="polls" filtered={Boolean(normalizedQuery) || filter !== "open"} onReset={() => { setQuery(""); setFilter("open"); }} />}
   </>;
