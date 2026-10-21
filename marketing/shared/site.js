@@ -27,7 +27,7 @@ document.querySelectorAll('[data-interest-form]').forEach(form=>{
  form.addEventListener('submit',async event=>{
   event.preventDefault();
   const status=form.querySelector('[data-form-status]');const button=form.querySelector('button[type=submit]');
-  if(!form.dataset.endpoint){status.textContent='Signup is not available on this deployment yet.';return;}
+  if(!form.dataset.endpoint){status.textContent='Signups are temporarily unavailable. Please check back soon.';return;}
   if(!form.reportValidity())return;
   const values=new FormData(form);button.disabled=true;status.textContent='Submitting…';
   try{
