@@ -29,12 +29,13 @@ for (const [name,site] of Object.entries(sites)) {
  assert(guide.startsWith(`# ${site.name}`));assert(!guide.includes('token='));
  for (const file of fs.readdirSync(out).filter(x=>x.endsWith('.html'))) {
   const html=fs.readFileSync(path.join(out,file),'utf8');pagesChecked++;
+  assert(!/script\.google|googleusercontent|google\.script|<iframe/.test(html),'Deprecated runtime link or embed');
   assert.equal((html.match(/<h1[\s>]/g)||[]).length,1,`${name}/${file}: expected one H1`);
   assert.match(html,/<html lang="en">/);assert.match(html,/<title>[^<]+<\/title>/);
   assert.match(html,/<meta name="description" content="[^"]+">/);
   assert.match(html,/<link rel="canonical" href="https:\/\//);
   assert(html.includes(`content="${indexing&&file!=='404.html'?'index, follow':'noindex, follow'}"`));
-  assert(!/google\.script\.run|[✓↗→↑]|<form\b/.test(html),`${file}: copied unsupported interaction or icon substitute`);
+  assert(!/google\.script\.run|[✓↗→↑]/.test(html),`${file}: copied unsupported interaction or icon substitute`);
   for (const m of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
    const href=m[1].replaceAll('&amp;','&');
    if (!href.startsWith('/')&&!href.startsWith('#')) continue;

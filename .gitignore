@@ -9,3 +9,5 @@ out
 .vercel
 coverage
 marketing/*/dist/
+marketing/imports/
+supabase/.temp/
