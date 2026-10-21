@@ -15,8 +15,8 @@
     {"source": "/home", "destination": "/", "permanent": true},
     {"source": "/about-us", "destination": "/about", "permanent": true},
     {"source": "/service-request", "destination": "/homeowners", "permanent": true},
-    {"source": "/login", "destination": "https://app.txkpro.com", "permanent": true},
-    {"source": "/login-signup", "destination": "https://app.txkpro.com", "permanent": true},
+    {"source": "/login", "destination": "/waitlist", "permanent": true},
+    {"source": "/login-signup", "destination": "/waitlist", "permanent": true},
     {"source": "/ads-txt", "destination": "/ads.txt", "permanent": true},
     {"source": "/privacy-policy", "destination": "/privacy", "permanent": true},
     {"source": "/terms-of-service", "destination": "/terms", "permanent": true}

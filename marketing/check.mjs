@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { sites, APP_URL } from './shared/content.mjs';
+import { sites, APP_URL, MARKETPLACE_JOIN } from './shared/content.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const encode = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sellerFile=fs.readFileSync(path.join(root,'../public/ads.txt'),'utf8');
@@ -54,7 +54,7 @@ for (const [name,site] of Object.entries(sites)) {
   const text=fs.readFileSync(path.join(root,'shared',slug+'.txt'),'utf8');
   for (const line of text.trim().split('\n')) assert(html.includes(encode(line)),`${name}: legal text omitted`);
  }
- if(name==='marketplace')assert(site.cta[1]===APP_URL);
+ if(name==='marketplace')assert(site.cta[1]===MARKETPLACE_JOIN && (MARKETPLACE_JOIN==='/waitlist'||MARKETPLACE_JOIN===APP_URL));
  console.log(`${name}: redirects, ads.txt, sitemap, indexing, links, legal preservation PASS`);
 }
 console.log(`PASS: ${pagesChecked} pages, ${linksChecked} internal links/assets/fragments checked.`);
