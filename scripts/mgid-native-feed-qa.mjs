@@ -58,3 +58,13 @@ test('URL diagnostics identify only field and hostname, and logger excludes path
  try{logMgidDiagnostic(diagnostics[0]);logMgidDiagnostic({outcome:'unsafe_url',field:'click_url',host:'127.0.0.1',url:'https://secret',token:'secret'});}finally{console.info=old;}
  assert.deepEqual(logged,[['mgid_native_delivery',diagnostics[0]],['mgid_native_delivery',{outcome:'unsafe_url',field:'click_url'}]]);assert.doesNotMatch(JSON.stringify(logged),/secret|private|127\.0\.0\.1/);
 });
+test('real visitor MGID click host is accepted exactly and tracked query is preserved',async()=>{
+ for(const link of ['https://clck.mgid.com/ghits/123?rid=opaque%2Bvalue','//clck.mgid.com/ghits/123?rid=opaque%2Bvalue','http://clck.mgid.com/ghits/123?rid=opaque%2Bvalue']){
+  const ad=await requestMgidAd({...input,fetcher:async()=>response([{...row,link}])});assert.ok(ad);assert.equal(ad.destinationUrl,'https://clck.mgid.com/ghits/123?rid=opaque%2Bvalue');
+ }
+ for(const link of ['https://clck.mgid.com.evil.test/ghits/123','https://clck-mgid.com/ghits/123','https://secret@clck.mgid.com/ghits/123','https://clck.mgid.com:8443/ghits/123'])assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,link}])}),null);
+});
+test('both rejected URL fields are diagnosed in one real request rather than concealing the second failure',async()=>{
+ const diagnostics=[];assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,link:'https://click.example.com/secret?token=private',image:'https://media.example.com/secret?token=private'}]),onDiagnostic:d=>diagnostics.push(d)}),null);
+ assert.deepEqual(diagnostics,[{outcome:'unsafe_url',field:'click_url',host:'click.example.com'},{outcome:'unsafe_url',field:'image_url',host:'media.example.com'}]);
+});
