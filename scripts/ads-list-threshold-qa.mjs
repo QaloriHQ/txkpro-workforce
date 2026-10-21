@@ -13,7 +13,7 @@ function load(relative,mocks={}){
  const source=fs.readFileSync(path.join(root,relative),'utf8');
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText;
  const compiledModule={exports:{}};
- const resolve=name=>name in mocks?mocks[name]:name==='@/lib/ads/list-policy'?{adListEligible}:name==='next/link'?{__esModule:true,default:({children,...props})=>React.createElement('a',props,children)}:require(name);
+ const resolve=name=>name in mocks?mocks[name]:name==='@/lib/ads/list-policy'?{adListEligible}:name==='next/link'?{__esModule:true,default:({children,...props})=>React.createElement('a',props,children)}:name.startsWith('@/')?load(name.slice(2)+(fs.existsSync(path.join(root,name.slice(2)+'.tsx'))?'.tsx':'.ts'),mocks):require(name);
  new Function('require','module','exports',js)(resolve,compiledModule,compiledModule.exports);return compiledModule.exports;
 }
 const placement=load('components/ads/sponsored-placement.tsx');
@@ -53,4 +53,20 @@ test('public group context rejects private, inactive and failed lookups without 
  };
  const {publicGroupPostIds}=load('lib/community/public-group-context.ts',{'server-only':{},'@/lib/supabase/admin':{createAdminClient:()=>({from})}});
  assert.deepEqual(await publicGroupPostIds(['a','b','ungrouped']),['a','ungrouped']);fail=true;assert.deepEqual(await publicGroupPostIds(['a']),[]);
+});
+
+test('all native layouts identify ads with the same Sponsored pill and support image/text variants',()=>{
+ const cases=[['in_feed','posts','feed','community-post'],['in_feed','events','events','student-discovery-card'],['in_feed','polls','polls','student-discovery-card'],['in_article','articles','articles','student-discovery-card'],['in_comments','comments','comments','community-comment'],['multiplex','posts','sidebar','community-card']];
+ for(const [unit,listKind,layout,cardClass] of cases)for(const previewMedia of ['image','text']){
+   const html=renderToStaticMarkup(React.createElement(placement.SponsoredPlacement,{placement:unit,listKind,itemCount:3,preview:true,previewMedia}));
+   assert.match(html,new RegExp('data-ad-layout="'+layout+'"'));
+   assert.match(html,new RegExp(cardClass));assert.match(html,/class="sponsored-badge">Sponsored<\/span>/);
+   assert.equal((html.match(/<img/g)||[]).length,previewMedia==='image'?1:0);
+   if(layout==='comments'){assert.match(html,/sponsored-comment-body/);assert.match(html,/sponsored-media-comments|sponsored-comment-copy/);assert.doesNotMatch(html,/<h2/);}
+ }
+});
+test('normalized MGID creative uses each layout without fabricated member actions or tracking pixels',()=>{
+ const renderer=load('components/ads/native-ad-presentation.tsx');
+ const ad={provider:'mgid',advertiserName:'Example advertiser',headline:'Provider headline',body:'Provider description',imageUrl:'https://imgg-cdn.mgid.com/example.jpg',imageAlt:'',destinationUrl:'https://www.mgid.com/ghits/example',ctaLabel:'Learn more'};
+ for(const layout of ['feed','events','polls','articles','comments','sidebar']){const html=renderToStaticMarkup(React.createElement(renderer.NativeAdPresentation,{ad,layout,preview:false,onClick:()=>{}}));assert.match(html,/Sponsored<\/span>/);assert.match(html,/Provider headline/);assert.match(html,/rel="noopener noreferrer sponsored"/);assert.match(html,/imgg-cdn.mgid.com/);assert.doesNotMatch(html,/c.mgid.com|RSVP|Vote now|likes|Reply/);}
 });
