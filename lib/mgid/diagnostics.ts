@@ -5,12 +5,14 @@ export type MgidDiagnostic = {
     "network_error" | "accepted" | "disabled" | "invalid_page" | "missing_ip" |
     "reservation_rejected" | "storage_error";
   status?: number;
+  field?: "record" | "title" | "description" | "category";
 };
 
 export function logMgidDiagnostic(diagnostic: MgidDiagnostic) {
   // Construct the output explicitly; additional caller fields must never leak.
   console.info("mgid_native_delivery", {
     outcome: diagnostic.outcome,
+    ...(["record", "title", "description", "category"].includes(diagnostic.field || "") ? { field: diagnostic.field } : {}),
     ...(diagnostic.status && Number.isInteger(diagnostic.status) && diagnostic.status >= 100 && diagnostic.status <= 599
       ? { status: diagnostic.status } : {}),
   });

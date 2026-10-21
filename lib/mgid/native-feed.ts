@@ -2,7 +2,7 @@ import type { MgidDiagnostic } from "./diagnostics";
 import { isIP } from "node:net";
 
 export type MgidCreative = {
-  creativeId: string; category: string; advertiserName: string;
+  creativeId: string | null; category: string | null; advertiserName: string;
   headline: string; body: string; imageUrl: string; destinationUrl: string;
 };
 
@@ -37,7 +37,7 @@ export async function requestMgidAd(input: {
   page: string; sourceId: string; excludedCategories: string[]; fetcher?: typeof fetch;
   onDiagnostic?: (diagnostic: MgidDiagnostic) => void;
 }): Promise<MgidCreative | null> {
-  const fail = (outcome: MgidDiagnostic["outcome"], status?: number): null => { input.onDiagnostic?.({ outcome, ...(status ? {status} : {}) }); return null; };
+  const fail = (outcome: MgidDiagnostic["outcome"], status?: number, field?: MgidDiagnostic["field"]): null => { input.onDiagnostic?.({ outcome, ...(status ? {status} : {}), ...(field ? {field} : {}) }); return null; };
   if (!input.token || /\s/.test(input.token) || !isIP(input.ip) || !input.userAgent ||
     input.userAgent.length > 1024 || input.language.length > 256) return fail("invalid_input");
   const url = new URL("https://api-wa.mgid.com/2099644");
@@ -68,17 +68,28 @@ export async function requestMgidAd(input: {
     if (Array.isArray(data) && data.length === 0) return fail("empty");
     if (!Array.isArray(data) || data.length !== 1) return fail("invalid_response");
     const row = data[0];
-    if (!row || typeof row !== "object" || !/^[\w-]{1,128}$/.test(String(row.Id ?? "")) ||
-      !/^\d{1,10}$/.test(String(row.category ?? "")) ||
-      typeof row.title !== "string" || !row.title.trim() || row.title.length > 200 ||
-      (row.description != null && (typeof row.description !== "string" || row.description.length > 2000))) return fail("invalid_creative");
-    if (input.excludedCategories.includes(String(row.category))) return fail("excluded_category");
+    if (!row || typeof row !== "object" || Array.isArray(row)) return fail("invalid_creative", undefined, "record");
+    if (typeof row.title !== "string" || !row.title.trim() || row.title.length > 200) return fail("invalid_creative", undefined, "title");
+    if (row.description != null && (typeof row.description !== "string" || row.description.length > 2000)) return fail("invalid_creative", undefined, "description");
+    // IDs/category are provider metadata, not fields required to safely render
+    // a title, image and tracked link. Never invent an ID/category when absent.
+    const metadata = (value: unknown): string | null => {
+      if (typeof value !== "string" && !(typeof value === "number" && Number.isSafeInteger(value))) return null;
+      const text = String(value).trim();
+      return text && text.length <= 128 ? text : null;
+    };
+    const creativeId = metadata(row.Id);
+    const category = metadata(row.category);
+    // A configured local numeric blocklist must remain enforceable. Provider
+    // filters are separately mandatory before this function can serve live ads.
+    if (input.excludedCategories.length && (!category || !/^\d{1,10}$/.test(category))) return fail("invalid_creative", undefined, "category");
+    if (category && input.excludedCategories.includes(category)) return fail("excluded_category");
     const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com"]);
     const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com"]);
     if (!destinationUrl || !imageUrl) return fail("unsafe_url");
     // icon is deliberately discarded: MGID says it is optional for JSON feeds.
     // Never call it per teaser or accidentally render it as an advertiser logo.
-    return { creativeId: String(row.Id), category: String(row.category),
+    return { creativeId, category,
       advertiserName: typeof row.adv === "string" && row.adv.trim() ? row.adv.slice(0, 120) : "MGID partner",
       headline: row.title, body: row.description || "", imageUrl, destinationUrl };
   } catch (error) {
