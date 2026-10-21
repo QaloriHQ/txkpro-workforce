@@ -1,0 +1,171 @@
+TXK PRO TERMS OF SERVICE
+Effective Date: September 7, 2026
+These Terms of Service (“Terms”) govern access to and use of TXK Pro websites, applications, dashboards, marketplace features, and related services.
+By accessing or using TXK Pro, you agree to these Terms.
+TXK PRO SMS TERMS
+By voluntarily opting in to the TXK PRO SMS program, you agree to receive recurring informational text messages from TXK PRO at the mobile number you provide.
+Messages may include account notifications, application or service-request updates, appointment and scheduling reminders, verification notices, support communications, and workforce opportunity notifications that you have requested.
+Message frequency varies.
+Message and data rates may apply.
+Reply STOP to any TXK PRO text message to opt out. After opting out, you may receive a final confirmation message.
+Reply HELP for assistance.
+Consent to receive SMS messages is not a condition of purchasing goods or services or using TXK PRO services.
+Wireless carriers are not responsible for delayed or undelivered messages.
+Your mobile phone number, SMS opt-in information, and messaging consent will not be sold, rented, transferred, or shared with third parties or affiliates for their marketing or promotional purposes.
+Privacy Policy:
+https://txkpro.com/privacy
+1. TXK PRO
+TXK Pro is a marketplace and workflow platform that helps connect homeowners and service professionals and helps organize service requests, estimates, jobs, communication, reviews, and related marketplace operations.
+TXK Pro is not itself the contractor performing home service unless expressly stated otherwise in a separate written agreement.
+2. ELIGIBILITY
+You may use TXK Pro only if you are legally able to enter into the agreements relevant to your use of the platform.
+You are responsible for providing accurate information and for using TXK Pro in compliance with applicable law.
+3. ACCOUNT ACCESS
+TXK Pro may use email verification codes, sessions, or other methods to authenticate users.
+You are responsible for:
+- Using an email account you control
+- Protecting access to your email
+- Not sharing verification codes or session credentials
+- Promptly reporting suspected unauthorized access
+4. HOMEOWNER ACCESS
+TXK Pro platform access is free for homeowners unless TXK Pro clearly introduces and discloses a different fee for a specific optional service.
+Homeowners may use TXK Pro to:
+- Save properties
+- Create service requests
+- Upload project information
+- Receive or review estimates
+- Accept estimates
+- Manage jobs
+- Send messages
+- Leave reviews after eligible completed work
+5. CONTRACTOR ACCESS
+Contractors may be required to:
+- Apply or register
+- Maintain accurate business information
+- Maintain an approved contractor status
+- Select active services
+- Maintain service territories
+- Provide requested documents
+- Maintain an active account
+- Maintain required paid platform access
+Contractor platform access may be billed through Stripe or another payment processor.
+Payment terms, price, billing interval, trial terms, cancellation rules, and other billing details should be shown during the applicable checkout or subscription process.
+6. CONTRACTOR ELIGIBILITY FOR NEW WORK
+TXK Pro may evaluate eligibility for new marketplace work based on factors including:
+- Contractor approval
+- Account status
+- Paid-access status
+- Requested service
+- Active contractor-service relationship
+- Service territory
+- Property location
+- Other marketplace requirements
+TXK Pro may withhold, pause, or stop new opportunities when eligibility requirements are not met.
+7. SERVICE REQUESTS
+Homeowners are responsible for providing reasonably accurate project information.
+TXK Pro does not guarantee that:
+- A contractor will accept a request
+- An estimate will be provided
+- A particular price will be offered
+- A contractor will be available at a requested time
+- A specific project can be completed
+8. ESTIMATES
+Contractor estimates may include:
+- Scope
+- Line items
+- Quantity
+- Unit pricing
+- Subtotal
+- Tax
+- Total
+- Notes
+- Expiration
+Contractors are responsible for the estimates they provide.
+Homeowners are responsible for reviewing the estimate before accepting it.
+9. ESTIMATE ACCEPTANCE AND JOB CREATION
+TXK Pro may automatically create a marketplace job when a homeowner accepts an eligible contractor estimate.
+Creating a TXK Pro job record does not automatically mean:
+- The work has started
+- All project conditions have been independently verified by TXK Pro
+- TXK Pro guarantees the contractor's performance
+- A homeowner platform subscription has been created
+10. PAYMENTS FOR HOME SERVICE
+TXK Pro contractor platform billing is separate from any payment a homeowner may owe a contractor for actual home service.
+If TXK Pro later facilitates homeowner-to-contractor payments, applicable transaction terms and disclosures should be provided separately.
+11. CONTRACTOR-HOMEOWNER RELATIONSHIP
+Unless explicitly stated otherwise:
+- Contractors are independent service providers.
+- Contractors are responsible for their own licenses, permits, insurance, taxes, employees, subcontractors, equipment, workmanship, pricing, and legal obligations.
+- Homeowners are responsible for evaluating whether a contractor and estimate meet their needs.
+TXK Pro may establish marketplace eligibility standards, but those standards are not a warranty of contractor performance.
+12. MESSAGES AND CONTENT
+Users may submit:
+- Descriptions
+- Photos
+- Documents
+- Messages
+- Estimates
+- Reviews
+- Business information
+You must not use TXK Pro to submit content that:
+- Is unlawful
+- Is fraudulent
+- Infringes another person's rights
+- Contains malware
+- Is intentionally deceptive
+- Violates privacy rights
+- Is unrelated abusive or harmful content
+You grant TXK Pro the rights reasonably necessary to host, process, transmit, display, and use submitted content to operate the service.
+13. REVIEWS
+Reviews should reflect genuine experiences.
+TXK Pro may remove, restrict, or moderate reviews that violate platform rules, are fraudulent, or are otherwise inappropriate.
+14. ADVERTISERS AND SPONSORS
+TXK Pro may offer paid advertising and sponsorship opportunities.
+Advertisers and sponsors may be subject to separate agreements, insertion orders, campaign terms, billing terms, content standards, or other commercial conditions.
+15. PROHIBITED USE
+You may not:
+- Attempt to bypass authentication or access controls
+- Access records you are not authorized to view
+- Scrape or extract data in violation of platform rules
+- Interfere with the operation of TXK Pro
+- Misrepresent your identity or business
+- Submit fraudulent requests or estimates
+- Use TXK Pro to violate law
+- Attempt to compromise accounts, sessions, or infrastructure
+16. THIRD-PARTY SERVICES
+TXK Pro may integrate with third-party services, including Google services, Mapbox, Stripe, and email providers.
+Your use of those services may also be governed by their terms.
+17. AVAILABILITY
+TXK Pro may change, suspend, or discontinue features.
+We do not guarantee uninterrupted or error-free operation.
+18. DISCLAIMERS
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, TXK PRO IS PROVIDED ON AN “AS IS” AND “AS AVAILABLE” BASIS.
+TXK PRO DOES NOT GUARANTEE:
+- A PARTICULAR CONTRACTOR
+- A PARTICULAR PRICE
+- A PARTICULAR RESULT
+- PROJECT COMPLETION
+- CONTRACTOR WORKMANSHIP
+- CONTINUOUS PLATFORM AVAILABILITY
+19. LIMITATION OF LIABILITY
+To the maximum extent permitted by applicable law, TXK Pro and its owners, operators, affiliates, and service providers will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages arising from or related to use of the service.
+Any additional limitation of liability should be reviewed for the jurisdictions in which TXK Pro operates.
+20. INDEMNIFICATION
+To the extent permitted by law, you agree to indemnify and hold harmless TXK Pro and its owners, operators, affiliates, and service providers from claims arising from your unlawful use of TXK Pro, your content, your services, your business conduct, or your violation of these Terms.
+21. TERMINATION
+TXK Pro may suspend or terminate access when a user:
+- Violates these Terms
+- Creates security or fraud risk
+- Fails contractor eligibility requirements
+- Fails required billing obligations
+- Misuses the marketplace
+- Creates legal or operational risk
+22. CHANGES TO THESE TERMS
+TXK Pro may update these Terms from time to time.
+The effective date should be updated when material changes are published.
+23. GOVERNING LAW
+The final governing-law and dispute-resolution provisions should be completed based on the legal entity operating TXK Pro and the jurisdictions in which the service is offered.
+24. CONTACT
+For support or legal questions, use the contact channels published at:
+https://www.txkpro.com
+These Terms are a general operating draft and should be reviewed by qualified counsel before final publication.
