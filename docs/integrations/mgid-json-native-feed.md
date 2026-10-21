@@ -125,3 +125,9 @@ Owner retry on #353 produced exact redacted evidence: unsafe_url, field=click_ur
 ### Confirmed live image host (2026-10-21)
 
 Owner retries on #354 at 17:02:17–18 UTC on dpl_4rBh5jzQdE2QVvJHuuZnvrKm5Dqm pass the click check and identify only unsafe_url/image_url/s-img.mgid.com. Add exactly this MGID-owned media host alongside imgg-cdn.mgid.com/imggprx.mgid.com. The regression models the complete observed clck.mgid.com + s-img.mgid.com host pair with absent provider metadata, preserving real tracked URLs and images. It rejects lookalikes/credentials/ports. Both-field diagnostics now reveal all rejected URL fields in the same request. No arbitrary domains, new vendors, migrations, synthetic traffic or production changes.
+
+### Owner-supplied ads.txt (2026-10-21)
+
+`public/ads.txt` publishes the 20 seller entries supplied directly by the owner, unchanged, as a root static text file. The MGID seller entry is `mgid.com, 997582, DIRECT, d4c29acad76ce94f`; this ads.txt seller ID is distinct from the reporting client API ID, website ID and JSON feed ID. Both supplied Google DIRECT/RESELLER entries and all reseller lines are preserved. No IDs/relationships are inferred, deduplicated or replaced.
+
+The Workforce app serves it at `/ads.txt` without app sign-in, using its normal static-file handling; current robots rules allow it. Staging Vercel deployment protection remains in place, so public internet crawler validation on staging requires the existing Vercel access path. Production publishing and publishing at the separately hosted txkpro.com root are outside this staging change. No production promotion, database migration, inventory activation, credentials, provider requests or private data changes. Verify HTTP 200, text/plain, exact 20-line body and no redirect to app login after staging deploy.
