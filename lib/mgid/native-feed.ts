@@ -88,7 +88,7 @@ export async function requestMgidAd(input: {
     if (input.excludedCategories.length && (!category || !/^\d{1,10}$/.test(category))) return fail("invalid_creative", undefined, "category");
     if (category && input.excludedCategories.includes(category)) return fail("excluded_category");
     const destinationUrl = mgidHttpsUrl(row.link, ["www.mgid.com", "mgid.com", "clck.mgid.com"]);
-    const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com", "imggprx.mgid.com"]);
+    const imageUrl = mgidHttpsUrl(row.image, ["imgg-cdn.mgid.com", "imggprx.mgid.com", "s-img.mgid.com"]);
     if (!destinationUrl || !imageUrl) {
       for (const [field, valid, value] of [["click_url", destinationUrl, row.link], ["image_url", imageUrl, row.image]] as const) {
         if (valid) continue;

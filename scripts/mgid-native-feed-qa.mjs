@@ -68,3 +68,7 @@ test('both rejected URL fields are diagnosed in one real request rather than con
  const diagnostics=[];assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,link:'https://click.example.com/secret?token=private',image:'https://media.example.com/secret?token=private'}]),onDiagnostic:d=>diagnostics.push(d)}),null);
  assert.deepEqual(diagnostics,[{outcome:'unsafe_url',field:'click_url',host:'click.example.com'},{outcome:'unsafe_url',field:'image_url',host:'media.example.com'}]);
 });
+test('complete live provider host pair supports all rendered formats without dropping the creative',async()=>{
+ const ad=await requestMgidAd({...input,fetcher:async()=>response([{...row,Id:null,category:null,link:'https://clck.mgid.com/ghits/123?rid=opaque%2Bvalue',image:'https://s-img.mgid.com/gid/creative.jpg'}])});assert.ok(ad);assert.equal(ad.destinationUrl,'https://clck.mgid.com/ghits/123?rid=opaque%2Bvalue');assert.equal(ad.imageUrl,'https://s-img.mgid.com/gid/creative.jpg');
+ for(const image of ['https://s-img.mgid.com.evil.test/image.jpg','https://s-img-mgid.com/image.jpg','https://secret@s-img.mgid.com/image.jpg','https://s-img.mgid.com:8080/image.jpg'])assert.equal(await requestMgidAd({...input,fetcher:async()=>response([{...row,image}])}),null);
+});

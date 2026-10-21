@@ -121,3 +121,7 @@ URL rejection diagnostics identify click_url/image_url and may include only a bo
 ### Confirmed live click host (2026-10-21)
 
 Owner retry on #353 produced exact redacted evidence: unsafe_url, field=click_url, host=clck.mgid.com, twice at 16:53:23 UTC on deployment dpl_AcT87hAC1d7iZMyXt7GoCYNreig2. This is the MGID-owned click hostname returned by the live approved feed. Add only clck.mgid.com alongside mgid.com/www.mgid.com, preserving HTTPS and opaque tracked path/query. Tests reject lookalike domains, credentials and arbitrary ports. No wildcard domains, new vendor data sharing, migrations, synthetic traffic or production changes. This host is sourced from actual provider delivery diagnostics, not an invented public documentation claim.
+
+### Confirmed live image host (2026-10-21)
+
+Owner retries on #354 at 17:02:17–18 UTC on dpl_4rBh5jzQdE2QVvJHuuZnvrKm5Dqm pass the click check and identify only unsafe_url/image_url/s-img.mgid.com. Add exactly this MGID-owned media host alongside imgg-cdn.mgid.com/imggprx.mgid.com. The regression models the complete observed clck.mgid.com + s-img.mgid.com host pair with absent provider metadata, preserving real tracked URLs and images. It rejects lookalikes/credentials/ports. Both-field diagnostics now reveal all rejected URL fields in the same request. No arbitrary domains, new vendors, migrations, synthetic traffic or production changes.
