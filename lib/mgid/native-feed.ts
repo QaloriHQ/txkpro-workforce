@@ -21,6 +21,9 @@ export function mgidPublicPage(request: Request, contentId: string | null): stri
   try {
     const page = new URL(request.headers.get("referer") || "");
     if (page.origin !== new URL(request.url).origin || page.username || page.password) return null;
+    // Workspace placements use only the independently validated public article
+    // list. Disclose its public URL, never the private workspace path or query.
+    if (page.pathname === "/student") return page.origin + "/articles";
     const feed = ["/community", "/student/community", "/events", "/polls", "/articles"].includes(page.pathname);
     const detail = !!contentId && page.pathname === "/community/posts/" + encodeURIComponent(contentId);
     if (!feed && !detail) return null;

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useAdTestMode } from "@/components/ads/student-ad-testing";
 import { nativeAdLayout, nativeAdClasses } from "@/lib/ads/presentation";
 import { NativeAdPresentation } from "@/components/ads/native-ad-presentation";
 import { FlagIcon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -25,8 +26,11 @@ async function sendEvent(ad: NativeAd, eventType: "viewable" | "clicked") {
 
 type PlacementProps = { placement: AdPlacement; contentId?: string; preview?: boolean; itemCount: number; listKind?: AdListKind; listItemIds?: string[]; previewMedia?: "image" | "text" };
 export function SponsoredPlacement(props: PlacementProps) {
+  const mode = useAdTestMode();
+  const preview = props.preview || mode === "image" || mode === "text";
+  const previewMedia = mode === "text" ? "text" : props.previewMedia || "image";
   if (!adListEligible(props.itemCount)) return null;
-  return <EligiblePlacement key={`${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}:${props.previewMedia || "image"}`} {...props} />;
+  return <EligiblePlacement key={`${preview}:${previewMedia}:${props.placement}:${props.contentId || ""}:${props.listKind || "posts"}:${props.listItemIds?.slice(0,3).join(",") || "preview"}:${props.previewMedia || "image"}`} {...props} preview={preview} previewMedia={previewMedia} />;
 }
 
 function EligiblePlacement({ placement, contentId, preview = false, itemCount, listKind = "posts", listItemIds, previewMedia = "image" }: PlacementProps) {

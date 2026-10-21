@@ -1,3 +1,6 @@
+import { getAccountContext } from "@/lib/auth";
+import { stagingStudentAdTesting } from "@/lib/ads/test-mode";
+import { StudentAdTesting } from "@/components/ads/student-ad-testing";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./theme.css";
@@ -78,6 +81,9 @@ export default async function RootLayout({
     try { impersonation = await getImpersonationRegistrySession(); }
     catch { /* Auth expiry/revocation must not expose impersonation context. */ }
   }
+  const staging = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_GIT_COMMIT_REF === "staging";
+  const account = staging ? await getAccountContext() : null;
+  const adTesting = stagingStudentAdTesting(process.env, account?.role, account?.userStatus);
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -88,7 +94,7 @@ export default async function RootLayout({
           <ImpersonationBanner targetName={impersonation.target.name}
             targetScope={impersonation.session.target_membership_key} />
         ) : null}
-        {children}
+        <StudentAdTesting enabled={adTesting}>{children}</StudentAdTesting>
       </body>
     </html>
   );
