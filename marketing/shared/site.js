@@ -22,3 +22,19 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') { close(); toggle.focus(); } });
   matchMedia('(min-width: 761px)').addEventListener('change', (e) => { if (e.matches) close(); });
 })();
+
+document.querySelectorAll('[data-interest-form]').forEach(form=>{
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const status=form.querySelector('[data-form-status]');const button=form.querySelector('button[type=submit]');
+  if(!form.dataset.endpoint){status.textContent='Signups are temporarily unavailable. Please check back soon.';return;}
+  if(!form.reportValidity())return;
+  const values=new FormData(form);button.disabled=true;status.textContent='Submitting…';
+  try{
+   const response=await fetch(form.dataset.endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({product:form.dataset.product,email:values.get('email'),role:values.get('role'),consent:values.get('consent')==='on',website:values.get('website')}),signal:AbortSignal.timeout(10000)});
+   const result=await response.json();
+   if(!response.ok)throw new Error(result.error||'Unable to submit. Please try again.');
+   status.textContent='Thank you. Your request has been received. No account has been created.';form.reset();
+  }catch(error){status.textContent=error.name==='TimeoutError'?'Connection timed out. Please try again.':error.message||'Unable to submit. Please try again.';}finally{button.disabled=false;}
+ });
+});

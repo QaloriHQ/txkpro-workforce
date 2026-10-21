@@ -991,6 +991,8 @@ jobs:
           NODE
 
       - run: npm install
+      - name: Verify native marketing intake privacy and consent
+        run: node --test marketing/intake-qa.mjs
       - run: node --test scripts/professional-profile-render-qa.mjs
       - run: npm run portfolio:qa
       - run: npm run classes:qa

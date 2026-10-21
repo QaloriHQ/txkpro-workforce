@@ -1,0 +1,4 @@
+
+[functions.marketing-intake]
+verify_jwt = false
+entrypoint = "./functions/marketing-intake/index.mjs"
