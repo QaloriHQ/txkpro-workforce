@@ -1,6 +1,7 @@
 export type AdPlacement = "in_feed" | "in_comments" | "in_article" | "multiplex";
 
 export type NativeAd = {
+  provider?: "direct" | "mgid";
   deliveryId: string;
   eventToken: string;
   placement: AdPlacement;

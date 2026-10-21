@@ -133,3 +133,5 @@ ADS-03 ANALYTICS AND RECONCILIATION PERMISSIONS — OWNER APPROVED 2026-10-16 (#
 - Advertiser Owner, Admin, Creative and Analyst may read/export only aggregate analytics for their advertiser scope. Exports are audited.
 - TXKPRO platform Admin may append invalid-traffic and provider-reconciliation evidence. Advertisers cannot invalidate delivery or record spend.
 - No role receives viewer identities, private Workforce data or direct advertising-table access through analytics.
+
+ADS-04 (#278): public/signed-in visitors may receive MGID fallback only in approved public contexts. External delivery tables are service-role-only with RLS and revoked anon/authenticated table access. Random per-delivery tokens authorize only bounded, idempotent measurement. Reporting additionally requires an active canonical community actor; no advertiser receives private viewer data. Only platform-scoped Super Admin may inspect MGID integration configuration/aggregate delivery status. Contract: docs/integrations/mgid-json-native-feed.md.

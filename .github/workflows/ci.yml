@@ -998,7 +998,7 @@ jobs:
       - run: npm run authcard:qa
       - run: npm run screening-policy:qa
       - run: node --experimental-strip-types --test scripts/pro-points-csv-qa.mjs
-      - run: node --experimental-strip-types --test scripts/mgid-publisher-api-qa.mjs
+      - run: node --experimental-strip-types --test scripts/mgid-publisher-api-qa.mjs scripts/mgid-native-feed-qa.mjs scripts/mgid-native-database-qa.mjs
       - run: node --test scripts/admin-platform-workspace-qa.mjs
       - run: node --experimental-strip-types --test scripts/impersonation-registry-qa.mjs
       - run: node --experimental-strip-types --test scripts/impersonation-coverage-gate.mjs
