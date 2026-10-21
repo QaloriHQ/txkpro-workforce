@@ -1,4 +1,5 @@
 import "server-only";
+import { logMgidDiagnostic } from "@/lib/mgid/diagnostics";
 import { createHmac } from "node:crypto";
 import { isIP } from "node:net";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -17,22 +18,24 @@ export function mgidConfiguration() {
 export async function selectMgidAd(request: Request, input: { placement: AdPlacement; contentId: string | null; requestKey: string }): Promise<NativeAd | null> {
   const config = mgidConfiguration();
   if (!config.configured || !config.enabled || !config.filtersConfirmed ||
-    (process.env.VERCEL_ENV === "production" && !config.productionAuthorized)) return null;
+    (process.env.VERCEL_ENV === "production" && !config.productionAuthorized)) { logMgidDiagnostic({outcome: "disabled"}); return null; }
   const page = mgidPublicPage(request, input.contentId);
   // Vercel overwrites this trusted forwarding header. Do not trust arbitrary
   // x-forwarded-for chains or a client-supplied IP/query parameter.
   const ip = process.env.VERCEL === "1" ? request.headers.get("x-vercel-forwarded-for")?.trim() : null;
-  if (!page || !ip || !isIP(ip)) return null;
+  if (!page) { logMgidDiagnostic({outcome: "invalid_page"}); return null; }
+  if (!ip || !isIP(ip)) { logMgidDiagnostic({outcome: "missing_ip"}); return null; }
   const token = process.env.MGID_FEED_TOKEN!;
   const admin = createAdminClient();
   const fingerprint = createHmac("sha256", token).update("mgid-rate:" + new Date().toISOString().slice(0,10) + ":" + ip).digest("hex");
   const { data: eventToken, error: reserveError } = await admin.rpc("external_ad_reserve", {
     p_delivery_id: input.requestKey, p_fingerprint: fingerprint, p_placement: input.placement,
   });
-  if (reserveError || !eventToken) return null;
+  if (reserveError || !eventToken) { logMgidDiagnostic({outcome: "reservation_rejected"}); return null; }
   const creative = await requestMgidAd({ token, ip, userAgent: request.headers.get("user-agent") || "",
     language: request.headers.get("accept-language") || "en", page,
     sourceId: "txkpro.com:" + input.placement,
+    onDiagnostic: logMgidDiagnostic,
     excludedCategories: (process.env.MGID_EXCLUDED_CATEGORY_IDS || "").split(",").map(value => value.trim()).filter(Boolean),
   });
   if (!creative) return null;
@@ -44,8 +47,9 @@ export async function selectMgidAd(request: Request, input: { placement: AdPlace
   const snapshot = { provider: "mgid", creativeId: creative.creativeId, category: creative.category,
     headline: creative.headline, body: creative.body, advertiserName: creative.advertiserName };
   const { error } = await admin.from("wf_external_ad_deliveries").update({ creative_id: creative.creativeId, snapshot }).eq("delivery_id", ad.deliveryId);
-  if (error) return null;
+  if (error) { logMgidDiagnostic({outcome: "storage_error"}); return null; }
   const { error: eventError } = await admin.from("wf_external_ad_events").insert({ delivery_id: ad.deliveryId, event_type: "served" });
+  logMgidDiagnostic({outcome: eventError ? "storage_error" : "accepted"});
   return eventError ? null : ad;
 }
 

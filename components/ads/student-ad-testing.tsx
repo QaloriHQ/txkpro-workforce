@@ -8,7 +8,7 @@ const AdTestContext = createContext<AdTestMode | null>(null);
 export function useAdTestMode() { return useContext(AdTestContext); }
 
 export function StudentAdTesting({ enabled, children }: { enabled: boolean; children: ReactNode }) {
-  const [mode, setMode] = useState<AdTestMode>("image");
+  const [mode, setMode] = useState<AdTestMode>("live");
   const path = usePathname();
   const surface = ["/student", "/student/community", "/events", "/polls", "/articles"].includes(path) || path.startsWith("/community/posts/");
   const active = enabled && surface;

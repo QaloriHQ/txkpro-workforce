@@ -22,3 +22,16 @@ test('workspace public article placement discloses only its public article URL',
  assert.equal(mgidPublicPage(req('https://other.test/student'),null),null);
  for(const path of ['/student/profile','/student/points','/student/opportunities','/student/employer-training/secret'])assert.equal(mgidPublicPage(req('https://txkpro.com'+path),null),null);
 });
+test('no-fill diagnostics distinguish provider failures without leaking response or visitor data',async()=>{
+ const cases=[['http_error',async()=>new Response('secret provider body',{status:403})],['empty',async()=>response([])],['invalid_response',async()=>new Response('<html>secret</html>')],['unsafe_url',async()=>response([{...row,image:'https://private.example/secret'}])],['network_error',async()=>{throw new Error('token=secret&ip=private');}],['timeout',async()=>{throw new DOMException('private','TimeoutError');}]];
+ for(const [outcome,fetcher] of cases){const diagnostics=[];assert.equal(await requestMgidAd({...input,fetcher,onDiagnostic:d=>diagnostics.push(d)}),null);assert.equal(diagnostics.length,1);assert.equal(diagnostics[0].outcome,outcome);assert.doesNotMatch(JSON.stringify(diagnostics),/secret|private|test-only-token|203\.0\.113|Browser/);if(outcome==='http_error')assert.equal(diagnostics[0].status,403);}
+});
+test('valid bounded JSON is accepted even with an upstream text MIME label; non-JSON remains rejected',async()=>{
+ const ad=await requestMgidAd({...input,fetcher:async()=>new Response(JSON.stringify([row]),{headers:{'content-type':'text/plain'}})});assert.equal(ad.creativeId,'123');
+ assert.equal(await requestMgidAd({...input,fetcher:async()=>new Response('<script>private()</script>',{headers:{'content-type':'text/plain'}})}),null);
+});
+test('operational logger emits only fixed codes and valid HTTP status',async()=>{
+ const {logMgidDiagnostic}=await import('../lib/mgid/diagnostics.ts');const old=console.info;const logged=[];console.info=(...args)=>logged.push(args);
+ try{logMgidDiagnostic({outcome:'http_error',status:403,token:'secret',ip:'private',body:'secret response'});logMgidDiagnostic({outcome:'network_error',status:999});}finally{console.info=old;}
+ assert.deepEqual(logged,[['mgid_native_delivery',{outcome:'http_error',status:403}],['mgid_native_delivery',{outcome:'network_error'}]]);
+});
