@@ -1,9 +1,9 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
-import {normalizeServerSecret} '../supabase/server-secret.js';
-import {readTwilioEmailConfig,sendTwilioEmail} '../email/twilio-email.js';
-import {bookingInput,email,surveyInput} './contract.js';
-import {calendarAvailability,calendarConfig,createResearchEvent} './calendar.js';
+import {normalizeServerSecret} from '../supabase/server-secret.js';
+import {readTwilioEmailConfig,sendTwilioEmail} from '../email/twilio-email.js';
+import {bookingInput,email,surveyInput} from './contract.js';
+import {calendarAvailability,calendarConfig,createResearchEvent} from './calendar.js';
 
 // Server entry points only. This module is never imported by marketing browser assets.
 const createAdminClient=()=>createClient(process.env.NEXT_PUBLIC_SUPABASE_URL||'',normalizeServerSecret(process.env.SUPABASE_SECRET_KEY??process.env.SUPABASE_SERVICE_ROLE_KEY),{auth:{persistSession:false,autoRefreshToken:false}});
@@ -110,6 +110,6 @@ export async function researchCalendarFile(input:Record<string,unknown>){
  const {data,error}=await createAdminClient().from('marketing_research_bookings').select('google_event_id,start_at,end_at,reservation_state').eq('calendar_token_hash',hash(input.token)).maybeSingle();
  if(error||!data||data.reservation_state!=='booked')throw Error('token');
  const stamp=(date:string)=>new Date(date).toISOString().replaceAll(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
- const calendar=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TXKPRO//Research//EN','BEGIN:VEVENT','UID:'+data.google_event_id+'@txkpro.com','DTSTAMP:'+stamp(new Date().toISOString()),'DTSTART:'+stamp(data.start_at),'DTEND:'+stamp(data.end_at),'SUMMARY:TXKPRO Workforce Research Interview','DESCRIPTION:Video/phone interview. Details provided after booking. For changes visit https://txkpro.com/contact','END:VEVENT','END:VCALENDAR',''].join('\r\n');
+ const calendar=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TXKPRO//Research//EN','BEGIN:VEVENT','UID:'+data.google_event_id+'@txkpro.com','DTSTAMP:'+stamp(new Date().toISOString()),'DTSTART:'+stamp(data.start_at),'DTEND:'+stamp(data.end_at),'SUMMARY:TXKPRO Workforce Research Interview','DESCRIPTION:Video/phone interview. Details provided after booking. For changes visit https://txkpro.com/contact','END:VEVENT','END:VCALENDAR',''].map(line=>(line.match(/.{1,73}/g)||['']).join('\r\n ')).join('\r\n');
  return {ok:true,calendar};
 }

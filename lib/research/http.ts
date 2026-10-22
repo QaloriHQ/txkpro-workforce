@@ -1,5 +1,5 @@
-import {allowedResearchOrigin,email} './contract.js';
-import {bookResearchInterview,confirmResearchUnsubscribe,requestResearchUnsubscribe,researchAvailability,researchCalendarFile,researchLimit,submitResearchSurvey} './service.js';
+import {allowedResearchOrigin,email} from './contract.js';
+import {bookResearchInterview,confirmResearchUnsubscribe,requestResearchUnsubscribe,researchAvailability,researchCalendarFile,researchLimit,submitResearchSurvey} from './service.js';
 const baseHeaders={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Vary':'Origin'};
 function originHeaders(request:Request){
  const origin=request.headers.get('origin')??(request.method==='GET'?new URL(request.url).origin:'');

@@ -1,1 +1,1 @@
-export {GET,POST,OPTIONS} '../../../lib/research/http.js';
+export {GET,POST,OPTIONS} from '../../../lib/research/http.js';
