@@ -34,7 +34,9 @@ for (const [name,site] of Object.entries(sites)) {
   assert.match(html,/<html lang="en">/);assert.match(html,/<title>[^<]+<\/title>/);
   assert.match(html,/<meta name="description" content="[^"]+">/);
   assert.match(html,/<link rel="canonical" href="https:\/\//);
-  assert(html.includes(`content="${indexing&&file!=='404.html'?'index, follow':'noindex, follow'}"`));
+  const research=name==='workforce'&&['survey.html','booking.html','unsubscribe.html'].includes(file);
+  assert(html.includes(`content="${indexing&&file!=='404.html'&&!research?'index, follow':'noindex, follow'}"`));
+  if(research){assert(!sitemap.includes('/'+file.replace('.html','')+'</loc>'));assert(html.includes('data-research-form'));assert(html.includes('name="referrer" content="no-referrer"'));}
   assert(!/google\.script\.run|[✓↗→↑]/.test(html),`${file}: copied unsupported interaction or icon substitute`);
   for (const m of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
    const href=m[1].replaceAll('&amp;','&');

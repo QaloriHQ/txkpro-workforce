@@ -7,18 +7,102 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
-    {"source": "/(.*)", "headers": [{"key": "X-Content-Type-Options", "value": "nosniff"}, {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}, {"key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'none'; connect-src https://qwxlgzlkaeaqfzjodtis.supabase.co"}]},
-    {"source": "/ads.txt", "headers": [{"key": "Content-Type", "value": "text/plain; charset=utf-8"}]},
-    {"source": "/llms.txt", "headers": [{"key": "Content-Type", "value": "text/plain; charset=utf-8"}]}
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'none'; connect-src https://qwxlgzlkaeaqfzjodtis.supabase.co"
+        }
+      ]
+    },
+    {
+      "source": "/ads.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
   ],
   "redirects": [
-    {"source": "/home", "destination": "/", "permanent": true},
-    {"source": "/about-us", "destination": "/about", "permanent": true},
-    {"source": "/service-request", "destination": "/homeowners", "permanent": true},
-    {"source": "/login", "destination": "/waitlist", "permanent": true},
-    {"source": "/login-signup", "destination": "/waitlist", "permanent": true},
-    {"source": "/ads-txt", "destination": "/ads.txt", "permanent": true},
-    {"source": "/privacy-policy", "destination": "/privacy", "permanent": true},
-    {"source": "/terms-of-service", "destination": "/terms", "permanent": true}
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about-us",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/service-request",
+      "destination": "/homeowners",
+      "permanent": true
+    },
+    {
+      "source": "/login",
+      "destination": "/waitlist",
+      "permanent": true
+    },
+    {
+      "source": "/login-signup",
+      "destination": "/waitlist",
+      "permanent": true
+    },
+    {
+      "source": "/ads-txt",
+      "destination": "/ads.txt",
+      "permanent": true
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/terms-of-service",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/survey",
+      "destination": "https://workforce.txkpro.com/survey",
+      "permanent": false
+    },
+    {
+      "source": "/booking",
+      "destination": "https://workforce.txkpro.com/booking",
+      "permanent": false
+    },
+    {
+      "source": "/unsubscribe",
+      "destination": "https://workforce.txkpro.com/unsubscribe",
+      "permanent": false
+    },
+    {
+      "source": "/workforce",
+      "destination": "https://workforce.txkpro.com",
+      "permanent": false
+    }
   ]
 }
