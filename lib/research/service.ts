@@ -3,10 +3,12 @@ import {createClient} from '@supabase/supabase-js';
 import {normalizeServerSecret} from '../supabase/server-secret.js';
 import {readTwilioEmailConfig,sendTwilioEmail} from '../email/twilio-email.js';
 import {bookingInput,email,surveyInput} from './contract.js';
-import {calendarAvailability,calendarConfig,createResearchEvent} from './calendar.js';
+import {calendarAvailability,calendarConfig,createResearchBooking,chicagoDate} from './calendar.js';
 
 // Server entry points only. This module is never imported by marketing browser assets.
-const createAdminClient=()=>createClient(process.env.NEXT_PUBLIC_SUPABASE_URL||'',normalizeServerSecret(process.env.SUPABASE_SECRET_KEY??process.env.SUPABASE_SERVICE_ROLE_KEY),{auth:{persistSession:false,autoRefreshToken:false}});
+const createAdminClient=()=>{
+ try{return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL||'',normalizeServerSecret(process.env.SUPABASE_SECRET_KEY??process.env.SUPABASE_SERVICE_ROLE_KEY),{auth:{persistSession:false,autoRefreshToken:false}});}catch{throw Error('configuration');}
+};
 const sendEmail=(message:{to:string;subject:string;html:string;text?:string})=>sendTwilioEmail(readTwilioEmailConfig(process.env),message);
 const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
 const escape=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -26,10 +28,10 @@ export async function researchLimit(ip:string,action:string,recipient?:string){
   if(error)throw Error('request_limit');
  }
 }
-export async function researchAvailability(){
+export async function researchAvailability(date?:string){
  const config=calendarConfig(process.env);
  if(!config)throw Error('configuration');
- const availability=await calendarAvailability(config);
+ const availability=await calendarAvailability(config,fetch,new Date(),date);
  const {data,error}=await createAdminClient().from('marketing_research_bookings').select('start_at').gte('start_at',new Date().toISOString()).lte('start_at',new Date(Date.now()+31*86400000).toISOString());
  if(error)throw Error('storage');
  const reserved=new Set(data.map(row=>new Date(row.start_at).toISOString()));
@@ -66,23 +68,26 @@ export async function confirmResearchUnsubscribe(input:Record<string,unknown>){
  return {ok:true,message:'You will no longer receive TXKPRO Workforce marketing updates.'};
 }
 export async function bookResearchInterview(input:Record<string,unknown>){
- requireMail();const value=bookingInput(input);const config=calendarConfig(process.env);if(!config)throw Error('configuration');
+ requireMail();const value=bookingInput(input);const config=calendarConfig(process.env);if(!config||!config.emailDisabled)throw Error('configuration');
  testRecipient(value.email);
  const db=createAdminClient();const requestHash=hash(JSON.stringify(value));
  const {data:existing,error:readError}=await db.from('marketing_research_bookings').select('*').eq('request_id',value.requestId).maybeSingle();
  if(readError)throw Error('storage');
  if(existing){if(existing.request_hash!==requestHash)throw Error('conflict');if(existing.reservation_state==='booked')return {ok:true,message:'Your research interview is confirmed.',start:existing.start_at,receipt:existing.receipt_outcome};throw Error('booking_pending');}
- const available=await researchAvailability();const slot=available.slots.find(slot=>slot.start===value.start);if(!slot)throw Error('slot_unavailable');
+ const date=chicagoDate(new Date(value.start));
+ const available=await researchAvailability(date);const slot=available.slots.find(slot=>slot.start===value.start);if(!slot)throw Error('slot_unavailable');
  const eventId=hash('txkpro-research:'+value.requestId);
  const calendarToken=randomBytes(32).toString('base64url');
  const calendarLink='https://txkpro.com/booking#calendar='+calendarToken;
- const {error}=await db.from('marketing_research_bookings').insert({request_id:value.requestId,request_hash:requestHash,first_name:value.firstName,email:value.email,research_role:value.role,start_at:slot.start,end_at:slot.end,google_event_id:eventId,calendar_token_hash:hash(calendarToken),email_consent:value.consent});
+ const {error}=await db.from('marketing_research_bookings').insert({request_id:value.requestId,request_hash:requestHash,first_name:value.firstName,email:value.email,research_role:value.role,start_at:slot.start,end_at:slot.end,google_event_id:eventId,booking_provider:'zoho',calendar_token_hash:hash(calendarToken),email_consent:value.consent});
  if(error)throw Error(error.code==='23505'?'slot_unavailable':'storage');
  try{
-  // Recheck all calendars after acquiring the database reservation. Google event insert is not atomic with free/busy.
-  const live=await calendarAvailability(config);
+  // Recheck live provider slots after the durable DB claim. Never retry an uncertain provider POST.
+  const live=await calendarAvailability(config,fetch,new Date(),date);
   if(!live.slots.some(s=>s.start===slot.start))throw Error('calendar_changed');
-  await createResearchEvent(config,{id:eventId,start:slot.start,end:slot.end,firstName:value.firstName});
+  const booking=await createResearchBooking(config,{id:value.requestId,start:slot.start,end:slot.end,firstName:value.firstName,email:value.email});
+  const {error:providerError}=await db.from('marketing_research_bookings').update({provider_booking_id:booking.bookingId}).eq('request_id',value.requestId);
+  if(providerError)throw Error('booking_pending');
  }catch{
   await db.from('marketing_research_bookings').update({reservation_state:'needs_review'}).eq('request_id',value.requestId);
   throw Error('booking_pending');

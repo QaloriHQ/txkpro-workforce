@@ -59,12 +59,21 @@
    }).catch(()=>{submit.disabled=true;message('Survey questions could not be loaded. Please refresh.');});
   }
   if(kind==='booking'){
+   const date=form.querySelector('[data-booking-date]');
+   const chicago=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+   date.min=chicago(new Date(Date.now()+86400000));date.max=chicago(new Date(Date.now()+30*86400000));
+   for(let offset=1;offset<=4;offset++){const day=new Date(Date.now()+offset*86400000);if(!['Sat','Sun'].includes(new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',weekday:'short'}).format(day))){date.value=chicago(day);break;}}
+   date.addEventListener('change',()=>{form.querySelector('[data-time-slots]').replaceChildren(new Option('Check availability first',''));});
    const load=form.querySelector('[data-load-availability]');
    load.addEventListener('click',async()=>{
     load.disabled=true;message('Checking live calendar availability…');
+    const date=form.querySelector('[data-booking-date]');
+    if(!date.reportValidity()){load.disabled=false;return;}
     const select=form.querySelector('[data-time-slots]');select.replaceChildren(new Option('Choose a time',''));
     try{
-     const result=await call('availability');
+     const selected=date.value;
+     const result=await call('availability&date='+encodeURIComponent(selected));
+     if(date.value!==selected){message('Date changed. Check available times again.');return;}
      for(const slot of result.slots)select.add(new Option(slot.label+' (Chicago time)',slot.start));
      message(result.slots.length?'Choose a time, then confirm your interview.':'No times are currently available. Please check back later.');
     }catch(error){message(error.message);}finally{load.disabled=false;}

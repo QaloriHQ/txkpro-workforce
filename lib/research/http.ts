@@ -26,7 +26,7 @@ async function handle(request:Request){
   }
   const ip=(request.headers.get('x-forwarded-for')??'unknown').split(',')[0].trim();
   await researchLimit(ip,action!,action==='booking'||action==='unsubscribe_request'?email(body.email):undefined);
-  const result=action==='availability'?await researchAvailability():action==='survey'?await submitResearchSurvey(body):action==='booking'?await bookResearchInterview(body):action==='calendar'?await researchCalendarFile(body):action==='unsubscribe_request'?await requestResearchUnsubscribe(body):await confirmResearchUnsubscribe(body);
+  const result=action==='availability'?await researchAvailability(new URL(request.url).searchParams.get('date')??undefined):action==='survey'?await submitResearchSurvey(body):action==='booking'?await bookResearchInterview(body):action==='calendar'?await researchCalendarFile(body):action==='unsubscribe_request'?await requestResearchUnsubscribe(body):await confirmResearchUnsubscribe(body);
   return Response.json(result,{status:200,headers});
  }catch(error){
   const code=error instanceof Error?error.message:'';
