@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sites, legacyWorkforceAnchors } from './shared/content.mjs';
+import { researchPages } from './research/pages.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.dirname(root);
@@ -24,7 +25,11 @@ for (const target of targets) {
  for (const theme of ['light','dark']) fs.copyFileSync(path.join(repo,'public',`txkpro-logo-${theme}.svg`),path.join(out,'assets',`logo-${theme}.svg`));
  fs.copyFileSync(path.join(repo,'public','favicon.ico'),path.join(out,'favicon.ico'));
  fs.copyFileSync(path.join(repo,'public','ads.txt'),path.join(out,'ads.txt'));
- const pages=[...site.pages];
+ const pages=[...site.pages,...(target==='workforce'?researchPages():[])];
+ if(target==='workforce'){
+  fs.copyFileSync(path.join(root,'research','research.js'),path.join(out,'assets','research.js'));
+  fs.copyFileSync(path.join(root,'research','questions.json'),path.join(out,'assets','research-questions.json'));
+ }
  for (const [slug,title] of [['privacy','Privacy Policy'],['terms','Terms of Service']]) {
   const original=fs.readFileSync(path.join(root,'shared',`${slug}.txt`),'utf8');
   // Preserve the currently published legal text and dates, with the approved entity attribution (#199).
@@ -33,7 +38,7 @@ for (const target of targets) {
  }
  const render = (page,notFound=false) => {
   const pageTitle = `${page.title} | ${site.name}`;
-  const metaIndex = publicIndexing && !notFound ? 'index, follow' : 'noindex, follow';
+  const metaIndex = publicIndexing && !notFound && !page.research ? 'index, follow' : 'noindex, follow';
   return `<!doctype html>
 <!-- TXKPRO UI BUILD GATE: approved logos; official Heroicons; semantic tokens; responsive layouts; explicit sample provenance. -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escape(page.description)}"><meta name="robots" content="${metaIndex}"><meta name="theme-color" content="#1173d4"><title>${escape(pageTitle)}</title><link rel="canonical" href="${site.domain}${page.path}"><meta property="og:type" content="website"><meta property="og:title" content="${escape(pageTitle)}"><meta property="og:description" content="${escape(page.description)}"><meta property="og:url" content="${site.domain}${page.path}"><meta property="og:site_name" content="${site.name}"><link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script></head><body>
@@ -43,11 +48,11 @@ for (const target of targets) {
  };
  for (const page of pages) {
   const file=path.join(out,page.path==='/'?'index.html':`${page.path.slice(1)}.html`);
-  fs.writeFileSync(file,render(page));
+  fs.writeFileSync(file,render(page).replace('</head>',page.research?'<script src="/assets/research.js" defer></script><meta name="referrer" content="no-referrer"></head>':'</head>'));
  }
  fs.writeFileSync(path.join(out,'404.html'),render({path:'/404',title:'Page not found',description:'Find your way back to TXKPRO.',heading:'Let’s get you back on track.',intro:'This page could not be found.',body:'<section class="section"><div class="shell"><a class="button blue" href="/">Return home</a></div></section>'},true));
- fs.writeFileSync(path.join(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.map(p=>`<url><loc>${site.domain}${p.path}</loc></url>`).join('\n')}\n</urlset>\n`);
+ fs.writeFileSync(path.join(out,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.filter(p=>!p.research).map(p=>`<url><loc>${site.domain}${p.path}</loc></url>`).join('\n')}\n</urlset>\n`);
  fs.writeFileSync(path.join(out,'robots.txt'),publicIndexing?`User-agent: *\nAllow: /\nSitemap: ${site.domain}/sitemap.xml\n`:'User-agent: *\nDisallow: /\n');
- fs.writeFileSync(path.join(out,'llms.txt'),`# ${site.name}\n\n> ${site.description}\n\nOperated by Qalori, LLC dba TXKPRO. Geography: Greater Texarkana.\n${target==='workforce'?'The Workforce application is built in staging and undergoing testing. Production launch is not announced. Access and pilots are coordinated by TXKPRO. Self-reported, institution-verified, and employer-specific evidence remain distinct; there is no guarantee of employment.':'The Marketplace application is not built yet. The current build offers a waitlist; https://app.txkpro.com is its intended address after domain cutover. Service requests, contractor onboarding, estimates, jobs, and payments are planned, not available features.'}\n\n## Public pages\n${pages.map(p=>`- [${p.title}](${site.domain}${p.path}): ${p.description}`).join('\n')}\n\n## Boundaries\nPublic marketing information only. Research submissions, private account data, personalized research links, learner records, and application workspaces are not included in this guide or sitemap.\n`);
+ fs.writeFileSync(path.join(out,'llms.txt'),`# ${site.name}\n\n> ${site.description}\n\nOperated by Qalori, LLC dba TXKPRO. Geography: Greater Texarkana.\n${target==='workforce'?'The Workforce application is built in staging and undergoing testing. Production launch is not announced. Access and pilots are coordinated by TXKPRO. Self-reported, institution-verified, and employer-specific evidence remain distinct; there is no guarantee of employment.':'The Marketplace application is not built yet. The current build offers a waitlist; https://app.txkpro.com is its intended address after domain cutover. Service requests, contractor onboarding, estimates, jobs, and payments are planned, not available features.'}\n\n## Public pages\n${pages.filter(p=>!p.research).map(p=>`- [${p.title}](${site.domain}${p.path}): ${p.description}`).join('\n')}\n\n## Boundaries\nPublic marketing information only. Research submissions, private account data, personalized research links, learner records, and application workspaces are not included in this guide or sitemap.\n`);
  console.log(`${target}: ${pages.length} pages → ${out}; production indexing ${publicIndexing?'enabled':'disabled'}`);
 }

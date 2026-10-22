@@ -1,0 +1,582 @@
+{
+  "student": [
+    {
+      "id": "stage",
+      "text": "Where are you in your skilled-career journey?",
+      "type": "choice",
+      "options": [
+        "High school / CTE program",
+        "Trade or technical school",
+        "Community college",
+        "Apprenticeship",
+        "Self-taught / learning independently",
+        "Already working in an entry-level skilled role",
+        "Exploring options"
+      ]
+    },
+    {
+      "id": "path_clarity",
+      "text": "How clear are you on the next step toward the career you want?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "training_barrier",
+      "text": "What is the biggest barrier to starting or continuing training?",
+      "type": "choice",
+      "options": [
+        "Cost / tuition",
+        "Transportation",
+        "Work or family schedule",
+        "Not knowing which program to choose",
+        "Entry requirements / prerequisites",
+        "Tools, equipment, or supplies",
+        "Confidence / not knowing where to start",
+        "I do not currently face a major barrier"
+      ]
+    },
+    {
+      "id": "application_barrier",
+      "text": "What is hardest about moving from training into a job?",
+      "type": "choice",
+      "options": [
+        "Finding relevant openings",
+        "Knowing whether I am qualified",
+        "Showing employers what I can do",
+        "Building a résumé",
+        "Getting the right credentials",
+        "Interviewing",
+        "Getting employers to respond"
+      ]
+    },
+    {
+      "id": "portfolio_value",
+      "text": "How useful would a profile showing projects, work samples, credentials, and skills be to you?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "support_priority",
+      "text": "Which kind of support would help you most right now?",
+      "type": "choice",
+      "options": [
+        "Scholarship / financial assistance",
+        "Job matching",
+        "Mentorship",
+        "Portfolio / profile building",
+        "Résumé and interview preparation",
+        "Transportation support",
+        "Tools / equipment assistance"
+      ]
+    },
+    {
+      "id": "platform_likelihood",
+      "text": "How likely would you be to use a local platform that connects training, proof of skills, and job opportunities?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    }
+  ],
+  "parent": [
+    {
+      "id": "learner_stage",
+      "text": "Where is the learner you support today?",
+      "type": "choice",
+      "options": [
+        "Middle school",
+        "High school",
+        "Trade / technical program",
+        "Community college",
+        "Apprenticeship",
+        "Recently completed training",
+        "Already working"
+      ]
+    },
+    {
+      "id": "path_confidence",
+      "text": "How confident are you that you understand the skilled-career options available locally?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "biggest_concern",
+      "text": "What is your biggest concern about a skilled-career pathway?",
+      "type": "choice",
+      "options": [
+        "Cost of training",
+        "Job stability",
+        "Starting pay / long-term earnings",
+        "Safety",
+        "Quality of the training program",
+        "Finding the right career fit",
+        "Transportation / logistics",
+        "Finding a job after training"
+      ]
+    },
+    {
+      "id": "information_gap",
+      "text": "Which information is hardest to find?",
+      "type": "choice",
+      "options": [
+        "Which careers are hiring locally",
+        "Training costs",
+        "Scholarships / financial aid",
+        "Program completion outcomes",
+        "Employer expectations",
+        "Starting pay",
+        "Program quality",
+        "How to get started"
+      ]
+    },
+    {
+      "id": "support_value",
+      "text": "How valuable would a single local resource connecting training, support, and employment information be?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "support_priority",
+      "text": "Which resource would be most useful to your family?",
+      "type": "choice",
+      "options": [
+        "Career pathway comparison",
+        "Scholarship / aid information",
+        "Local job opportunities",
+        "Program directory",
+        "Mentor access",
+        "Student work portfolio",
+        "Application guidance"
+      ]
+    },
+    {
+      "id": "recommend_likelihood",
+      "text": "How likely would you be to recommend a trusted local workforce platform to a learner?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    }
+  ],
+  "employer": [
+    {
+      "id": "hiring_frequency",
+      "text": "How often do you hire entry-level or early-career skilled workers?",
+      "type": "choice",
+      "options": [
+        "Monthly or more often",
+        "Every 2-3 months",
+        "A few times per year",
+        "About once per year",
+        "Rarely",
+        "Not currently hiring"
+      ]
+    },
+    {
+      "id": "hiring_difficulty",
+      "text": "How difficult is it to find qualified entry-level or early-career candidates locally?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "hiring_bottleneck",
+      "text": "Where does the hiring process break down most often?",
+      "type": "choice",
+      "options": [
+        "Not enough applicants",
+        "Applicants lack required skills",
+        "Applicants lack reliable work habits",
+        "Credentials do not show actual ability",
+        "Too much time spent screening",
+        "Candidates stop responding",
+        "Scheduling / availability",
+        "Retention after hire"
+      ]
+    },
+    {
+      "id": "qualification_signal",
+      "text": "Which signal matters most when evaluating an early-career candidate?",
+      "type": "choice",
+      "options": [
+        "Hands-on work samples",
+        "Instructor recommendation",
+        "Industry credential / license",
+        "Relevant work experience",
+        "Interview performance",
+        "Résumé",
+        "References"
+      ]
+    },
+    {
+      "id": "application_friction",
+      "text": "What is the biggest weakness in typical entry-level applications?",
+      "type": "choice",
+      "options": [
+        "Too generic",
+        "Little evidence of practical skills",
+        "Missing credentials",
+        "Unclear experience",
+        "Poor communication",
+        "Application is too long",
+        "We do not receive enough applications"
+      ]
+    },
+    {
+      "id": "portfolio_interest",
+      "text": "How useful would candidate project photos, videos, and work samples be during screening?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "participation_interest",
+      "text": "Which TXKPRO Workforce activity would be most useful to your organization?",
+      "type": "choice",
+      "options": [
+        "Post job opportunities",
+        "Browse emerging local talent",
+        "Create custom application forms",
+        "Connect with training programs",
+        "Offer jobsite tours / career exposure",
+        "Provide feedback on training needs",
+        "Participate in a pilot"
+      ]
+    }
+  ],
+  "instructor": [
+    {
+      "id": "program_type",
+      "text": "Which best describes the program you support?",
+      "type": "choice",
+      "options": [
+        "High school CTE",
+        "Trade / technical school",
+        "Community college",
+        "Apprenticeship",
+        "Employer training program",
+        "Nonprofit / community training",
+        "Other workforce program"
+      ]
+    },
+    {
+      "id": "enrollment_barrier",
+      "text": "What is the biggest barrier preventing interested learners from enrolling?",
+      "type": "choice",
+      "options": [
+        "Cost",
+        "Awareness of the program",
+        "Transportation",
+        "Schedule / work obligations",
+        "Entry requirements",
+        "Family responsibilities",
+        "Misunderstanding of skilled careers"
+      ]
+    },
+    {
+      "id": "completion_barrier",
+      "text": "Once enrolled, what most often prevents learners from completing?",
+      "type": "choice",
+      "options": [
+        "Financial pressure",
+        "Transportation",
+        "Work schedule",
+        "Family responsibilities",
+        "Academic / technical difficulty",
+        "Attendance",
+        "Loss of motivation / unclear outcome"
+      ]
+    },
+    {
+      "id": "transition_barrier",
+      "text": "What is the biggest barrier between program completion and employment?",
+      "type": "choice",
+      "options": [
+        "Not enough employer relationships",
+        "Students do not know where to apply",
+        "Students struggle to present their skills",
+        "Employer expectations do not align with training",
+        "Credentials are not understood by employers",
+        "Students need more work experience",
+        "Transportation / scheduling"
+      ]
+    },
+    {
+      "id": "employer_alignment",
+      "text": "How strong is your current connection with local employers?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "outside_support",
+      "text": "What outside support would add the most value without duplicating your program?",
+      "type": "choice",
+      "options": [
+        "Employer introductions",
+        "Scholarship fundraising",
+        "Student portfolio tools",
+        "Job opportunity matching",
+        "Mentor network",
+        "Transportation / barrier support",
+        "Employer-needs research"
+      ]
+    },
+    {
+      "id": "profile_value",
+      "text": "How useful would a portable student profile of projects, credentials, and skills be at graduation or program transition?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    }
+  ],
+  "community": [
+    {
+      "id": "organization_type",
+      "text": "Which best describes your organization?",
+      "type": "choice",
+      "options": [
+        "Nonprofit",
+        "Economic development",
+        "Chamber / business organization",
+        "Government / public agency",
+        "School / education partner",
+        "Faith / community organization",
+        "Workforce support organization",
+        "Other"
+      ]
+    },
+    {
+      "id": "barrier_seen",
+      "text": "Which barrier do you see most often among people trying to enter skilled careers?",
+      "type": "choice",
+      "options": [
+        "Training cost",
+        "Transportation",
+        "Childcare / family obligations",
+        "Lack of career awareness",
+        "Limited employer connections",
+        "Digital access",
+        "Tools / equipment",
+        "Confidence / navigation support"
+      ]
+    },
+    {
+      "id": "underserved_group",
+      "text": "Which group appears to have the greatest unmet workforce support need?",
+      "type": "choice",
+      "options": [
+        "High school students",
+        "Recent graduates",
+        "Adults changing careers",
+        "Underemployed workers",
+        "People returning to work",
+        "Rural residents",
+        "People without transportation",
+        "No single group stands out"
+      ]
+    },
+    {
+      "id": "coordination_difficulty",
+      "text": "How difficult is it for local organizations to coordinate workforce resources today?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "shared_resource",
+      "text": "Which shared resource would create the most value?",
+      "type": "choice",
+      "options": [
+        "Local opportunity directory",
+        "Training-program directory",
+        "Scholarship / support directory",
+        "Referral system",
+        "Employer-needs dashboard",
+        "Student / talent profiles",
+        "Shared events calendar"
+      ]
+    },
+    {
+      "id": "partner_role",
+      "text": "How could your organization most realistically participate?",
+      "type": "choice",
+      "options": [
+        "Refer participants",
+        "Provide funding / sponsorship",
+        "Provide support services",
+        "Share program information",
+        "Host events",
+        "Recruit employers",
+        "Participate in research"
+      ]
+    },
+    {
+      "id": "pilot_interest",
+      "text": "How interested would your organization be in participating in an early TXKPRO Workforce pilot?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    }
+  ],
+  "other": [
+    {
+      "id": "relationship",
+      "text": "How are you most connected to the local workforce ecosystem?",
+      "type": "choice",
+      "options": [
+        "Job seeker",
+        "Business owner",
+        "Educator",
+        "Community volunteer",
+        "Government / civic work",
+        "Economic development",
+        "Family member / supporter",
+        "General community interest"
+      ]
+    },
+    {
+      "id": "biggest_gap",
+      "text": "Where do you believe the biggest local workforce gap exists?",
+      "type": "choice",
+      "options": [
+        "Career awareness",
+        "Training access",
+        "Training completion",
+        "Financial support",
+        "Employer recruiting",
+        "Proof of practical skills",
+        "Job matching",
+        "Coordination between organizations"
+      ]
+    },
+    {
+      "id": "affected_group",
+      "text": "Who is most affected by that gap?",
+      "type": "choice",
+      "options": [
+        "Students",
+        "Recent graduates",
+        "Career changers",
+        "Employers",
+        "Training programs",
+        "Families",
+        "Community organizations"
+      ]
+    },
+    {
+      "id": "priority",
+      "text": "Which outcome should TXKPRO Workforce prioritize first?",
+      "type": "choice",
+      "options": [
+        "More people entering training",
+        "Higher training completion",
+        "More local hiring",
+        "Better student-employer matching",
+        "More scholarship / support access",
+        "Better visibility into workforce needs",
+        "Stronger employer-school relationships"
+      ]
+    },
+    {
+      "id": "current_connection",
+      "text": "How well connected do local training, support, and employment resources feel today?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    },
+    {
+      "id": "txkpro_role",
+      "text": "Where could TXKPRO add the most value?",
+      "type": "choice",
+      "options": [
+        "Information hub",
+        "Research and workforce intelligence",
+        "Talent / employer matching",
+        "Student portfolio platform",
+        "Scholarship coordination",
+        "Community referral network",
+        "Convening employers and educators"
+      ]
+    },
+    {
+      "id": "participation",
+      "text": "How interested are you in helping test or shape the program?",
+      "type": "scale",
+      "options": [
+        "1 — Very low",
+        "2",
+        "3 — Neutral",
+        "4",
+        "5 — Very high"
+      ]
+    }
+  ]
+}
