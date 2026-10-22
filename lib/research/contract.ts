@@ -29,7 +29,7 @@ export function surveyInput(value: Record<string,unknown>) {
 export function bookingInput(value: Record<string,unknown>) {
   const role=researchRole(value.role);
   const address=email(value.email);
-  if(typeof value.firstName!=='string'||!value.firstName.trim()||value.firstName.length>80||/[\x00-\x1f\x7f]/.test(value.firstName))throw Error('name');
+  if(typeof value.firstName!=='string'||!value.firstName.trim()||value.firstName.length>50||/[\x00-\x1f\x7f]/.test(value.firstName))throw Error('name');
   if(typeof value.requestId!=='string'||!uuidPattern.test(value.requestId))throw Error('request');
   if(typeof value.start!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:00\.000Z$/.test(value.start)||!Number.isFinite(Date.parse(value.start)))throw Error('start');
   if(value.consent!==true&&value.consent!==false)throw Error('consent');
