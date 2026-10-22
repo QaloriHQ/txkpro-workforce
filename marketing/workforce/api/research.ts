@@ -1,6 +1,6 @@
 import * as module from '../../../lib/research/http.js';
 type Handler=(request:Request)=>Promise<Response>;
-// Shared code is compiled as CommonJS by the root project; the native entry is ESM.
+// Accept the ESM namespace (and CommonJS interop in alternate local toolchains).
 const handlers=('default' in module?module.default:module) as Record<string,Handler>;
 export default {
  async fetch(request:Request){
