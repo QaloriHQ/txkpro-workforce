@@ -991,6 +991,8 @@ jobs:
           NODE
 
       - run: npm install
+      - name: Verify Twilio Email transport and credential boundaries
+        run: node --experimental-strip-types --test scripts/twilio-email-qa.mjs
       - name: Verify native marketing intake privacy and consent
         run: node --test marketing/intake-qa.mjs
       - run: node --test scripts/professional-profile-render-qa.mjs
