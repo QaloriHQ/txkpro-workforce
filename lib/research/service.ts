@@ -1,9 +1,9 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
-import {normalizeServerSecret} from '../supabase/server-secret';
-import {readTwilioEmailConfig,sendTwilioEmail} from '../email/twilio-email';
-import {bookingInput,email,surveyInput} from './contract';
-import {calendarAvailability,calendarConfig,createResearchEvent} from './calendar';
+import {normalizeServerSecret} '../supabase/server-secret.js';
+import {readTwilioEmailConfig,sendTwilioEmail} '../email/twilio-email.js';
+import {bookingInput,email,surveyInput} './contract.js';
+import {calendarAvailability,calendarConfig,createResearchEvent} './calendar.js';
 
 // Server entry points only. This module is never imported by marketing browser assets.
 const createAdminClient=()=>createClient(process.env.NEXT_PUBLIC_SUPABASE_URL||'',normalizeServerSecret(process.env.SUPABASE_SECRET_KEY??process.env.SUPABASE_SERVICE_ROLE_KEY),{auth:{persistSession:false,autoRefreshToken:false}});
