@@ -3,7 +3,7 @@
   "framework": null,
   "buildCommand": "node ../build.mjs marketplace",
   "outputDirectory": "dist",
-  "installCommand": "echo marketing-build-has-no-dependencies",
+  "installCommand": "npm ci --prefix ../.. --ignore-scripts --no-audit --no-fund",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -20,7 +20,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'none'; connect-src https://qwxlgzlkaeaqfzjodtis.supabase.co"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'none'; connect-src 'self' https://qwxlgzlkaeaqfzjodtis.supabase.co"
         }
       ]
     },
@@ -87,11 +87,6 @@
     {
       "source": "/survey",
       "destination": "https://workforce.txkpro.com/survey",
-      "permanent": false
-    },
-    {
-      "source": "/booking",
-      "destination": "https://workforce.txkpro.com/booking",
       "permanent": false
     },
     {

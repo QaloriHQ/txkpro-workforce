@@ -11,7 +11,7 @@ Survey questions come from the recovered owner-owned v7 engagement source `05_Su
 | Email CTA | Owned apex URL | Native destination |
 | --- | --- | --- |
 | Survey | `https://txkpro.com/survey?role=student` | `https://workforce.txkpro.com/survey`, role retained |
-| Interview | `https://txkpro.com/booking?role=student` | `https://workforce.txkpro.com/booking`, role retained |
+| Interview | `https://txkpro.com/booking?role=student` | Native apex page and same-origin `/api/research`; no redirect |
 | Home | `https://txkpro.com/workforce` | Workforce homepage |
 | Preferences | `https://txkpro.com/unsubscribe` | Native Workforce email preferences |
 
@@ -27,9 +27,9 @@ Survey request UUIDs deduplicate a retry and reject payload changes. Booking use
 
 ## Staging configuration and activation
 
-The provider is Zoho Bookings. Direct Google OAuth and calendar calls have been removed from the native research backend. The owner-supplied public Bookings address is https://book.txkpro.com/txkpro; it is a reference, not a source for inferred IDs or OAuth data center. See [Zoho setup and operating instructions](zoho-research-bookings.md) for required variables, secure authorization-code exchange, service discovery, notification configuration and verification.
+The provider is Zoho Bookings. Direct Google OAuth and calendar calls have been removed from the native research backend. The owner-supplied public Bookings address is https://txkpro.zohobookings.com/research; it is a setup reference and is never a booking redirect. Its public metadata identifies US/Chicago, but service/staff/workspace IDs still require authenticated discovery. See [Zoho setup and operating instructions](zoho-research-bookings.md) for required variables, secure authorization-code exchange, service discovery, notification configuration and verification.
 
-Server/frontend project: `txkpro-workforce-marketing`, Preview/staging branch. The same-origin `/api/research` function is enabled only when `MARKETING_RESEARCH_ENABLED=true`. Missing setup leaves the forms disabled. Configure the correct staging Supabase URL and server-only secret, private `RESEARCH_LINK_SECRET`, restricted `RESEARCH_EMAIL_TEST_TO`, and dedicated Twilio configuration in this project. Secrets from the authenticated app project are not inherited. No production activation or authenticated Workforce app release is implied.
+The apex booking page and same-origin `/api/research` function run in `txkpro-marketplace-marketing`, the project owning txkpro.com. The existing Workforce research pages/API continue in `txkpro-workforce-marketing`. Both API entries reuse the same private research service; neither redirects nor proxies booking requests between protected projects. Each deployment needs its own environment configuration. For apex booking, configure the staging Supabase URL/server secret, private `RESEARCH_LINK_SECRET`, restricted `RESEARCH_EMAIL_TEST_TO`, Zoho and Twilio credentials in `txkpro-marketplace-marketing`, Preview/staging. `MARKETING_RESEARCH_ENABLED` stays false until these are verified. Credentials are not inherited from another project. No new migration, production activation or authenticated app release is implied.
 
 ## Operator email preview batch
 

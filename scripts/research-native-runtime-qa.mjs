@@ -18,13 +18,16 @@ test('native ESM entry loads shared ESM modules and fails closed without contact
   }
   for(const dir of ['lib/research','lib/email','lib/supabase'])fs.copyFileSync(path.join(root,dir,'package.json'),path.join(tmp,dir,'package.json'));
   const q=path.join(tmp,'marketing/research/questions.json');fs.mkdirSync(path.dirname(q),{recursive:true});fs.copyFileSync(path.join(root,'marketing/research/questions.json'),q);
-  const entry=path.join(tmp,'marketing/workforce/api/research.mjs');fs.mkdirSync(path.dirname(entry),{recursive:true});
-  fs.writeFileSync(entry,ts.transpileModule(fs.readFileSync(path.join(root,'marketing/workforce/api/research.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
-  const app=(await import(pathToFileURL(entry).href)).default;
   process.env.MARKETING_RESEARCH_ENABLED='false';
-  assert.equal((await app.fetch(new Request('https://workforce.txkpro.com/api/research?action=availability'))).status,503);
-  assert.equal((await app.fetch(new Request('https://workforce.txkpro.com/api/research?action=availability',{headers:{Origin:'https://attacker.invalid'}}))).status,403);
-  assert.equal((await app.fetch(new Request('https://workforce.txkpro.com/api/research',{method:'DELETE'}))).status,405);
+  for(const [site,origin]of [['workforce','https://workforce.txkpro.com'],['marketplace','https://txkpro.com']]){
+   const entry=path.join(tmp,`marketing/${site}/api/research.mjs`);fs.mkdirSync(path.dirname(entry),{recursive:true});
+   fs.writeFileSync(entry,ts.transpileModule(fs.readFileSync(path.join(root,`marketing/${site}/api/research.ts`),'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
+   const app=(await import(pathToFileURL(entry).href)).default;
+   const response=await app.fetch(new Request(origin+'/api/research?action=availability'));
+   assert.equal(response.status,503);assert.equal(response.headers.get('location'),null);assert.equal(response.headers.get('cache-control'),'no-store');
+   assert.equal((await app.fetch(new Request(origin+'/api/research?action=availability',{headers:{Origin:'https://attacker.invalid'}}))).status,403);
+   assert.equal((await app.fetch(new Request(origin+'/api/research',{method:'DELETE'}))).status,405);
+  }
  }finally{
   if(prior===undefined)delete process.env.MARKETING_RESEARCH_ENABLED;else process.env.MARKETING_RESEARCH_ENABLED=prior;
   fs.rmSync(tmp,{recursive:true,force:true});
