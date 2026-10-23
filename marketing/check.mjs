@@ -34,7 +34,7 @@ for (const [name,site] of Object.entries(sites)) {
   assert.match(html,/<html lang="en">/);assert.match(html,/<title>[^<]+<\/title>/);
   assert.match(html,/<meta name="description" content="[^"]+">/);
   assert.match(html,/<link rel="canonical" href="https:\/\//);
-  const research=name==='workforce'&&['survey.html','booking.html','unsubscribe.html'].includes(file);
+  const research=(name==='workforce'&&['survey.html','booking.html','unsubscribe.html'].includes(file))||(name==='marketplace'&&file==='booking.html');
   assert(html.includes(`content="${indexing&&file!=='404.html'&&!research?'index, follow':'noindex, follow'}"`));
   if(research){assert(!sitemap.includes('/'+file.replace('.html','')+'</loc>'));assert(html.includes('data-research-form'));assert(html.includes('name="referrer" content="no-referrer"'));}
   assert(!/google\.script\.run|[✓↗→↑]/.test(html),`${file}: copied unsupported interaction or icon substitute`);
@@ -57,6 +57,15 @@ for (const [name,site] of Object.entries(sites)) {
   for (const line of text.trim().split('\n')) assert(html.includes(encode(line)),`${name}: legal text omitted`);
  }
  if(name==='marketplace')assert(site.cta[1]===MARKETPLACE_JOIN && (MARKETPLACE_JOIN==='/waitlist'||MARKETPLACE_JOIN===APP_URL));
+ if(name==='marketplace'){
+  assert(!config.redirects.some(rule=>rule.source==='/booking'),'Booking must stay on the apex');
+  assert(!config.rewrites?.some(rule=>rule.source==='/booking'),'Booking must be served locally');
+  const booking=fs.readFileSync(path.join(out,'booking.html'),'utf8');
+  assert(booking.includes('<link rel="canonical" href="https://txkpro.com/booking">'));
+  assert(booking.includes('data-research-api="'+(process.env.MARKETING_RESEARCH_ENABLED==='true'?'/api/research':'')+'"'));
+  assert(!/zohobookings\.com|http-equiv="refresh"|<iframe/.test(booking));
+  assert(config.headers.find(rule=>rule.source==='/(.*)').headers.find(h=>h.key==='Content-Security-Policy').value.includes("connect-src 'self'"));
+ }
  console.log(`${name}: redirects, ads.txt, sitemap, indexing, links, legal preservation PASS`);
 }
 console.log(`PASS: ${pagesChecked} pages, ${linksChecked} internal links/assets/fragments checked.`);

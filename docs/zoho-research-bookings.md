@@ -1,10 +1,10 @@
 # Zoho Bookings research scheduling — #357
 
-Owner selected Zoho Bookings API in place of direct Google Calendar and supplied https://book.txkpro.com/txkpro. Native email links remain https://txkpro.com/booking; the owned redirect/native Workforce form is retained. No provider iframe, Apps Script or browser OAuth credential is introduced. The public booking URL did not yield usable service metadata in the implementation environment (HTTP 503), so no region/service/staff identity is inferred.
+Owner selected Zoho Bookings API in place of direct Google Calendar and updated the provider reference to https://txkpro.zohobookings.com/research. Native email links remain https://txkpro.com/booking. The apex page is served directly with its local assets and same-origin `/api/research`; no redirect to Workforce or Zoho, provider iframe, Apps Script or browser OAuth credential is introduced. Public provider-page metadata verifies America/Chicago and accounts.zoho.com (US); it does not establish service/staff/workspace IDs.
 
 ## Configuration
 
-Add to **txkpro-workforce-marketing → Preview → staging**, with separate production values only after production approval:
+For booking on txkpro.com, add to **txkpro-marketplace-marketing → Preview → staging**, with separate production values only after production approval. This project owns both the apex booking page and its API. The Workforce project still hosts its other research forms and uses the same shared backend code with independently configured environments.
 
 | Variable | Source / purpose |
 | --- | --- |
@@ -17,7 +17,7 @@ Add to **txkpro-workforce-marketing → Preview → staging**, with separate pro
 | ZOHO_BOOKINGS_STAFF_ID | Assigned staff identifier from services API |
 | ZOHO_BOOKINGS_EMAIL_DISABLED | Set `true` only after administrator verifies all provider-generated email is disabled |
 
-Existing staging Supabase server secret, Twilio Email credentials and enable flag are also required. Vercel variables in the authenticated `txkpro-workforce` project are not inherited by this project. Do not print, read back or copy production secrets for staging. Direct Google variables are no longer used; removal is optional after deployment acceptance.
+The correct staging Supabase URL/server secret, private `RESEARCH_LINK_SECRET`, restricted `RESEARCH_EMAIL_TEST_TO`, Twilio Email credentials and enable flags are also required in the apex project. Vercel variables in `txkpro-workforce` or `txkpro-workforce-marketing` are not inherited. Do not print, read back or copy production secrets for staging. Direct Google variables are no longer used; removal is optional after deployment acceptance. The Marketplace project now installs the locked root dependencies for its native API; the static page builder itself remains dependency-free. Preview protection is preserved and no shared authentication bypass is introduced.
 
 Create a **free, one-to-one, 20-minute** research interview event type, with at least **10 minutes buffer**, Chicago timezone and assigned staff. API checks service type, duration, buffer, zero price, assigned staff and availability timezone. Only provider-returned slots within the existing weekday 09:00–16:00 Chicago schedule, half-hour starts, tomorrow through next 30 days are displayed. A date selector limits each public availability check to one day; the frontend drops stale results after a date change. Configure the staff's conflicting calendars in Zoho and verify that conflicts are actually blocked. Required custom fields/phone must be disabled for this event type: the form sends name and email only.
 

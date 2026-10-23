@@ -25,8 +25,9 @@ for (const target of targets) {
  for (const theme of ['light','dark']) fs.copyFileSync(path.join(repo,'public',`txkpro-logo-${theme}.svg`),path.join(out,'assets',`logo-${theme}.svg`));
  fs.copyFileSync(path.join(repo,'public','favicon.ico'),path.join(out,'favicon.ico'));
  fs.copyFileSync(path.join(repo,'public','ads.txt'),path.join(out,'ads.txt'));
- const pages=[...site.pages,...(target==='workforce'?researchPages():[])];
- if(target==='workforce'){
+ const research=target==='workforce'?researchPages():target==='marketplace'?researchPages().filter(page=>page.path==='/booking'):[];
+ const pages=[...site.pages,...research];
+ if(research.length){
   fs.copyFileSync(path.join(root,'research','research.js'),path.join(out,'assets','research.js'));
   fs.copyFileSync(path.join(root,'research','questions.json'),path.join(out,'assets','research-questions.json'));
  }
