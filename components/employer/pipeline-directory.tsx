@@ -18,9 +18,9 @@ export function PipelineDirectory({ initialPipelines, versions, employerId, role
   const [menu,setMenu]=useState<string|null>(null);
   const [busy,setBusy]=useState<string|null>(null);
   const [message,setMessage]=useState("");
-  const published=new Set(versions.map(v=>v.templateId));
+  const published=useMemo(()=>new Set(versions.map(v=>v.templateId)),[versions]);
   const displayed=useMemo(()=>pipelines.filter(p=>(filter==="all" || (filter==="published" ? published.has(p.id):!published.has(p.id)))
-    && (p.name+" "+p.description).toLowerCase().includes(query.trim().toLowerCase())),[pipelines,filter,query,versions]);
+    && (p.name+" "+p.description).toLowerCase().includes(query.trim().toLowerCase())),[pipelines,filter,query,published]);
   async function duplicate(id:string) {
     setBusy(id);setMessage("");
     try {
