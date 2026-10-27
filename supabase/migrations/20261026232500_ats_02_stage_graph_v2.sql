@@ -14,7 +14,7 @@ declare
     'background_check','fingerprinting','drug_test','manual_review','decision','notification'];
 begin
   if p_graph is null or jsonb_typeof(p_graph) is distinct from 'object'
-    or p_graph->>'schemaVersion' not in ('1','2')
+    or p_graph->>'schemaVersion' is null or p_graph->>'schemaVersion' not in ('1','2')
     or jsonb_typeof(p_graph->'nodes') is distinct from 'array'
     or jsonb_typeof(p_graph->'edges') is distinct from 'array' then return false; end if;
   v_nodes:=p_graph->'nodes'; v_edges:=p_graph->'edges';
@@ -28,11 +28,11 @@ begin
         or v_stage_id=any(v_stage_ids)
         or nullif(btrim(v_stage->>'name'),'') is null
         or length(v_stage->>'name')>80
-        or (v_stage->>'color') !~ '^#[0-9a-fA-F]{6}$'
+        or v_stage->>'color' is null or (v_stage->>'color') !~ '^#[0-9a-fA-F]{6}$'
         or jsonb_typeof(v_stage->'sortOrder') is distinct from 'number'
         or (v_stage->>'sortOrder')::integer not between 0 and 29
         or jsonb_typeof(v_stage->'candidateVisible') is distinct from 'boolean'
-        or v_stage->>'completionRule' not in ('all_required','manual')
+        or v_stage->>'completionRule' is null or v_stage->>'completionRule' not in ('all_required','manual')
       then return false; end if;
       v_stage_ids:=array_append(v_stage_ids,v_stage_id);
     end loop;
