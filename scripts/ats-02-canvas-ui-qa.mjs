@@ -62,11 +62,13 @@ test("all displayed library components and settings fields have discoverable inf
     assert.ok(editor.includes('label="'+label+'"') || editor.includes('label={outcome+" connection"}'), "Tooltip "+label);
   }
 });
-test("employer sidebar collapses on desktop and nests Pipeline editor below Hiring Pipeline", () => {
+test("employer sidebar collapses and nests only published Pipelines", () => {
   assert.match(nav,/aria-label=\{collapsed \? "Expand Employer sidebar"/);
   assert.match(nav,/employer-sidebar is-collapsed|is-collapsed/);
   assert.match(nav,/key: "pipeline"/);
-  assert.match(nav,/href="\/employer\/pipeline-builder"/);
+  assert.match(nav,/href: "\/employer\/pipelines"/);
+  assert.match(nav,/publishedPipelines\.map/);
+  assert.doesNotMatch(nav,/href="\/employer\/pipeline-builder"/);
   assert.match(nav,/employer-nav-child/);
   assert.match(nav,/aria-expanded=\{pipelineExpanded\}/);
   assert.match(shell,/body:has\(\.employer-sidebar\.is-collapsed\)/);

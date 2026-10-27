@@ -1473,3 +1473,8 @@ body input:is([type="checkbox"], [type="radio"]) { width: 1.125rem; height: 1.12
 @media(max-width:1000px){.ats-pipeline-layout{grid-template-columns:minmax(0,1fr)}.ats-pipeline-palette{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-height:none}}
 @media(max-width:650px){.ats-pipeline-page{padding-top:100px}.ats-pipeline-fields{grid-template-columns:1fr}.ats-pipeline-actions .button{min-height:44px}.ats-pipeline-toolbar{gap:16px}.ats-pipeline-canvas-wrap{max-height:520px}.ats-pipeline-canvas-hint{max-width:260px}}
 @media(prefers-reduced-motion:reduce){.ats-pipeline-node{transition:none}}
+
+/* Consolidated Talent workspace navigation (Saved/Referrals/Interviews/Placements). */
+.ats-talent-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.ats-talent-tabs a[aria-current=page]{font-weight:700}
+@media(max-width:700px){.ats-talent-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;max-width:calc(100vw - 32px)}.ats-talent-tabs a{white-space:nowrap;min-height:44px;display:inline-flex;align-items:center}}

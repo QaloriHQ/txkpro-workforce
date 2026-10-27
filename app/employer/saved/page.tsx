@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmployerTalentTabs } from "@/components/employer/talent-tabs";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SaveCandidateButton } from "@/components/employer/save-candidate-button";
@@ -43,6 +44,7 @@ export default async function SavedCandidatesPage({
         <SignOutButton />
       </header>
       <main className="page-wrap">
+        <EmployerTalentTabs active="saved" />
         <div className="page-heading">
           <div>
             <p className="eyebrow">Employer · Saved Candidates</p>

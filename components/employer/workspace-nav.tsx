@@ -5,11 +5,8 @@ import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import {
   AcademicCapIcon,
   Bars3Icon,
-  BookmarkIcon,
   BriefcaseIcon,
-  CalendarDaysIcon,
   HomeIcon,
-  PaperAirplaneIcon,
   QueueListIcon,
   ShieldCheckIcon,
   UserGroupIcon,
@@ -29,6 +26,7 @@ type EmployerSection =
   | "interviews"
   | "pipeline-builder"
   | "pipeline"
+  | "integrations"
   | "jobs"
   | "placements"
   | "incentives"
@@ -79,9 +77,9 @@ const groups: NavGroup[] = [
     items: [
       { key: "jobs", href: "/employer/jobs", label: "Job listings", icon: BriefcaseIcon },
       {
-        key: "screening",
-        href: "/employer/screening",
-        label: "Background checks",
+        key: "integrations",
+        href: "/employer/integrations",
+        label: "Integrations",
         icon: ShieldCheckIcon,
       },
       {
@@ -90,36 +88,12 @@ const groups: NavGroup[] = [
         label: "Talent",
         icon: UserGroupIcon,
       },
-      {
-        key: "saved",
-        href: "/employer/saved",
-        label: "Saved",
-        icon: BookmarkIcon,
-      },
-      {
-        key: "referrals",
-        href: "/employer/referrals",
-        label: "Referrals",
-        icon: PaperAirplaneIcon,
-      },
-      {
-        key: "interviews",
-        href: "/employer/interviews",
-        label: "Interviews",
-        icon: CalendarDaysIcon,
-      },
 
       {
         key: "pipeline",
-        href: "/employer/pipeline",
-        label: "Hiring Pipeline",
+        href: "/employer/pipelines",
+        label: "Pipelines",
         icon: QueueListIcon,
-      },
-      {
-        key: "placements",
-        href: "/employer/placements",
-        label: "Placements",
-        icon: BriefcaseIcon,
       },
     ],
   },
@@ -152,6 +126,22 @@ export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [pipelineExpanded, setPipelineExpanded] = useState(active === "pipeline" || active === "pipeline-builder");
+  const [publishedPipelines,setPublishedPipelines] = useState<{id:string;name:string}[]>([]);
+  useEffect(()=>{
+    if(!pipelineExpanded)return;
+    let cancelled=false;
+    fetch("/api/employer/pipelines",{credentials:"same-origin"})
+      .then(async response=>{
+        if(!response.ok)throw new Error("Pipelines unavailable");
+        return response.json() as Promise<{pipelines:{id:string;name:string}[];versions:{templateId:string}[]}>;
+      })
+      .then(data=>{
+        if(cancelled)return;
+        const published=new Set(data.versions.map(v=>v.templateId));
+        setPublishedPipelines(data.pipelines.filter(p=>published.has(p.id)).slice(0,5).map(p=>({id:p.id,name:p.name})));
+      }).catch(()=>{if(!cancelled)setPublishedPipelines([]);});
+    return()=>{cancelled=true;};
+  },[pipelineExpanded]);
   useEffect(() => {
     if (!open) return;
     function onEscape(event: KeyboardEvent) {
@@ -221,21 +211,27 @@ export function EmployerWorkspaceNav({ active }: { active?: EmployerSection }) {
                         <span>{item.label}</span>
                       </Link>
                       <button type="button" className="employer-nav-expand"
-                        title="Show Hiring Pipeline subpages"
-                        aria-label={pipelineExpanded ? "Collapse Hiring Pipeline subpages" : "Expand Hiring Pipeline subpages"}
+                        title="Show published pipelines"
+                        aria-label={pipelineExpanded ? "Collapse published pipelines" : "Expand published pipelines"}
                         aria-expanded={pipelineExpanded}
                         onClick={() => setPipelineExpanded((value) => !value)}>
                         {pipelineExpanded ? <ChevronDownIcon aria-hidden="true"/> : <ChevronRightIcon aria-hidden="true"/>}
                       </button>
                     </div>
-                    {pipelineExpanded ? <Link
-                      className={`employer-sidebar-link employer-nav-child ${active === "pipeline-builder" ? "active" : ""}`}
-                      href="/employer/pipeline-builder" title={collapsed ? "Pipeline editor" : undefined}
-                      aria-current={active === "pipeline-builder" ? "page" : undefined}
-                      onClick={() => setOpen(false)}>
-                      <QueueListIcon className="employer-sidebar-icon" aria-hidden="true" />
-                      <span>Pipeline editor</span>
-                    </Link> : null}
+                    {pipelineExpanded ? <div>
+                      {publishedPipelines.map(p=><Link
+                        key={p.id} className="employer-sidebar-link employer-nav-child"
+                        href={"/employer/pipelines/"+p.id}
+                        title={p.name} onClick={()=>setOpen(false)}>
+                        <QueueListIcon className="employer-sidebar-icon" aria-hidden="true"/>
+                        <span>{p.name}</span>
+                      </Link>)}
+                      <Link className="employer-sidebar-link employer-nav-child"
+                        href="/employer/pipelines" onClick={()=>setOpen(false)}>
+                        <QueueListIcon className="employer-sidebar-icon" aria-hidden="true"/>
+                        <span>View all pipelines</span>
+                      </Link>
+                    </div>:null}
                   </div>;
                 }
                 return (
