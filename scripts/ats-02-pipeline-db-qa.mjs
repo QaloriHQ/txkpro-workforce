@@ -2,10 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
-import { STARTER_PIPELINE } from "../lib/employer/ats-pipelines.ts";
+import { STARTER_PIPELINE, toStageGraph } from "../lib/employer/ats-pipelines.ts";
 
 const baseline = readFileSync(new URL("../supabase/migrations/20261018193301_ats_01_job_listings.sql",import.meta.url),"utf8");
 const migration = readFileSync(new URL("../supabase/migrations/20261018213605_ats_02_pipeline_templates.sql",import.meta.url),"utf8");
+const migrationV2 = readFileSync(new URL("../supabase/migrations/20261026232500_ats_02_stage_graph_v2.sql",import.meta.url),"utf8");
 const authA="aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const authB="bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
 const authC="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -32,7 +33,14 @@ test("ATS-02 SQL installs; version publication is immutable and employer-scoped"
     ].join("\n"));
     await db.exec(baseline);
     await db.exec(migration);
+    await db.exec(migrationV2);
     await db.exec("alter function public.wf_ats_publish_pipeline(text,uuid,integer) security invoker;");
+    const v2Graph=JSON.stringify(toStageGraph(STARTER_PIPELINE)).replaceAll("'","''");
+    const v2Valid=await db.query(`select security.wf_ats_graph_publishable('${v2Graph}'::jsonb) as ok`);
+    assert.equal(v2Valid.rows[0].ok,true);
+    const invalidStage=JSON.stringify({...toStageGraph(STARTER_PIPELINE),stages:[]}).replaceAll("'","''");
+    const v2Bad=await db.query(`select security.wf_ats_graph_publishable('${invalidStage}'::jsonb) as ok`);
+    assert.equal(v2Bad.rows[0].ok,false);
     await db.exec(`set role authenticated; set app.actor_auth='${authA}'; set app.actor_user='owner-a'; set app.employer='employer-a';`);
     const graph=JSON.stringify(STARTER_PIPELINE).replaceAll("'","''");
     const inserted=await db.query(`insert into public.wf_ats_pipeline_templates(employer_id,name,description,created_by_user_id,revision,graph_json)
@@ -46,6 +54,12 @@ test("ATS-02 SQL installs; version publication is immutable and employer-scoped"
     assert.equal(published.rows.length,1);
     assert.equal(published.rows[0].version_number,1);
     assert.equal(published.rows[0].source_revision,1);
+    const staged=await db.query(`insert into public.wf_ats_pipeline_templates(employer_id,name,description,created_by_user_id,graph_json)
+      values('employer-a','Stage-based Draft','','owner-a','${v2Graph}'::jsonb) returning id`);
+    const v2Version=await db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${staged.rows[0].id}',1) as v`);
+    assert.equal(v2Version.rows[0].graph_json.schemaVersion,2);
+    assert.equal(v2Version.rows[0].graph_json.stages.length,1);
+    assert.equal(published.rows[0].graph_json.schemaVersion,1);
     await assert.rejects(db.query(`select v.* from public.wf_ats_publish_pipeline('employer-a','${id}',1) as v`),/unique|duplicate/i);
     await assert.rejects(db.query(`update public.wf_ats_pipeline_versions set version_number=42 where template_id='${id}'`),/permission|policy/i);
     await db.exec(`set app.actor_auth='${authB}';set app.actor_user='read-a';`);
