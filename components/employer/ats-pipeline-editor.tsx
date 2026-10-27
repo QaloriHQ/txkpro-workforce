@@ -112,6 +112,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const canvasRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const libraryRef = useRef<HTMLDivElement>(null);
+  const stagesRef = useRef<HTMLDivElement>(null);
   const editor = isPipelineConfigurator(role);
   const publisher = isPipelinePublisher(role);
   const selected = pipelines.find((p) => p.id === selectedId);
@@ -191,6 +192,25 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     setHistory((h) => [...h.slice(-49), clone(graph)]); setFuture([]);
     setGraph(next); setDirty(true); setError(""); setMessage("");
   }
+  useEffect(()=>{
+    if(!stagesOpen)return;
+    const prior=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    const previous=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    stagesRef.current?.focus();
+    function keydown(e:KeyboardEvent){
+      if(e.key==="Escape"){e.preventDefault();setStagesOpen(false);}
+      if(e.key==="Tab"&&stagesRef.current){
+        const controls=Array.from(stagesRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),select:not([disabled])'));
+        const first=controls[0],last=controls[controls.length-1];
+        if(!first||!last)return;
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    }
+    document.addEventListener("keydown",keydown);
+    return()=>{document.body.style.overflow=previous;document.removeEventListener("keydown",keydown);prior?.focus();};
+  },[stagesOpen]);
   function addStage() {
     const staged=toStageGraph(graph);
     const entries=staged.stages??[];
@@ -678,7 +698,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
             </button>
           </div>
           {stagesOpen && dedicated ? <div className="ats-pipeline-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setStagesOpen(false);}}>
-            <div className="card ats-pipeline-modal ats-stage-manager" role="dialog" aria-modal="true" aria-label="Manage hiring stages">
+            <div className="card ats-pipeline-modal ats-stage-manager" role="dialog" aria-modal="true" aria-label="Manage hiring stages" tabIndex={-1} ref={stagesRef}>
               <div className="ats-pipeline-modal-head">
                 <div><p className="eyebrow">Workflow stages</p><h2>Manage stages</h2></div>
                 <button type="button" aria-label="Close stage manager" onClick={()=>setStagesOpen(false)}><XMarkIcon aria-hidden="true"/></button>
