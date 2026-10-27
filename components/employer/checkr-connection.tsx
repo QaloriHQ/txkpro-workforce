@@ -59,4 +59,4 @@ export function CheckrConnection({ employerId, embedded = false }: {
     description="Connect your employer’s Checkr account. Screening charges belong to your employer account.">
     {controls}
   </ActionModal>;
-
+}
