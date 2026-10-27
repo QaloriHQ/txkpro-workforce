@@ -8,7 +8,7 @@ import {
   MagnifyingGlassPlusIcon, QuestionMarkCircleIcon, XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon,
 } from "@heroicons/react/24/outline";
 import {
-  ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE,
+  ATS_NODE_KINDS, ATS_PROVIDER_KINDS, STARTER_PIPELINE, DEFAULT_STAGE_COLORS, toStageGraph,
   isPipelineConfigurator, isPipelinePublisher, validatePipelineGraph, upsertPipelineConnection, removePipelineConnection,
   type ATSNodeKind, type PipelineGraph, type PipelineNode,
   type PipelineTemplateSummary, type PipelineVersionSummary, type PipelineField,
@@ -99,6 +99,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [componentQuery, setComponentQuery] = useState("");
+  const [stagesOpen,setStagesOpen] = useState(false);
   const [componentSource, setComponentSource] = useState<{id:string;outcome?:"yes"|"no"}|null>(null);
   const [branchChoices, setBranchChoices] = useState<Record<string, "yes" | "no">>({});
   const [recovery, setRecovery] = useState<{ name: string; description: string; graph: PipelineGraph; revision: number } | null>(null);
@@ -213,6 +214,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   function add(kind: ATSNodeKind, x = 200 + graph.nodes.length * 70, y = 200) {
     if (!editor || kind === "start" || (kind === "end" && graph.nodes.some((n) => n.kind === "end"))) return;
     const node = initialNode(kind, x, y);
+    if(graph.schemaVersion===2)node.stageId=graph.stages?.[0]?.id;
     change({ ...graph, nodes: [...graph.nodes, node] });
     setSelectedNodeId(node.id); setSettingsOpen(true);
   }
@@ -225,6 +227,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     const source=graph.nodes.find(n=>n.id===componentSource.id);
     if(!source || source.kind==="end")return;
     const node=initialNode(kind,source.x+310,source.y+45);
+    if(graph.schemaVersion===2)node.stageId=source.stageId??graph.stages?.[0]?.id;
     const old=graph.edges.find(e=>e.source===source.id &&
       (source.kind==="decision"?e.outcome===componentSource.outcome:!e.outcome));
     try{
@@ -465,6 +468,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           <div className="ats-pipeline-actions">
 
             <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate journey simulator"}</button>
+            {dedicated?<button type="button" className="button button-small button-ghost" disabled={!editor} onClick={()=>setStagesOpen(true)}>Manage stages</button>:null}
             <button type="button" className="button button-small button-ghost" disabled={!editor || busy} onClick={() => void duplicate()}><DocumentDuplicateIcon aria-hidden="true" /> Duplicate</button>
             <button type="button" className="button button-small button-ghost" disabled={!dirty || !editor || busy} onClick={() => void save()}>{busy ? "Working…" : "Save draft"}</button>
             <button type="button" className="button button-small button-dark" disabled={!publisher || busy || Boolean(check)}
@@ -569,7 +573,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                   </svg>
                   {graph.nodes.map((node) => <div key={node.id} data-pipeline-node={node.id}
                     className={"ats-pipeline-node " + (node.id === selectedNodeId ? "is-selected " : "") + (linking ? "is-linking" : "")}
-                    style={{ left:node.x,top:node.y }}>
+                    style={{ left:node.x,top:node.y, borderColor:graph.stages?.find(stage=>stage.id===node.stageId)?.color }}>
                     {diagnostics.some(issue=>issue.nodeId===node.id) ? <span className="ats-pipeline-node-issue" role="status"
                       title={diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}>
                       <ExclamationTriangleIcon aria-hidden="true"/><span className="sr-only">{diagnostics.filter(issue=>issue.nodeId===node.id).map(issue=>issue.message).join("; ")}</span>
