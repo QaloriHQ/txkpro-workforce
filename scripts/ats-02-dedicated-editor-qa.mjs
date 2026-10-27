@@ -37,3 +37,29 @@ test("SQL v2 graph validator is additive; version records remain immutable",()=>
  assert.ok(sql.includes("v_stage_ids"));
  assert.ok(!sql.toLowerCase().includes("update public.wf_ats_pipeline_versions"));
 });
+
+test("historical version restoration checks permission and revision without changing immutable snapshots",()=>{
+ const view=read("../app/employer/pipelines/[pipelineId]/versions/[versionNumber]/page.tsx");
+ const restore=read("../components/employer/restore-pipeline-version.tsx");
+ const api=read("../app/api/employer/pipelines/[id]/route.ts");
+ const repo=read("../lib/employer/ats-pipelines-repository.ts");
+ assert.ok(view.includes("isPipelineConfigurator(context.role)"));
+ assert.ok(view.includes("RestorePipelineVersion"));
+ assert.ok(restore.includes("window.confirm("));
+ assert.ok(restore.includes("method:\"PATCH\""));
+ assert.ok(restore.includes("revision,fields:{name,description,graph}"));
+ assert.ok(restore.includes("response.status===409"));
+ assert.ok(!restore.includes("wf_ats_pipeline_versions"));
+ assert.ok(api.includes("saveEmployerPipeline"));
+ assert.ok(repo.includes('.eq("revision", revision)'));
+});
+test("integrations gallery checks live connection state with one level of modal and no credentialed claims without evidence",()=>{
+ const gallery=read("../components/employer/integrations-gallery.tsx");
+ const checkr=read("../components/employer/checkr-connection.tsx");
+ assert.ok(gallery.includes('op:"workspace"'));
+ assert.ok(gallery.includes('checkrStatus'));
+ assert.ok(gallery.includes('<CheckrConnection employerId={employerId} embedded/>'));
+ assert.ok(checkr.includes("if(embedded)return"));
+ assert.ok(checkr.includes("data.credentialed"));
+ assert.ok(gallery.includes("setActive(null)"));
+});
