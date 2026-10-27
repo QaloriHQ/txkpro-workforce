@@ -191,6 +191,27 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     setHistory((h) => [...h.slice(-49), clone(graph)]); setFuture([]);
     setGraph(next); setDirty(true); setError(""); setMessage("");
   }
+  function addStage() {
+    const staged=toStageGraph(graph);
+    const entries=staged.stages??[];
+    if(entries.length>=30){setError("At most 30 stages are supported");return;}
+    const position=entries.length;
+    change({...staged,stages:[...entries,{
+      id:createId("stage"),name:"New stage "+(position+1),
+      color:DEFAULT_STAGE_COLORS[position%DEFAULT_STAGE_COLORS.length],
+      sortOrder:position,candidateVisible:true,completionRule:"all_required",
+    }]});
+  }
+  function editStage(stageId:string,update:{name?:string;color?:string;candidateVisible?:boolean;completionRule?:"all_required"|"manual"}){
+    change({...graph,stages:(graph.stages??[]).map(stage=>stage.id===stageId?{...stage,...update}:stage)});
+  }
+  function deleteStage(stageId:string){
+    const remaining=(graph.stages??[]).filter(stage=>stage.id!==stageId)
+      .map((stage,sortOrder)=>({...stage,sortOrder}));
+    if(!remaining.length){setError("At least one stage must remain");return;}
+    change({...graph,stages:remaining,
+      nodes:graph.nodes.map(node=>node.stageId===stageId?{...node,stageId:remaining[0].id}:node)});
+  }
   function setNode(node: PipelineNode) {
     change({ ...graph, nodes: graph.nodes.map((item) => item.id === node.id ? node : item) });
   }
@@ -687,6 +708,13 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               <div className="ats-pipeline-settings-fields">
                 <label><span className="ats-pipeline-setting-title">Step title <Help label="Step title" text="A short descriptive name shown on the workflow and to candidates when visible."/></span>
                   <input className="input" value={selectedNode.label} disabled={!editor} onChange={(e) => setNode({ ...selectedNode,label:e.target.value })}/></label>
+                {graph.schemaVersion===2&&selectedNode.kind!=="start"&&selectedNode.kind!=="end"?<label>
+                  <span className="ats-pipeline-setting-title">Hiring stage</span>
+                  <select className="select" disabled={!editor} value={selectedNode.stageId??""}
+                    onChange={e=>setNode({...selectedNode,stageId:e.target.value})}>
+                    {(graph.stages??[]).slice().sort((a,b)=>a.sortOrder-b.sortOrder).map(stage=>
+                      <option value={stage.id} key={stage.id}>{stage.name}</option>)}
+                  </select></label>:null}
                 <div className="form-grid ats-pipeline-settings-switches">
                   <label><span className="ats-pipeline-setting-title">Required <Help label="Required step" text="When enabled, completion of this step is required to advance along the workflow."/></span>
                     <input type="checkbox" checked={selectedNode.required} disabled={!editor || selectedNode.kind==="start"} onChange={(e) => setNode({ ...selectedNode, required:e.target.checked })}/></label>
