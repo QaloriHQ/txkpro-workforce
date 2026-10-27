@@ -809,7 +809,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               </div>
             </div>
           </div> : null}
-        </>}
+        </>
         {currentVersions.length ? <div className="card"><h2>Published versions</h2><p className="card-sub">Published snapshots are immutable. Editing this draft and publishing again creates a new version.</p>
           <div className="grid">{currentVersions.map((v) => <div className="ats-pipeline-version" key={v.id}><strong>Version {v.versionNumber}</strong><small>{new Date(v.publishedAt).toLocaleString()}</small><small>{v.graph.nodes.length} steps</small></div>)}</div>
         </div> : null}
