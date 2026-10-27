@@ -9,12 +9,28 @@ export type ATSNodeKind = (typeof ATS_NODE_KINDS)[number];
 
 export type PipelineField = { id: string; label: string; type: "text" | "textarea" | "email" | "number" | "select" | "checkbox"; required: boolean; options?: string[] };
 export type PipelineNode = {
-  id: string; kind: ATSNodeKind; label: string; x: number; y: number;
+  id: string; kind: ATSNodeKind; label: string; x: number; y: number; stageId?: string;
   required: boolean; candidateVisible: boolean;
   config: { instructions?: string; url?: string; fields?: PipelineField[]; disclosure?: string; expectedMinutes?: number; ownerRole?: "candidate" | "recruiter" | "hiring_manager" | "employer_admin"; targetHours?: number };
 };
 export type PipelineEdge = { id: string; source: string; target: string; outcome?: "yes" | "no" };
-export type PipelineGraph = { schemaVersion: 1; entryNodeId: string; nodes: PipelineNode[]; edges: PipelineEdge[] };
+export type PipelineStage = {
+ id: string; name: string; color: string; sortOrder: number; candidateVisible: boolean;
+ completionRule: "all_required" | "manual";
+};
+export type PipelineGraph = {
+ schemaVersion: 1 | 2; entryNodeId: string; nodes: PipelineNode[]; edges: PipelineEdge[];
+ stages?: PipelineStage[];
+};
+export const DEFAULT_STAGE_COLORS = ["#5A95DC","#A18AD8","#DDA265","#69AFA3","#B68AC3","#6CA6A8"] as const;
+export function toStageGraph(graph: PipelineGraph): PipelineGraph {
+ if(graph.schemaVersion===2)return graph;
+ const id="application_stage";
+ return { ...graph, schemaVersion:2,
+   stages:[{id,name:"Application",color:DEFAULT_STAGE_COLORS[0],sortOrder:0,candidateVisible:true,completionRule:"all_required"}],
+   nodes:graph.nodes.map(node=>node.kind==="start"||node.kind==="end"?node:{...node,stageId:id}),
+ };
+}
 export type PipelineTemplateSummary = {
   id: string; employerId: string; name: string; description: string; revision: number;
   graph: PipelineGraph; latestVersion: number; updatedAt: string; createdAt: string;
@@ -117,7 +133,26 @@ function config(raw: unknown, kind: ATSNodeKind, publish: boolean): PipelineNode
 
 export function validatePipelineGraph(input: unknown, publish = true): PipelineGraph {
   const graph = obj(input, "pipeline");
-  if (graph.schemaVersion !== 1) throw new Error("Unsupported pipeline schema");
+  if (graph.schemaVersion !== 1 && graph.schemaVersion !== 2) throw new Error("Unsupported pipeline schema");
+  let stages:PipelineStage[]|undefined;
+  if(graph.schemaVersion===2){
+    if(!Array.isArray(graph.stages)||graph.stages.length<1||graph.stages.length>30)throw new Error("Stage-based workflows need 1–30 stages");
+    const ids=new Set<string>(),orders=new Set<number>();
+    stages=graph.stages.map(raw=>{
+      const v=obj(raw,"stage");
+      const stageId=id(v.id,"stage ID");
+      if(ids.has(stageId))throw new Error("Duplicate stage ID");ids.add(stageId);
+      const order=number(v.sortOrder,"stage order",0,29);
+      if(!Number.isInteger(order)||orders.has(order))throw new Error("Stage order must be unique");orders.add(order);
+      const color=text(v.color,"stage color",7);
+      if(!/^#[0-9a-fA-F]{6}$/.test(color))throw new Error("Stage colors must use #RRGGBB");
+      const name=text(v.name,"stage name",80);
+      if(!name)throw new Error("Stage name required");
+      if(v.completionRule!=="all_required"&&v.completionRule!=="manual")throw new Error("Invalid stage completion rule");
+      return {id:stageId,name,color,sortOrder:order,candidateVisible:bool(v.candidateVisible,"stage visibility"),
+        completionRule:v.completionRule};
+    });
+  }
   if (!Array.isArray(graph.nodes) || graph.nodes.length < 2 || graph.nodes.length > 100) throw new Error("Pipeline requires 2–100 nodes");
   if (!Array.isArray(graph.edges) || graph.edges.length > 200) throw new Error("Too many pipeline connections");
   const nodes: PipelineNode[] = graph.nodes.map((raw) => {
@@ -129,9 +164,17 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
       x: number(n.x, "horizontal position", -20000, 20000),
       y: number(n.y, "vertical position", -20000, 20000),
       required: bool(n.required, "required"), candidateVisible: bool(n.candidateVisible, "candidate visibility"),
+      ...(graph.schemaVersion===2 && kind!=="start"&&kind!=="end"
+        ? {stageId:id(n.stageId,"node stage")} : {}),
       config: config(n.config, kind, publish),
     };
   });
+  if(graph.schemaVersion===2){
+    const stageIds=new Set(stages?.map(stage=>stage.id));
+    for(const node of nodes){
+      if(node.kind!=="start"&&node.kind!=="end"&&!stageIds.has(node.stageId))throw new Error("Every workflow component must belong to a stage");
+    }
+  }
   const ids = new Set(nodes.map((n) => n.id));
   if (ids.size !== nodes.length) throw new Error("Duplicate component ID");
   const startNodes = nodes.filter((n) => n.kind === "start");
@@ -154,7 +197,7 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
     if (e.outcome && from.kind !== "decision") throw new Error("Only decision components can branch");
     return { id: edgeId, source, target, ...(e.outcome ? { outcome: e.outcome } : {}) };
   });
-  if (!publish) return { schemaVersion: 1, entryNodeId, nodes, edges };
+  if (!publish) return { schemaVersion: graph.schemaVersion as 1|2, entryNodeId, nodes, edges, ...(stages?{stages}:{}) };
   const edgesBySource = new Map(nodes.map((n) => [n.id, edges.filter((e) => e.source === n.id)]));
   for (const node of nodes) {
     const outgoing = edgesBySource.get(node.id)!;
@@ -176,7 +219,7 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
   }
   walk(entryNodeId);
   if (visited.size !== nodes.length) throw new Error("Every component must be reachable from Start");
-  return { schemaVersion: 1, entryNodeId, nodes, edges };
+  return { schemaVersion: graph.schemaVersion as 1|2, entryNodeId, nodes, edges, ...(stages?{stages}:{}) };
 }
 /** Editor-safe, immutable edge linking with immediate cycle/branch checks.
  * Validation runs again on the server when drafts are saved/published. */
