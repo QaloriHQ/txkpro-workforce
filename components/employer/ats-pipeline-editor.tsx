@@ -677,6 +677,38 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               <span>Minimap · pan</span>
             </button>
           </div>
+          {stagesOpen && dedicated ? <div className="ats-pipeline-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setStagesOpen(false);}}>
+            <div className="card ats-pipeline-modal ats-stage-manager" role="dialog" aria-modal="true" aria-label="Manage hiring stages">
+              <div className="ats-pipeline-modal-head">
+                <div><p className="eyebrow">Workflow stages</p><h2>Manage stages</h2></div>
+                <button type="button" aria-label="Close stage manager" onClick={()=>setStagesOpen(false)}><XMarkIcon aria-hidden="true"/></button>
+              </div>
+              {graph.schemaVersion===1?<div className="ats-stage-upgrade">
+                <p className="card-sub">This draft uses the original graph format. Enable stages on this editable draft without changing previously published versions.</p>
+                <button type="button" className="button button-dark" disabled={!editor}
+                  onClick={()=>change(toStageGraph(graph))}>Enable stage management</button>
+              </div>:<div className="ats-stage-manager-list">
+                {(graph.stages??[]).slice().sort((a,b)=>a.sortOrder-b.sortOrder).map(stage=>
+                  <div className="ats-stage-manager-row" key={stage.id}>
+                    <label>Stage name<input className="input" maxLength={80} disabled={!editor}
+                      value={stage.name} onChange={e=>editStage(stage.id,{name:e.target.value})}/></label>
+                    <label>Color<input type="color" disabled={!editor} value={stage.color}
+                      onChange={e=>editStage(stage.id,{color:e.target.value})}/></label>
+                    <label>Completion<select className="select" disabled={!editor}
+                      value={stage.completionRule} onChange={e=>editStage(stage.id,{completionRule:e.target.value as "all_required"|"manual"})}>
+                      <option value="all_required">All required steps</option>
+                      <option value="manual">Manual review</option>
+                    </select></label>
+                    <button className="button button-ghost" type="button"
+                      disabled={!editor||(graph.stages?.length??0)<2} onClick={()=>deleteStage(stage.id)}>Remove</button>
+                  </div>)}
+                <button type="button" className="button button-ghost"
+                  disabled={!editor||(graph.stages?.length??0)>=30} onClick={addStage}><PlusIcon aria-hidden="true"/> Add stage</button>
+              </div>}
+              <p className="card-sub">Stage colors and assignments are versioned with the graph. Publishing creates a new immutable snapshot.</p>
+              <button type="button" className="button button-dark" onClick={()=>setStagesOpen(false)}>Done</button>
+            </div>
+          </div>:null}
           {libraryOpen && dedicated ? <div className="ats-pipeline-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setLibraryOpen(false);}}>
             <div className="card ats-pipeline-modal ats-component-picker" role="dialog" aria-modal="true"
               aria-labelledby="ats-component-picker-title" tabIndex={-1} ref={libraryRef}>
