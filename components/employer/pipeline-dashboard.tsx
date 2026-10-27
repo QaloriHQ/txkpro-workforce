@@ -16,8 +16,13 @@ export function PipelineDashboard({pipeline,versions,linkedJobs,employerId}:{
  const [loaded,setLoaded]=useState(false);
  const prefKey="txkpro:pipeline-view:"+employerId+":"+pipeline.id;
  useEffect(()=>{
-   try{const saved=window.localStorage.getItem(prefKey) as View|null;if(saved&&allowed.includes(saved))setView(saved);}catch{}
-   setLoaded(true);
+   const handle=window.requestAnimationFrame(()=>{
+     try{const saved=window.localStorage.getItem(prefKey) as View|null;
+       if(saved&&allowed.includes(saved))setView(saved);
+     }catch{}
+     setLoaded(true);
+   });
+   return()=>window.cancelAnimationFrame(handle);
  },[prefKey]);
  function updateView(v:View){setView(v);try{window.localStorage.setItem(prefKey,v);}catch{}}
  const graph=currentGraph(pipeline,latest);
