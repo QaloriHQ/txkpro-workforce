@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireEmployerContext } from "@/lib/employer/auth";
 import { EmployerIntegrationsGallery } from "@/components/employer/integrations-gallery";
+import "../pipelines/pipeline-editor.css";
 export const dynamic="force-dynamic";
 export default async function IntegrationsPage(){
  const context=await requireEmployerContext({approved:true});
