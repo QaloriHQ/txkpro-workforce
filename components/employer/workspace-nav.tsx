@@ -5,11 +5,8 @@ import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import {
   AcademicCapIcon,
   Bars3Icon,
-  BookmarkIcon,
   BriefcaseIcon,
-  CalendarDaysIcon,
   HomeIcon,
-  PaperAirplaneIcon,
   QueueListIcon,
   ShieldCheckIcon,
   UserGroupIcon,
