@@ -71,8 +71,11 @@ test("candidate timeline shows target windows as planning, not due dates",()=>{
  assert.equal(result.steps[0].targetHours,48);
  assert.equal(result.steps[0].owner,"candidate");
  const editor=read("components/employer/ats-pipeline-editor.tsx");
- for(const term of ["Candidate journey simulator","Await human decision","Target: within","not a confirmed deadline",
- "Responsible role","Target window (hours)","Estimated effort (minutes)"])assert.ok(editor.includes(term),term);
+ const preview=read("components/employer/candidate-journey-live-preview.tsx");
+ for(const term of ["Candidate journey simulator","Await human decision","Target window:",
+  "not a confirmed deadline"])assert.ok(preview.includes(term),term);
+ for(const term of ["Responsible role","Target window (hours)","Estimated effort (minutes)"])
+   assert.ok(editor.includes(term),term);
 });
 test("autosave preserves draft on failure, protects revision, and offers recovery",()=>{
  const editor=read("components/employer/ats-pipeline-editor.tsx");
