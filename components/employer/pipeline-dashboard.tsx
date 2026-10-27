@@ -23,6 +23,15 @@ export function PipelineDashboard({pipeline,versions,linkedJobs,employerId}:{
  const graph=currentGraph(pipeline,latest);
  const nodes=graph.nodes.filter(n=>n.kind!=="start"&&n.kind!=="end");
  const ordered=nodes.slice().sort((a,b)=>a.x-b.x||a.y-b.y);
+ const stages=graph.schemaVersion===2&&graph.stages?.length
+   ? graph.stages.slice().sort((a,b)=>a.sortOrder-b.sortOrder).map(stage=>({
+       id:stage.id,name:stage.name,color:stage.color,
+       components:ordered.filter(node=>node.stageId===stage.id),
+     }))
+   : ordered.map((node,index)=>({
+       id:node.id,name:node.label,color:"#5A95DC",
+       components:[node],
+     }));
  return <div className="ats-pipeline-dashboard">
    <div className="ats-dashboard-metrics">
      <div className="card"><strong>{linkedJobs}</strong><span>Linked job listings</span></div>
@@ -45,20 +54,22 @@ export function PipelineDashboard({pipeline,versions,linkedJobs,employerId}:{
        </div>
      </div>
      {loaded && view==="kanban"?<div className="ats-stage-board" aria-label="Kanban workflow stages">
-       {ordered.map((n,i)=><article key={n.id} className="ats-stage-column">
+       {stages.map((stage,i)=><article key={stage.id} className="ats-stage-column" style={{borderTop:"4px solid "+stage.color}}>
          <div className="ats-stage-heading"><span className="ats-stage-number">{i+1}</span>
-           <strong>{n.label}</strong></div>
-         <p className="card-sub">{n.kind.replaceAll("_"," ")}</p>
-         <small>{n.required?"Required":"Optional"} · {n.candidateVisible?"Candidate-visible":"Internal"}</small>
+           <strong>{stage.name}</strong></div>
+         <p className="card-sub">{stage.components.length} components</p>
+         <ul>{stage.components.map(node=><li key={node.id}>{node.label}</li>)}</ul>
        </article>)}
      </div>:null}
      {loaded && view==="list"?<ol className="ats-dashboard-list">
-       {ordered.map(n=><li key={n.id}><strong>{n.label}</strong><small>{n.kind.replaceAll("_"," ")} · {n.required?"Required":"Optional"}</small></li>)}
+       {stages.map(stage=><li key={stage.id} style={{borderLeft:"4px solid "+stage.color,paddingLeft:12}}>
+         <strong>{stage.name}</strong><small>{stage.components.map(n=>n.label).join(" · ")||"No steps assigned"}</small>
+       </li>)}
      </ol>:null}
      {loaded && view==="grid"?<div className="ats-dashboard-grid">
-       {ordered.map(n=><article className="card" key={n.id}><strong>{n.label}</strong>
-         <p className="card-sub">{n.kind.replaceAll("_"," ")}</p>
-         <small>{n.candidateVisible?"Candidate-visible":"Internal"}</small></article>)}
+       {stages.map(stage=><article className="card" key={stage.id} style={{borderTop:"4px solid "+stage.color}}>
+         <strong>{stage.name}</strong><p className="card-sub">{stage.components.length} components</p>
+         <small>{stage.components.map(n=>n.label).join(" · ")||"No steps assigned"}</small></article>)}
      </div>:null}
      {!nodes.length?<p className="card-sub">No workflow steps configured yet.</p>:null}
      <div className="ats-dashboard-version-links">
