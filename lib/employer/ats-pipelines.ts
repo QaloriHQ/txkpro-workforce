@@ -172,7 +172,7 @@ export function validatePipelineGraph(input: unknown, publish = true): PipelineG
   if(graph.schemaVersion===2){
     const stageIds=new Set(stages?.map(stage=>stage.id));
     for(const node of nodes){
-      if(node.kind!=="start"&&node.kind!=="end"&&!stageIds.has(node.stageId))throw new Error("Every workflow component must belong to a stage");
+      if(node.kind!=="start"&&node.kind!=="end"&&(!node.stageId||!stageIds.has(node.stageId)))throw new Error("Every workflow component must belong to a stage");
     }
   }
   const ids = new Set(nodes.map((n) => n.id));
