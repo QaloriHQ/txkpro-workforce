@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowPathIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, DocumentDuplicateIcon,
   PlusIcon, TrashIcon, CheckCircleIcon, ExclamationTriangleIcon, MagnifyingGlassMinusIcon,
@@ -70,10 +71,11 @@ function parseFields(value: string): PipelineField[] {
   });
 }
 
-export function ATSPipelineEditor({ initialPipelines, initialVersions, employerId, role }: {
+export function ATSPipelineEditor({ initialPipelines, initialVersions, employerId, role, dedicated = false }: {
   initialPipelines: PipelineTemplateSummary[]; initialVersions: PipelineVersionSummary[];
-  employerId: string; role: EmployerRole;
+  employerId: string; role: EmployerRole; dedicated?: boolean;
 }) {
+  const router = useRouter();
   const [pipelines, setPipelines] = useState(initialPipelines);
   const [versions, setVersions] = useState(initialVersions);
   const [selectedId, setSelectedId] = useState<string | null>(initialPipelines[0]?.id ?? null);
@@ -95,6 +97,9 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const [linking, setLinking] = useState<{source:string;outcome?:"yes"|"no"} | null>(null);
   const [pointer, setPointer] = useState<{x:number;y:number} | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [componentQuery, setComponentQuery] = useState("");
+  const [componentSource, setComponentSource] = useState<{id:string;outcome?:"yes"|"no"}|null>(null);
   const [branchChoices, setBranchChoices] = useState<Record<string, "yes" | "no">>({});
   const [recovery, setRecovery] = useState<{ name: string; description: string; graph: PipelineGraph; revision: number } | null>(null);
   const [autosaveStatus, setAutosaveStatus] = useState("Autosave enabled");
@@ -105,6 +110,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const libraryRef = useRef<HTMLDivElement>(null);
   const editor = isPipelineConfigurator(role);
   const publisher = isPipelinePublisher(role);
   const selected = pipelines.find((p) => p.id === selectedId);
@@ -210,6 +216,45 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     change({ ...graph, nodes: [...graph.nodes, node] });
     setSelectedNodeId(node.id); setSettingsOpen(true);
   }
+  function openContextLibrary(id:string,outcome?:"yes"|"no"){
+    if(!editor) return;
+    setSettingsOpen(false);setComponentSource({id,outcome});setComponentQuery("");setLibraryOpen(true);
+  }
+  function insertComponent(kind:ATSNodeKind){
+    if(!editor||!componentSource||kind==="start"||kind==="end")return;
+    const source=graph.nodes.find(n=>n.id===componentSource.id);
+    if(!source || source.kind==="end")return;
+    const node=initialNode(kind,source.x+310,source.y+45);
+    const old=graph.edges.find(e=>e.source===source.id &&
+      (source.kind==="decision"?e.outcome===componentSource.outcome:!e.outcome));
+    try{
+      let newGraph:PipelineGraph={...graph,nodes:[...graph.nodes,node]};
+      newGraph=upsertPipelineConnection(newGraph,source.id,node.id,componentSource.outcome);
+      if(old&&kind!=="decision")newGraph=upsertPipelineConnection(newGraph,node.id,old.target);
+      change(newGraph);
+      setSelectedNodeId(node.id);
+      setLibraryOpen(false);setComponentSource(null);setSettingsOpen(true);
+    }catch(e){setError(e instanceof Error?e.message:"Could not add component");}
+  }
+  useEffect(()=>{
+    if(!libraryOpen)return;
+    const prior=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    const previous=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    libraryRef.current?.focus();
+    function keydown(e:KeyboardEvent){
+      if(e.key==="Escape"){e.preventDefault();setLibraryOpen(false);}
+      if(e.key==="Tab"&&libraryRef.current){
+        const elements=Array.from(libraryRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled])'));
+        const first=elements[0],last=elements[elements.length-1];
+        if(!first||!last)return;
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    }
+    document.addEventListener("keydown",keydown);
+    return()=>{document.body.style.overflow=previous;document.removeEventListener("keydown",keydown);prior?.focus();};
+  },[libraryOpen]);
   function removeNode() {
     if (!selectedNode || selectedNode.kind === "start" || selectedNode.kind === "end") return;
     change({ ...graph, nodes: graph.nodes.filter((n) => n.id !== selectedNode.id),
@@ -344,6 +389,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
       const response = await fetch("/api/employer/pipelines/" + selectedId + "/duplicate" + endpoint, { method: "POST" });
       if (!response.ok) throw new Error(await getMessage(response));
       const { pipeline } = await response.json() as { pipeline: PipelineTemplateSummary };
+      if(dedicated){router.push("/employer/pipelines/"+pipeline.id+"/edit");return;}
       setPipelines((items) => [pipeline, ...items]); choosePipeline(pipeline);
       setMessage("Pipeline copied as a new draft. Versions and applicants were not copied.");
     } catch (e) { setError(e instanceof Error ? e.message : "Duplicate failed"); }
@@ -375,8 +421,8 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
     if (!box || !node) return;
     setNode({ ...node, x: Math.round((event.clientX - box.left) / zoom), y: Math.round((event.clientY - box.top) / zoom) });
   }
-  return <div className={"ats-pipeline-layout " + (libraryCollapsed ? "is-library-collapsed" : "")}>
-    <aside className={"card ats-pipeline-sidebar " + (libraryCollapsed ? "is-collapsed" : "")} aria-label="Pipeline templates">
+  return <div className={"ats-pipeline-layout " + (dedicated ? "is-dedicated " : "") + (libraryCollapsed ? "is-library-collapsed" : "")}>
+    {!dedicated ? <aside className={"card ats-pipeline-sidebar " + (libraryCollapsed ? "is-collapsed" : "")} aria-label="Pipeline templates">
       <div className="card-header ats-pipeline-sidehead">
         <h2>{libraryCollapsed ? "Library" : "My pipelines"}</h2>
         <button type="button" className="button button-small button-ghost" onClick={() => setLibraryCollapsed((value) => !value)}
@@ -408,7 +454,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           {kind === "background_check" ? <div className="ats-checkr-palette-action"><CheckrConnection employerId={employerId} /></div> : null}
         </div>)}</div>
       </div>
-    </aside>
+    </aside> : null}
     <section className="ats-pipeline-workspace" aria-label="Pipeline editor">
       {!selected ? <div className="card"><h2>Pipeline editor</h2><p>Create a pipeline to get started.</p></div> : <>
         <div className="card ats-pipeline-toolbar">
@@ -549,6 +595,14 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                       }} aria-pressed={node.id === selectedNodeId}>
                       <strong>{node.label}</strong><small>{node.kind.replaceAll("_"," ")}{ATS_PROVIDER_KINDS.has(node.kind) ? " · Not connected" : ""}</small>
                     </button>
+                    {dedicated && editor && node.kind !== "end" ? (node.kind==="decision" ? ["yes","no"] as const : ["next"] as const).map(outcome =>
+                      <button key={"add-"+outcome} type="button"
+                        className={"ats-pipeline-node-add "+(outcome==="yes"?"is-yes":outcome==="no"?"is-no":"is-next")}
+                        aria-label={"Add component after "+node.label+(outcome==="next"?"":" on "+outcome+" branch")}
+                        title="Insert a connected component"
+                        onClick={e=>{e.stopPropagation();openContextLibrary(node.id,outcome==="next"?undefined:outcome);}}>
+                        <PlusIcon aria-hidden="true"/>
+                      </button>) : null}
                     {node.kind !== "end" ? (node.kind==="decision" ? ["yes","no"] as const : ["next"] as const).map((outcome) =>
                       <button key={outcome} type="button" className={"ats-pipeline-port ats-pipeline-port-output "+(outcome==="yes"?"is-yes":outcome==="no"?"is-no":"is-next")}
                         disabled={!editor}
@@ -561,14 +615,14 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
                     ) : null}
                   </div>)}
                 </div>
-                <div className="ats-pipeline-canvas-hint">
-                  {linking ? <><strong>Connecting:</strong> select an input port or click a target node. Press Escape to cancel.
-                    <button type="button" onClick={() => { setLinking(null); setPointer(null); }}>Cancel</button></> :
-                    <>Select a node to edit settings. Use the round output ports to link steps; decision nodes use Yes/No ports. Arrow keys move a focused node.</>}
-                </div>
+                {linking ? <div className="ats-pipeline-canvas-hint"><strong>Connecting:</strong> choose an input port or node.
+                  <button type="button" onClick={()=>{setLinking(null);setPointer(null);}}>Cancel</button></div>:null}
               </div>
             </div>
             <div className="ats-pipeline-canvas-controls" role="toolbar" aria-label="Canvas navigation and edit controls">
+              <details className="ats-canvas-help"><summary title="Canvas help" aria-label="Canvas help"><QuestionMarkCircleIcon aria-hidden="true"/></summary>
+                <div role="note">Select a node to edit settings. Use the round output ports to link steps; decisions have Yes/No ports. Arrow keys move a focused node.</div>
+              </details>
               <button type="button" disabled={!history.length || !editor} onClick={undo} title="Undo change" aria-label="Undo"><ArrowUturnLeftIcon aria-hidden="true"/></button>
               <button type="button" disabled={!future.length || !editor} onClick={redo} title="Redo change" aria-label="Redo"><ArrowUturnRightIcon aria-hidden="true"/></button>
               <span className="ats-pipeline-canvas-divider" aria-hidden="true"/>
@@ -598,6 +652,26 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               <span>Minimap · pan</span>
             </button>
           </div>
+          {libraryOpen && dedicated ? <div className="ats-pipeline-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setLibraryOpen(false);}}>
+            <div className="card ats-pipeline-modal ats-component-picker" role="dialog" aria-modal="true"
+              aria-labelledby="ats-component-picker-title" tabIndex={-1} ref={libraryRef}>
+              <div className="ats-pipeline-modal-head"><div><p className="eyebrow">Component library</p>
+                <h2 id="ats-component-picker-title">Insert workflow step</h2></div>
+                <button type="button" aria-label="Close component picker" onClick={()=>setLibraryOpen(false)}>
+                  <XMarkIcon aria-hidden="true"/></button></div>
+              <input className="input" type="search" autoFocus placeholder="Search components…" aria-label="Search components"
+                value={componentQuery} onChange={e=>setComponentQuery(e.target.value)}/>
+              <div className="ats-component-picker-list">
+                {ATS_NODE_KINDS.filter(k=>k!=="start"&&k!=="end"&&
+                  (LABELS[k]+" "+DESCRIPTIONS[k]).toLowerCase().includes(componentQuery.trim().toLowerCase()))
+                  .map(kind=><button type="button" key={kind} onClick={()=>insertComponent(kind)}>
+                    <strong>{LABELS[kind]}</strong><span>{DESCRIPTIONS[kind]}</span>
+                    {ATS_PROVIDER_KINDS.has(kind)?<small>Integration setup required for live execution</small>:null}
+                  </button>)}
+              </div>
+              <p className="card-sub">Choose a component to connect it after the selected step. Integrations are configured after insertion.</p>
+            </div>
+          </div>:null}
           {settingsOpen && selectedNode ? <div className="ats-pipeline-modal-backdrop" onMouseDown={(e) => { if (e.target===e.currentTarget) setSettingsOpen(false); }}>
             <div className="card ats-pipeline-inspector ats-pipeline-modal" ref={modalRef}
               role="dialog" aria-modal="true" aria-labelledby="ats-pipeline-settings-heading" tabIndex={-1}>
