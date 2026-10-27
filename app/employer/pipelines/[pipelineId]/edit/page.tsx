@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
 import { getEmployerPipeline, listEmployerPipelines } from "@/lib/employer/ats-pipelines-repository";
 import "../../pipeline-editor.css";
+import "../../../pipeline-builder/pipeline-editor-enhancements.css";
+import "../../../pipeline-builder/pipeline-simulator.css";
 
 export const dynamic = "force-dynamic";
 export default async function DedicatedPipelineEditorPage({ params }: { params: Promise<{pipelineId:string}> }) {
