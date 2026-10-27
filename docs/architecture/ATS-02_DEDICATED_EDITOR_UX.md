@@ -34,3 +34,5 @@
 - Candidate analytics, candidate progress tracking and invitations need ATS-03.
 - Provider execution needs ATS-04–07 connection, compliance and privacy acceptance.
 - Server-stored per-user dashboard view preferences and multi-user collaborative draft conflict comparison are later enhancements; in this UI the default is per-browser/per-pipeline and optimistic revision conflict handling is existing.
+
+**Staging ledger verification:** `20261027043057_ats_02_stage_graph_v2` applied successfully to TXKPRO Workforce Staging. Live valid-v2/invalid-v2 graph checks passed; no ATS-specific security advisor findings. Manual owner browser UAT remains required.
