@@ -92,3 +92,17 @@
 @media(max-width:700px){.ats-stage-manager-row{grid-template-columns:minmax(0,1fr) auto}.ats-stage-manager-row label:first-child{grid-column:1/-1}
 .ats-stage-manager-row label:nth-child(3){grid-column:1/-1}.ats-talent-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;max-width:calc(100vw - 32px)}
 .ats-talent-tabs a{white-space:nowrap;min-height:44px;display:inline-flex;align-items:center}}
+
+/* Version-history restoration and integration status/details */
+.ats-version-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ats-version-restore{display:grid;gap:8px}
+.ats-version-stage-key{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.ats-version-stage-label{display:inline-flex;align-items:center;border:2px solid;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600}
+.ats-integrations-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.ats-integration-card{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-width:0}
+.ats-integration-card h2{margin:5px 0 9px;font-size:1.15rem}
+.ats-integration-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.ats-integration-modal{display:grid;gap:14px;width:min(550px,calc(100vw - 30px));max-height:min(84dvh,730px);overflow:auto}
+.ats-inline-checkr-controls{display:grid;gap:10px}
+.ats-inline-checkr-controls button,.ats-inline-checkr-controls a{justify-self:start}
+@media(max-width:700px){.ats-version-header-actions{width:100%}.ats-version-header-actions .button{min-height:44px}}
