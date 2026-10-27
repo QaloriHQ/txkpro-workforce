@@ -32,7 +32,7 @@ test("dedicated route reads only one employer-scoped pipeline, historic snapshot
  assert.ok(list.includes("Duplicate pipeline"));
 });
 test("SQL v2 graph validator is additive; version records remain immutable",()=>{
- const sql=read("../supabase/migrations/20261026232500_ats_02_stage_graph_v2.sql");
+ const sql=read("../supabase/migrations/20261027043057_ats_02_stage_graph_v2.sql");
  assert.ok(sql.includes("create or replace function security.wf_ats_graph_publishable"));
  assert.ok(sql.includes("v_stage_ids"));
  assert.ok(!sql.toLowerCase().includes("update public.wf_ats_pipeline_versions"));
