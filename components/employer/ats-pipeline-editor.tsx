@@ -16,6 +16,7 @@ import {
 import type { EmployerRole } from "@/lib/employer/types";
 import { autoLayoutPipeline, inspectPipelineGraph, simulateCandidateJourney } from "@/lib/employer/pipeline-experience";
 import { CheckrConnection } from "@/components/employer/checkr-connection";
+import { CandidateJourneyLivePreview } from "@/components/employer/candidate-journey-live-preview";
 
 const LABELS: Record<ATSNodeKind, string> = {
   start: "Start", end: "End", application_form: "Application / form", assessment: "Assessment",
@@ -508,7 +509,7 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           </div>
           <div className="ats-pipeline-actions">
 
-            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Show canvas" : "Candidate journey simulator"}</button>
+            <button type="button" className="button button-small button-ghost" onClick={() => setPreview(!preview)} aria-pressed={preview}>{preview ? "Hide live preview" : "Live candidate preview"}</button>
             {dedicated?<button type="button" className="button button-small button-ghost" disabled={!editor} onClick={()=>setStagesOpen(true)}>Manage stages</button>:null}
             <button type="button" className="button button-small button-ghost" disabled={!editor || busy} onClick={() => void duplicate()}><DocumentDuplicateIcon aria-hidden="true" /> Duplicate</button>
             <button type="button" className="button button-small button-ghost" disabled={!dirty || !editor || busy} onClick={() => void save()}>{busy ? "Working…" : "Save draft"}</button>
@@ -526,41 +527,8 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
           {message ? <p role="status">{message}</p> : null}
           {error ? <p role="alert" className="ats-pipeline-validation">{error}{error.toLowerCase().includes("revision") ? <button className="button button-small button-ghost" type="button" onClick={() => location.reload()}><ArrowPathIcon aria-hidden="true" /> Reload</button> : null}</p> : null}
         </div>
-        {preview ? <div className="card ats-pipeline-simulator" aria-label="Candidate journey simulator">
-          <h2>Candidate journey simulator</h2>
-          <p className="card-sub">Planning preview only. No applicant data or status changes. Choose a decision branch to see how it changes the candidate-visible path.</p>
-          <div className="ats-pipeline-simulator-grid">
-            <section aria-label="Human decision scenarios">
-              <h3>Decision scenario</h3>
-              {graph.nodes.filter(n=>n.kind==="decision").map(node=><label key={node.id} className="ats-pipeline-simulator-choice">
-                <span>{node.label}</span>
-                <select className="select" value={branchChoices[node.id]??""}
-                  onChange={e=>setBranchChoices(old=>({...old,[node.id]:e.target.value as "yes"|"no"}))}>
-                  <option value="">Await human decision</option><option value="yes">Yes path</option><option value="no">No path</option>
-                </select>
-              </label>)}
-              {!graph.nodes.some(n=>n.kind==="decision") ? <p className="card-sub">This workflow has no decision branches.</p> : null}
-              <p className="card-sub">Simulation never automatically accepts or rejects a candidate.</p>
-            </section>
-            <section aria-label="Candidate next action and timeline">
-              <h3>Candidate next action</h3>
-              <p className="ats-pipeline-next-action">{journey.nextAction ?? "Await next steps"}</p>
-              {journey.awaitingDecision ? <p className="ats-pipeline-validation">This preview stops at a pending human decision.</p> : null}
-              {journey.diagnostics.map(d=><p className="ats-pipeline-validation" key={d}>{d}</p>)}
-              <ol className="ats-pipeline-candidate-timeline">
-                {journey.steps.map((step,i)=><li key={step.id}>
-                  <span className="ats-pipeline-timeline-number">{i+1}</span>
-                  <div><strong>{step.label}</strong><small>{step.owner==="candidate"?"Candidate action":"Waiting on employer"} · {step.required?"Required":"Optional"} · Planned, not completed</small>
-                    {step.instructions ? <p>{step.instructions}</p> : null}
-                    {step.targetHours ? <small>Target: within {step.targetHours} hours of assignment (not a confirmed deadline)</small> : null}
-                    {step.expectedMinutes ? <small>Estimated effort: {step.expectedMinutes} minutes</small> : null}
-                  </div>
-                </li>)}
-              </ol>
-              {!journey.steps.length ? <p className="card-sub">No candidate-visible steps on this selected path yet.</p> : null}
-            </section>
-          </div>
-        </div> : <>
+        <>
+          <div className={"ats-pipeline-design-surface "+(preview?"is-preview-open":"")}>
           <div className="ats-pipeline-canvas-area">
             <div className="ats-pipeline-canvas-wrap" ref={viewportRef}
               onScroll={e=>setScrollPosition({left:e.currentTarget.scrollLeft,top:e.currentTarget.scrollTop})}>
@@ -696,6 +664,20 @@ export function ATSPipelineEditor({ initialPipelines, initialVersions, employerI
               </svg>
               <span>Minimap · pan</span>
             </button>
+          </div>
+            {preview?<CandidateJourneyLivePreview
+              name={name} graph={graph} journey={journey} dirty={dirty}
+              choices={branchChoices}
+              onChoice={(nodeId,outcome)=>setBranchChoices(old=>{
+                const updated={...old};
+                if(outcome)updated[nodeId]=outcome;else delete updated[nodeId];
+                return updated;
+              })}
+              onClose={()=>setPreview(false)}
+              onLocate={id=>{
+                const node=graph.nodes.find(n=>n.id===id);
+                if(node){setSelectedNodeId(id);centerOnNode(node);}
+              }}/>:null}
           </div>
           {stagesOpen && dedicated ? <div className="ats-pipeline-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setStagesOpen(false);}}>
             <div className="card ats-pipeline-modal ats-stage-manager" role="dialog" aria-modal="true" aria-label="Manage hiring stages" tabIndex={-1} ref={stagesRef}>
