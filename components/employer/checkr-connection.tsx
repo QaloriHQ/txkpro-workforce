@@ -1,19 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ActionModal } from "@/components/design-system/action-modal";
 
 type Connection = { connected: boolean; credentialed: boolean; canManage: boolean };
-export function CheckrConnection({ employerId }: { employerId: string }) {
+export function CheckrConnection({ employerId, embedded = false }: {
+  employerId: string; embedded?: boolean;
+}) {
   const [data, setData] = useState<Connection | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  async function call(op: string) {
+  const call = useCallback(async (op: string) => {
     const r = await fetch("/api/checkr", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op, employerId }) });
     const result = await r.json();
     if (!r.ok) throw new Error(result.error || "Checkr setup unavailable.");
     return result;
-  }
+  },[employerId]);
   async function load() {
     setBusy(true); setError("");
     try { setData(await call("workspace")); }
@@ -25,8 +27,19 @@ export function CheckrConnection({ employerId }: { employerId: string }) {
     try { const result = await call("authorize"); window.location.assign(result.url); }
     catch (e) { setError(e instanceof Error ? e.message : "Connection unavailable."); setBusy(false); }
   }
-  return <ActionModal title="Background check · Checkr sandbox" triggerLabel="Enable / manage Checkr" onOpen={() => void load()} busy={busy}
-    description="Connect your employer’s Checkr account. Screening charges belong to your employer account.">
+  useEffect(()=>{
+    if(!embedded)return;
+    let active=true;
+    async function fetchConnection(){
+      setBusy(true);setError("");
+      try{const status=await call("workspace");if(active)setData(status);}
+      catch(e){if(active)setError(e instanceof Error?e.message:"Unable to load connection.");}
+      finally{if(active)setBusy(false);}
+    }
+    void fetchConnection();
+    return()=>{active=false;};
+  },[embedded,call]);
+  const controls = <>
     {busy ? <p role="status">Loading Checkr…</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {data ? <>
@@ -37,5 +50,13 @@ export function CheckrConnection({ employerId }: { employerId: string }) {
       {data.connected ? <Link className="button button-ghost" href={`/employer/checkr?employer=${encodeURIComponent(employerId)}`}>Open Checkr workspace</Link> : null}
     </> : null}
     <button type="button" className="button button-ghost" disabled={busy} onClick={() => void load()}>Refresh connection</button>
+  </>;
+  if(embedded)return <div className="ats-inline-checkr-controls">
+    <p className="card-sub">Connect your employer’s Checkr account. Screening charges belong to your employer account.</p>
+    {controls}
+  </div>;
+  return <ActionModal title="Background check · Checkr sandbox" triggerLabel="Enable / manage Checkr" onOpen={() => void load()} busy={busy}
+    description="Connect your employer’s Checkr account. Screening charges belong to your employer account.">
+    {controls}
   </ActionModal>;
-}
+
