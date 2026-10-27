@@ -31,8 +31,8 @@ export function EmployerIntegrationsGallery({employerId}:{employerId:string}){
       </div>
       <p className="card-sub">{selected.description}</p>
       {selected.id==="checkr"?<CheckrConnection employerId={employerId}/>:
-      <p className="card-sub" role="status">Provider connection is not enabled in this release. Configuration becomes available after the corresponding integration's approved implementation; no credentials can be submitted here.</p>}
-      <p className="card-sub">After adding a provider component to a pipeline, open that component's settings to configure its workflow-specific behavior.</p>
+      <p className="card-sub" role="status">Provider connection is not enabled in this release. Configuration becomes available after the corresponding integration&apos;s approved implementation; no credentials can be submitted here.</p>}
+      <p className="card-sub">After adding a provider component to a pipeline, open that component&apos;s settings to configure its workflow-specific behavior.</p>
       <button className="button button-dark" type="button" onClick={()=>setActive(null)}>Done</button>
     </div>
   </div>:null}
