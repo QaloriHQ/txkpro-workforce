@@ -80,3 +80,15 @@
  .ats-component-picker-list{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){.ats-pipeline-node-add{transition:none}}
+
+.ats-stage-manager{max-width:min(850px,calc(100vw - 24px));width:850px;max-height:80dvh;overflow:auto;display:grid;gap:14px}
+.ats-stage-manager-list{display:grid;gap:12px;max-height:52dvh;overflow:auto}
+.ats-stage-manager-row{display:grid;grid-template-columns:minmax(150px,2fr) 95px minmax(130px,1.3fr) auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--txk-border);border-radius:10px}
+.ats-stage-manager-row label{display:grid;gap:7px;font-size:13px;min-width:0}
+.ats-stage-manager-row .input,.ats-stage-manager-row .select{width:100%;min-width:0}
+.ats-stage-manager-row input[type=color]{width:60px;min-height:42px;border:1px solid var(--txk-border);border-radius:8px;background:transparent}
+.ats-talent-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.ats-talent-tabs a[aria-current=page]{font-weight:700}
+@media(max-width:700px){.ats-stage-manager-row{grid-template-columns:minmax(0,1fr) auto}.ats-stage-manager-row label:first-child{grid-column:1/-1}
+.ats-stage-manager-row label:nth-child(3){grid-column:1/-1}.ats-talent-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;max-width:calc(100vw - 32px)}
+.ats-talent-tabs a{white-space:nowrap;min-height:44px;display:inline-flex;align-items:center}}
