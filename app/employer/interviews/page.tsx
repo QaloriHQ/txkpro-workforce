@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmployerTalentTabs } from "@/components/employer/talent-tabs";
 import { Brand } from "@/components/brand";
 import { EmployerWorkspaceNav } from "@/components/employer/workspace-nav";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -41,6 +42,7 @@ export default async function EmployerInterviewsPage({
         <SignOutButton />
       </header>
       <main className="page-wrap">
+        <EmployerTalentTabs active="interviews" />
         <div className="page-heading">
           <div>
             <p className="eyebrow">Employer · Interviews</p>
