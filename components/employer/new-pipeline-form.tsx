@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { STARTER_PIPELINE, isPipelineConfigurator, type PipelineGraph } from "@/lib/employer/ats-pipelines";
+import { STARTER_PIPELINE, toStageGraph, isPipelineConfigurator, type PipelineGraph } from "@/lib/employer/ats-pipelines";
 import type { EmployerRole } from "@/lib/employer/types";
 
 const BLANK:PipelineGraph = {
@@ -23,7 +23,7 @@ export function NewPipelineForm({employerId,role}:{employerId:string;role:Employ
    try{
      const response=await fetch("/api/employer/pipelines?employerId="+encodeURIComponent(employerId),{
        method:"POST",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({name,description,graph:template==="blank"?BLANK:STARTER_PIPELINE}),
+       body:JSON.stringify({name,description,graph:toStageGraph(template==="blank"?BLANK:STARTER_PIPELINE)}),
      });
      const data=await response.json() as {pipeline?:{id:string};error?:string};
      if(!response.ok||!data.pipeline)throw new Error(data.error??"Unable to create pipeline");
