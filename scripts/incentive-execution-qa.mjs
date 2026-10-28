@@ -526,8 +526,21 @@ test("verified safety reporting freezes crew progress, pays once and permits the
       count: 7,
       evidence: "Seven verified safe check-ins",
     });
-    const ordinary = await engine({op:"metric_event",sourceKey:"before-hazard",milestoneId:"review",participantId:worker,metrics:{reviews:1},evidence:"Verified review before safety award",safetyComplete:true});
-    await engine({op:"review_event",eventId:ordinary.id,decision:"approve",reason:"Ordinary reward verified"});
+    const ordinary = await engine({
+      op: "metric_event",
+      sourceKey: "before-hazard",
+      milestoneId: "review",
+      participantId: worker,
+      metrics: { reviews: 1 },
+      evidence: "Verified review before safety award",
+      safetyComplete: true,
+    });
+    await engine({
+      op: "review_event",
+      eventId: ordinary.id,
+      decision: "approve",
+      reason: "Ordinary reward verified",
+    });
     await actor(WORKER);
     const report = await action({
       op: "safety",
@@ -554,7 +567,11 @@ test("verified safety reporting freezes crew progress, pays once and permits the
     let w = await view();
     assert.equal(w.progress[0].count, 7);
     assert.equal(w.progress[0].paused, true);
-    const lot = w.lots.find((l) => w.events.some(e => e.id === l.event_id && e.milestone_id === "safety-report"));
+    const lot = w.lots.find((l) =>
+      w.events.some(
+        (e) => e.id === l.event_id && e.milestone_id === "safety-report",
+      ),
+    );
     assert.equal(lot.points, 1000);
     await action({
       op: "resolve",
@@ -581,7 +598,10 @@ test("verified safety reporting freezes crew progress, pays once and permits the
     });
     assert.ok(request.id);
     assert.equal((await view()).lots.find((l) => l.id === lot.id).consumed, 1);
-    assert.equal((await view()).lots.find(l => l.event_id === ordinary.id).consumed,0);
+    assert.equal(
+      (await view()).lots.find((l) => l.event_id === ordinary.id).consumed,
+      0,
+    );
   } finally {
     await db.close();
   }
