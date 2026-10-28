@@ -11,7 +11,17 @@ export const EDITOR_HELP: Record<string, string> = {
   "Employer timezone":
     "Use an IANA timezone, such as America/Chicago. It controls local program dates, monthly allowances and retention checks.",
   "Crew name":
-    "Name a real working team. Assign enrolled members before recording crew milestones.",
+    "Use a short organization-wide name employees recognize. Crew names are unique within this employer workspace.",
+  "Crew description":
+    "Optionally describe the crew’s trade, region, shift or working purpose. Do not include private performance or safety details.",
+  "Find organization members":
+    "Search active employer directory members by name or role. Crew membership does not grant a new role or program enrollment.",
+  "Organization crew membership":
+    "Add this active directory member to the reusable organization crew. This changes no hiring, staff or incentive permissions.",
+  "Find existing crews":
+    "Search reusable organization crews by name, description or member. Selecting a crew does not automatically invite its members to the program.",
+  "Existing crew selection":
+    "Link this reusable organization crew to the program. Only members who separately accept program enrollment can receive crew awards.",
   "Crew membership":
     "Include only this program’s enrolled employees. A verified crew award snapshots its eligible roster and splits points into individual accounts.",
   "Milestone title":

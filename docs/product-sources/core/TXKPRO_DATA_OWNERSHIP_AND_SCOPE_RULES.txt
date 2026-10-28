@@ -208,3 +208,13 @@ Integration bearer hashes, bindings, quarantine receipts and worker jobs remain
 private, RPC-only. No arbitrary HRMS payload is retained. Reward bank entries
 reuse the shared financial ledger; PRO Points and private activity scores remain
 separate. Withdrawn recognition consent suppresses the minimal company board.
+
+#368 reusable employer crews: the sponsoring Employer owns canonical crew and
+crew-membership records. Approved active Employer Owner/Admin may create crews
+using active users already in that Employer's canonical directory. Operational
+Employer roles may read the bounded crew directory; Employer Employee remains
+excluded from operational directory access. Crew membership grants no role,
+program enrollment, terms acceptance, reward, credential or hiring authority.
+An incentive definition may link only a crew owned by its Employer. Program
+participant mapping remains separate and includes only active accepted program
+participants. Direct tables stay RPC-only and cross-Employer IDs fail closed.

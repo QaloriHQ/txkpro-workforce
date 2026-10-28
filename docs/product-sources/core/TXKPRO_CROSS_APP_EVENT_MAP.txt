@@ -249,3 +249,8 @@ events. Original metric/evidence and append-only review history remain private.
 Shared reward ledger/request/provider events retain their original contracts.
 Retention/allowance notices are in-app consequences of canonical awards, not
 PRO Points, hiring, placement, licensure or verified-skill events.
+
+EMPLOYER_CREW_CREATED: Source is an approved active Employer Owner/Admin. Target
+is the employer-owned crew UUID. Audit metadata contains Employer ID, bounded
+crew name and member count only; it contains no email, private performance,
+safety evidence or reward data. The event grants no role or program enrollment.

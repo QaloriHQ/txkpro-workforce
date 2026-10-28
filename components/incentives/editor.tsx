@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BLUEPRINTS,
@@ -16,6 +16,13 @@ import Link from "next/link";
 import { EditorField, CheckField, FieldHelp } from "./field-help";
 import { editorHelp } from "@/lib/incentives/field-help";
 import type { Program } from "@/lib/pro-points/types";
+import { CrewCreateModal } from "@/components/employer/crew-create-modal";
+import { CrewSelector } from "@/components/incentives/crew-selector";
+import {
+  selectedCrewsToTeams,
+  type EmployerCrew,
+  type EmployerCrewWorkspace,
+} from "@/lib/employer/crew-contracts";
 export async function incentiveAction(input: Record<string, unknown>) {
   const response = await fetch("/api/employer/incentives", {
     method: "POST",
@@ -33,6 +40,7 @@ export function ProgramEditor({
   initialDraft,
   templateName,
   initialMode,
+  crewWorkspace,
 }: {
   ownerId: string;
   program?: Program;
@@ -40,6 +48,7 @@ export function ProgramEditor({
   initialDraft?: Definition;
   templateName?: string;
   initialMode?: "guided" | "advanced";
+  crewWorkspace: EmployerCrewWorkspace;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Definition>(
@@ -76,6 +85,7 @@ export function ProgramEditor({
   );
   const [busy, setBusy] = useState(false);
   const [conflict, setConflict] = useState(false);
+  const [availableCrews, setAvailableCrews] = useState(crewWorkspace.crews);
   const saving = useRef(false);
   const latest = useRef(draft);
   const [savedFingerprint, setSavedFingerprint] = useState(
@@ -148,6 +158,48 @@ export function ProgramEditor({
     (m) =>
       m.conditions.length > 1 || m.match === "any" || m.approval !== "manager",
   );
+  const crewById = useMemo(
+    () => new Map(availableCrews.map((crew) => [crew.id, crew])),
+    [availableCrews],
+  );
+  const directoryCrewIds = draft.teams.flatMap((team) => {
+    const id = team.directoryCrewId ?? team.id;
+    return crewById.has(id) ? [id] : [];
+  });
+  const legacyCrewCount = draft.teams.length - directoryCrewIds.length;
+  function selectDirectoryCrews(ids: string[]) {
+    update(
+      "teams",
+      selectedCrewsToTeams(
+        availableCrews,
+        ids.slice(0, Math.max(0, 50 - legacyCrewCount)),
+        program?.participants ?? [],
+        draft.teams,
+      ),
+    );
+  }
+  function addCreatedCrew(crew: EmployerCrew) {
+    const next = [
+      ...availableCrews.filter((item) => item.id !== crew.id),
+      crew,
+    ].sort((a, b) => a.name.localeCompare(b.name));
+    setAvailableCrews(next);
+    if (draft.teams.length >= 50) {
+      setMessage(
+        "Crew created in Directory. This program already has the 50-crew maximum, so it was not selected.",
+      );
+      return;
+    }
+    update(
+      "teams",
+      selectedCrewsToTeams(
+        next,
+        [...new Set([...directoryCrewIds, crew.id])],
+        program?.participants ?? [],
+        draft.teams,
+      ),
+    );
+  }
   function changeMilestone(index: number, value: Partial<Milestone>) {
     update(
       "milestones",
@@ -365,87 +417,191 @@ export function ProgramEditor({
               />,
             )}
             <p>
-              Program invitations remain separate from employment verification.
-              Assign only enrolled program participants to crews.
+              Crews are reusable organization records from Directory. Selecting
+              a crew does not invite or enroll its members; only active program
+              participants are mapped into its reward roster.
             </p>
-            {draft.teams.map((t, index) => (
-              <fieldset key={t.id}>
-                <legend>Crew {index + 1}</legend>
-                {field(
-                  "Crew name",
-                  <input
-                    value={t.name}
-                    maxLength={100}
-                    onChange={(e) =>
-                      update(
-                        "teams",
-                        draft.teams.map((x, i) =>
-                          i === index ? { ...x, name: e.target.value } : x,
-                        ),
-                      )
-                    }
-                  />,
-                )}
-                {program?.participants.map((r) => (
-                  <CheckField
-                    key={r.id}
-                    label={`${r.name} · ${r.kind}`}
-                    help={editorHelp("Crew membership")}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={t.participantIds.includes(r.id)}
-                      onChange={(e) =>
-                        update(
-                          "teams",
-                          draft.teams.map((x, i) =>
-                            i === index
-                              ? {
-                                  ...x,
-                                  participantIds: e.target.checked
-                                    ? [...x.participantIds, r.id]
-                                    : x.participantIds.filter(
-                                        (id) => id !== r.id,
-                                      ),
-                                }
-                              : x,
-                          ),
-                        )
-                      }
-                    />
-                  </CheckField>
-                ))}
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() =>
-                    update(
-                      "teams",
-                      draft.teams.filter((x) => x.id !== t.id),
-                    )
+            <div className="incentive-crew-actions">
+              <CrewSelector
+                crews={availableCrews}
+                selectedIds={directoryCrewIds}
+                maxSelected={Math.max(0, 50 - legacyCrewCount)}
+                onChange={selectDirectoryCrews}
+              />
+              {crewWorkspace.canManage ? (
+                <CrewCreateModal
+                  people={crewWorkspace.people}
+                  onCreated={addCreatedCrew}
+                  triggerClassName="txk-button txk-button-default txk-button-md"
+                />
+              ) : null}
+              <Link className="button secondary" href="/employer/directory">
+                Open organization directory
+              </Link>
+            </div>
+            {draft.teams.length ? (
+              <div className="incentive-selected-crews">
+                {draft.teams.map((team, index) => {
+                  const crew = crewById.get(
+                    team.directoryCrewId ?? team.id,
+                  );
+                  if (crew) {
+                    const synced = selectedCrewsToTeams(
+                      [crew],
+                      [crew.id],
+                      program?.participants ?? [],
+                      [],
+                    )[0];
+                    const currentIds = [...team.participantIds].sort();
+                    const syncedIds = [...synced.participantIds].sort();
+                    const inSync =
+                      JSON.stringify(currentIds) === JSON.stringify(syncedIds);
+                    return (
+                      <article className="incentive-selected-crew" key={team.id}>
+                        <div className="student-section-heading">
+                          <div>
+                            <span className="pill">Organization crew</span>
+                            <h3>{crew.name}</h3>
+                            {crew.description ? <p>{crew.description}</p> : null}
+                          </div>
+                          <button
+                            className="button secondary"
+                            type="button"
+                            onClick={() =>
+                              update(
+                                "teams",
+                                draft.teams.filter((item) => item.id !== team.id),
+                              )
+                            }
+                          >
+                            Remove from program
+                          </button>
+                        </div>
+                        <p className="card-sub">
+                          {crew.memberCount} organization member
+                          {crew.memberCount === 1 ? "" : "s"} ·{" "}
+                          {team.participantIds.length} active program participant
+                          {team.participantIds.length === 1 ? "" : "s"} mapped
+                        </p>
+                        <p className="card-sub">
+                          {crew.members.length
+                            ? crew.members
+                                .slice(0, 6)
+                                .map((member) => member.name)
+                                .join(", ")
+                            : "No organization members assigned"}
+                          {crew.members.length > 6
+                            ? ` +${crew.members.length - 6} more`
+                            : ""}
+                        </p>
+                        {program && !inSync ? (
+                          <div className="alert" role="status">
+                            Directory membership or program enrollment changed.
+                            <button
+                              className="button secondary"
+                              type="button"
+                              onClick={() =>
+                                update(
+                                  "teams",
+                                  draft.teams.map((item) =>
+                                    item.id === team.id ? synced : item,
+                                  ),
+                                )
+                              }
+                            >
+                              Sync active participants
+                            </button>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
                   }
-                >
-                  Remove crew
-                </button>
-              </fieldset>
-            ))}
-            <button
-              className="button secondary"
-              disabled={draft.teams.length >= 50}
-              type="button"
-              onClick={() =>
-                update("teams", [
-                  ...draft.teams,
-                  {
-                    id: crypto.randomUUID(),
-                    name: "New crew",
-                    participantIds: [],
-                  },
-                ])
-              }
-            >
-              Add crew
-            </button>
+                  return (
+                    <fieldset key={team.id}>
+                      <legend>Program-only crew {index + 1}</legend>
+                      <p className="card-sub">
+                        This older crew is stored only in this program. Select an
+                        organization crew above to use a reusable roster.
+                      </p>
+                      {field(
+                        "Crew name",
+                        <input
+                          value={team.name}
+                          maxLength={100}
+                          onChange={(event) =>
+                            update(
+                              "teams",
+                              draft.teams.map((item) =>
+                                item.id === team.id
+                                  ? { ...item, name: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />,
+                      )}
+                      {program?.participants.map((participant) => (
+                        <CheckField
+                          key={participant.id}
+                          label={`${participant.name} · ${participant.kind}`}
+                          help={editorHelp("Crew membership")}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={team.participantIds.includes(participant.id)}
+                            onChange={(event) =>
+                              update(
+                                "teams",
+                                draft.teams.map((item) =>
+                                  item.id === team.id
+                                    ? {
+                                        ...item,
+                                        participantIds: event.target.checked
+                                          ? [
+                                              ...new Set([
+                                                ...item.participantIds,
+                                                participant.id,
+                                              ]),
+                                            ]
+                                          : item.participantIds.filter(
+                                              (id) => id !== participant.id,
+                                            ),
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        </CheckField>
+                      ))}
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() =>
+                          update(
+                            "teams",
+                            draft.teams.filter((item) => item.id !== team.id),
+                          )
+                        }
+                      >
+                        Remove crew
+                      </button>
+                    </fieldset>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="employer-crew-empty">
+                <div>
+                  <h3>No crews selected</h3>
+                  <p className="card-sub">
+                    Select an existing crew or create one without leaving this
+                    draft. Individual milestones can still operate without a
+                    crew.
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
         {step === 2 && (

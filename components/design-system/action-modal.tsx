@@ -20,6 +20,7 @@ export function ActionModal({
   openSignal = 0,
   onOpen,
   onClose,
+  triggerClassName,
   className,
   children,
 }: {
@@ -32,6 +33,7 @@ export function ActionModal({
   openSignal?: number;
   onOpen?: () => void;
   onClose?: () => void;
+  triggerClassName?: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -71,7 +73,9 @@ export function ActionModal({
     <div className="txk-modal-action">
       <button
         ref={trigger}
-        className="txk-button txk-button-primary txk-button-md"
+        className={
+          triggerClassName ?? "txk-button txk-button-primary txk-button-md"
+        }
         type="button"
         aria-label={triggerLabel}
         aria-haspopup="dialog"
@@ -147,6 +151,7 @@ export function WorkspaceForm({
   busy = false,
   feedback,
   onOpen,
+  triggerClassName,
   children,
   ...formProps
 }: ComponentPropsWithRef<"form"> & {
@@ -156,6 +161,7 @@ export function WorkspaceForm({
   busy?: boolean;
   feedback?: ReactNode;
   onOpen?: () => void;
+  triggerClassName?: string;
 }) {
   return (
     <ActionModal
@@ -164,6 +170,7 @@ export function WorkspaceForm({
       description={description}
       busy={busy}
       onOpen={onOpen}
+      triggerClassName={triggerClassName}
     >
       <form {...formProps}>
         <PendingMarker />
