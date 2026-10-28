@@ -19,6 +19,7 @@ export type Condition = {
   value: number;
 };
 export type Milestone = {
+  repeat?: "once" | "per_source";
   id: string;
   title: string;
   recipient: "individual" | "crew";
@@ -146,7 +147,8 @@ export function validateDefinition(d: Definition, publish = false): string[] {
       m.points > 1000000 ||
       !["individual", "crew"].includes(m.recipient) ||
       !["all", "any"].includes(m.match) ||
-      !["manager", "safety_then_manager"].includes(m.approval)
+      !["manager", "safety_then_manager"].includes(m.approval) ||
+      (m.repeat !== undefined && !["once", "per_source"].includes(m.repeat))
     )
       errors.push("Check milestone title, points and routing.");
     if (
@@ -301,6 +303,7 @@ export function blueprintMilestones(blueprint: Blueprint): Milestone[] {
       ...common,
       id: `service-${days}`,
       title: `${days}-day service milestone`,
+      safetyRequired: false,
       conditions: [
         {
           metric: "service_days" as const,

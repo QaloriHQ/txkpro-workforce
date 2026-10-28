@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 import { pointsWorkspace } from "@/lib/pro-points/server";
 import { IncentiveWorkspace } from "@/components/pro-points/workspace";
+import { ExecutionPanel } from "@/components/incentives/execution";
+import { engineWorkspace } from "@/lib/incentives/server";
 import { incentiveRpc } from "@/lib/incentives/server";
 import type { Extension } from "@/lib/incentives/contracts";
 import { OperationalCases } from "@/components/incentives/detail";
@@ -19,6 +21,17 @@ export default async function Programs() {
     rewardWorkspace(),
     incentiveRpc<Extension>("incentive_workspace"),
   ]);
+  const eligible = data.programs.filter(
+    (p) =>
+      p.ownerType === "employer" &&
+      p.participation?.acceptedVersion !== null &&
+      p.participation?.acceptedVersion !== undefined,
+  );
+  const engines = Object.fromEntries(
+    await Promise.all(
+      eligible.map(async (p) => [p.id, await engineWorkspace(p.id)] as const),
+    ),
+  );
   return (
     <>
       <header className="topbar">
@@ -52,6 +65,17 @@ export default async function Programs() {
               />
             </section>
           ))}
+        {eligible.map((p) => (
+          <ExecutionPanel
+            key={p.id}
+            program={{ ...p, canManage: false }}
+            definition={
+              extension.configs.find((c) => c.programId === p.id)?.published ??
+              undefined
+            }
+            data={engines[p.id]}
+          />
+        ))}
         <RewardsPanel data={rewards} points={data} />
       </main>
     </>

@@ -135,3 +135,17 @@ ADS-03 ANALYTICS AND RECONCILIATION PERMISSIONS — OWNER APPROVED 2026-10-16 (#
 - No role receives viewer identities, private Workforce data or direct advertising-table access through analytics.
 
 ADS-04 (#278): public/signed-in visitors may receive MGID fallback only in approved public contexts. External delivery tables are service-role-only with RLS and revoked anon/authenticated table access. Random per-delivery tokens authorize only bounded, idempotent measurement. Reporting additionally requires an active canonical community actor; no advertiser receives private viewer data. Only platform-scoped Super Admin may inspect MGID integration configuration/aggregate delivery status. Contract: docs/integrations/mgid-json-native-feed.md.
+
+EMPLOYER INCENTIVE EXECUTION — #368
+Approved active Employer Owner/Admin: configure immutable draft execution before
+acceptance, scoped verified event/review/employment, delegation/revocation,
+integration mapping/binding/reconciliation, tier/perk fulfillment and funding.
+Active accepted participant: own giving allowance, own bank redemption, own
+individual exception (explicit assigned crew lead for crew exception), own perk
+request and recognition consent. Program-specific safety_reviewer may perform
+only the independent safety stage while participation remains active. A safety
+reviewer may not approve their own reward or both safety and manager stages.
+Natural-person employment verification and peer approvals are independent.
+Machine integration credentials authorize only their program/bound employees and
+configured event types; they never create a human staff role. Worker job RPCs
+are service-only. Direct table mutation and anonymous reads remain denied.

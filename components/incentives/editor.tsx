@@ -564,6 +564,31 @@ export function ProgramEditor({
                     Add condition
                   </button>
                 )}
+                {field(
+                  "Award frequency",
+                  <select
+                    value={
+                      m.repeat ??
+                      (m.conditions.some((c) =>
+                        ["service_days", "qualifying_projects"].includes(
+                          c.metric,
+                        ),
+                      )
+                        ? "once"
+                        : "per_source")
+                    }
+                    onChange={(e) =>
+                      changeMilestone(index, {
+                        repeat: e.target.value as Milestone["repeat"],
+                      })
+                    }
+                  >
+                    <option value="once">Once per participant or crew</option>
+                    <option value="per_source">
+                      Each distinct verified source event
+                    </option>
+                  </select>,
+                )}
                 <label className="pro-check">
                   <input
                     type="checkbox"

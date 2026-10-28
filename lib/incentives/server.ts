@@ -55,3 +55,10 @@ export async function employerIncentives(owner: string) {
     },
   };
 }
+
+export async function engineWorkspace(programId: string) {
+  return incentiveRpc<import("./execution-types").EngineWorkspace>(
+    "incentive_engine_workspace",
+    { p_program_id: programId },
+  );
+}

@@ -43,7 +43,7 @@ function definition() {
     ],
   };
 }
-async function fixture() {
+export async function fixture() {
   const db = new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role;create schema security;create schema auth;grant usage on schema security,auth to authenticated,anon;
 create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.auth',true),'')::uuid$$;

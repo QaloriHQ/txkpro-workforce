@@ -1,4 +1,6 @@
 "use client";
+import { ExecutionPanel } from "./execution";
+import type { EngineWorkspace } from "@/lib/incentives/execution-types";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,6 +24,7 @@ export function ProgramDetail({
   audit,
   rewards,
   assignments,
+  engine,
 }: {
   program: Program;
   points: PointsWorkspace;
@@ -29,6 +32,7 @@ export function ProgramDetail({
   cases: Case[];
   audit: Extension["audit"][string];
   rewards: RewardWorkspace;
+  engine: EngineWorkspace;
   assignments: Extension["assignments"][string];
 }) {
   const [tab, setTab] = useState("Overview");
@@ -102,6 +106,7 @@ export function ProgramDetail({
           "Activity",
           "Rewards",
           "Analytics",
+          "Automation",
         ].map((t) => (
           <button
             key={t}
@@ -113,6 +118,13 @@ export function ProgramDetail({
           </button>
         ))}
       </nav>
+      {tab === "Automation" && (
+        <ExecutionPanel
+          program={program}
+          definition={definition}
+          data={engine}
+        />
+      )}
       {tab === "Overview" && (
         <>
           <div className="incentive-stats">
@@ -370,6 +382,7 @@ export function ProgramDetail({
               data={rewards}
               points={{ ...points, programs: [program] }}
               ownerType="employer"
+              executionMode={!!engine.execution}
             />
           )}
           <h3>Redemption history</h3>
@@ -382,9 +395,8 @@ export function ProgramDetail({
               </p>
             ))}
           <p>
-            Expanded banking, automatic safety payouts and peer-point transfers
-            require the funded launch contract. Existing earned rewards remain
-            governed by their original policy.
+            Execution awards use snapshotted terms and existing sandbox
+            fulfillment. Existing earned rewards retain their original policy.
           </p>
         </section>
       )}

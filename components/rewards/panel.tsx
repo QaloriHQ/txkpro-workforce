@@ -23,10 +23,12 @@ export function RewardsPanel({
   data,
   points,
   ownerType,
+  executionMode = false,
 }: {
   data: RewardWorkspace;
   points: PointsWorkspace;
   ownerType?: string;
+  executionMode?: boolean;
 }) {
   const router = useRouter(),
     keys = useRef(new WeakMap<HTMLFormElement, string>());
@@ -168,7 +170,7 @@ export function RewardsPanel({
                   No reward policy configured. Activities still earn points.
                 </p>
               )}
-              {p.canManage && p.status === "draft" ? (
+              {p.canManage && !executionMode && p.status === "draft" ? (
                 <WorkspaceForm
                   modalTitle="Configure reward policy"
                   busy={busy}
@@ -347,6 +349,7 @@ export function RewardsPanel({
               ) : null}
               {p.canManage &&
               q &&
+              !executionMode &&
               !q.winnerRank &&
               p.status === "ended" &&
               ["competition", "combined"].includes(p.template) ? (
@@ -392,7 +395,10 @@ export function RewardsPanel({
                   </fieldset>
                 </WorkspaceForm>
               ) : null}
-              {p.canManage && q?.winnerRank && p.status === "ended" ? (
+              {p.canManage &&
+              !executionMode &&
+              q?.winnerRank &&
+              p.status === "ended" ? (
                 <WorkspaceForm
                   modalTitle="Finalize winner prizes"
                   busy={busy}
