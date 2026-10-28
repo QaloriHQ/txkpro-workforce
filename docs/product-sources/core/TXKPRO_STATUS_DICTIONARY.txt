@@ -256,3 +256,13 @@ ATS_JOB_LISTING_STATUS: draft, published, paused, closed, archived.
 - closed: listing no longer accepting applications; existing application/history records remain governed by their independent lifecycles. Not enabled in ATS-01.
 - archived: removed from the employer's active workspace but retained with its audit history. In ATS-01 an authorized Employer Owner/Admin may archive a draft; archival must not alter existing applicant, referral, interview, placement or retention statuses.
 These values are exclusive to the new Job Listing aggregate, separate from Hiring Need, Referral, Interview, Placement and all other canonical statuses. ATS-01 does not activate public publication, pause/close transitions, pipeline reassignment, or applicant submission. Those transitions require ATS-02/ATS-03 reviewed schema, API and event contracts; do not infer reopen, unarchive or automated application rejection rules. All authorized status changes require scoped tenant/role checks and immutable audit evidence.
+EMPLOYER INCENTIVE EXPANSION — #368 (staging increment)
+Canonical wf_incentive_programs states remain draft/active/ended/cancelled.
+Scheduled and expired are date-derived display states; paused and archived are
+explicit wf_incentive_definitions controls. Archiving never erases obligations.
+Separate confidential wf_incentive_cases states: pending, verified, declined,
+resolved, appealed. A pending/appealed dispute overlays the original decision;
+original submission evidence is never rewritten. One appeal is allowed.
+Verification is not reward delivery or a monetary award. A safety case remains
+open after its 24-hour target until explicitly resolved. Configuration publication
+and financial activation are separate; funded expansion operations remain denied.

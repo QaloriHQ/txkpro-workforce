@@ -48,7 +48,7 @@ The unresolved funded launch contract remains employer sponsorship/custody, appr
 
 ## Migration and recovery
 
-Additive migration generated with Supabase CLI: `20261028002650_employer_incentive_engine.sql`. Four new RPC-only RLS tables, a nullable activity mapping column/index, checked RPCs and a legacy action wrapper. Never rewrite it once applied. Rollback strategy: revert application increment while keeping additive tables/history; operational forward fix if needed. Before deploying app code, apply/confirm its migration so new RPCs exist. Do not reverse existing financial ledgers or drop earned records.
+Additive migration generated with Supabase CLI: `20261028004805_employer_incentive_engine.sql`. Four new RPC-only RLS tables, a nullable activity mapping column/index, checked RPCs and a legacy action wrapper. Never rewrite it once applied. Rollback strategy: revert application increment while keeping additive tables/history; operational forward fix if needed. Before deploying app code, apply/confirm its migration so new RPCs exist. Do not reverse existing financial ledgers or drop earned records.
 
 ## Verification
 

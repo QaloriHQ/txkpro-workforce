@@ -252,3 +252,4 @@ end $$;
 create function public.incentive_bank() returns jsonb language sql security invoker set search_path='' as $$select security.incentive_bank()$$;
 revoke all on function security.incentive_bank(),public.incentive_bank() from public,anon,authenticated,service_role;
 grant execute on function security.incentive_bank(),public.incentive_bank() to authenticated;
+create index wf_incentive_definition_versions_actor on public.wf_incentive_definition_versions(actor);
