@@ -188,3 +188,13 @@ Invalid traffic and provider reconciliation append correction evidence and audit
 ADS-04 MGID JSON integration (owner approved 2026-10-20, #278): external fallback is permitted only after direct no-fill in an approved public context, with server-only feed credentials and independent provider/filter/production gates. Required IP, user agent, language, public page path and placement are shared transiently with MGID; private Workforce records, query parameters and user identity are prohibited. No raw IP/UA is persisted. External delivery/event records belong to the platform advertising domain and remain separate from advertiser-funded campaign budgets. Canonical signed-in reports use the community moderation queue. Exact contract and approved exclusions: docs/integrations/mgid-json-native-feed.md.
 
 ADS-04 three-item policy (owner approved 2026-10-20): sponsored units require >=3 currently displayed organic records in the relevant posts/events/polls/articles/comments list; fewer items never authorize a request or display. Three distinct public records and public group context are revalidated server-side before any ad selection. Article text or poll answer choices alone do not count. Staging-only sample content is explicitly fictional, noindex and organization-origin (no points), authored by the pre-existing Demo Student fixture identity. Owner confirms MGID exclusions applied; staging filter gate may be enabled. Production remains separately gated.
+
+Employer incentive expansion #368: employer program definitions and crew
+assignments are owned by the sponsoring employer; only canonical approved active
+owner/admin scope manages them. Participants retain own accepted-program access,
+not staff access. Confidential safety/dispute cases are visible to the reporter
+and authorized sponsor reviewers; recognition is additionally visible to its
+named recipient. Private drafts are never projected to participants. Banking
+reads expose only the authenticated recipient's existing reward ledger/accounts.
+Direct client table operations are denied; checked RPCs rederive actor and scope.
+Published terms/history and original evidence cannot be silently overwritten.

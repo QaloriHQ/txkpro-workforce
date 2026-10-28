@@ -76,6 +76,7 @@ export type Program = {
   } | null;
   participants: {
     id: string;
+    userId?: string;
     name: string;
     kind: string;
     status: string;

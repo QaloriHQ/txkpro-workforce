@@ -227,3 +227,15 @@ APPENDIX M — ADS-03 OWNER APPROVED 2026-10-16 (#265, #277)
 AD_DELIVERY_INVALIDATED: Source is an authorized TXKPRO platform administrator. Target is the immutable delivery-group UUID. Metadata contains campaign/creative/placement identifiers and a bounded correction reason; original delivery evidence remains unchanged. Replays do not append a second invalidation.
 AD_PROVIDER_RECONCILED: Source is an authorized TXKPRO platform administrator or separately approved server provider adapter. Target is the immutable delivery-group UUID. Metadata contains campaign ID, provider/reference and actual minor-unit amount. A provider/reference pair is idempotent and a conflicting replay fails closed. This event does not activate live charging or an external provider.
 REPORT_EXPORTED: ADS-03 advertiser analytics export uses the existing canonical export event with advertiser scope, optional campaign ID, bounded UTC range and format only. Aggregate rows contain no viewer identity.
+
+EMPLOYER INCENTIVE EXPANSION — #368 (staging increment)
+Audit vocabulary: INCENTIVE_SAVE, INCENTIVE_PUBLISH, INCENTIVE_PAUSE,
+INCENTIVE_RESUME, INCENTIVE_ARCHIVE, INCENTIVE_RESTORE,
+INCENTIVE_CREW_ASSIGNED, INCENTIVE_CASE_VERIFY, INCENTIVE_CASE_DECLINE_CASE,
+INCENTIVE_CASE_RESOLVE, INCENTIVE_CASE_APPEAL.
+Existing PROGRAM_CREATED and canonical activity/submission events are reused.
+Definition publication records an immutable version and creates manual-review
+activities with zero private score; proposed reward points do not become global
+PRO Points. Confidential case details are not copied into public/community feeds.
+Safety verification does not call a provider or create a funded entitlement in
+this increment. Full rule-event evaluation and payout execution remain #368 work.
