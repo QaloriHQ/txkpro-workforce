@@ -1,4 +1,5 @@
-import { requireEmployerContext, canManageCompany } from "@/lib/employer/auth";
+import { notFound, redirect } from "next/navigation";
+import { getEmployerContext, canManageCompany } from "@/lib/employer/auth";
 import { IncentiveShell, BackToPrograms } from "@/components/incentives/shell";
 import { TemplateGallery } from "@/components/incentives/template-gallery";
 import {
@@ -8,7 +9,13 @@ import {
 } from "@/lib/incentives/templates";
 export const dynamic = "force-dynamic";
 export default async function Templates() {
-  const c = await requireEmployerContext({ approved: true });
+  const c = await getEmployerContext();
+  if (!c) redirect("/login");
+  if (
+    c.approvalStatus !== "approved" ||
+    ["suspended", "closed"].includes(c.accountStatus)
+  )
+    notFound();
   return (
     <IncentiveShell>
       <BackToPrograms />

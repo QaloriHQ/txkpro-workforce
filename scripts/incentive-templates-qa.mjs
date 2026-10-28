@@ -1,4 +1,5 @@
 import test from "node:test";
+import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
@@ -169,4 +170,114 @@ test("every complete template is accepted by the canonical SQL publication valid
   } finally {
     await db.close();
   }
+});
+
+// Execute the actual page functions with controlled server context and navigation.
+// No auth cookies, network requests, or program writes are created by this harness.
+const nativeRequire = createRequire(import.meta.url);
+class Navigation extends Error {
+  constructor(destination) {
+    super(destination);
+    this.destination = destination;
+  }
+}
+function pageUnderContext(file, context) {
+  const output = ts.transpileModule(readFileSync(file, "utf8"), {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      jsx: ts.JsxEmit.ReactJSX,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+  const exports = {};
+  const dependencies = {
+    "next/navigation": {
+      redirect: (where) => {
+        throw new Navigation(where);
+      },
+      notFound: () => {
+        throw new Navigation("not-found");
+      },
+    },
+    "@/lib/employer/auth": {
+      getEmployerContext: async () => context,
+      canManageCompany: (role) =>
+        ["employer_owner", "employer_admin"].includes(role),
+    },
+    "@/lib/incentives/templates": {
+      findIncentiveTemplate,
+      templateDefinition,
+      INCENTIVE_TEMPLATES,
+      EMPLOYER_SIZES,
+      PROGRAM_GOALS,
+    },
+    "@/components/incentives/shell": {
+      IncentiveShell: "main",
+      BackToPrograms: "nav",
+    },
+    "@/components/incentives/editor": { ProgramEditor: "editor" },
+    "@/components/incentives/template-gallery": { TemplateGallery: "gallery" },
+  };
+  new Function("require", "exports", output)(
+    (name) =>
+      name === "react/jsx-runtime"
+        ? nativeRequire(name)
+        : (dependencies[name] ??
+          (() => {
+            throw new Error(`Unexpected page dependency ${name}`);
+          })()),
+    exports,
+  );
+  return exports.default;
+}
+test("template page flows redirect anonymous actors, deny unauthorized creation and safely prefill only allowlisted presets", async () => {
+  const files = [
+    "app/employer/incentives/new/page.tsx",
+    "app/employer/incentives/templates/page.tsx",
+  ];
+  const args = {
+    searchParams: Promise.resolve({ template: "small-quality-1" }),
+  };
+  const owner = {
+    employerId: "owned-company",
+    role: "employer_owner",
+    approvalStatus: "approved",
+    accountStatus: "active",
+  };
+  for (const file of files) {
+    await assert.rejects(
+      pageUnderContext(file, null)(args),
+      (error) => error instanceof Navigation && error.destination === "/login",
+    );
+    for (const context of [
+      { ...owner, approvalStatus: "pending" },
+      { ...owner, accountStatus: "suspended" },
+      { ...owner, accountStatus: "closed" },
+    ])
+      await assert.rejects(
+        pageUnderContext(file, context)(args),
+        (error) =>
+          error instanceof Navigation && error.destination === "not-found",
+      );
+  }
+  const create = pageUnderContext(files[0], owner);
+  const page = await create(args);
+  const editor = page.props.children[1];
+  assert.equal(editor.props.ownerId, "owned-company");
+  assert.equal(editor.props.initialDraft.blueprint, "quality");
+  assert.equal(editor.props.initialDraft.milestones.length, 3);
+  assert.notEqual(editor.props.initialDraft, INCENTIVE_TEMPLATES[0].definition);
+  await assert.rejects(
+    create({ searchParams: Promise.resolve({ template: "unknown" }) }),
+    (error) => error instanceof Navigation && error.destination === "not-found",
+  );
+  const readonly = { ...owner, role: "employer_read_only" };
+  await assert.rejects(
+    pageUnderContext(files[0], readonly)(args),
+    (error) => error instanceof Navigation && error.destination === "not-found",
+  );
+  const browse = await pageUnderContext(files[1], readonly)();
+  assert.equal(browse.props.children[1].props.canCreate, false);
+  const blank = await create({ searchParams: Promise.resolve({}) });
+  assert.equal(blank.props.children[1].props.initialDraft, undefined);
 });
