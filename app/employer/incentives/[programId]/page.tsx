@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireEmployerContext } from "@/lib/employer/auth";
-import { employerIncentives } from "@/lib/incentives/server";
+import { engineWorkspace, employerIncentives } from "@/lib/incentives/server";
 import { rewardWorkspace } from "@/lib/rewards/server";
 import { IncentiveShell, BackToPrograms } from "@/components/incentives/shell";
 import { ProgramDetail } from "@/components/incentives/detail";
@@ -18,11 +18,13 @@ export default async function Detail({
   ]);
   const program = points.programs.find((p) => p.id === programId);
   if (!program) notFound();
+  const engine = await engineWorkspace(programId);
   return (
     <IncentiveShell>
       <BackToPrograms />
       <ProgramDetail
         program={program}
+        engine={engine}
         points={points}
         configuration={extension.configs.find((c) => c.programId === programId)}
         assignments={extension.assignments[programId] ?? []}

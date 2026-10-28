@@ -265,4 +265,13 @@ resolved, appealed. A pending/appealed dispute overlays the original decision;
 original submission evidence is never rewritten. One appeal is allowed.
 Verification is not reward delivery or a monetary award. A safety case remains
 open after its 24-hour target until explicitly resolved. Configuration publication
-and financial activation are separate; funded expansion operations remain denied.
+and financial activation are separate; live financial operations remain denied.
+Execution-event states: safety_review, review, approved, rejected, disputed,
+budget_wait. Decision approval is not provider delivery. budget_wait preserves
+intent during funding/eligibility/pause blocks. Required safety stages cannot be
+skipped by an exception or funding wait. Accepted/quarantined/retry_ready are
+integration receipt states; retry_ready requires scoped manager reconciliation.
+Perk states: unlocked, requested, approved, fulfilled, declined. Approval reserves
+finite availability; fulfilled requires evidence. Giving allowance expiry and
+lot consumption are accounting state, not program lifecycle changes. Existing
+wf_reward_requests fulfillment/reconciliation states remain authoritative.

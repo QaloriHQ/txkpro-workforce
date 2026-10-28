@@ -237,5 +237,15 @@ Existing PROGRAM_CREATED and canonical activity/submission events are reused.
 Definition publication records an immutable version and creates manual-review
 activities with zero private score; proposed reward points do not become global
 PRO Points. Confidential case details are not copied into public/community feeds.
-Safety verification does not call a provider or create a funded entitlement in
-this increment. Full rule-event evaluation and payout execution remain #368 work.
+Execution continuation: safety verification creates an idempotent individual
+award intent and funded lot when eligible; immediate mode queues the existing
+sandbox reward request. No provider result is inferred from verification.
+ENGINE_SETUP, ENGINE_METRIC_EVENT, ENGINE_REVIEW_EVENT, ENGINE_EVENT_DISPUTE,
+ENGINE_PEER_POINTS, ENGINE_ENGINE_REDEEM, ENGINE_EMPLOYMENT, ENGINE_GRANT_ROLE,
+ENGINE_REVOKE_ROLE, ENGINE_TIER, ENGINE_PERK, ENGINE_RECOGNITION_CONSENT,
+ENGINE_INTEGRATION, ENGINE_BIND_INTEGRATION, ENGINE_DISABLE_INTEGRATION,
+ENGINE_RETRY_INGESTION, ENGINE_TICK and ENGINE_SAFETY_PROGRESS are scoped audit
+events. Original metric/evidence and append-only review history remain private.
+Shared reward ledger/request/provider events retain their original contracts.
+Retention/allowance notices are in-app consequences of canonical awards, not
+PRO Points, hiring, placement, licensure or verified-skill events.

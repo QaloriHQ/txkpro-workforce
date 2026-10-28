@@ -52,7 +52,8 @@
     "public-trust:qa": "node --test scripts/w12-18-organization-public-profile-qa.mjs scripts/w12-19-professional-reviews-qa.mjs scripts/w12-21-cross-app-seo-qa.mjs",
     "pro-points-finalization:qa": "node --test scripts/w12-16b-season-finalization-qa.mjs scripts/w12-16b-season-finalization-database-qa.mjs",
     "ats-pipelines:qa": "node --experimental-strip-types --test scripts/ats-02-pipeline-qa.mjs scripts/ats-02-pipeline-db-qa.mjs scripts/ats-02-job-publication-db-qa.mjs scripts/ats-02-dedicated-editor-qa.mjs scripts/ats-02-live-preview-qa.mjs",
-    "incentives:qa": "node --experimental-strip-types --test scripts/employer-incentives-qa.mjs"
+    "incentives:qa": "node --experimental-strip-types --test scripts/employer-incentives-qa.mjs",
+    "incentives-execution:qa": "node --experimental-strip-types --test scripts/incentive-execution-qa.mjs scripts/incentive-integrations-contract-qa.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

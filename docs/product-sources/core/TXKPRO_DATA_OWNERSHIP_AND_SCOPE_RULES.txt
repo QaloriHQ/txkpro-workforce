@@ -198,3 +198,13 @@ named recipient. Private drafts are never projected to participants. Banking
 reads expose only the authenticated recipient's existing reward ledger/accounts.
 Direct client table operations are denied; checked RPCs rederive actor and scope.
 Published terms/history and original evidence cannot be silently overwritten.
+
+#368 execution records: sponsor owns published terms and scoped source mappings;
+recipient owns visibility of recognition and may read own earned lots, giving
+allowance, decisions and perks. Employers manage only their program. Delegated
+reviewers are explicit active accepted participants with program-specific roles;
+crew leaders must belong to their assigned crew. Delegation grants no staff role.
+Integration bearer hashes, bindings, quarantine receipts and worker jobs remain
+private, RPC-only. No arbitrary HRMS payload is retained. Reward bank entries
+reuse the shared financial ledger; PRO Points and private activity scores remain
+separate. Withdrawn recognition consent suppresses the minimal company board.

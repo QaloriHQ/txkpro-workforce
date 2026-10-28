@@ -2,7 +2,7 @@
 
 Owner approved the design and employer-defined conversion, expiry/departure and safety-redemption settings in the active conversation. The owner explicitly extended the Project-access exception to #368. This is a direct implementation increment on a feature branch from staging; no automated Definition-of-Ready PASS, canonical Project status, live funding activation or production authorization is claimed.
 
-## Delivered in this increment
+## Program workspace foundation (PR #369)
 
 - Employer-only program gallery at `/employer/incentives`: all matching lifecycle states, search, status/blueprint filters, name/ending/updated/budget sort; per-company full program read (no inherited global 50-program truncation), unique participant aggregation, planned budgets and existing scoped reward accounting.
 - Program operations at `/employer/incentives/[programId]`: Overview, People, Rules & milestones, Activity, Rewards, Analytics. Editor lives at `/new` or `/[programId]/edit`; no inline gallery forms.
@@ -23,36 +23,50 @@ Private checked RPCs: `incentive_action(jsonb)`, `incentive_workspace()`, `incen
 `POST /api/employer/incentives` handles the bounded owner/participant actions. The versioned surfaces include:
 
 - `GET /v1/rewards/accounts/me` and `/transactions` (own account summaries with bounded history).
-- `POST /v1/rewards/peer-nomination` (private recognition text, no point transfer).
+- `POST /v1/rewards/peer-nomination` (funded, independently reviewed peer points for execution programs).
 - `POST /v1/rewards/safety-reports`.
 - `POST /v1/rewards/metric-decisions/[id]/disputes` (ID is the canonical declined submission).
 - `POST /v1/rewards/disputes/[id]/resolution` (independent owner/admin verifies or declines).
-- `POST /v1/rewards/redemptions` (expanded engine fails closed pending activation).
+- `POST /v1/rewards/redemptions` (own accepted execution reward bank).
 - `GET /v1/rewards/redemptions/[id]` (existing authorized reward history only).
 
-All mutation HTTP routes bound request bodies and reject a mismatched Origin. Database RPC authorization is authoritative even when a caller bypasses the UI.
+User mutation HTTP routes bound request bodies and reject a mismatched Origin. Machine integration/worker routes use scoped bearer credentials. Database RPC authorization is authoritative even when a caller bypasses the UI.
 
-## Not delivered / not activated — retain #368 open
+## Execution increment
 
-This increment is not full epic acceptance. Remaining work is explicit:
+This continuation implements the requested automated payout, peer allowance, retention, status/perk and integration workflows on the existing sandbox financial engine. It does not authorize live funds or production.
 
-1. Operational rule evaluation from authenticated verified source events, fixed milestone crew snapshots, multi-step approval execution and atomic funded individual/crew entitlement issuance. The current test simulator is not a production rule evaluator.
-2. Lot-level financial terms/expiry/departure enforcement on actual credits, provider-specific catalog validation and immediate safety redemption override. Configuration alone is not a redeemable promise.
-3. Safety payout reservation and actual safety-streak engine integration, duplicate hazard policy and escalation delivery. Current cases preserve evidence and open remediation state; no new monetary entitlement is minted.
-4. Funded monthly peer allowances/expiration, point transfers, sender/recipient caps and collusion detection. Current endpoint provides confidential nomination validation only.
-5. Automatic retention scheduler with verified employment/HRMS/project sources, anniversary/DST/leap-day policies and actual reward issuance. Current rule definitions/simulator can describe retention conditions.
-6. Opt-in shared recognition feed/crew boards, status tiers and real gear/truck/scheduling perk fulfillment. No public recognition is inferred from a program flag.
-7. ERP/HRMS authenticated mapping/ingestion, multi-version participant enrollment, delegated team/location governance, real notification delivery, richer ROI scenario comparison and gallery location/team/owner filters.
+- Immutable execution terms are configured once while a published program is still draft and before participant acceptance. The setup checks the fee-free USD catalog for the normal minimum and immediate safety amount. Existing credited programs retain their original contracts. Conversion, lot expiry/departure terms and safety mode cannot be silently changed. Award frequency is once or per distinct verified source event.
+- Verified manual/integration events evaluate bounded typed metrics; missing evidence fails. Crew rosters and rules are snapshotted with deterministic integer shares. Safety/manager approval stages require different independent reviewers even after a funding delay or appeal. Paused programs retain intent without releasing new awards. Program budget and actual confirmed allocation are both ceilings; no devaluation or unfunded credit creation.
+- Award lots append to the existing shared reward-credit ledger. Redemptions atomically reserve lots and debit that ledger, then enqueue the existing sandbox provider adapter. Confirmed rejection/cancellation restores original lots once; uncertain provider outcomes preserve reservations and retry the same immutable request. Queue leases, exponential backoff and a ten-attempt ceiling prevent uncontrolled retries. Existing rewards reconciliation UI remains available.
+- Verified confidential hazards grant one micro-reward per source incident. Safety mode supports immediate automatic request, bank only, or bank with immediate minimum override. Provider failures never delete earned lots. Reports freeze the affected crew's verified progress without resetting it; overdue remediation posts a private in-app escalation and remains frozen until resolution. An unfunded/eligibility-blocked intent is visible as budget_wait, not falsely delivered.
+- Monthly giving allowances reserve worst-case funding, expire on the employer's local month boundary, and remain distinct from received rewards. No self/cross-program transfers. Recipient caps, reciprocal/concentrated pair flags and independent review apply. Rejection refunds unexpired sender allowance; received points use the snapshotted earned-point policy.
+- Native explicitly confirmed placement starts, independent employer verification, and scoped HRMS events supply actual employment dates. Invitations and scheduled starts never qualify. The hourly database job calculates service-day anniversaries in employer timezone, creates replay-safe awards, initializes allowances, settles expiry/departure windows and escalates safety cases. Service-day rules use exact elapsed calendar dates (365 days is not a calendar-year/leap-day anniversary); configure separate thresholds for later milestones. Qualifying project/review/training counts arrive through verified events and cannot be inferred from report absence. Two-stage safety rules retain their required review.
+- Employer-issued tiers count actually awarded qualifying events. Perk lifecycle is unlocked → requested → approved → fulfilled (or declined); approval reserves finite capacity and fulfillment requires a reference. Recognition board uses participant opt-in, minimal bylines and company-issued labels; it grants no license, verified skill, hiring eligibility or staff access. Scoped safety reviewer/crew lead assignments are revocable and never become global roles.
+- Integrations receive a one-time 256-bit bearer credential, store only its hash, allow configured event types, bind external employee IDs, and map bounded numeric fields via flat/dotted paths. Mapping is immutable: replacement requires a new integration. Event hashes reject conflicting accepted replays, invalid inputs quarantine with sanitized reasons, and managers explicitly authorize reconciled retries. Disable revokes the credential. Arbitrary HRMS payloads/secrets are not returned or logged.
+- Program Automation provides operational controls; participant `/incentives` provides giving allowances, pooled bank redemption, own decisions, lots, perks and recognition consent. Progress, notices and finance history are consequences of canonical records.
 
-The unresolved funded launch contract remains employer sponsorship/custody, approved funded catalog and provider operation/refund/reconciliation validation. Existing legacy sandbox rewards remain on their original contracts. No production deployment or production migration is authorized.
+## Activation boundaries and remaining epic scope
+
+`POST /api/incentives/worker` requires `INCENTIVES_WORKER_SECRET`; missing/incorrect authentication fails closed. The native hourly database cron queues retention requests without requiring HTTP secrets. Successful authorized mutation/integration requests also dispatch queue work automatically with Next `after()`.
+
+**Unattended provider dispatch is not activated by the database cron alone.** Protected staging requires an approved trusted scheduled HTTP caller to POST the worker every five minutes. No worker credential, persistent Vercel protection bypass or protection setting was provisioned by this increment. Do not disable protection. Concrete activation: provision a staging-only worker credential, select an approved caller, authorize only that caller's access to the staging deployment, and verify a sandbox issue/reconciliation cycle. Jobs remain durable and may be processed through the authorized Program Automation action and existing reward controls meanwhile. Do not claim an anniversary gift card was sent merely because a retention job was queued.
+
+Live launch still requires existing sponsorship/custody, funding, catalog, provider operation/refund/reconciliation gates. Full epic items outside this continuation remain: multi-version participant enrollment, delegated location governance, richer location/team/owner gallery filtering, scenario comparisons, named vendor adapters beyond the authenticated mapping bridge, calendar-year anniversary semantics, external email/SMS delivery and any additional status expiry rules. In-app notices are implemented; SMS/email delivery is not inferred from saved preferences. #368 remains open pending these acceptance items, worker activation and owner UAT. Project state remains unverified under the approved access exception.
+
+## Integration contract
+
+`POST /api/incentives/integrations/events`, `Authorization: Bearer <one-time credential>`, maximum 32 KB. Required `eventId` (stable, up to 100 characters), `sentAt` (fresh within five minutes), `type` (`metric` or `employment`) and bound `employeeId`. Retries keep eventId/content and refresh sentAt. Metric events include published `milestoneId`, optional `crewId`, `values` matching immutable numeric mapping, `evidence` and explicit `safetyComplete`. Employment events include actual `startedOn` and optional `endedOn`. A quarantined response is HTTP 202; it is not an award. Accepted duplicate replays create no new award. Only managers see integration receipts; credentials/hashes are excluded.
+
+Additional checked RPCs: `incentive_engine_workspace(uuid)` for scoped own/manager data; service-only `incentive_ingest(text,jsonb)` and `incentive_jobs(jsonb)`. Versioned peer nomination and redemption routes now use the same checked engine actions. Operational actions route through `incentive_action`; legacy score awards are blocked for execution programs so a private score cannot mint financial value twice.
 
 ## Migration and recovery
 
-Additive migration generated with Supabase CLI: `20261028004805_employer_incentive_engine.sql`. Four new RPC-only RLS tables, a nullable activity mapping column/index, checked RPCs and a legacy action wrapper. Never rewrite it once applied. Rollback strategy: revert application increment while keeping additive tables/history; operational forward fix if needed. Before deploying app code, apply/confirm its migration so new RPCs exist. Do not reverse existing financial ledgers or drop earned records.
+Additive migration generated with Supabase CLI: `20261028004805_employer_incentive_engine.sql`. The foundation introduced four RPC-only RLS tables and a nullable activity mapping column/index. The execution continuation adds RPC-only event/lot/allowance/employment/tier/perk/recognition/role/notice/safety records and private ingestion/integration/job records, with checked wrappers preserving the shared finance engine. A separate additive pg_cron migration schedules the hourly internal tick. No secret is embedded in cron SQL. Never rewrite it once applied. Rollback strategy: revert application increment while keeping additive tables/history; operational forward fix if needed. Before deploying app code, apply/confirm its migration so new RPCs exist. Do not reverse existing financial ledgers or drop earned records.
 
 ## Verification
 
-`npm run incentives:qa` executes typed logic plus PGlite against the actual new migration and canonical program/helper/action SQL. Tests cover scope/anonymous/direct-table denial, revision races, immutable publication, disabled monetary mutation, pause bypass, confidentiality, independent safety review, open remediation after deadline, duplicate reports, 48-hour dispute window, single appeal, own bank reservation accounting and more than 50 scoped gallery programs. Also run typecheck/lint/build and existing reward suites.
+`npm run incentives:qa` executes typed logic plus PGlite against the actual new migration and canonical program/helper/action SQL. Tests cover scope/anonymous/direct-table denial, revision races, immutable publication, disabled monetary mutation, pause bypass, confidentiality, independent safety review, open remediation after deadline, duplicate reports, 48-hour dispute window, single appeal, own bank reservation accounting and more than 50 scoped gallery programs. Execution verification: `npm run incentives-execution:qa` loads the real finance and execution migrations in PGlite, tests tenant/delegated scope, crew splits, distinct approvals, budget exhaustion, lot reservation/refund/expiry, verified native/manual retention, safety micro-redemption, revoked integrations, quarantine/replays, pause and role revocation. HTTP contract tests cover fresh envelopes and fail-closed worker authentication. Also run typecheck/lint/build and existing reward suites.
 
 Owner signed-in UAT (no automated staging browser run):
 
@@ -60,7 +74,10 @@ Owner signed-in UAT (no automated staging browser run):
 - Create/save/reopen both editor modes; publish with valid terms/milestones; verify a stale editor cannot overwrite another save.
 - Inspect program sections; legacy invitations/review and existing sandbox reward management remain reachable inside the program.
 - Separate participant account submits a confidential hazard, nomination or eligible dispute; separate admin reviews; other tenant/peer cannot see the confidential case.
-- Verify pause blocks direct submissions and archive preserves records. No new funded reward claims or live provider actions should be available.
+- Enable execution before enrollment; allocate confirmed sandbox funding, accept exact new terms as a separate employee, and verify event → independent approvals → bank → request → provider reconciliation. Confirm whole-cent conversion, below-minimum pooling and published safety override. No live provider actions should be available.
+- Verify allowances and receipt caps with two employees; duplicate sends/replays never double spend. Confirm 90-day awards from actual starts, one-time project milestones, perk capacity/fulfillment, consent withdrawal and reviewer revocation.
+- Verify pause blocks new awards, archive preserves earned rights, disputes retain original evidence, and other-tenant/peer users cannot see confidential safety or financial data.
+- Send mapped integration and invalid/replayed/revoked events; verify quarantine/reconciliation. Complete unattended worker activation separately and record a sandbox dispatch/retry before accepting automated delivery.
 - Keyboard/focus, screen-reader labels, narrow widths, light/dark themes and save/error feedback.
 
 Do not mark #368 Done until remaining scope, deployment/SQL checks and owner UAT meet the full issue contract. Project state remains unverified under the approved access exception. Exact provider token/cost telemetry is unavailable; report unavailable rather than zero.
