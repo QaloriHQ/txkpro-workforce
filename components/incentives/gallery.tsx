@@ -77,11 +77,19 @@ export function ProgramGallery({
             Recognize contributions. Build stronger crews.
           </p>
         </div>
-        {canCreate && (
-          <Link className="button" href="/employer/incentives/new">
-            <PlusIcon width={18} /> Create program
+        <div className="reward-actions">
+          <Link
+            className="button secondary"
+            href="/employer/incentives/templates"
+          >
+            Templates
           </Link>
-        )}
+          {canCreate && (
+            <Link className="button" href="/employer/incentives/new">
+              <PlusIcon width={18} /> Create program
+            </Link>
+          )}
+        </div>
       </div>
       <div className="incentive-stats" aria-label="Filtered program totals">
         <article className="card">
