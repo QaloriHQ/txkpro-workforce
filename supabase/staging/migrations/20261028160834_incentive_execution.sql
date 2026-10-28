@@ -38,6 +38,8 @@ create table public.wf_incentive_lots (
 create index wf_incentive_lots_program on public.wf_incentive_lots(program_id);
 create index wf_incentive_lots_participant on public.wf_incentive_lots(participant_id,expires_at);
 create index wf_incentive_lots_event on public.wf_incentive_lots(event_id);
+alter table public.wf_reward_requests add column incentive_safety_lot uuid references public.wf_incentive_lots(id);
+create index wf_reward_requests_incentive_safety_lot on public.wf_reward_requests(incentive_safety_lot);
 create table public.wf_incentive_request_lots (
  request_id uuid not null references public.wf_reward_requests(id), lot_id uuid not null references public.wf_incentive_lots(id),
  points integer not null check(points>0), restored boolean not null default false, primary key(request_id,lot_id)
@@ -159,7 +161,7 @@ declare pid uuid;n integer:=new.credits;l record;take integer;begin
  if not exists(select 1 from public.wf_incentive_execution where program_id=pid) then return new;end if;
  perform security.incentive_expire(pid);
  if (select coalesce(sum(points-consumed),0) from public.wf_incentive_lots where participant_id=new.participant_id)<n then raise exception 'Available reward lots insufficient';end if;
- for l in select * from public.wf_incentive_lots where participant_id=new.participant_id and consumed<points order by expires_at nulls last,created_at,id for update loop
+ for l in select * from public.wf_incentive_lots where participant_id=new.participant_id and consumed<points order by (id=new.incentive_safety_lot) desc nulls last,expires_at nulls last,created_at,id for update loop
  take:=least(n,l.points-l.consumed);if take=0 then continue;end if;
  update public.wf_incentive_lots set consumed=consumed+take where id=l.id;
  insert into public.wf_incentive_request_lots(request_id,lot_id,points) values(new.id,l.id,take);
@@ -179,7 +181,7 @@ declare a record;begin
  end if;return new;
 end $$;
 create trigger incentive_restore_lots after update of status on public.wf_reward_requests for each row execute function security.incentive_restore_lots();
-create function security.incentive_redemption(recipient uuid,n integer,k uuid,immediate boolean default false) returns uuid language plpgsql security definer set search_path='' as $$
+create function security.incentive_redemption(recipient uuid,n integer,k uuid,immediate boolean default false,safety_lot uuid default null) returns uuid language plpgsql security definer set search_path='' as $$
 declare r public.wf_incentive_participants%rowtype;p public.wf_incentive_programs%rowtype;q public.wf_reward_policies%rowtype;u public.users%rowtype;rid uuid;begin
  select * into r from public.wf_incentive_participants where id=recipient;
  select * into p from public.wf_incentive_programs where id=r.program_id for update;
@@ -187,13 +189,14 @@ declare r public.wf_incentive_participants%rowtype;p public.wf_incentive_program
  if found then return rid;end if;
  select * into q from public.wf_reward_policies where program_id=p.id;
  select * into u from public.users where user_id=r.user_id and status='active';
+ if immediate and not exists(select 1 from public.wf_incentive_lots l join public.wf_incentive_events e on e.id=l.event_id where l.id=safety_lot and l.participant_id=recipient and e.milestone_id='safety-report' and l.policy->>'safetyMode' in ('immediate','bank_and_redeem') and l.points-l.consumed>=n) then raise exception 'Available safety reward required for minimum override';end if;
  if q.program_id is null or u.user_id is null or u.email is null or n<1 or (not immediate and n<q.minimum_credits) or (n::bigint*q.cents_per_block)%q.credits_per_block<>0 then raise exception 'Eligible amount and whole-cent conversion required';end if;
  if not exists(select 1 from public.wf_incentive_execution x where x.program_id=p.id and x.enabled and x.terms_version=r.accepted_version) then raise exception 'Accepted execution terms required';end if;
  if not exists(select 1 from security.wf_reward_eligibility where user_id=r.user_id and country='US' and born_on<=(now() at time zone 'UTC')::date-interval '18 years') then return null;end if;
  if exists(select 1 from security.wf_reward_accounts where owner_type=p.owner_type and owner_id=p.owner_id and frozen) then return null;end if;
  perform security.incentive_expire(p.id);
  if n>security.reward_credit_balance(recipient) then raise exception 'Available reward points insufficient';end if;
- insert into public.wf_reward_requests(participant_id,request_key,credits,cents,product_id,status,recipient_email,recipient_name,requested_by) values(recipient,k,n,n::bigint*q.cents_per_block/q.credits_per_block,q.product_id,'approved',u.email,concat_ws(' ',u.first_name,u.last_name),u.user_id) returning id into rid;
+ insert into public.wf_reward_requests(participant_id,request_key,credits,cents,product_id,status,recipient_email,recipient_name,requested_by,incentive_safety_lot) values(recipient,k,n,n::bigint*q.cents_per_block/q.credits_per_block,q.product_id,'approved',u.email,concat_ws(' ',u.first_name,u.last_name),u.user_id,case when immediate then safety_lot end) returning id into rid;
  insert into public.wf_reward_credits(participant_id,credits,source_key,reason) values(recipient,-n,'request:'||rid,'Reserved for sandbox incentive fulfillment');
  insert into security.wf_incentive_jobs(request_id) values(rid);
  return rid;
@@ -356,11 +359,15 @@ declare actor text:=security.pro_actor();op text:=input->>'op';p public.wf_incen
  if input->>'decision' not in ('approve','reject') then raise exception 'Select review decision';end if;
  decision:=case when input->>'decision'='approve' then 'approved' else 'rejected' end;
  -- Exception approval preserves original metrics and appends the review reason; no silent rewrite.
- update public.wf_incentive_events set status=decision,reviewed_by=actor,reason=input->>'reason',reserved_cents=case when decision='rejected' then 0 else reserved_cents end,history=history||jsonb_build_array(jsonb_build_object('stage','manager','actor',actor,'decision',decision,'reason',input->>'reason','at',now())) where id=e.id;
+ update public.wf_incentive_events set status=decision,reviewed_by=actor,reason=input->>'reason',reserved_cents=case when decision='rejected' and e.milestone_id='peer' then 0 else reserved_cents end,history=history||jsonb_build_array(jsonb_build_object('stage','manager','actor',actor,'decision',decision,'reason',input->>'reason','at',now())) where id=e.id;
  if decision='rejected' and e.milestone_id='peer' then
  update public.wf_incentive_allowances set spent=greatest(0,spent-(e.rule->>'points')::int),reserved_cents=reserved_cents+case when expires_at>now() then e.reserved_cents else 0 end where program_id=p.id and participant_id=(e.metrics->>'senderId')::uuid and period=date_trunc('month',e.created_at at time zone (cfg.policy->>'timezone'))::date;
  end if;
  if decision='approved' then perform security.incentive_complete(e.id);end if;
+ end if;
+ if decision='rejected' and e.milestone_id<>'peer' then
+ update public.wf_incentive_events set notified_at=now(),dispute_until=now()+interval '48 hours' where id=e.id;
+ insert into public.wf_incentive_notices(program_id,user_id,source_key,title,body) select p.id,part.user_id,'decision:'||e.id||':'||jsonb_array_length(e.history)||':'||part.id,'Milestone decision available','Your reviewer declined this milestone. You have 48 hours from this in-app notice to request an exception. Original evidence and available funding reservation are retained.' from public.wf_incentive_participants part where part.id=any(e.recipients);
  end if;target:=e.id;
  elsif op='event_dispute' then
  select * into e from public.wf_incentive_events where id=(input->>'eventId')::uuid and program_id=p.id for update;
@@ -379,7 +386,7 @@ declare actor text:=security.pro_actor();op text:=input->>'op';p public.wf_incen
  if r.id is null then raise exception 'Own accepted reward account required' using errcode='42501';end if;
  redeem_points:=(input->>'points')::int;
  target:=security.incentive_redemption(r.id,redeem_points,(input->>'requestKey')::uuid,
- exists(select 1 from public.wf_incentive_lots l join public.wf_incentive_events safety_event on safety_event.id=l.event_id where l.id=nullif(input->>'safetyLot','')::uuid and l.participant_id=r.id and safety_event.milestone_id='safety-report' and l.policy->>'safetyMode' in ('immediate','bank_and_redeem') and l.points-l.consumed>=redeem_points));
+ exists(select 1 from public.wf_incentive_lots l join public.wf_incentive_events safety_event on safety_event.id=l.event_id where l.id=nullif(input->>'safetyLot','')::uuid and l.participant_id=r.id and safety_event.milestone_id='safety-report' and l.policy->>'safetyMode' in ('immediate','bank_and_redeem') and l.points-l.consumed>=redeem_points),nullif(input->>'safetyLot','')::uuid);
  if target is null then raise exception 'Reward eligibility or sponsor funding requires review';end if;
  elsif op='employment' then
  if not manager then raise exception 'Employment verification scope denied' using errcode='42501';end if;
@@ -562,7 +569,7 @@ declare cfg public.wf_incentive_execution%rowtype;recipient uuid;eid uuid;lot uu
  perform security.incentive_complete(eid);
  if cfg.policy->>'safetyMode'='immediate' then
  select id into lot from public.wf_incentive_lots where event_id=eid;
- if lot is not null then begin perform security.incentive_redemption(recipient,(cfg.policy->>'safetyPoints')::int,lot,true);exception when raise_exception then null;end;end if;
+ if lot is not null then begin perform security.incentive_redemption(recipient,(cfg.policy->>'safetyPoints')::int,lot,true,lot);exception when raise_exception then null;end;end if;
  end if;
  end if;return new;
 end $$;

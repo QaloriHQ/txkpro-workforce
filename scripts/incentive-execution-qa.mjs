@@ -526,6 +526,8 @@ test("verified safety reporting freezes crew progress, pays once and permits the
       count: 7,
       evidence: "Seven verified safe check-ins",
     });
+    const ordinary = await engine({op:"metric_event",sourceKey:"before-hazard",milestoneId:"review",participantId:worker,metrics:{reviews:1},evidence:"Verified review before safety award",safetyComplete:true});
+    await engine({op:"review_event",eventId:ordinary.id,decision:"approve",reason:"Ordinary reward verified"});
     await actor(WORKER);
     const report = await action({
       op: "safety",
@@ -552,7 +554,7 @@ test("verified safety reporting freezes crew progress, pays once and permits the
     let w = await view();
     assert.equal(w.progress[0].count, 7);
     assert.equal(w.progress[0].paused, true);
-    const lot = w.lots.find((l) => l.participant_id === worker);
+    const lot = w.lots.find((l) => w.events.some(e => e.id === l.event_id && e.milestone_id === "safety-report"));
     assert.equal(lot.points, 1000);
     await action({
       op: "resolve",
@@ -579,6 +581,7 @@ test("verified safety reporting freezes crew progress, pays once and permits the
     });
     assert.ok(request.id);
     assert.equal((await view()).lots.find((l) => l.id === lot.id).consumed, 1);
+    assert.equal((await view()).lots.find(l => l.event_id === ordinary.id).consumed,0);
   } finally {
     await db.close();
   }
@@ -757,6 +760,49 @@ test("funding delays cannot skip safety approval, paused awards wait, and delega
       }),
       /belong to assigned crew/,
     );
+  } finally {
+    await db.close();
+  }
+});
+
+test("a late review starts a fresh notified exception window and retains the award reservation", async () => {
+  const { db, actor, engine, view, worker } = await fixture();
+  try {
+    const event = await engine({
+      op: "metric_event",
+      sourceKey: "late-review",
+      milestoneId: "review",
+      participantId: worker,
+      metrics: { reviews: 1 },
+      evidence: "Verified client feedback",
+      safetyComplete: true,
+    });
+    const reserved = (await view()).events[0].reserved_cents;
+    await db.exec(
+      `reset role;update public.wf_incentive_events set dispute_until=now()-interval '2 days' where id='${event.id}'`,
+    );
+    await actor(OWNER);
+    await engine({
+      op: "review_event",
+      eventId: event.id,
+      decision: "reject",
+      reason: "Third-party delay requires exception evidence",
+    });
+    const result = (await view()).events[0];
+    assert.equal(result.reserved_cents, reserved);
+    assert.ok(Date.parse(result.dispute_until) > Date.now() + 47 * 3600000);
+    await actor(WORKER);
+    assert.ok(
+      (await view()).notices.some(
+        (n) => n.title === "Milestone decision available",
+      ),
+    );
+    await engine({
+      op: "event_dispute",
+      eventId: event.id,
+      reason: "Supplier delivery log explains delay",
+    });
+    assert.equal((await view()).events[0].status, "disputed");
   } finally {
     await db.close();
   }
