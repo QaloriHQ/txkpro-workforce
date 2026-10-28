@@ -28,9 +28,11 @@ function Label({
 export function IncentiveWorkspace({
   data,
   ownerType,
+  allowActivityAuthoring = true,
 }: {
   data: PointsWorkspace;
   ownerType?: string;
+  allowActivityAuthoring?: boolean;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState("all");
@@ -503,7 +505,7 @@ export function IncentiveWorkspace({
                 {submit}
               </WorkspaceForm>
             ) : null}
-            {p.canManage && p.status === "draft" ? (
+            {allowActivityAuthoring && p.canManage && p.status === "draft" ? (
               <WorkspaceForm
                 modalTitle="Add custom activity"
                 feedback={status}
