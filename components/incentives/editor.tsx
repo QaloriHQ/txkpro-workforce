@@ -12,6 +12,9 @@ import {
   type Configuration,
   type Milestone,
 } from "@/lib/incentives/contracts";
+import Link from "next/link";
+import { EditorField, CheckField, FieldHelp } from "./field-help";
+import { editorHelp } from "@/lib/incentives/field-help";
 import type { Program } from "@/lib/pro-points/types";
 export async function incentiveAction(input: Record<string, unknown>) {
   const response = await fetch("/api/employer/incentives", {
@@ -27,15 +30,22 @@ export function ProgramEditor({
   ownerId,
   program,
   configuration,
+  initialDraft,
+  templateName,
+  initialMode,
 }: {
   ownerId: string;
   program?: Program;
   configuration?: Configuration;
+  initialDraft?: Definition;
+  templateName?: string;
+  initialMode?: "guided" | "advanced";
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Definition>(
     () =>
-      configuration?.draft ?? {
+      configuration?.draft ??
+      initialDraft ?? {
         ...initialDefinition(),
         ...(program
           ? {
@@ -47,7 +57,18 @@ export function ProgramEditor({
           : {}),
       },
   );
-  const [mode, setMode] = useState<"guided" | "advanced">("guided");
+  const [mode, setMode] = useState<"guided" | "advanced">(
+    () =>
+      initialMode ??
+      (draft.milestones.some(
+        (m) =>
+          m.conditions.length > 1 ||
+          m.match === "any" ||
+          m.approval !== "manager",
+      )
+        ? "advanced"
+        : "guided"),
+  );
   const [step, setStep] = useState(0);
   const [revision, setRevision] = useState(configuration?.revision ?? 0);
   const [message, setMessage] = useState(
@@ -159,11 +180,13 @@ export function ProgramEditor({
       },
     ]);
   }
-  const field = (label: string, content: React.ReactNode) => (
-    <label className="pro-field">
-      <span>{label}</span>
+  const field = (
+    label: string,
+    content: React.ReactElement<{ id?: string; "aria-describedby"?: string }>,
+  ) => (
+    <EditorField label={label} help={editorHelp(label)}>
       {content}
-    </label>
+    </EditorField>
   );
   return (
     <>
@@ -196,6 +219,19 @@ export function ProgramEditor({
           </button>
         </div>
       </div>
+      {templateName && (
+        <section className="card incentive-template-applied">
+          <strong>Using {templateName}</strong>
+          <p>
+            All settings are editable. Confirm dates, amounts, terms and crew
+            membership before publishing. This draft is not saved until you
+            choose Save draft.
+          </p>
+          <Link href="/employer/incentives/templates" className="link">
+            Browse templates
+          </Link>
+        </section>
+      )}
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -256,7 +292,18 @@ export function ProgramEditor({
                 onChange={(e) => update("trade", e.target.value)}
               />,
             )}
-            <div className="incentive-gallery">
+            <div className="incentive-field-label">
+              <h3 id="incentive-goal-label">Program goal</h3>
+              <FieldHelp
+                label="Program goal"
+                help="Choose the program focus. Selecting another goal preserves existing milestones; remove or adjust them explicitly if you want different rules."
+              />
+            </div>
+            <div
+              className="incentive-gallery"
+              role="group"
+              aria-labelledby="incentive-goal-label"
+            >
               {BLUEPRINTS.map((b) => (
                 <button
                   type="button"
@@ -340,7 +387,11 @@ export function ProgramEditor({
                   />,
                 )}
                 {program?.participants.map((r) => (
-                  <label className="pro-check" key={r.id}>
+                  <CheckField
+                    key={r.id}
+                    label={`${r.name} · ${r.kind}`}
+                    help={editorHelp("Crew membership")}
+                  >
                     <input
                       type="checkbox"
                       checked={t.participantIds.includes(r.id)}
@@ -362,8 +413,7 @@ export function ProgramEditor({
                         )
                       }
                     />
-                    {r.name} · {r.kind}
-                  </label>
+                  </CheckField>
                 ))}
                 <button
                   className="button secondary"
@@ -589,7 +639,10 @@ export function ProgramEditor({
                     </option>
                   </select>,
                 )}
-                <label className="pro-check">
+                <CheckField
+                  label="Require completed safety and quality checks"
+                  help={editorHelp("Safety checks")}
+                >
                   <input
                     type="checkbox"
                     checked={m.safetyRequired}
@@ -599,8 +652,7 @@ export function ProgramEditor({
                       })
                     }
                   />
-                  Require completed safety and quality checks
-                </label>
+                </CheckField>
                 {mode === "advanced" &&
                   field(
                     "Approval sequence",
@@ -768,17 +820,26 @@ export function ProgramEditor({
                 onChange={(e) => update("terms", e.target.value)}
               />,
             )}
-            <label className="pro-check">
+            <CheckField
+              label="Offer opt-in public recognition (participant consent still required)"
+              help={editorHelp("Public recognition")}
+            >
               <input
                 type="checkbox"
                 checked={draft.publicRecognition}
                 onChange={(e) => update("publicRecognition", e.target.checked)}
               />
-              Offer opt-in public recognition (participant consent still
-              required)
-            </label>
+            </CheckField>
             {(["inApp", "email"] as const).map((k) => (
-              <label className="pro-check" key={k}>
+              <CheckField
+                key={k}
+                label={`${k === "inApp" ? "In-app" : "Email"} notification preference`}
+                help={editorHelp(
+                  k === "inApp"
+                    ? "In-app notification preference"
+                    : "Email notification preference",
+                )}
+              >
                 <input
                   type="checkbox"
                   checked={draft.notifications[k]}
@@ -789,12 +850,12 @@ export function ProgramEditor({
                     })
                   }
                 />
-                {k === "inApp" ? "In-app" : "Email"} notification preference
-              </label>
+              </CheckField>
             ))}
             <p className="card-sub">
-              Notification delivery and external HRMS/ERP connections are
-              enabled only after their integration is verified.
+              Operational in-app notices remain available in the program. Email
+              delivery and external HRMS/ERP connections require a verified
+              integration.
             </p>
           </>
         )}
@@ -898,8 +959,11 @@ export function RuleSimulator({ definition }: { definition: Definition }) {
       </p>
       <div className="incentive-filters">
         {Object.entries(metrics).map(([key, value]) => (
-          <label className="pro-field" key={key}>
-            <span>{key.replaceAll("_", " ")}</span>
+          <EditorField
+            key={key}
+            label={key.replaceAll("_", " ")}
+            help={editorHelp(key.replaceAll("_", " "))}
+          >
             <input
               type="number"
               min={0}
@@ -908,17 +972,19 @@ export function RuleSimulator({ definition }: { definition: Definition }) {
                 setMetrics({ ...metrics, [key]: Number(e.target.value) })
               }
             />
-          </label>
+          </EditorField>
         ))}
       </div>
-      <label className="pro-check">
+      <CheckField
+        label="Safety and quality checks complete"
+        help={editorHelp("Simulation safety")}
+      >
         <input
           type="checkbox"
           checked={safe}
           onChange={(e) => setSafe(e.target.checked)}
         />
-        Safety and quality checks complete
-      </label>
+      </CheckField>
       {definition.milestones.map((m) => {
         const result = evaluateMilestone(m, metrics, safe);
         return (

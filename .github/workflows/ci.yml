@@ -1012,6 +1012,7 @@ jobs:
       - run: node --experimental-strip-types --test scripts/impersonation-coverage-gate.mjs
       - run: node --experimental-strip-types --test scripts/impersonation-action-policy-qa.mjs
       - run: npm run incentives-execution:qa
+      - run: npm run incentives-templates:qa
       - run: npm run incentives:qa
       - run: npm run typecheck
       - run: npm run wave11:qa

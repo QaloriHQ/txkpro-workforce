@@ -53,7 +53,8 @@
     "pro-points-finalization:qa": "node --test scripts/w12-16b-season-finalization-qa.mjs scripts/w12-16b-season-finalization-database-qa.mjs",
     "ats-pipelines:qa": "node --experimental-strip-types --test scripts/ats-02-pipeline-qa.mjs scripts/ats-02-pipeline-db-qa.mjs scripts/ats-02-job-publication-db-qa.mjs scripts/ats-02-dedicated-editor-qa.mjs scripts/ats-02-live-preview-qa.mjs",
     "incentives:qa": "node --experimental-strip-types --test scripts/employer-incentives-qa.mjs",
-    "incentives-execution:qa": "node --experimental-strip-types --test scripts/incentive-execution-qa.mjs scripts/incentive-integrations-contract-qa.mjs"
+    "incentives-execution:qa": "node --experimental-strip-types --test scripts/incentive-execution-qa.mjs scripts/incentive-integrations-contract-qa.mjs",
+    "incentives-templates:qa": "node --experimental-strip-types --test scripts/incentive-templates-qa.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
