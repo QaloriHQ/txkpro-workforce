@@ -9,6 +9,8 @@ import { InvitationManager } from "@/components/invitations/invitation-manager";
 import { canManageCompany, getEmployerContext } from "@/lib/employer/auth";
 import { listUserInvitations } from "@/lib/invitations/service";
 import { classRpc } from "@/lib/classes/server";
+import { employerCrewWorkspace } from "@/lib/employer/crews";
+import { EmployerCrewDirectory } from "@/components/employer/crew-directory";
 export const dynamic = "force-dynamic";
 const roles = [
   {value: "employer_employee", label: "Employee", description: "Training and accepted incentive programs only. No hiring or administrative access."},
@@ -21,14 +23,18 @@ export default async function Directory() {
   const context = await getEmployerContext();
   if (!context || context.accountStatus !== "active") redirect("/dashboard");
   const manage = canManageCompany(context.role);
-  const [data, invitations] = await Promise.all([
+  const [data, invitations, crews] = await Promise.all([
     classRpc<DirectoryData>("employer_connections", {p_employer: context.employerId}),
     manage ? listUserInvitations({employerId: context.employerId}) : Promise.resolve([]),
+    context.approvalStatus === "approved"
+      ? employerCrewWorkspace(context.employerId)
+      : Promise.resolve(null),
   ]);
   return <>
     <header className="topbar employer-topbar"><Brand /><EmployerWorkspaceNav active="team" /><div className="header-actions"><ThemeToggle /><SignOutButton /></div></header>
     <main className="page-wrap txk-prototype-content directory-page">
-      <PageHeader eyebrow="Employer workspace" title="Directory" description="Explore your team by role. Select a person to view their membership." />
+      <PageHeader eyebrow="Employer workspace" title="Directory" description="Manage reusable crews and explore your organization by role." />
+      {crews ? <EmployerCrewDirectory initialWorkspace={crews} /> : null}
       <InstitutionDirectory variant="employer" data={{...data, organizations: [{id: context.employerId, name: context.employerName}]}} actions={manage ? <InvitationManager compact initial={invitations} roles={roles}
         scopes={[{scopeType:"employer",scopeId:context.employerId,employerId:context.employerId,label:context.employerName}]}
         tenantFilter={`?employerId=${encodeURIComponent(context.employerId)}`} title="Invite employees and workspace users"

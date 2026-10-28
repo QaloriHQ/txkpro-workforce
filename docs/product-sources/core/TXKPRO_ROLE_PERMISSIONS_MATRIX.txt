@@ -149,3 +149,10 @@ Natural-person employment verification and peer approvals are independent.
 Machine integration credentials authorize only their program/bound employees and
 configured event types; they never create a human staff role. Worker job RPCs
 are service-only. Direct table mutation and anonymous reads remain denied.
+
+EMPLOYER CREWS — #368
+Approved active Employer Owner/Admin: create reusable crews and select active
+members from their own Employer directory. Recruiter, Hiring Manager and
+Employer Read-only: view Employer-scoped crews only. Employer Employee: no
+operational crew-directory access. Selecting or joining a crew never grants a
+role, program participation, hiring access, verified skill or reward entitlement.

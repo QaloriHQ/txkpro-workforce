@@ -51,7 +51,12 @@ export type Definition = {
   givingAllowance: number;
   recipientMonthlyCap: number;
   publicRecognition: boolean;
-  teams: { id: string; name: string; participantIds: string[] }[];
+  teams: {
+    id: string;
+    directoryCrewId?: string;
+    name: string;
+    participantIds: string[];
+  }[];
   milestones: Milestone[];
   notifications: { inApp: boolean; email: boolean };
 };
@@ -135,6 +140,23 @@ export function validateDefinition(d: Definition, publish = false): string[] {
     new Set(d.teams.map((t) => t.id)).size !== d.teams.length
   )
     errors.push("Check teams.");
+  else
+    for (const team of d.teams)
+      if (
+        !team.id ||
+        team.id.length > 100 ||
+        !team.name?.trim() ||
+        team.name.length > 100 ||
+        !Array.isArray(team.participantIds) ||
+        team.participantIds.some((id) => typeof id !== "string" || !id) ||
+        new Set(team.participantIds).size !== team.participantIds.length ||
+        (team.directoryCrewId !== undefined &&
+          (team.directoryCrewId !== team.id ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+              team.directoryCrewId,
+            )))
+      )
+        errors.push("Check crew names and membership.");
   if (!Array.isArray(d.milestones) || d.milestones.length > 50)
     return [...errors, "Use up to 50 milestones."];
   for (const m of d.milestones) {

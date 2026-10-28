@@ -217,6 +217,14 @@ function pageUnderContext(file, context) {
     },
     "@/components/incentives/editor": { ProgramEditor: "editor" },
     "@/components/incentives/template-gallery": { TemplateGallery: "gallery" },
+    "@/lib/employer/crews": {
+      employerCrewWorkspace: async (employerId) => ({
+        employerId,
+        canManage: true,
+        people: [],
+        crews: [],
+      }),
+    },
   };
   new Function("require", "exports", output)(
     (name) =>
@@ -266,6 +274,7 @@ test("template page flows redirect anonymous actors, deny unauthorized creation 
   assert.equal(editor.props.ownerId, "owned-company");
   assert.equal(editor.props.initialDraft.blueprint, "quality");
   assert.equal(editor.props.initialDraft.milestones.length, 3);
+  assert.equal(editor.props.crewWorkspace.employerId, "owned-company");
   assert.notEqual(editor.props.initialDraft, INCENTIVE_TEMPLATES[0].definition);
   await assert.rejects(
     create({ searchParams: Promise.resolve({ template: "unknown" }) }),

@@ -6,6 +6,7 @@ import {
 import { getEmployerContext, canManageCompany } from "@/lib/employer/auth";
 import { IncentiveShell, BackToPrograms } from "@/components/incentives/shell";
 import { ProgramEditor } from "@/components/incentives/editor";
+import { employerCrewWorkspace } from "@/lib/employer/crews";
 export const dynamic = "force-dynamic";
 export default async function Create({
   searchParams,
@@ -23,6 +24,7 @@ export default async function Create({
   const { template: id } = await searchParams;
   const template = id ? findIncentiveTemplate(id) : undefined;
   if (id && !template) notFound();
+  const crews = await employerCrewWorkspace(c.employerId);
   return (
     <IncentiveShell>
       <BackToPrograms />
@@ -32,6 +34,7 @@ export default async function Create({
         initialDraft={template ? templateDefinition(template) : undefined}
         templateName={template?.name}
         initialMode={template?.recommendedMode}
+        crewWorkspace={crews}
       />
     </IncentiveShell>
   );
