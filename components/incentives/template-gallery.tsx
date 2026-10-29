@@ -5,7 +5,10 @@ import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
   ArrowRightIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
+import { ActionModal } from "@/components/design-system/action-modal";
+import { ButtonLink } from "@/components/design-system/primitives";
 import type {
   IncentiveTemplate,
   EmployerSize,
@@ -17,6 +20,79 @@ const usd = (cents: number) =>
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(cents / 100);
+
+function TemplateRules({ template: t }: { template: IncentiveTemplate }) {
+  return (
+    <div className="incentive-template-rules">
+      <h3>Milestones & approvals</h3>
+      {t.definition.milestones.map((m) => (
+        <section key={m.id}>
+          <h4>{m.title}</h4>
+          <p>
+            {m.points.toLocaleString()} points ·{" "}
+            {m.recipient === "crew"
+              ? "equal individual crew shares"
+              : "individual"}{" "}
+            ·{" "}
+            {m.repeat === "once"
+              ? "one-time milestone"
+              : "each distinct verified source"}
+          </p>
+          <ul>
+            {m.conditions.map((c, i) => (
+              <li key={i}>
+                {c.metric.replaceAll("_", " ")}{" "}
+                {c.operator === "gte" ? "at least" : "at most"} {c.value}
+              </li>
+            ))}
+          </ul>
+          <p className="card-sub">
+            {m.approval === "safety_then_manager"
+              ? "Separate safety → manager approval"
+              : "Independent manager review"}
+            {m.safetyRequired ? " · safety and quality checks required" : ""}
+          </p>
+        </section>
+      ))}
+      <h3>Evidence</h3>
+      <p>{t.evidence}</p>
+      <h3>Reward policy</h3>
+      <p>
+        {t.definition.creditsPerBlock} points ={" "}
+        {usd(t.definition.centsPerBlock)} · ordinary minimum{" "}
+        {t.definition.minimumCredits} points. Earned points{" "}
+        {t.definition.expiryMonths
+          ? `expire after ${t.definition.expiryMonths} months`
+          : "remain available indefinitely"}
+        ; after employment ends, original availability continues.
+      </p>
+      <p>
+        {t.definition.givingAllowance.toLocaleString()} monthly points to give ·{" "}
+        {t.definition.recipientMonthlyCap.toLocaleString()} recipient cap ·{" "}
+        {t.definition.safetyPoints.toLocaleString()} verified hazard points,
+        banked with immediate redemption available.
+      </p>
+      <p>
+        Employer timezone: {t.definition.timezone}. Dates start when you use the
+        template. In-app notices; email off. Recognition{" "}
+        {t.definition.publicRecognition
+          ? "offered with separate employee opt-in"
+          : "not offered"}
+        .
+      </p>
+      <h3>Employee-facing terms</h3>
+      <p className="portfolio-text">{t.definition.terms}</p>
+      <h3>Before activation</h3>
+      <p>
+        Review company-specific rules, publish, configure sandbox execution
+        before employee acceptance, assign enrolled members to crews, allocate
+        confirmed funding and verify source mappings. Required reviewers and any
+        perks must be assigned separately.
+      </p>
+    </div>
+  );
+}
+
 export function TemplateGallery({
   templates,
   canCreate,
@@ -167,90 +243,46 @@ export function TemplateGallery({
                 </dd>
               </div>
             </dl>
-            <details className="incentive-template-preview">
-              <summary>Preview complete rules</summary>
-              <h3>Milestones & approvals</h3>
-              {t.definition.milestones.map((m) => (
-                <section key={m.id}>
-                  <h4>{m.title}</h4>
-                  <p>
-                    {m.points.toLocaleString()} points ·{" "}
-                    {m.recipient === "crew"
-                      ? "equal individual crew shares"
-                      : "individual"}{" "}
-                    ·{" "}
-                    {m.repeat === "once"
-                      ? "one-time milestone"
-                      : "each distinct verified source"}
-                  </p>
-                  <ul>
-                    {m.conditions.map((c, i) => (
-                      <li key={i}>
-                        {c.metric.replaceAll("_", " ")}{" "}
-                        {c.operator === "gte" ? "at least" : "at most"}{" "}
-                        {c.value}
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="card-sub">
-                    {m.approval === "safety_then_manager"
-                      ? "Separate safety → manager approval"
-                      : "Independent manager review"}
-                    {m.safetyRequired
-                      ? " · safety and quality checks required"
-                      : ""}
-                  </p>
-                </section>
-              ))}
-              <h3>Evidence</h3>
-              <p>{t.evidence}</p>
-              <h3>Reward policy</h3>
-              <p>
-                {t.definition.creditsPerBlock} points ={" "}
-                {usd(t.definition.centsPerBlock)} · ordinary minimum{" "}
-                {t.definition.minimumCredits} points. Earned points{" "}
-                {t.definition.expiryMonths
-                  ? `expire after ${t.definition.expiryMonths} months`
-                  : "remain available indefinitely"}
-                ; after employment ends, original availability continues.
-              </p>
-              <p>
-                {t.definition.givingAllowance.toLocaleString()} monthly points
-                to give · {t.definition.recipientMonthlyCap.toLocaleString()}{" "}
-                recipient cap · {t.definition.safetyPoints.toLocaleString()}{" "}
-                verified hazard points, banked with immediate redemption
-                available.
-              </p>
-              <p>
-                Employer timezone: {t.definition.timezone}. Dates start when you
-                use the template. In-app notices; email off. Recognition{" "}
-                {t.definition.publicRecognition
-                  ? "offered with separate employee opt-in"
-                  : "not offered"}
-                .
-              </p>
-              <h3>Employee-facing terms</h3>
-              <p className="portfolio-text">{t.definition.terms}</p>
-              <h3>Before activation</h3>
-              <p>
-                Review company-specific rules, publish, configure sandbox
-                execution before employee acceptance, assign enrolled members to
-                crews, allocate confirmed funding and verify source mappings.
-                Required reviewers and any perks must be assigned separately.
-              </p>
-            </details>
-            {canCreate ? (
-              <Link
-                className="button"
-                href={`/employer/incentives/new?template=${t.id}`}
+            <div className="incentive-template-actions">
+              <ActionModal
+                title={`${t.name} rules`}
+                triggerLabel={`Preview ${t.name} rules`}
+                triggerContent={
+                  <>
+                    <EyeIcon aria-hidden="true" /> Preview
+                  </>
+                }
+                description="Review the complete editable rules before choosing this template."
+                triggerClassName="txk-button txk-button-secondary txk-button-md"
+                className="incentive-template-rules-dialog"
+                closeLabel="Close"
+                footerActions={
+                  canCreate ? (
+                    <ButtonLink
+                      tone="primary"
+                      href={`/employer/incentives/new?template=${t.id}`}
+                    >
+                      Use template
+                      <ArrowRightIcon aria-hidden="true" />
+                    </ButtonLink>
+                  ) : undefined
+                }
               >
-                Use template <ArrowRightIcon width={18} aria-hidden="true" />
-              </Link>
-            ) : (
-              <p className="card-sub">
-                An employer owner or admin can create programs.
-              </p>
-            )}
+                <TemplateRules template={t} />
+              </ActionModal>
+              {canCreate ? (
+                <ButtonLink
+                  tone="primary"
+                  href={`/employer/incentives/new?template=${t.id}`}
+                >
+                  Use template <ArrowRightIcon aria-hidden="true" />
+                </ButtonLink>
+              ) : (
+                <p className="card-sub">
+                  An employer owner or admin can create programs.
+                </p>
+              )}
+            </div>
           </article>
         ))}
       </div>

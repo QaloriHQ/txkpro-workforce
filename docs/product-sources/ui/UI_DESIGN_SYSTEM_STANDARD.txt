@@ -766,6 +766,15 @@ Self-attested data must never visually look authoritative or institution-verifie
 
 One visually dominant primary action per action group where possible.
 
+Primary buttons use:
+- background: #1173D4;
+- text: #FFFFFF;
+- the shared control corner radius;
+- a darker blue hover/pressed state defined through shared semantic tokens.
+
+Do not introduce screen-specific primary colors. The same primary treatment
+applies in light and dark themes so action hierarchy remains predictable.
+
 Examples:
 Save profile
 Request Interview
@@ -779,6 +788,16 @@ Use secondary buttons for:
 - view;
 - alternate workflow;
 - non-destructive supporting actions.
+
+Secondary buttons use:
+- panel/white background;
+- #1173D4 text;
+- a 1px #1173D4 border;
+- the shared control corner radius;
+- a subtle blue-tinted hover state.
+
+Primary and secondary labels must remain visible without relying on hover.
+Buttons should provide an approximately 44x44px touch target where layout permits.
 
 13.3 DESTRUCTIVE ACTION
 
