@@ -22,6 +22,8 @@ export function ActionModal({
   onClose,
   triggerClassName,
   className,
+  closeLabel = "Cancel / close",
+  footerActions,
   children,
 }: {
   title: string;
@@ -35,6 +37,8 @@ export function ActionModal({
   onClose?: () => void;
   triggerClassName?: string;
   className?: string;
+  closeLabel?: string;
+  footerActions?: ReactNode;
   children: ReactNode;
 }) {
   const id = useId();
@@ -124,13 +128,14 @@ export function ActionModal({
         <div className="txk-action-dialog-body">{children}</div>
         <footer className="txk-action-dialog-footer">
           <button
-            className="txk-button txk-button-default txk-button-md"
+            className="txk-button txk-button-secondary txk-button-md"
             type="button"
             onClick={close}
             disabled={busy}
           >
-            Cancel / close
+            {closeLabel}
           </button>
+          {footerActions}
         </footer>
       </dialog>
     </div>

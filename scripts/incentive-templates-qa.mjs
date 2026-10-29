@@ -146,6 +146,35 @@ test("every native editor/simulator input is associated with contextual field he
     assert.ok(EDITOR_HELP[key]?.length > 40, key);
 });
 
+test("template cards preview complete rules in the shared accessible modal", () => {
+  const gallery = readFileSync(
+    "components/incentives/template-gallery.tsx",
+    "utf8",
+  );
+  const modal = readFileSync(
+    "components/design-system/action-modal.tsx",
+    "utf8",
+  );
+  assert.doesNotMatch(gallery, /<details|<summary/);
+  assert.match(gallery, /<ActionModal/);
+  assert.match(gallery, /triggerContent=/);
+  assert.match(gallery, /> Preview\s*</);
+  assert.match(gallery, /<TemplateRules template=\{t\}/);
+  for (const heading of [
+    "Milestones & approvals",
+    "Evidence",
+    "Reward policy",
+    "Employee-facing terms",
+    "Before activation",
+  ])
+    assert.ok(gallery.includes(heading), heading);
+  assert.match(gallery, /closeLabel="Close"/);
+  assert.match(gallery, /footerActions=/);
+  assert.match(gallery, /tone="primary"/);
+  assert.match(modal, /aria-haspopup="dialog"/);
+  assert.match(modal, /signalTrigger\.current\.focus\(\)/);
+});
+
 test("every complete template is accepted by the canonical SQL publication validator", async () => {
   const migration = readFileSync(
     "supabase/staging/migrations/20261028004805_employer_incentive_engine.sql",

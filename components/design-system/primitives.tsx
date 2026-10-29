@@ -24,7 +24,7 @@ export function Button({
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  tone?: "default" | "primary" | "danger" | "ghost";
+  tone?: "default" | "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md";
 }) {
   return (
@@ -49,7 +49,7 @@ export function ButtonLink({
 }: {
   href: string;
   children: ReactNode;
-  tone?: "default" | "primary" | "danger" | "ghost";
+  tone?: "default" | "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md";
   className?: string;
 }) {
