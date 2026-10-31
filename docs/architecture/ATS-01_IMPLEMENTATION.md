@@ -45,3 +45,21 @@ Published jobs must have a verified, same-employer, immutable `pipeline_version_
 The ATS-01 SQL originated from `supabase migration new ats_01_job_listings`. After the owner approved canonical status names and the staging migration/UAT step, the reviewed SQL was applied to **TXKPRO Workforce Staging** (`qwxlgzlkaeaqfzjodtis`) on 2026-10-18. The Supabase migration ledger recorded version `20261018193301`, so the committed source filename is `20261018193301_ats_01_job_listings.sql` to prevent future duplicate pending migration detection. CI #739 passed for the reviewed SQL and draft editor. This staging authorization does **not** extend to production. Application UAT requires an approved preview or staging build using the staging database. No existing domain tables are modified by the migration. Rollback requires a reviewed data-preservation plan; do not drop records in an ad hoc deploy script.
 
 **Remaining upstream dependencies:** ATS-02 pipeline editor/publication; ATS-03 applicant records and submission; later ATS-04 through ATS-07 provider/interview/progress features. This PR is not the full ATS program and must not be represented as such.
+
+## 2026-10-31 gallery, workspace, and template continuation
+
+Owner-approved ATS-01 continuation separates collection browsing, job operations, editing, and reusable starting content:
+
+| Route | Contract |
+| --- | --- |
+| `/employer/jobs` | Employer listing gallery only. Templates are excluded from cards and aggregates. Search, lifecycle/location/pipeline/assignee filters and sorting operate across all employer-owned listings without the former inline editor. |
+| `/employer/jobs/[jobId]` | Scoped operational home for overview, hiring-team and crew context, listing rules, application readiness, immutable pipeline, analytics readiness, and audit-friendly activity. ATS-03 application/view/conversion counts remain explicitly unavailable rather than fabricated. |
+| `/employer/jobs/new` | Deliberate private-draft creation, optionally prefilled from a curated template. |
+| `/employer/jobs/[jobId]/edit` | Dedicated Guided/Advanced editor over the same revision-safe draft. Every editable control has accessible contextual help; critical publication requirements remain inline. |
+| `/employer/jobs/templates` | Searchable/filterable/sortable library of 36 complete presets: three experience levels across 12 major skilled-trade families. Template cards use the shared accessible `ActionModal` for a complete preview before `Use template`. |
+
+The template library is static curated product content, not employer data. Choosing a template creates a new private draft through the existing allowlisted job API; it never publishes, binds a pipeline, copies applicants, runs screening, or grants access.
+
+`wf_ats_job_hiring_team` and `wf_ats_job_crews` are job-scoped responsibility/context links. They are distinct by design: hiring-team entries identify recruiting coordination, while crews describe intended operational placement. Neither assignment creates a role, enrollment, applicant access, credential, or reward eligibility. The `wf_ats_job_workspace` read and `wf_ats_job_assignment_action` replace RPCs re-derive the authenticated employer scope, validate same-employer active people/crews, bound selections, deny direct client table access, and record `ATS_JOB_ASSIGNMENTS_REPLACED` audit evidence. Existing canonical job RLS remains authoritative; adding a team entry does not expand a user's job visibility.
+
+The additive migration is staged under `supabase/staging/migrations/20261031083232_ats_01_job_workspaces.sql` because it depends on the staging-only reusable crew migration. Production remains a separate authorization and migration-order decision.
