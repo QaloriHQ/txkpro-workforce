@@ -1,5 +1,5 @@
 import { requireEmployerContext } from "@/lib/employer/auth";
-import { archiveEmployerJob, getEmployerJob, updateEmployerJob } from "@/lib/employer/job-listings-repository";
+import { getEmployerJob, transitionEmployerJob, updateEmployerJob } from "@/lib/employer/job-listings-repository";
 import { jsonError } from "@/lib/http";
 
 type Params = { params: Promise<{ id: string }> };
@@ -22,9 +22,9 @@ export async function PATCH(request: Request, { params }: Params) {
     if (typeof body.revision !== "number" || !Number.isSafeInteger(body.revision) || body.revision < 1) {
       return Response.json({ error: "A valid expected revision is required" }, { status: 400 });
     }
-    if (body.action === "archive") {
+    if (["pause", "resume", "close", "archive"].includes(String(body.action))) {
       if (body.fields !== undefined) return Response.json({ error: "Archive does not accept edits" }, { status: 400 });
-      return Response.json({ job: await archiveEmployerJob(context, id, Number(body.revision)) });
+      return Response.json({ job: await transitionEmployerJob(context, id, Number(body.revision), body.action as "pause" | "resume" | "close" | "archive") });
     }
     if (body.action !== undefined) return Response.json({ error: "Invalid job action" }, { status: 400 });
     return Response.json({ job: await updateEmployerJob(context, id, Number(body.revision), body.fields) });

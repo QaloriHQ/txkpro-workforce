@@ -22,10 +22,17 @@ function requireCreator(context: EmployerContext): void {
 
 export async function listEmployerJobs(context: EmployerContext): Promise<JobListing[]> {
   const client = await createServerSupabaseClient();
-  const { data, error } = await client.from(TABLE).select("*")
-    .eq("employer_id", context.employerId).order("updated_at", { ascending: false }).limit(100);
-  if (error) throw error;
-  return (data ?? []).map((row) => mapJob(row));
+  const rows: Record<string, unknown>[] = [];
+  const pageSize = 500;
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await client.from(TABLE).select("*")
+      .eq("employer_id", context.employerId).order("updated_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    rows.push(...((data ?? []) as Record<string, unknown>[]));
+    if ((data ?? []).length < pageSize) break;
+  }
+  return rows.map((row) => mapJob(row));
 }
 
 export async function getEmployerJob(context: EmployerContext, id: string): Promise<JobListing> {
@@ -123,6 +130,30 @@ export async function archiveEmployerJob(
     .select("*").maybeSingle();
   if (error) throw error;
   if (!data) conflict("The listing changed. Reload before archiving.");
+  return mapJob(data);
+}
+
+export async function transitionEmployerJob(
+  context: EmployerContext,
+  id: string,
+  revision: number,
+  action: "pause" | "resume" | "close" | "archive",
+): Promise<JobListing> {
+  if (!canManageJobStatus(context.role)) forbidden("Only Employer Owner/Admin may change listing status");
+  const source = await getEmployerJob(context, id);
+  if (source.revision !== revision) conflict("The listing changed. Reload before changing its status.");
+  const next = action === "pause" ? "paused" : action === "resume" ? "published" : action === "close" ? "closed" : "archived";
+  const allowed = (source.status === "published" && ["paused", "closed"].includes(next)) ||
+    (source.status === "paused" && ["published", "closed"].includes(next)) ||
+    (source.status === "closed" && next === "archived") ||
+    (source.status === "draft" && next === "archived");
+  if (!allowed) conflict(`A ${source.status} listing cannot be changed to ${next}`);
+  const client = await createServerSupabaseClient();
+  const { data, error } = await client.from(TABLE).update({ status: next })
+    .eq("employer_id", context.employerId).eq("id", id).eq("revision", revision)
+    .select("*").maybeSingle();
+  if (error) throw error;
+  if (!data) conflict("The listing changed. Reload before changing its status.");
   return mapJob(data);
 }
 

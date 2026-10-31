@@ -8,6 +8,8 @@ import {
 import type { EmployerRole } from "@/lib/employer/types";
 import type { PipelineTemplateSummary, PipelineVersionSummary } from "@/lib/employer/ats-pipelines";
 import Link from "next/link";
+import { FieldHelp } from "@/components/incentives/field-help";
+import { JOB_FIELD_HELP } from "@/lib/employer/job-field-help";
 
 type EditorMode = "wizard" | "advanced";
 const STAGES = ["Role & overview", "Location & compensation", "Requirements & benefits", "Review"] as const;
@@ -31,25 +33,26 @@ function errorText(result: Response): Promise<string> {
 }
 
 export function JobListingEditor({
-  initialJobs, initialPipelines, initialVersions, employerId, role, legacyUserId,
+  initialJobs, initialPipelines, initialVersions, employerId, role, legacyUserId, initialSelectedId,
 }: {
   initialJobs: JobListing[]; initialPipelines: PipelineTemplateSummary[];
-  initialVersions: PipelineVersionSummary[]; employerId: string; role: EmployerRole; legacyUserId: string;
+  initialVersions: PipelineVersionSummary[]; employerId: string; role: EmployerRole; legacyUserId: string; initialSelectedId?: string;
 }) {
   const [jobs, setJobs] = useState(initialJobs);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<JobEditableFields>({ ...BLANK_JOB });
+  const initialJob = initialJobs.find((job) => job.id === initialSelectedId);
+  const [selectedId, setSelectedId] = useState<string | null>(initialJob?.id ?? null);
+  const [draft, setDraft] = useState<JobEditableFields>(initialJob ? editable(initialJob) : { ...BLANK_JOB });
   const [mode, setMode] = useState<EditorMode>("wizard");
   const [stage, setStage] = useState(0);
   const [preview, setPreview] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [revision, setRevision] = useState(1);
+  const [revision, setRevision] = useState(initialJob?.revision ?? 1);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | "jobs" | "templates">("all");
   const [message, setMessage] = useState("");
   const [conflict, setConflict] = useState(false);
-  const [pipelineChoice, setPipelineChoice] = useState("");
+  const [pipelineChoice, setPipelineChoice] = useState(initialJob?.pipelineVersionId ?? "");
 
   const editGeneration = useRef(0);
   const inFlight = useRef<Promise<boolean> | null>(null);
@@ -265,7 +268,7 @@ export function JobListingEditor({
 
   function fieldLabel(label: string, content: React.ReactNode, hint?: string) {
     return <label style={{ display: "grid", gap: 5, minWidth: 0 }}>
-      <strong style={{ fontSize: 13 }}>{label}</strong>
+      <span style={{ display: "flex", gap: 5, alignItems: "center" }}><strong style={{ fontSize: 13 }}>{label}</strong><FieldHelp label={label} help={JOB_FIELD_HELP[label] ?? `Configure ${label.toLowerCase()} for this listing.`} /></span>
       {content}
       {hint ? <small className="card-sub">{hint}</small> : null}
     </label>;
@@ -288,8 +291,8 @@ export function JobListingEditor({
 
   const filtered = jobs.filter((job) => filter === "all" || (filter === "templates" ? job.isTemplate : !job.isTemplate));
 
-  return <div style={{ display: "grid", gridTemplateColumns: "minmax(250px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }} className="ats-job-layout">
-    <aside className="card" style={{ display: "grid", gap: 14, minWidth: 0 }}>
+  return <div style={{ display: "grid", gridTemplateColumns: initialSelectedId ? "minmax(0, 1fr)" : "minmax(250px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }} className="ats-job-layout">
+    <aside hidden={Boolean(initialSelectedId)} className="card" style={{ display: initialSelectedId ? "none" : "grid", gap: 14, minWidth: 0 }}>
       <div className="card-header">
         <div><h2>Job listings</h2><p className="card-sub">{jobs.length} employer-owned records</p></div>
       </div>
@@ -391,7 +394,7 @@ export function JobListingEditor({
           <strong>Publication readiness</strong>
           <p className="card-sub">Only employer Owner/Admin can publish. The selected, published pipeline version is immutable for this job. Applicants will use this same version in ATS-03.</p>
           <label style={{ display: "grid", gap: 5 }}>
-            <strong style={{ fontSize: 13 }}>Published hiring pipeline version</strong>
+            <span style={{ display: "flex", gap: 5, alignItems: "center" }}><strong style={{ fontSize: 13 }}>Published hiring pipeline version</strong><FieldHelp label="Published hiring pipeline version" help={JOB_FIELD_HELP["Published hiring pipeline version"]} /></span>
             <select className="select" aria-label="Published hiring pipeline version" value={pipelineChoice}
               disabled={selected.status !== "draft" || !["employer_owner", "employer_admin"].includes(role)}
               onChange={(event) => setPipelineChoice(event.target.value)}>
