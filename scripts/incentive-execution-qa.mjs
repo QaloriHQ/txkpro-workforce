@@ -392,7 +392,9 @@ test("retention uses verified dates, preserves idempotency across later days and
     await engine({
       op: "employment",
       participantId: worker,
-      startedOn: new Date(Date.now() - 90 * 86400000)
+      // Use a one-day buffer because the policy evaluates anniversaries in its
+      // configured timezone, while this test process and Postgres may be UTC.
+      startedOn: new Date(Date.now() - 91 * 86400000)
         .toISOString()
         .slice(0, 10),
       evidence: "HR confirmed employment record",
@@ -610,7 +612,7 @@ test("native retention requires confirmed starts and expiry/departure availabili
   const { db, actor, engine, view, programId, worker } = await fixture();
   try {
     await db.exec(
-      `reset role;insert into public.wf_student_profiles(student_id,user_id,school_id) values('student-worker','worker','school');insert into public.wf_placements(placement_id,employer_id,student_id,employment_start_date,status) values('placement-worker','tenant','student-worker',current_date-90,'active');`,
+      `reset role;insert into public.wf_student_profiles(student_id,user_id,school_id) values('student-worker','worker','school');insert into public.wf_placements(placement_id,employer_id,student_id,employment_start_date,status) values('placement-worker','tenant','student-worker',current_date-91,'active');`,
     );
     await actor(OWNER);
     await engine({ op: "tick" });
