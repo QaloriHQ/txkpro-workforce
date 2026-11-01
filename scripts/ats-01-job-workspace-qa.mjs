@@ -6,6 +6,7 @@ import { JOB_TEMPLATES, JOB_TEMPLATE_LEVELS } from "../lib/employer/job-template
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const gallery = read("components/employer/job-gallery.tsx");
 const templates = read("components/employer/job-template-gallery.tsx");
+const starter = read("components/employer/job-draft-starter.tsx");
 const editor = read("components/employer/job-listing-editor.tsx");
 const detail = read("app/employer/jobs/[jobId]/page.tsx");
 const migration = read("supabase/staging/migrations/20261031083232_ats_01_job_workspaces.sql");
@@ -26,8 +27,25 @@ test("template library contains 36 complete, distinct skilled-trade drafts", () 
     assert.ok(item.fields.requirements.length >= 5);
     assert.ok(item.fields.skills.length >= 5);
     assert.ok(item.fields.benefits.length >= 3);
+    assert.ok(item.fields.payMin !== null && item.fields.payMin > 0);
+    assert.ok(item.fields.payMax !== null && item.fields.payMax > item.fields.payMin);
+    assert.equal(item.fields.payPeriod, "hour");
+    assert.ok(item.fields.shiftText.length > 40);
+    assert.doesNotMatch(item.fields.shiftText, /employer-defined schedule/i);
+    assert.ok(item.fields.locationCity.length > 0);
+    assert.ok(item.fields.locationState.length > 0);
+    assert.ok(item.fields.applicationInstructions.length > 60);
     assert.equal(item.fields.isTemplate, false);
   }
+});
+
+test("template create page renders every prefilled field as a published-job preview", () => {
+  for (const evidence of ["Published job preview", "Candidate view", "Compensation", "Schedule", "About this role", "Responsibilities", "Requirements", "Skills", "Benefits", "Draft fields to review", "Applicant instructions", "Candidate-review safeguards", "Create private draft", "not part of the current public projection"]) {
+    assert.ok(starter.includes(evidence), `Missing complete template-create preview evidence: ${evidence}`);
+  }
+  assert.ok(starter.includes("formatPay(fields)"));
+  assert.ok(starter.includes("template.responsibilities.map"));
+  assert.ok(starter.includes("template.screening.map"));
 });
 
 test("template cards preview full rules in a modal before creating a draft", () => {
