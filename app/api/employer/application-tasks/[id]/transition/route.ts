@@ -1,0 +1,4 @@
+import { transitionEmployerTask } from "@/lib/ats/applications-repository";
+import { requireEmployerContext } from "@/lib/employer/auth";
+import { jsonError } from "@/lib/http";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){try{const{id}=await params;const context=await requireEmployerContext({employerId:new URL(request.url).searchParams.get("employerId"),approved:true});const body=await request.json() as {revision?:unknown;status?:unknown;reason?:unknown};if(typeof body.revision!=="number"||typeof body.status!=="string"||typeof body.reason!=="string")return Response.json({error:"Task revision, status and audit reason are required."},{status:400});return Response.json({task:await transitionEmployerTask(context,id,body.revision,body.status,body.reason)},{headers:{"Cache-Control":"private, no-store"}});}catch(error){return jsonError(error);}}

@@ -156,3 +156,12 @@ members from their own Employer directory. Recruiter, Hiring Manager and
 Employer Read-only: view Employer-scoped crews only. Employer Employee: no
 operational crew-directory access. Selecting or joining a crew never grants a
 role, program participation, hiring access, verified skill or reward entitlement.
+
+ATS-03 APPLICATION PERMISSIONS — OWNER APPROVED 2026-11-01 (#330)
+- Employer Owner/Admin: invite candidates and read/manage all applications and tasks in their active approved Employer scope.
+- Recruiter: invite candidates and read/manage applications and tasks in their Employer scope; cannot publish Pipeline Versions or Job Listings through ATS-03.
+- Hiring Manager: invite, read and manage only applications for explicitly assigned Jobs.
+- Employer Read-only: read Employer-scoped applications and task status; cannot invite, withdraw, close, move or override.
+- Student applicant: submit one application per Job from their verified identity; read/withdraw only their own application and read/submit only candidate-visible owned tasks.
+- External applicant: verified-email limited session with the same own-application boundary; no Student, Institution or Employer membership is created.
+- Institution and unrelated Employer actors: denied. Provider completion and any task transition never create an automatic accept, reject, hire or confirmed employment start.

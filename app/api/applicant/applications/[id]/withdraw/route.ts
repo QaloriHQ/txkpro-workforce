@@ -1,0 +1,3 @@
+import { withdrawApplication } from "@/lib/ats/applications-repository";
+import { jsonError } from "@/lib/http";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){try{const{id}=await params;const body=await request.json() as {revision?:unknown;reason?:unknown};if(typeof body.revision!=="number"||typeof body.reason!=="string")return Response.json({error:"Revision and withdrawal reason are required."},{status:400});return Response.json({application:await withdrawApplication(id,body.revision,body.reason)},{headers:{"Cache-Control":"private, no-store"}});}catch(error){return jsonError(error);}}

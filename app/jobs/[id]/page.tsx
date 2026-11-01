@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -25,7 +26,8 @@ export default async function PublicJobDetail({ params }: { params: Promise<{ id
       <section><h2>Requirements</h2><ul>{requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
       <section><h2>Skills</h2><ul>{skills.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
       <section><h2>Benefits</h2><ul>{benefits.map((item, index) => <li key={index}>{item}</li>)}</ul></section>
-      <p className="card-sub">Applications become available after the ATS application workflow launches.</p>
+      <Link className="button button-brand" href={`/jobs/${encodeURIComponent(data.job_listing_id)}/apply`}>Apply now</Link>
+      <p className="card-sub">Your verified application is private, pinned to this job’s published workflow, and never treated as an automatic hiring decision.</p>
     </article>
   </main>;
 }

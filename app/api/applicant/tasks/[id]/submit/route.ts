@@ -1,0 +1,3 @@
+import { submitCandidateTask } from "@/lib/ats/applications-repository";
+import { jsonError } from "@/lib/http";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){try{const{id}=await params;const body=await request.json() as {revision?:unknown;evidence?:unknown};if(typeof body.revision!=="number"||!body.evidence||typeof body.evidence!=="object"||Array.isArray(body.evidence))return Response.json({error:"Task revision and evidence are required."},{status:400});return Response.json({task:await submitCandidateTask(id,body.revision,body.evidence as Record<string,unknown>)},{headers:{"Cache-Control":"private, no-store"}});}catch(error){return jsonError(error);}}
