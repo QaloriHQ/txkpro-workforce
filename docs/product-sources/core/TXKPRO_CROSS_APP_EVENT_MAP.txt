@@ -254,3 +254,11 @@ EMPLOYER_CREW_CREATED: Source is an approved active Employer Owner/Admin. Target
 is the employer-owned crew UUID. Audit metadata contains Employer ID, bounded
 crew name and member count only; it contains no email, private performance,
 safety evidence or reward data. The event grants no role or program enrollment.
+
+APPENDIX N — ATS-03 OWNER APPROVED 2026-11-01 (#330)
+ATS_CANDIDATE_INVITED: Source is an authorized scoped Employer Owner/Admin/Recruiter or assigned Hiring Manager. Target is the candidate-invitation UUID. Metadata contains Employer, Job Listing and immutable Pipeline Version IDs plus expiry only; email remains in the restricted canonical invitation record. Delivery does not grant membership or create an application.
+ATS_CANDIDATE_INVITATION_REVOKED: Source is the same scoped Employer authority. Target is the invitation UUID. Metadata contains bounded reason and before/after status only; accepted invitations cannot be revoked.
+ATS_APPLICATION_SUBMITTED: Source is the verified Student or external applicant. Target is the application UUID. Metadata contains Employer, Job Listing and pinned Pipeline Version IDs only; answers, email, resume and consent bodies never enter the event payload.
+ATS_APPLICATION_WITHDRAWN: Source is the verified applicant who owns the application. Target is the application UUID. Metadata contains bounded reason and before/after status only. It never mutates Referral, Interview, Placement or retention state.
+ATS_APPLICATION_EMPLOYER_CLOSED: Source is an authorized scoped Employer actor. Target is the application UUID. Metadata contains bounded reason and before/after status only. It is not an automatic rejection or official employment outcome.
+ATS_TASK_SUBMITTED / ATS_TASK_STATUS_CHANGED: Source is the verified task owner or authorized scoped Employer actor. Target is the application-task UUID. Metadata contains application, node, before/after status and bounded reason where required; candidate answers, evaluator notes and provider reports remain in restricted records. Provider/task state cannot automatically accept, reject, hire or confirm employment start.

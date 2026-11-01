@@ -275,3 +275,21 @@ Perk states: unlocked, requested, approved, fulfilled, declined. Approval reserv
 finite availability; fulfilled requires evidence. Giving allowance expiry and
 lot consumption are accounting state, not program lifecycle changes. Existing
 wf_reward_requests fulfillment/reconciliation states remain authoritative.
+
+APPENDIX N — ATS-03 OWNER APPROVED 2026-11-01 (#330)
+ATS_APPLICATION_INVITATION_STATUS: pending, accepted, revoked, expired.
+- pending: a verified-email candidate invitation is available until its bounded expiry.
+- accepted: the verified recipient submitted the one canonical application for the invited job.
+- revoked: an authorized scoped Employer actor revoked a pending invitation with an audit reason.
+- expired: the invitation passed its expiry and grants no application association.
+Candidate invitations never create or change Employer team membership, Student membership, discoverability, referral, placement or retention state.
+
+ATS_APPLICATION_STATUS: draft, submitted, withdrawn, employer_closed.
+- draft is reserved for candidate-owned saved intake and is never Employer-visible as a submitted application.
+- submitted is a verified Student or external applicant submission bound permanently to the published Job Listing and immutable Pipeline Version selected in the same transaction.
+- withdrawn is a terminal candidate action requiring an audit reason; it does not delete the application or mutate Referral, Interview, Placement or retention state.
+- employer_closed is a terminal scoped Employer action requiring an audit reason; it is not an automated rejection and does not imply official employment outcome.
+One verified identity has one canonical application per Job Listing. Submitted applications never migrate implicitly to a later Pipeline Version.
+
+ATS_APPLICATION_TASK_STATUS: not_started, in_progress, submitted, completed, skipped, review_required.
+Task transitions are per application and immutable Pipeline Version. Candidate-owned tasks may be submitted only by the verified applicant. Employer completion, skip and review actions require assigned scope and an audit reason. Skipped is not completed. Pipeline target hours are planning metadata; due_at remains empty until a distinct assignment event records a real deadline. Provider completion never automatically accepts, rejects, hires or confirms an employment start.

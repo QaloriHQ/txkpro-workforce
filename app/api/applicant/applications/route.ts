@@ -1,0 +1,4 @@
+import { submitApplication } from "@/lib/ats/applications-repository";
+import { jsonError } from "@/lib/http";
+
+export async function POST(request:Request){try{const body=await request.json() as {jobListingId?:unknown;invitationId?:unknown;answers?:unknown;privacyAccepted?:unknown};if(typeof body.jobListingId!=="string"||!body.answers||typeof body.answers!=="object"||Array.isArray(body.answers))return Response.json({error:"Complete the application form."},{status:400});const application=await submitApplication({jobListingId:body.jobListingId,invitationId:typeof body.invitationId==="string"?body.invitationId:null,answers:body.answers as Record<string,unknown>,privacyAccepted:body.privacyAccepted===true});return Response.json({application},{status:201,headers:{"Cache-Control":"private, no-store"}});}catch(error){if(error instanceof SyntaxError)return Response.json({error:"Invalid request body."},{status:400});return jsonError(error);}}
