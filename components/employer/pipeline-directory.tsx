@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon, MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { isPipelineConfigurator, type PipelineTemplateSummary, type PipelineVersionSummary } from "@/lib/employer/ats-pipelines";
 import type { EmployerRole } from "@/lib/employer/types";
 
@@ -19,8 +19,23 @@ export function PipelineDirectory({ initialPipelines, versions, employerId, role
   const [busy,setBusy]=useState<string|null>(null);
   const [message,setMessage]=useState("");
   const published=useMemo(()=>new Set(versions.map(v=>v.templateId)),[versions]);
+  const latestVersions=useMemo(()=>new Map(versions.slice().sort((a,b)=>a.versionNumber-b.versionNumber)
+    .map(version=>[version.templateId,version] as const)),[versions]);
+  const counts=useMemo(()=>({all:pipelines.length,published:pipelines.filter(p=>published.has(p.id)).length,
+    draft:pipelines.filter(p=>!published.has(p.id)).length}),[pipelines,published]);
   const displayed=useMemo(()=>pipelines.filter(p=>(filter==="all" || (filter==="published" ? published.has(p.id):!published.has(p.id)))
     && (p.name+" "+p.description).toLowerCase().includes(query.trim().toLowerCase())),[pipelines,filter,query,published]);
+  useEffect(()=>{
+    if(!menu)return;
+    const close=(event:KeyboardEvent|PointerEvent)=>{
+      if(event instanceof KeyboardEvent && event.key!=="Escape")return;
+      if(event instanceof PointerEvent && (event.target as HTMLElement).closest(`[data-pipeline-menu="${menu}"]`))return;
+      setMenu(null);
+    };
+    document.addEventListener("keydown",close);
+    document.addEventListener("pointerdown",close);
+    return ()=>{document.removeEventListener("keydown",close);document.removeEventListener("pointerdown",close);};
+  },[menu]);
   async function duplicate(id:string) {
     setBusy(id);setMessage("");
     try {
@@ -34,37 +49,43 @@ export function PipelineDirectory({ initialPipelines, versions, employerId, role
   }
   return <section className="ats-directory">
     <div className="card ats-directory-filters">
-      <input className="input" type="search" aria-label="Search pipelines" placeholder="Search pipelines…"
-        value={query} onChange={e=>setQuery(e.target.value)}/>
-      <div className="ats-directory-tabs" role="group" aria-label="Pipeline status">
-        {(["all","published","draft"] as const).map(s=><button key={s} type="button"
-          aria-pressed={filter===s} className={"button button-small "+(filter===s?"button-dark":"button-ghost")}
-          onClick={()=>setFilter(s)}>{s==="all"?"All":s==="published"?"Published":"Drafts"}</button>)}
-      </div>
-      {isPipelineConfigurator(role)?<Link className="button button-dark" href="/employer/pipelines/new">
+      <label className="ats-directory-search"><span>Search pipelines</span><div><MagnifyingGlassIcon aria-hidden="true"/>
+        <input className="input" type="search" placeholder="Search by name or description"
+          value={query} onChange={e=>setQuery(e.target.value)}/></div></label>
+      {isPipelineConfigurator(role)?<Link className="button button-brand ats-directory-create" href="/employer/pipelines/new">
         <PlusIcon aria-hidden="true"/> Create pipeline</Link>:null}
+      <div className="ats-directory-tabs" role="group" aria-label="Filter by pipeline status">
+        {(["all","published","draft"] as const).map(s=><button key={s} type="button"
+          aria-pressed={filter===s} className={filter===s?"is-active":""}
+          onClick={()=>setFilter(s)}><span>{s==="all"?"All":s==="published"?"Published":"Drafts"}</span><strong>{counts[s]}</strong></button>)}
+      </div>
     </div>
     {message?<p className="ats-pipeline-validation" role="alert">{message}</p>:null}
+    <div className="ats-directory-result-heading" aria-live="polite">
+      <strong>{displayed.length} {displayed.length===1?"pipeline":"pipelines"}</strong>
+      <span>{filter==="all"?"Reusable hiring workflows":filter==="published"?"With at least one published version":"Not yet published"}</span>
+    </div>
     <div className="ats-directory-results">
       {displayed.map(p=>{
         const isPublished=published.has(p.id);
-        const latest=versions.filter(v=>v.templateId===p.id).sort((a,b)=>b.versionNumber-a.versionNumber)[0];
+        const latest=latestVersions.get(p.id);
+        const componentCount=(latest?.graph??p.graph).nodes.length;
         return <article className="card ats-directory-card" key={p.id}>
           <div className="ats-directory-details">
-            <div className="ats-directory-title-line"><h2>{p.name}</h2>
+            <div className="ats-directory-title-line"><h2><Link href={`/employer/pipelines/${p.id}`}>{p.name}</Link></h2>
               <span className={"pill "+(isPublished?"pill-success":"pill-neutral")}>{isPublished?"Published":"Draft"}</span>
             </div>
-            {p.description?<p className="card-sub">{p.description}</p>:null}
-            <div className="ats-directory-meta">
-              <span>{latest?"Version "+latest.versionNumber:"Unpublished"}</span>
-              <span>{(latest?.graph??p.graph).nodes.length} components</span>
-              <span>Draft revision {p.revision}</span>
-              <span>Updated {new Date(p.updatedAt).toLocaleDateString()}</span>
-            </div>
+            <p className="card-sub ats-directory-description">{p.description||"Reusable employer hiring workflow."}</p>
+            <dl className="ats-directory-facts">
+              <div><dt>Published version</dt><dd>{latest?`Version ${latest.versionNumber}`:"None"}</dd></div>
+              <div><dt>Components</dt><dd>{componentCount}</dd></div>
+              <div><dt>Draft revision</dt><dd>{p.revision}</dd></div>
+              <div><dt>Last updated</dt><dd>{new Date(p.updatedAt).toLocaleDateString()}</dd></div>
+            </dl>
           </div>
           <div className="ats-directory-card-actions">
-            <Link className="button button-dark" href={`/employer/pipelines/${p.id}`}>Open</Link>
-            <div className="ats-directory-more">
+            <Link className="button button-brand" href={`/employer/pipelines/${p.id}`}>Open pipeline</Link>
+            <div className="ats-directory-more" data-pipeline-menu={p.id}>
               <button type="button" className="button button-ghost" title="More pipeline actions"
                 aria-label={"More actions for "+p.name} aria-expanded={menu===p.id}
                 onClick={()=>setMenu(open=>open===p.id?null:p.id)}><EllipsisVerticalIcon aria-hidden="true"/></button>
@@ -82,7 +103,8 @@ export function PipelineDirectory({ initialPipelines, versions, employerId, role
         </article>;
       })}
       {!displayed.length?<div className="card ats-directory-empty"><h2>No matching pipelines</h2>
-        <p className="card-sub">Adjust your search or create a reusable hiring workflow.</p></div>:null}
+        <p className="card-sub">Try another search or status filter.</p>
+        {query||filter!=="all"?<button className="button button-ghost" type="button" onClick={()=>{setQuery("");setFilter("all");}}>Clear filters</button>:null}</div>:null}
     </div>
   </section>;
 }

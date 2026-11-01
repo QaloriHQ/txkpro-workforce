@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { requireEmployerContext } from "@/lib/employer/auth";
 import { listEmployerPipelines } from "@/lib/employer/ats-pipelines-repository";
 import { PipelineDirectory } from "@/components/employer/pipeline-directory";
+import "./pipeline-editor.css";
 
 export const dynamic = "force-dynamic";
 export default async function PipelinesDirectoryPage() {

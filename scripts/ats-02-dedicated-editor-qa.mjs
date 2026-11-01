@@ -31,6 +31,19 @@ test("dedicated route reads only one employer-scoped pipeline, historic snapshot
  assert.ok(past.includes("Read-only immutable snapshot"));
  assert.ok(list.includes("Duplicate pipeline"));
 });
+test("pipeline directory uses a compact responsive filter and scannable record cards",()=>{
+ const page=read("../app/employer/pipelines/page.tsx");
+ const list=read("../components/employer/pipeline-directory.tsx");
+ const styles=read("../app/employer/pipelines/pipeline-editor.css");
+ assert.ok(page.includes('import "./pipeline-editor.css"'));
+ for(const evidence of ["Search by name or description","Filter by pipeline status","ats-directory-result-heading","ats-directory-facts","Published version","Draft revision","Last updated","Open pipeline","Clear filters"]){
+  assert.ok(list.includes(evidence),`Missing optimized directory evidence: ${evidence}`);
+ }
+ assert.ok(list.includes("MagnifyingGlassIcon"));
+ assert.ok(list.includes("data-pipeline-menu"));
+ assert.match(styles,/\.ats-directory-facts\{display:grid;grid-template-columns:repeat\(4/);
+ assert.match(styles,/@media\(max-width:700px\).*\.ats-directory-card-actions\{display:grid;grid-template-columns:minmax\(0,1fr\) 44px\}/s);
+});
 test("SQL v2 graph validator is additive; version records remain immutable",()=>{
  const sql=read("../supabase/migrations/20261027043057_ats_02_stage_graph_v2.sql");
  assert.ok(sql.includes("create or replace function security.wf_ats_graph_publishable"));
