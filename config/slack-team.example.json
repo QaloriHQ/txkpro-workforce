@@ -1,0 +1,18 @@
+{
+  "enabled": false,
+  "legacyListenerStopped": false,
+  "repository": "QaloriHQ/txkpro-workforce",
+  "teamId": "CONFIGURE_FROM_AUTH_TEST",
+  "channelId": "C0C6P7C73UY",
+  "ownerId": "CONFIGURE_FROM_EXISTING_SLACK_ALLOWED_USER_ID",
+  "allowedUserIds": [],
+  "memberIds": { "maya": "CONFIGURE", "devon": "CONFIGURE", "riley": "CONFIGURE" },
+  "monitorAppIds": [],
+  "model": "",
+  "monthlyTokens": 0,
+  "taskTokens": 0,
+  "incidentReserveTokens": 0,
+  "maxOutputTokens": 400,
+  "minDelayMs": 8000,
+  "maxDelayMs": 20000
+}
