@@ -56,7 +56,9 @@
     "incentives-execution:qa": "node --experimental-strip-types --test scripts/incentive-execution-qa.mjs scripts/incentive-integrations-contract-qa.mjs",
     "incentives-templates:qa": "node --experimental-strip-types --test scripts/incentive-templates-qa.mjs",
     "design-system-buttons:qa": "node --test scripts/design-system-buttons-qa.mjs",
-    "employer-crews:qa": "node --experimental-strip-types --test scripts/employer-crews-qa.mjs"
+    "employer-crews:qa": "node --experimental-strip-types --test scripts/employer-crews-qa.mjs",
+    "slack-team:qa": "node --test scripts/slack-team-qa.mjs",
+    "slack-team": "node scripts/slack-team/run.mjs"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
