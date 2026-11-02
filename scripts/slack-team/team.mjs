@@ -75,7 +75,8 @@ export class Team {
     for (const url of v.sources) await this.io.evidence(url);
     const action = v.kind === 'proposal' ? 'approve issue' : 'accept issue';
     const findings = Object.entries(v.findings).map(([k, value]) => `${k}: ${value}`).join('\n\n');
-    await this.io.post(j.owner, j.thread, `${v.title}\n\n${v.body}\n\n${findings}\n\nEvidence: ${v.sources.join(' ')}\n\nMark, please reply with “${action} ${j.hash}” if you approve this exact revision.`, j.id);
+    const target = v.kind === 'verification' ? `\n\nIssue #${v.issue}; reviewed commit ${v.commit}.` : '';
+    await this.io.post(j.owner, j.thread, `${v.title}${target}\n\n${v.body}\n\n${findings}\n\nEvidence: ${v.sources.join(' ')}\n\nMark, please reply with “${action} ${j.hash}” if you approve this exact revision.`, j.id);
     p.presented = true; this.store.save();
   }
   async mutate(j) {
